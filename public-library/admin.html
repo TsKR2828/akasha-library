@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>書目管理 — 阿卡夏圖書館</title>
+<style>
+:root {
+  --navy: #1E2430;
+  --navy-light: #2A3240;
+  --navy-hover: #343E4E;
+  --gold: #C9A86A;
+  --gold-dim: #A08550;
+  --cream: #F4F0E6;
+  --text-primary: #F4F0E6;
+  --text-secondary: #9BA3B0;
+  --danger: #C75B5B;
+  --success: #6AAE7F;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Serif TC', system-ui, sans-serif;
+  background: var(--navy);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  color: var(--gold);
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 24px;
+}
+
+.section {
+  background: var(--navy-light);
+  border: 1px solid var(--navy-hover);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 14px;
+  color: var(--gold);
+}
+
+.field {
+  margin-bottom: 12px;
+}
+
+.field label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--navy);
+  border: 1px solid var(--navy-hover);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color: var(--gold-dim);
+}
+
+.field textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.field select option {
+  background: var(--navy);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.btn {
+  padding: 9px 18px;
+  border: 1px solid var(--navy-hover);
+  border-radius: 6px;
+  background: var(--navy-light);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn:hover { border-color: var(--gold-dim); }
+.btn-gold { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
+.btn-gold:hover { background: var(--gold-dim); }
+.btn-danger { border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover { background: var(--danger); color: var(--cream); }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.book-list {
+  margin-top: 12px;
+}
+
+.book-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  transition: background 0.15s;
+}
+
+.book-list-item:hover {
+  background: var(--navy-hover);
+}
+
+.book-list-item__info {
+  flex: 1;
+}
+
+.book-list-item__title {
+  font-size: 13px;
+}
+
+.book-list-item__meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.book-list-item__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.book-list-item__actions button {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.output {
+  margin-top: 16px;
+  background: var(--navy);
+  border: 1px solid var(--navy-hover);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 16px;
+  background: var(--success);
+  color: var(--navy);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  transform: translateY(60px);
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+.toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<h1>書目管理工具</h1>
+<p class="subtitle">管理公共書庫的 catalog.json — 新增、編輯、刪除書目，然後匯出更新的 JSON</p>
+
+<div class="section">
+  <div class="section-title">載入書目</div>
+  <div class="actions">
+    <button class="btn" onclick="loadFromFile()">從檔案載入 catalog.json</button>
+    <button class="btn" onclick="loadFromServer()">從伺服器載入</button>
+    <button class="btn btn-gold" onclick="addNewBook()">+ 新增書籍</button>
+  </div>
+  <div class="book-list" id="bookList"></div>
+</div>
+
+<div class="section" id="editSection" style="display:none;">
+  <div class="section-title" id="editTitle">新增書籍</div>
+  <div class="row">
+    <div class="field">
+      <label>書名</label>
+      <input type="text" id="f-title" placeholder="書名">
+    </div>
+    <div class="field">
+      <label>作者</label>
+      <input type="text" id="f-author" placeholder="作者">
+    </div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>分類</label>
+      <select id="f-category">
+        <option value="文學">文學</option>
+        <option value="哲學">哲學</option>
+        <option value="歷史">歷史</option>
+        <option value="科學">科學</option>
+        <option value="童話">童話</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>頁數</label>
+      <input type="number" id="f-pages" placeholder="頁數" min="1">
+    </div>
+  </div>
+  <div class="field">
+    <label>描述</label>
+    <textarea id="f-description" placeholder="簡短描述"></textarea>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Google Drive File ID（公開分享的 PDF）</label>
+      <input type="text" id="f-driveFileId" placeholder="如 1aBcDeFgHiJkLmN...">
+    </div>
+    <div class="field">
+      <label>封面圖片 URL（選填）</label>
+      <input type="text" id="f-coverUrl" placeholder="https://...">
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn btn-gold" onclick="saveBook()">儲存</button>
+    <button class="btn" onclick="cancelEdit()">取消</button>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">匯出</div>
+  <div class="actions">
+    <button class="btn btn-gold" onclick="exportJSON()">匯出 catalog.json</button>
+    <button class="btn" onclick="copyJSON()">複製 JSON</button>
+  </div>
+  <div class="output" id="output"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept=".json" style="display:none">
+
+<script>
+let catalog = { version: 1, updated: '', categories: ['文學','哲學','歷史','科學','童話'], books: [] };
+let editingId = null;
+
+function generateId() {
+  return 'book-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+async function loadFromServer() {
+  try {
+    const res = await fetch('./catalog.json');
+    catalog = await res.json();
+    renderList();
+    showToast('已從伺服器載入');
+  } catch (e) {
+    showToast('載入失敗');
+  }
+}
+
+function loadFromFile() {
+  const input = document.getElementById('fileInput');
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        catalog = JSON.parse(reader.result);
+        renderList();
+        showToast('已從檔案載入');
+      } catch { showToast('JSON 格式錯誤'); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function renderList() {
+  const list = document.getElementById('bookList');
+  if (catalog.books.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-secondary);font-size:12px;padding:12px;">尚無書目</p>';
+    return;
+  }
+
+  list.innerHTML = catalog.books.map(book => `
+    <div class="book-list-item">
+      <div class="book-list-item__info">
+        <div class="book-list-item__title">${book.title}</div>
+        <div class="book-list-item__meta">${book.author} · ${book.category} · ${book.pages} 頁</div>
+      </div>
+      <div class="book-list-item__actions">
+        <button class="btn" onclick="editBook('${book.id}')">編輯</button>
+        <button class="btn btn-danger" onclick="deleteBook('${book.id}')">刪除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addNewBook() {
+  editingId = null;
+  document.getElementById('editTitle').textContent = '新增書籍';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-author').value = '';
+  document.getElementById('f-category').value = '文學';
+  document.getElementById('f-pages').value = '';
+  document.getElementById('f-description').value = '';
+  document.getElementById('f-driveFileId').value = '';
+  document.getElementById('f-coverUrl').value = '';
+  document.getElementById('editSection').style.display = '';
+}
+
+function editBook(id) {
+  const book = catalog.books.find(b => b.id === id);
+  if (!book) return;
+  editingId = id;
+  document.getElementById('editTitle').textContent = '編輯書籍';
+  document.getElementById('f-title').value = book.title;
+  document.getElementById('f-author').value = book.author;
+  document.getElementById('f-category').value = book.category;
+  document.getElementById('f-pages').value = book.pages;
+  document.getElementById('f-description').value = book.description || '';
+  document.getElementById('f-driveFileId').value = book.driveFileId || '';
+  document.getElementById('f-coverUrl').value = book.coverUrl || '';
+  document.getElementById('editSection').style.display = '';
+}
+
+function saveBook() {
+  const title = document.getElementById('f-title').value.trim();
+  const author = document.getElementById('f-author').value.trim();
+  if (!title || !author) { showToast('書名和作者必填'); return; }
+
+  const bookData = {
+    id: editingId || generateId(),
+    title,
+    author,
+    category: document.getElementById('f-category').value,
+    pages: parseInt(document.getElementById('f-pages').value) || 0,
+    description: document.getElementById('f-description').value.trim(),
+    driveFileId: document.getElementById('f-driveFileId').value.trim(),
+    coverUrl: document.getElementById('f-coverUrl').value.trim(),
+    addedDate: new Date().toISOString().split('T')[0]
+  };
+
+  if (editingId) {
+    const idx = catalog.books.findIndex(b => b.id === editingId);
+    if (idx >= 0) catalog.books[idx] = bookData;
+  } else {
+    catalog.books.push(bookData);
+  }
+
+  catalog.updated = new Date().toISOString().split('T')[0];
+  renderList();
+  cancelEdit();
+  showToast(editingId ? '已更新' : '已新增');
+}
+
+function deleteBook(id) {
+  if (!confirm('確定要刪除這本書嗎？')) return;
+  catalog.books = catalog.books.filter(b => b.id !== id);
+  catalog.updated = new Date().toISOString().split('T')[0];
+  renderList();
+  showToast('已刪除');
+}
+
+function cancelEdit() {
+  document.getElementById('editSection').style.display = 'none';
+  editingId = null;
+}
+
+function exportJSON() {
+  const json = JSON.stringify(catalog, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'catalog.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('output').textContent = json;
+  showToast('已匯出 catalog.json');
+}
+
+function copyJSON() {
+  const json = JSON.stringify(catalog, null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    showToast('已複製到剪貼簿');
+  });
+  document.getElementById('output').textContent = json;
+}
+
+// Auto-load on page open
+loadFromServer();
+</script>
+</body>
+</html>

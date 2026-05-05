@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1E2430">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="阿卡夏">
+<meta name="description" content="通用 MD / Excel / PDF 雲端編輯書庫">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<title>阿卡夏圖書館</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1E2430;
+  --navy-light: #2A3240;
+  --navy-hover: #343E4E;
+  --gold: #C9A86A;
+  --gold-dim: #A08550;
+  --gold-glow: rgba(201,168,106,0.15);
+  --cream: #F4F0E6;
+  --text-primary: #F4F0E6;
+  --text-secondary: #9BA3B0;
+  --danger: #C75B5B;
+  --success: #6AAE7F;
+  --sidebar-width: 260px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Serif TC', serif;
+  background: var(--navy);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--navy);
+  border-right: 1px solid var(--navy-light);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100vh;
+}
+
+.sidebar-header {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--navy-light);
+}
+
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 2px;
+}
+
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Auth area */
+.auth-area {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--navy-light);
+}
+
+.auth-btn {
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--navy-light);
+  border-radius: 6px;
+  background: var(--navy-light);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auth-btn:hover {
+  border-color: var(--gold-dim);
+  background: var(--navy-hover);
+}
+
+.auth-btn.connected {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.auth-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--navy-hover);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+/* Nav */
+.nav-section {
+  padding: 14px 12px 8px;
+}
+
+.nav-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  padding: 0 6px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.nav-item:hover {
+  background: var(--navy-light);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--gold-glow);
+  color: var(--gold);
+}
+
+.nav-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--navy-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.nav-item.active .nav-icon {
+  background: rgba(201,168,106,0.2);
+}
+
+.nav-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-info-title {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-info-sub {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+/* Sidebar footer */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 14px 18px;
+  border-top: 1px solid var(--navy-light);
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* ===== MAIN CONTENT ===== */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Top bar */
+.topbar {
+  height: 48px;
+  background: var(--navy);
+  border-bottom: 1px solid var(--navy-light);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.topbar-title {
+  font-size: 15px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.topbar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--navy-light);
+  background: var(--navy-light);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn:hover {
+  border-color: var(--gold-dim);
+  background: var(--navy-hover);
+}
+
+.btn-gold {
+  background: var(--gold);
+  color: var(--navy);
+  border-color: var(--gold);
+  font-weight: 600;
+}
+
+.btn-gold:hover {
+  background: var(--gold-dim);
+}
+
+/* Content area */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px;
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.module-card {
+  background: var(--navy-light);
+  border: 1px solid var(--navy-hover);
+  border-radius: 10px;
+  padding: 22px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.module-card:hover {
+  border-color: var(--gold-dim);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.card-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: var(--gold-glow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.card-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.card-formats {
+  margin-top: 12px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.format-tag {
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--navy);
+  color: var(--text-secondary);
+  border: 1px solid var(--navy-hover);
+}
+
+/* Recent files */
+.section-title {
+  font-size: 13px;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 24px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.recent-item:hover {
+  background: var(--navy-light);
+}
+
+.recent-icon {
+  font-size: 18px;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.recent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-name {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-meta {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-text {
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* Module iframe */
+.module-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: none;
+}
+
+.module-frame.active {
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .content { padding: 16px; }
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="brand">AKASHA</div>
+    <div class="brand-sub">阿卡夏圖書館</div>
+  </div>
+
+  <div class="auth-area">
+    <button class="auth-btn" id="auth-btn" onclick="handleAuth()">
+      <span class="auth-avatar">G</span>
+      <span id="auth-text">連接 Google Drive</span>
+    </button>
+  </div>
+
+  <nav class="nav-section">
+    <div class="nav-label">書庫</div>
+    <button class="nav-item active" data-view="dashboard">
+      <span class="nav-icon">&#9776;</span>
+      <span class="nav-info"><span class="nav-info-title">總覽</span></span>
+    </button>
+    <button class="nav-item" data-view="personal">
+      <span class="nav-icon">&#128218;</span>
+      <span class="nav-info">
+        <span class="nav-info-title">個人書庫</span>
+        <span class="nav-info-sub">我的檔案</span>
+      </span>
+    </button>
+    <button class="nav-item" data-view="public">
+      <span class="nav-icon">&#127758;</span>
+      <span class="nav-info">
+        <span class="nav-info-title">公共書庫</span>
+        <span class="nav-info-sub">同樂會</span>
+      </span>
+    </button>
+  </nav>
+
+  <nav class="nav-section">
+    <div class="nav-label">工具</div>
+    <button class="nav-item" data-module="markdown">
+      <span class="nav-icon">&#9998;</span>
+      <span class="nav-info">
+        <span class="nav-info-title">Markdown 編輯器</span>
+        <span class="nav-info-sub">撰寫 / 匯出</span>
+      </span>
+    </button>
+    <button class="nav-item" data-module="pdf-reader">
+      <span class="nav-icon">&#128214;</span>
+      <span class="nav-info">
+        <span class="nav-info-title">PDF 閱讀器</span>
+        <span class="nav-info-sub">閱讀 / 切割</span>
+      </span>
+    </button>
+    <button class="nav-item" data-module="spreadsheet">
+      <span class="nav-icon">&#128202;</span>
+      <span class="nav-info">
+        <span class="nav-info-title">試算表</span>
+        <span class="nav-info-sub">Excel 編輯</span>
+      </span>
+    </button>
+    <button class="nav-item" data-module="book-editor">
+      <span class="nav-icon">&#128155;</span>
+      <span class="nav-info">
+        <span class="nav-info-title">書籍排版器</span>
+        <span class="nav-info-sub">視覺化編書</span>
+      </span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    Akasha Library v0.1 &middot; PWA
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-title">總覽</span>
+    <div class="topbar-actions">
+      <button class="btn" id="btn-import" onclick="importFile()">匯入檔案</button>
+      <button class="btn btn-gold" id="btn-new" onclick="newFile()">新建</button>
+    </div>
+  </div>
+
+  <!-- Dashboard view -->
+  <div class="content" id="view-dashboard">
+    <div class="section-title">開啟工具</div>
+    <div class="dashboard-grid">
+      <a class="module-card" data-module="markdown">
+        <div class="card-icon">&#9998;</div>
+        <div class="card-title">Markdown 編輯器</div>
+        <div class="card-desc">撰寫文章、預覽排版、同步到 Google Sheets 或匯出檔案</div>
+        <div class="card-formats">
+          <span class="format-tag">.md</span>
+          <span class="format-tag">HTML</span>
+          <span class="format-tag">Google Sheets</span>
+        </div>
+      </a>
+      <a class="module-card" data-module="pdf-reader">
+        <div class="card-icon">&#128214;</div>
+        <div class="card-title">PDF 閱讀器</div>
+        <div class="card-desc">閱讀 PDF、切割頁面、管理本地書庫</div>
+        <div class="card-formats">
+          <span class="format-tag">.pdf</span>
+          <span class="format-tag">切割</span>
+          <span class="format-tag">書庫</span>
+        </div>
+      </a>
+      <a class="module-card" data-module="spreadsheet">
+        <div class="card-icon">&#128202;</div>
+        <div class="card-title">試算表編輯器</div>
+        <div class="card-desc">免買 Office 也能編輯 Excel，支援公式與多工作表</div>
+        <div class="card-formats">
+          <span class="format-tag">.xlsx</span>
+          <span class="format-tag">公式</span>
+          <span class="format-tag">多工作表</span>
+        </div>
+      </a>
+      <a class="module-card" data-module="book-editor">
+        <div class="card-icon">&#128155;</div>
+        <div class="card-title">書籍排版器</div>
+        <div class="card-desc">視覺化排版童話書、小說，可加圖片並匯出成 PDF</div>
+        <div class="card-formats">
+          <span class="format-tag">.pdf</span>
+          <span class="format-tag">.html</span>
+          <span class="format-tag">.book</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="recent-list" id="recent-list">
+      <div class="section-title">最近開啟</div>
+      <div class="empty-state">
+        <div class="empty-icon">&#128218;</div>
+        <div class="empty-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module iframe container -->
+  <iframe class="module-frame" id="module-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+</main>
+
+<script type="module">
+import { getFileEntries, saveFileEntry } from './core/storage.js';
+import { initAuth, signIn, signOut, isSignedIn, getUser } from './core/auth.js';
+import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
+import { CONFIG } from './core/config.js';
+
+const modules = {
+  'markdown': { title: 'Markdown 編輯器', src: 'modules/markdown/index.html' },
+  'pdf-reader': { title: 'PDF 閱讀器', src: 'modules/pdf-reader/index.html' },
+  'spreadsheet': { title: '試算表編輯器', src: 'dist/spreadsheet/index.html' },
+  'book-editor': { title: '書籍排版器', src: 'modules/book-editor/index.html' },
+};
+
+let currentView = 'dashboard';
+let isAuthed = false;
+
+// Navigation
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const view = btn.dataset.view;
+    const module = btn.dataset.module;
+    if (view) switchView(view);
+    if (module) openModule(module);
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+document.querySelectorAll('.module-card').forEach(card => {
+  card.addEventListener('click', (e) => {
+    e.preventDefault();
+    const module = card.dataset.module;
+    if (module) openModule(module);
+    document.querySelectorAll('.nav-item').forEach(b => {
+      b.classList.toggle('active', b.dataset.module === module);
+    });
+  });
+});
+
+function switchView(view) {
+  currentView = view;
+  const dashboard = document.getElementById('view-dashboard');
+  const frame = document.getElementById('module-frame');
+  const title = document.getElementById('topbar-title');
+
+  if (view === 'dashboard') {
+    dashboard.style.display = '';
+    frame.classList.remove('active');
+    title.textContent = '總覽';
+  } else if (view === 'personal') {
+    dashboard.style.display = '';
+    frame.classList.remove('active');
+    title.textContent = '個人書庫';
+  } else if (view === 'public') {
+    dashboard.style.display = 'none';
+    frame.src = 'public-library/index.html';
+    frame.classList.add('active');
+    title.textContent = '公共書庫 — 同樂會';
+  }
+}
+
+function openModule(name) {
+  const mod = modules[name];
+  if (!mod) return;
+
+  const dashboard = document.getElementById('view-dashboard');
+  const frame = document.getElementById('module-frame');
+  const title = document.getElementById('topbar-title');
+
+  dashboard.style.display = 'none';
+  frame.src = mod.src;
+  frame.classList.add('active');
+  title.textContent = mod.title;
+}
+
+// Auth
+function handleAuth() {
+  if (isAuthed) {
+    signOut(onAuthChange);
+  } else {
+    signIn();
+  }
+}
+
+function onAuthChange({ signedIn, user }) {
+  isAuthed = signedIn;
+  const btn = document.getElementById('auth-btn');
+  const text = document.getElementById('auth-text');
+  if (signedIn && user) {
+    btn.classList.add('connected');
+    text.textContent = user.name || '已連接 Drive';
+    fullSync().then(() => renderRecent());
+  } else {
+    btn.classList.remove('connected');
+    text.textContent = '連接 Google Drive';
+  }
+}
+
+// Init auth on load
+if (CONFIG.GOOGLE_CLIENT_ID !== 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
+  initAuth(CONFIG.GOOGLE_CLIENT_ID, onAuthChange);
+}
+
+// Sync status display
+setSyncCallback(({ status, detail }) => {
+  const btn = document.getElementById('auth-btn');
+  if (status === 'syncing') btn.style.opacity = '0.7';
+  else btn.style.opacity = '1';
+});
+
+// Init offline sync listeners
+initOfflineSync();
+
+// File actions placeholder
+function importFile() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.md,.pdf,.xlsx,.book,.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'md' || ext === 'markdown' || ext === 'txt') openModule('markdown');
+    else if (ext === 'pdf') openModule('pdf-reader');
+    else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') openModule('spreadsheet');
+    else if (ext === 'book' || ext === 'json') openModule('book-editor');
+  };
+  input.click();
+}
+
+function newFile() {
+  // Show a small picker - for now just open markdown
+  const choice = prompt('新建類型：\n1. Markdown 文件\n2. 試算表\n3. 書籍\n\n輸入數字：');
+  if (choice === '1') openModule('markdown');
+  else if (choice === '2') openModule('spreadsheet');
+  else if (choice === '3') openModule('book-editor');
+}
+
+// Expose functions to global scope for onclick handlers
+window.handleAuth = handleAuth;
+window.importFile = importFile;
+window.newFile = newFile;
+window.openModule = openModule;
+window.switchView = switchView;
+
+// Recent files
+async function renderRecent() {
+  const entries = await getFileEntries();
+  const container = document.getElementById('recent-list');
+
+  if (entries.length === 0) {
+    container.innerHTML = `
+      <div class="section-title">最近開啟</div>
+      <div class="empty-state">
+        <div class="empty-icon">&#128218;</div>
+        <div class="empty-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
+      </div>`;
+    return;
+  }
+
+  const typeIcons = { md: '&#9998;', pdf: '&#128214;', xlsx: '&#128202;', book: '&#128155;' };
+  const typeModules = { md: 'markdown', pdf: 'pdf-reader', xlsx: 'spreadsheet', book: 'book-editor' };
+
+  const items = entries.slice(0, 10).map(f => {
+    const icon = typeIcons[f.type] || '&#128196;';
+    const date = new Date(f.lastOpened);
+    const dateStr = `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}`;
+    const sizeStr = f.size ? `${(f.size / 1024).toFixed(1)} KB` : '';
+    const meta = [dateStr, sizeStr, f.pages ? `${f.pages} 頁` : ''].filter(Boolean).join(' · ');
+    return `<div class="recent-item" onclick="openModule('${typeModules[f.type] || 'markdown'}')">
+      <span class="recent-icon">${icon}</span>
+      <div class="recent-info">
+        <div class="recent-name">${f.name}</div>
+        <div class="recent-meta">${meta}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = `<div class="section-title">最近開啟</div>${items}`;
+}
+
+renderRecent();
+
+// Listen for messages from module iframes (file opened notifications)
+window.addEventListener('message', async (event) => {
+  if (event.data?.type === 'akasha-file-opened') {
+    await saveFileEntry(event.data.entry);
+    renderRecent();
+  }
+});
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>

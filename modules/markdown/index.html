@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Markdown 轉 Google Sheets（保留格式版）</title>
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --panel: #ffffff;
+      --text: #202124;
+      --muted: #6b7280;
+      --border: #d7dce2;
+      --accent: #3f51b5;
+      --ok: #0f766e;
+      --code: #f3f4f6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    h1 {
+      font-size: 18px;
+      margin: 0 14px 0 0;
+      white-space: nowrap;
+    }
+    button, label.file-label {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      padding: 8px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    button.sheet {
+      background: var(--ok);
+      color: #fff;
+      border-color: var(--ok);
+    }
+    button:hover, label.file-label:hover { filter: brightness(0.98); }
+    input[type="file"] { display: none; }
+    #status {
+      color: var(--muted);
+      font-size: 13px;
+      min-width: 260px;
+    }
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      width: 100%;
+    }
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      height: calc(100vh - 102px);
+    }
+    .pane {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .pane-title {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 14px;
+      background: #fbfbfc;
+    }
+    textarea {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      resize: none;
+      padding: 16px;
+      font: 15px/1.7 Consolas, "Noto Sans Mono CJK TC", "Microsoft JhengHei", monospace;
+      outline: none;
+      color: var(--text);
+    }
+    #preview {
+      padding: 22px;
+      overflow: auto;
+      line-height: 1.85;
+      font-size: 16px;
+    }
+    #preview h1 { font-size: 30px; margin: 0 0 20px; line-height: 1.35; }
+    #preview h2 { font-size: 24px; margin: 34px 0 12px; line-height: 1.4; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+    #preview h3 { font-size: 20px; margin: 28px 0 10px; line-height: 1.4; }
+    #preview p { margin: 0 0 14px; }
+    #preview ul, #preview ol { padding-left: 1.4em; margin: 0 0 16px; }
+    #preview li { margin: 4px 0; }
+    #preview a { color: var(--accent); text-decoration: underline; }
+    #preview code { background: var(--code); padding: 2px 5px; border-radius: 5px; }
+    #preview pre { background: var(--code); padding: 12px; overflow: auto; border-radius: 8px; }
+    #preview table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 15px; }
+    #preview th, #preview td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
+    #preview th { background: #f3f4f6; }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; height: auto; }
+      .pane { min-height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Markdown 轉 Google Sheets（保留格式版）</h1>
+    <label class="file-label">
+      開啟 .md
+      <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
+    </label>
+    <button id="saveMd">下載 .md</button>
+    <button id="copyHtml" class="primary">複製 HTML 給 WordPress</button>
+    <button id="copyPlainTables">複製純表格給 Sheets</button>
+    <button id="copyRichSheets" class="sheet">複製格式化內容給 Sheets</button>
+    <button id="openSheetsRich" class="sheet">開新 Sheet 並複製格式化內容</button>
+    <button id="clearText">清空</button>
+    <span id="status">可直接把 Markdown 貼進左邊。</span>
+    <span class="hint">格式化版會把 H1/H2/H3、段落、清單、Markdown 表格轉成 Google Sheets 可貼上的有格式表格。到新 Sheet 的 A1 按 Ctrl+V。</span>
+  </header>
+
+  <main>
+    <section class="pane">
+      <div class="pane-title">原始 Markdown / 可編輯</div>
+      <textarea id="editor" spellcheck="false" placeholder="把 .md 內容貼在這裡，或點上方「開啟 .md」。"></textarea>
+    </section>
+
+    <section class="pane">
+      <div class="pane-title">預覽 / 可複製 HTML</div>
+      <article id="preview"></article>
+    </section>
+  </main>
+
+  <script>
+    const editor = document.getElementById("editor");
+    const preview = document.getElementById("preview");
+    const statusEl = document.getElementById("status");
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function stripMarkdown(text) {
+      return String(text)
+        .replace(/<a\s+[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, "$2 ($1)")
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, "$1 ($2)")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/<br\s*\/?>/gi, " ")
+        .replace(/<[^>]+>/g, "")
+        .replace(/\\\|/g, "|")
+        .trim();
+    }
+
+    function inlineMarkdownToHtml(text) {
+      const rawHtml = [];
+      text = String(text).replace(/<a\s+[^>]*>[\s\S]*?<\/a>/gi, match => {
+        rawHtml.push(match);
+        return `@@RAWHTML${rawHtml.length - 1}@@`;
+      });
+
+      text = escapeHtml(text);
+      text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      rawHtml.forEach((html, i) => {
+        text = text.replace(`@@RAWHTML${i}@@`, html);
+      });
+
+      return text;
+    }
+
+    function splitMarkdownTableRow(row) {
+      let line = row.trim();
+      if (line.startsWith("|")) line = line.slice(1);
+      if (line.endsWith("|")) line = line.slice(0, -1);
+
+      const cells = [];
+      let current = "";
+      let escaped = false;
+      let inBacktick = false;
+
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+
+        if (escaped) {
+          current += ch;
+          escaped = false;
+          continue;
+        }
+
+        if (ch === "\\") {
+          escaped = true;
+          current += ch;
+          continue;
+        }
+
+        if (ch === "`") {
+          inBacktick = !inBacktick;
+          current += ch;
+          continue;
+        }
+
+        if (ch === "|" && !inBacktick) {
+          cells.push(current.trim());
+          current = "";
+          continue;
+        }
+
+        current += ch;
+      }
+
+      cells.push(current.trim());
+      return cells;
+    }
+
+    function isSeparatorRow(row) {
+      const cells = splitMarkdownTableRow(row);
+      if (cells.length === 0) return false;
+      return cells.every(cell => /^:?-{3,}:?$/.test(cell.replace(/\s/g, "")));
+    }
+
+    function isTableRow(line) {
+      const trimmed = line.trim();
+      return trimmed.startsWith("|") && trimmed.endsWith("|") && trimmed.includes("|");
+    }
+
+    function parseTable(lines, startIndex) {
+      const rows = [];
+      let i = startIndex;
+
+      while (i < lines.length && isTableRow(lines[i])) {
+        rows.push(lines[i]);
+        i++;
+      }
+
+      if (rows.length < 2 || !isSeparatorRow(rows[1])) return null;
+
+      const head = splitMarkdownTableRow(rows[0]);
+      const body = rows.slice(2).map(splitMarkdownTableRow);
+
+      let html = "<table><thead><tr>";
+      head.forEach(c => html += `<th>${inlineMarkdownToHtml(c)}</th>`);
+      html += "</tr></thead><tbody>";
+
+      body.forEach(row => {
+        html += "<tr>";
+        row.forEach(c => html += `<td>${inlineMarkdownToHtml(c)}</td>`);
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+      return { html, head, body, nextIndex: i };
+    }
+
+    function markdownToHtml(md) {
+      const lines = md.replace(/\r\n/g, "\n").split("\n");
+      let html = "";
+      let paragraph = [];
+      let listType = null;
+      let inCode = false;
+      let codeBuffer = [];
+
+      function flushParagraph() {
+        if (paragraph.length) {
+          html += `<p>${inlineMarkdownToHtml(paragraph.join(" "))}</p>\n`;
+          paragraph = [];
+        }
+      }
+
+      function closeList() {
+        if (listType) {
+          html += `</${listType}>\n`;
+          listType = null;
+        }
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (/^```/.test(line.trim())) {
+          if (!inCode) {
+            flushParagraph();
+            closeList();
+            inCode = true;
+            codeBuffer = [];
+          } else {
+            html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`;
+            inCode = false;
+          }
+          continue;
+        }
+
+        if (inCode) {
+          codeBuffer.push(line);
+          continue;
+        }
+
+        if (line.trim() === "") {
+          flushParagraph();
+          closeList();
+          continue;
+        }
+
+        const table = parseTable(lines, i);
+        if (table) {
+          flushParagraph();
+          closeList();
+          html += table.html + "\n";
+          i = table.nextIndex - 1;
+          continue;
+        }
+
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        if (heading) {
+          flushParagraph();
+          closeList();
+          const level = heading[1].length;
+          html += `<h${level}>${inlineMarkdownToHtml(heading[2].trim())}</h${level}>\n`;
+          continue;
+        }
+
+        const unordered = line.match(/^\s*[-*]\s+(.+)$/);
+        if (unordered) {
+          flushParagraph();
+          if (listType !== "ul") {
+            closeList();
+            html += "<ul>\n";
+            listType = "ul";
+          }
+          html += `<li>${inlineMarkdownToHtml(unordered[1])}</li>\n`;
+          continue;
+        }
+
+        const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+        if (ordered) {
+          flushParagraph();
+          if (listType !== "ol") {
+            closeList();
+            html += "<ol>\n";
+            listType = "ol";
+          }
+          html += `<li>${inlineMarkdownToHtml(ordered[1])}</li>\n`;
+          continue;
+        }
+
+        paragraph.push(line.trim());
+      }
+
+      flushParagraph();
+      closeList();
+
+      if (inCode) {
+        html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`;
+      }
+
+      return html;
+    }
+
+    function markdownTablesToRows(md) {
+      const lines = md.replace(/\r\n/g, "\n").split("\n");
+      const allRows = [];
+      let lastHeading = "";
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        if (heading) {
+          lastHeading = stripMarkdown(heading[2]);
+          continue;
+        }
+
+        if (!isTableRow(lines[i])) continue;
+
+        const tableLines = [];
+        let j = i;
+        while (j < lines.length && isTableRow(lines[j])) {
+          tableLines.push(lines[j]);
+          j++;
+        }
+
+        if (tableLines.length >= 2 && isSeparatorRow(tableLines[1])) {
+          if (allRows.length > 0) allRows.push([]);
+          if (lastHeading) allRows.push([lastHeading]);
+
+          allRows.push(splitMarkdownTableRow(tableLines[0]).map(stripMarkdown));
+          tableLines.slice(2).forEach(row => {
+            allRows.push(splitMarkdownTableRow(row).map(stripMarkdown));
+          });
+        }
+
+        i = j - 1;
+      }
+
+      return allRows;
+    }
+
+    function markdownToRichSheetHtml(md) {
+      const lines = md.replace(/\r\n/g, "\n").split("\n");
+      const maxCols = Math.max(6, getMaxTableCols(lines));
+      let html = `<table style="border-collapse:collapse;font-family:Arial,'Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:11pt;">`;
+      let paragraph = [];
+
+      function emptyCells(count) {
+        let s = "";
+        for (let i = 0; i < count; i++) s += `<td style="border:1px solid #d7dce2;"></td>`;
+        return s;
+      }
+
+      function row(cells, options = {}) {
+        const type = options.type || "normal";
+        const bg = options.bg || "#ffffff";
+        const color = options.color || "#202124";
+        const weight = options.weight || "400";
+        const size = options.size || "11pt";
+        const border = options.border || "1px solid #d7dce2";
+        const first = cells[0] ?? "";
+        const rest = cells.slice(1);
+
+        html += `<tr style="background:${bg};color:${color};font-weight:${weight};font-size:${size};">`;
+
+        if (type === "heading") {
+          html += `<td style="border:${border};padding:8px 10px;font-weight:${weight};font-size:${size};color:${color};background:${bg};">${inlineMarkdownToHtml(first)}</td>`;
+          html += emptyCells(maxCols - 1);
+        } else {
+          for (let i = 0; i < maxCols; i++) {
+            const value = cells[i] ?? "";
+            html += `<td style="border:${border};padding:6px 8px;vertical-align:top;background:${bg};color:${color};font-weight:${weight};font-size:${size};">${inlineMarkdownToHtml(value)}</td>`;
+          }
+        }
+
+        html += `</tr>`;
+      }
+
+      function flushParagraph() {
+        if (paragraph.length) {
+          row([paragraph.join(" ")], { type: "heading", bg: "#ffffff", weight: "400", size: "11pt" });
+          paragraph = [];
+        }
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        const raw = lines[i];
+        const line = raw.trim();
+
+        if (!line) {
+          flushParagraph();
+          continue;
+        }
+
+        const table = parseTable(lines, i);
+        if (table) {
+          flushParagraph();
+          row(table.head, { bg: "#eef1f8", weight: "700" });
+          table.body.forEach(bodyRow => row(bodyRow));
+          i = table.nextIndex - 1;
+          continue;
+        }
+
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        if (heading) {
+          flushParagraph();
+          const level = heading[1].length;
+          const text = heading[2].trim();
+          if (level === 1) row([text], { type: "heading", bg: "#dfe6ff", weight: "700", size: "16pt" });
+          else if (level === 2) row([text], { type: "heading", bg: "#edf1ff", weight: "700", size: "14pt" });
+          else if (level === 3) row([text], { type: "heading", bg: "#f4f6fb", weight: "700", size: "12pt" });
+          else row([text], { type: "heading", bg: "#ffffff", weight: "700", size: "11pt" });
+          continue;
+        }
+
+        const unordered = line.match(/^\s*[-*]\s+(.+)$/);
+        if (unordered) {
+          flushParagraph();
+          row(["• " + unordered[1]], { type: "heading", bg: "#ffffff", weight: "400", size: "11pt" });
+          continue;
+        }
+
+        const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+        if (ordered) {
+          flushParagraph();
+          row([stripMarkdown(line)], { type: "heading", bg: "#ffffff", weight: "400", size: "11pt" });
+          continue;
+        }
+
+        paragraph.push(line);
+      }
+
+      flushParagraph();
+      html += `</table>`;
+      return html;
+    }
+
+    function getMaxTableCols(lines) {
+      let max = 1;
+      lines.forEach(line => {
+        if (isTableRow(line)) max = Math.max(max, splitMarkdownTableRow(line).length);
+      });
+      return max;
+    }
+
+    function htmlToPlainTextTable(html) {
+      const temp = document.createElement("div");
+      temp.innerHTML = html;
+      const rows = Array.from(temp.querySelectorAll("tr"));
+      return rows.map(tr => Array.from(tr.children).map(td => td.innerText.trim()).join("\t")).join("\n");
+    }
+
+    function toTSV(rows) {
+      return rows.map(row => row.map(cell => {
+        return String(cell ?? "")
+          .replace(/\r?\n/g, " ")
+          .replace(/\t/g, " ")
+          .trim();
+      }).join("\t")).join("\n");
+    }
+
+    async function copyPlainText(text) {
+      const temp = document.createElement("textarea");
+      temp.value = text;
+      temp.style.position = "fixed";
+      temp.style.left = "-9999px";
+      temp.style.top = "0";
+      document.body.appendChild(temp);
+      temp.focus();
+      temp.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(temp);
+      return ok;
+    }
+
+    async function copyRichHtml(html) {
+      const plain = htmlToPlainTextTable(html);
+
+      if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
+        const item = new ClipboardItem({
+          "text/html": new Blob([html], { type: "text/html" }),
+          "text/plain": new Blob([plain], { type: "text/plain" })
+        });
+        await navigator.clipboard.write([item]);
+        return true;
+      }
+
+      const container = document.createElement("div");
+      container.innerHTML = html;
+      container.contentEditable = "true";
+      container.style.position = "fixed";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      document.body.appendChild(container);
+
+      const range = document.createRange();
+      range.selectNodeContents(container);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      const ok = document.execCommand("copy");
+      selection.removeAllRanges();
+      document.body.removeChild(container);
+      return ok;
+    }
+
+    function render() {
+      preview.innerHTML = markdownToHtml(editor.value);
+      localStorage.setItem("mdRichSheetDraft", editor.value);
+    }
+
+    editor.addEventListener("input", render);
+
+    document.getElementById("fileInput").addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        editor.value = reader.result;
+        render();
+        statusEl.textContent = `已開啟：${file.name}`;
+      };
+      reader.readAsText(file, "utf-8");
+    });
+
+    document.getElementById("saveMd").addEventListener("click", () => {
+      const blob = new Blob([editor.value], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "edited.md";
+      a.click();
+      URL.revokeObjectURL(url);
+      statusEl.textContent = "已下載 edited.md";
+    });
+
+    document.getElementById("copyHtml").addEventListener("click", async () => {
+      try {
+        await copyPlainText(preview.innerHTML.trim());
+        statusEl.textContent = "已複製 HTML。";
+      } catch (error) {
+        statusEl.textContent = "瀏覽器不允許自動複製。";
+      }
+    });
+
+    document.getElementById("copyPlainTables").addEventListener("click", async () => {
+      const rows = markdownTablesToRows(editor.value);
+      if (!rows.length) {
+        statusEl.textContent = "沒有偵測到 Markdown 表格。";
+        return;
+      }
+      await copyPlainText(toTSV(rows));
+      statusEl.textContent = `已複製純表格資料，貼到 Google Sheets A1。`;
+    });
+
+    document.getElementById("copyRichSheets").addEventListener("click", async () => {
+      const richHtml = markdownToRichSheetHtml(editor.value);
+      try {
+        await copyRichHtml(richHtml);
+        statusEl.textContent = "已複製格式化內容，貼到 Google Sheets A1。";
+      } catch (error) {
+        await copyPlainText(htmlToPlainTextTable(richHtml));
+        statusEl.textContent = "格式化複製失敗，已改複製純文字表格。";
+      }
+    });
+
+    document.getElementById("openSheetsRich").addEventListener("click", async () => {
+      const richHtml = markdownToRichSheetHtml(editor.value);
+      try {
+        await copyRichHtml(richHtml);
+        window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
+        statusEl.textContent = "已開新 Google Sheet；到 A1 按 Ctrl+V。";
+      } catch (error) {
+        await copyPlainText(htmlToPlainTextTable(richHtml));
+        window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
+        statusEl.textContent = "格式化複製失敗，已改複製純文字表格；到 A1 貼上。";
+      }
+    });
+
+    document.getElementById("clearText").addEventListener("click", () => {
+      editor.value = "";
+      render();
+      statusEl.textContent = "已清空。";
+    });
+
+    const saved = localStorage.getItem("mdRichSheetDraft");
+    editor.value = saved || `# 內部連結審計報告 — 2026-05-05
+
+## 概覽
+
+| 項目 | 數值 |
+|---|---|
+| 總頁數 | 87（草稿 0） |
+| 內部連結數 | 159 |
+| 孤兒頁 | 39 |
+
+## 1. 孤兒頁（無人連入）
+
+| slug | title | draft | GSC clicks | GSC impressions |
+|---|---|---|---|---|
+| 3c-loan | **3C借款懶人包：筆電、平板、手機借款行情＋管道＋利率一次看清楚** | — | — | — |
+| about-us-loannow | 關於現貸人 | — | — | — |
+
+### 備註
+
+- 這裡會保留成清單列。
+- **粗體**會盡量保留。
+`;
+    render();
+  </script>
+</body>
+</html>

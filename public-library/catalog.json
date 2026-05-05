@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "updated": "2026-05-05",
+  "categories": ["文學", "哲學", "歷史", "科學", "童話"],
+  "books": [
+    {
+      "id": "sample-01",
+      "title": "範例書籍",
+      "author": "公版作者",
+      "category": "文學",
+      "pages": 42,
+      "description": "這是一本範例書籍，用於測試公共書庫功能。",
+      "driveFileId": "",
+      "coverUrl": "",
+      "addedDate": "2026-05-05"
+    }
+  ]
+}

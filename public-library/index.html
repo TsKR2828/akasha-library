@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公共書庫 — 阿卡夏圖書館</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1E2430;
+  --navy-light: #2A3240;
+  --navy-hover: #343E4E;
+  --gold: #C9A86A;
+  --gold-dim: #A08550;
+  --gold-glow: rgba(201,168,106,0.15);
+  --cream: #F4F0E6;
+  --text-primary: #F4F0E6;
+  --text-secondary: #9BA3B0;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Noto Serif TC', serif;
+  background: var(--navy);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.header {
+  text-align: center;
+  padding: 32px 0;
+}
+
+.header-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  color: var(--gold);
+  letter-spacing: 3px;
+}
+
+.header-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 7px 16px;
+  border: 1px solid var(--navy-light);
+  border-radius: 20px;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-btn:hover {
+  border-color: var(--gold-dim);
+  color: var(--text-primary);
+}
+
+.filter-btn--active {
+  border-color: var(--gold);
+  background: var(--gold-glow);
+  color: var(--gold);
+}
+
+/* Search */
+.search-bar {
+  max-width: 400px;
+  margin: 0 auto 28px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 16px 10px 38px;
+  background: var(--navy-light);
+  border: 1px solid var(--navy-hover);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--gold-dim);
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Book grid */
+.book-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.book-card {
+  background: var(--navy-light);
+  border: 1px solid var(--navy-hover);
+  border-radius: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.book-card:hover {
+  border-color: var(--gold-dim);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+}
+
+.book-card__cover {
+  width: 100%;
+  height: 140px;
+  background: var(--navy);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  font-size: 32px;
+  color: var(--gold-dim);
+  border: 1px solid var(--navy-hover);
+}
+
+.book-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.book-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.book-card__author {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.book-card__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.book-card__pages {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.book-card__category {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--gold-glow);
+  color: var(--gold);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state__icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state__text {
+  font-size: 14px;
+  line-height: 1.8;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-brand">AKASHA PUBLIC LIBRARY</div>
+  <div class="header-sub">公共書庫 — 同樂會 · 免登入即可閱讀</div>
+</div>
+
+<div class="search-bar">
+  <span class="search-icon">&#128269;</span>
+  <input class="search-input" id="searchInput" type="text" placeholder="搜尋書名或作者...">
+</div>
+
+<div class="filters" id="filters"></div>
+
+<div class="book-grid" id="bookGrid">
+  <div class="empty-state">
+    <div class="empty-state__icon">&#128218;</div>
+    <div class="empty-state__text">載入書目中...</div>
+  </div>
+</div>
+
+<script>
+let catalog = null;
+let activeFilter = 'all';
+
+async function loadCatalog() {
+  try {
+    const res = await fetch('./catalog.json');
+    catalog = await res.json();
+    renderFilters();
+    renderBooks();
+  } catch (e) {
+    document.getElementById('bookGrid').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#128683;</div>
+        <div class="empty-state__text">無法載入書目</div>
+      </div>`;
+  }
+}
+
+function renderFilters() {
+  const container = document.getElementById('filters');
+  const categories = ['all', ...catalog.categories];
+  container.innerHTML = categories.map(cat => {
+    const label = cat === 'all' ? '全部' : cat;
+    const active = cat === activeFilter ? ' filter-btn--active' : '';
+    return `<button class="filter-btn${active}" onclick="setFilter('${cat}')">${label}</button>`;
+  }).join('');
+}
+
+function setFilter(cat) {
+  activeFilter = cat;
+  renderFilters();
+  renderBooks();
+}
+
+function renderBooks() {
+  const grid = document.getElementById('bookGrid');
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  let books = catalog.books;
+
+  if (activeFilter !== 'all') {
+    books = books.filter(b => b.category === activeFilter);
+  }
+
+  if (search) {
+    books = books.filter(b =>
+      b.title.toLowerCase().includes(search) ||
+      b.author.toLowerCase().includes(search)
+    );
+  }
+
+  if (books.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state__icon">&#128218;</div>
+        <div class="empty-state__text">沒有符合條件的書籍</div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = books.map(book => {
+    const cover = book.coverUrl
+      ? `<img src="${book.coverUrl}" alt="${book.title}">`
+      : '&#128214;';
+    const progressBadge = getProgressBadge(book.id, book.pages);
+    return `<div class="book-card" onclick="openBook('${book.id}')">
+      <div class="book-card__cover">${cover}</div>
+      <div class="book-card__title">${book.title}</div>
+      <div class="book-card__author">${book.author}</div>
+      <div class="book-card__meta">
+        <span class="book-card__pages">${book.pages} 頁${progressBadge}</span>
+        <span class="book-card__category">${book.category}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openBook(bookId) {
+  const book = catalog.books.find(b => b.id === bookId);
+  if (!book || !book.driveFileId) {
+    alert('此書籍尚未上傳 PDF。');
+    return;
+  }
+  // Open PDF reader with the public Drive link
+  const driveUrl = `https://drive.google.com/uc?export=download&id=${book.driveFileId}`;
+  // Post message to parent (if in iframe) or navigate
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: 'akasha-open-public-pdf', url: driveUrl, book }, '*');
+  } else {
+    window.location.href = `../modules/pdf-reader/index.html?url=${encodeURIComponent(driveUrl)}`;
+  }
+}
+
+// === Reading Progress (localStorage, no login needed) ===
+function getProgress(bookId) {
+  try {
+    const data = JSON.parse(localStorage.getItem('akasha-reading-progress') || '{}');
+    return data[bookId] || null;
+  } catch { return null; }
+}
+
+function saveProgress(bookId, page) {
+  try {
+    const data = JSON.parse(localStorage.getItem('akasha-reading-progress') || '{}');
+    data[bookId] = { page, lastRead: Date.now() };
+    localStorage.setItem('akasha-reading-progress', JSON.stringify(data));
+  } catch {}
+}
+
+function getProgressBadge(bookId, totalPages) {
+  const progress = getProgress(bookId);
+  if (!progress) return '';
+  const percent = Math.round((progress.page / totalPages) * 100);
+  return `<span class="book-card__progress" style="font-size:10px;color:var(--gold);margin-left:8px;">&#9654; 第 ${progress.page} 頁 (${percent}%)</span>`;
+}
+
+document.getElementById('searchInput').addEventListener('input', renderBooks);
+
+// Listen for reading progress from PDF reader
+window.addEventListener('message', (event) => {
+  if (event.data?.type === 'akasha-reading-progress') {
+    saveProgress(event.data.bookId, event.data.page);
+    renderBooks();
+  }
+});
+
+loadCatalog();
+</script>
+</body>
+</html>
