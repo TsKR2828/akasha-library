@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>隱私權政策 — 阿卡夏圖書館</title>
+<style>
+:root {
+  --navy: #1E2430;
+  --navy-light: #2A3240;
+  --gold: #C9A86A;
+  --cream: #F4F0E6;
+  --text-secondary: #9BA3B0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Serif TC', system-ui, sans-serif;
+  background: var(--navy);
+  color: var(--cream);
+  padding: 40px 24px;
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.8;
+}
+h1 { color: var(--gold); font-size: 22px; margin-bottom: 8px; }
+h2 { color: var(--gold); font-size: 16px; margin-top: 28px; margin-bottom: 8px; }
+p, li { font-size: 14px; margin-bottom: 10px; }
+ul { padding-left: 20px; }
+.meta { color: var(--text-secondary); font-size: 12px; margin-bottom: 24px; }
+a { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<h1>隱私權政策</h1>
+<p class="meta">最後更新：2026-05-05</p>
+
+<p>阿卡夏圖書館（以下簡稱「本應用」）尊重您的隱私。本政策說明我們如何處理您的資料。</p>
+
+<h2>1. 資料蒐集範圍</h2>
+<p>本應用使用 Google OAuth 2.0 登入，僅請求 <code>drive.file</code> 權限範圍，這表示：</p>
+<ul>
+  <li>本應用只能存取由本應用自己建立的檔案</li>
+  <li>本應用無法讀取您 Google Drive 中的其他檔案（照片、文件、影片等）</li>
+  <li>本應用不會蒐集您的密碼</li>
+</ul>
+
+<h2>2. 我們存取的資料</h2>
+<ul>
+  <li><strong>Google 帳號基本資訊：</strong>顯示名稱、電子郵件、大頭貼（僅用於應用內顯示）</li>
+  <li><strong>應用檔案：</strong>您在本應用中建立的 Markdown、PDF、試算表等檔案，同步至您自己的 Google Drive</li>
+</ul>
+
+<h2>3. 資料儲存位置</h2>
+<ul>
+  <li><strong>本地端：</strong>使用瀏覽器 IndexedDB 儲存，資料不會離開您的裝置</li>
+  <li><strong>雲端：</strong>同步至您個人的 Google Drive 帳號（在「Akasha Library」資料夾中）</li>
+  <li><strong>本應用不設伺服器：</strong>我們沒有自己的後端伺服器儲存您的資料</li>
+</ul>
+
+<h2>4. 第三方服務</h2>
+<ul>
+  <li><strong>Google Drive API：</strong>用於檔案同步，受 <a href="https://policies.google.com/privacy" target="_blank">Google 隱私權政策</a>規範</li>
+  <li><strong>AI 功能（選用）：</strong>若您使用 AI 圖書館員功能，對話內容會傳送至 AI 服務提供商處理。使用 BYOK 模式時，API Key 僅存放在您的瀏覽器本地端</li>
+</ul>
+
+<h2>5. Cookie 與追蹤</h2>
+<p>本應用不使用追蹤型 Cookie、不嵌入廣告、不使用分析工具。僅使用 localStorage 儲存應用設定與閱讀進度。</p>
+
+<h2>6. 資料刪除</h2>
+<p>您可以隨時：</p>
+<ul>
+  <li>在應用內刪除所有本地資料</li>
+  <li>在 Google Drive 中刪除「Akasha Library」資料夾</li>
+  <li>在 <a href="https://myaccount.google.com/permissions" target="_blank">Google 帳號設定</a>中撤銷本應用的存取權</li>
+</ul>
+
+<h2>7. 公共書庫</h2>
+<p>公共書庫（同樂會）功能不需要登入。閱讀進度僅儲存在您的瀏覽器 localStorage 中，不會傳送至任何伺服器。</p>
+
+<h2>8. 聯絡方式</h2>
+<p>如有隱私相關問題，請聯繫：dr1090a@gmail.com</p>
+
+</body>
+</html>
