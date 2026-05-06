@@ -941,7 +941,7 @@ body { display: flex; }
   </div>
 
   <!-- Module iframe container -->
-  <iframe class="module-frame" id="module-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms"></iframe>
+  <iframe class="module-frame" id="module-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-clipboard-write"></iframe>
 </main>
 
 <script type="module">
@@ -949,6 +949,7 @@ import { getFileEntries, saveFileEntry } from './core/storage.js';
 import { initAuth, signIn, signOut, isSignedIn, getUser } from './core/auth.js';
 import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
+import { MSG_TYPES, STORAGE_KEY } from './core/export/bridge.js';
 
 const modules = {
   'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
@@ -1228,11 +1229,15 @@ async function renderRecent() {
 
 renderRecent();
 
-// Listen for messages from module iframes (file opened notifications)
+// Listen for messages from module iframes
 window.addEventListener('message', async (event) => {
   if (event.data?.type === 'akasha-file-opened') {
     await saveFileEntry(event.data.entry);
     renderRecent();
+  }
+  if (event.data?.type === MSG_TYPES.READER_EXPORT_TO_SPREADSHEET) {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
+    openModule('spreadsheet');
   }
 });
 

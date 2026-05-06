@@ -539,6 +539,9 @@
       <button class="btn--sheets btn" id="openSheetsRich">開新 Sheet 並貼上</button>
     </div>
 
+    <span class="separator"></span>
+    <button class="btn--gold btn" id="exportToSpreadsheet">送到內建試算表</button>
+
     <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼...">
     <button class="btn" id="searchBtn">搜尋</button>
     <span id="status">拖曳 .py / .json / .score.json / .md / .txt 到視窗</span>
@@ -1450,6 +1453,27 @@
         copyPlain(htmlToPlainTextTable(richHtml));
         window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
         statusEl.textContent = "已改複製純文字；到 A1 貼上";
+      }
+    });
+
+    // --- Export to built-in Spreadsheet ---
+    document.getElementById("exportToSpreadsheet").addEventListener("click", async () => {
+      if (!state.content) {
+        statusEl.textContent = "尚未載入檔案";
+        return;
+      }
+      try {
+        const { contentToPayload } = await import("../../core/export/toPayload.js");
+        const { MSG_TYPES } = await import("../../core/export/bridge.js");
+        const payload = contentToPayload(state.content, state.mode, state.filename, state.parsedJson);
+        window.parent.postMessage({
+          type: MSG_TYPES.READER_EXPORT_TO_SPREADSHEET,
+          payload,
+        }, "*");
+        statusEl.textContent = "已送出至內建試算表";
+      } catch (e) {
+        console.error("Export failed:", e);
+        statusEl.textContent = "匯出失敗：" + e.message;
       }
     });
 

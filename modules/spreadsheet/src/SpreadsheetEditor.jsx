@@ -1,5 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
+import { STORAGE_KEY } from "../../../core/export/bridge.js";
+import { payloadToCells } from "../../../core/export/fromPayload.js";
 
 const ROWS = 50;
 const COLS = 26;
@@ -328,6 +330,24 @@ export default function SpreadsheetEditor() {
     const id = cellId(selection.r, selection.c);
     if (!editing) setFormulaBarValue(cells[id] || "");
   }, [selection, cells, editing]);
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(STORAGE_KEY);
+    try {
+      const payload = JSON.parse(raw);
+      const imported = payloadToCells(payload);
+      setSheets((prev) => [
+        ...prev,
+        { name: imported.name, cells: imported.cells, styles: imported.styles, colWidths: {} },
+      ]);
+      setActiveSheet((prev) => prev + 1);
+      showNotif(`已匯入：${imported.name}`);
+    } catch (e) {
+      console.error("Import payload failed:", e);
+    }
+  }, []);
 
   const getCellStyle = (id) => styles[id] || defaultCellStyle();
   const updateCellStyle = (prop, value) => {
