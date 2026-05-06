@@ -35,8 +35,12 @@
 | 9 | 沒有 test script | `npm test` = build + 關鍵檔案存在檢查 |
 | 10 | postMessage 沒驗證 origin | 四個檔案加 `event.origin` 守衛 |
 
-### 待修：#11–14
-- #11 `core/drive.js` API 呼叫沒檢查 `res.ok`
-- #12 `ai-settings` BYOK 明文存 localStorage + 直打第三方 API
-- #13 最近檔案點擊不還原內容
-- #14 `offlineQueue` 純記憶體，reload 即消失
+### 風險/路徑修復 #11–14（`bd6b26e`）
+| # | 問題 | 修法 |
+|---|------|------|
+| 11 | Drive API 沒檢查 `res.ok` | `driveJson()`/`driveBlob()` helper，非 2xx 拋出含 Google error message 的錯誤 |
+| 12 | BYOK 明文存 localStorage | API key 改存 sessionStorage（關分頁即清除），非敏感設定留 localStorage |
+| 13 | 最近檔案點擊不還原內容 | `openRecentFile()` 讀 IndexedDB blob → postMessage 傳入對應模組 |
+| 14 | offlineQueue 純記憶體 | 佇列存入 IndexedDB settings store，`initOfflineSync()` 啟動時還原 |
+
+**健檢報告 14/14 項全部修復完畢。**
