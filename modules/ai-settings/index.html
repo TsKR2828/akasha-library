@@ -280,7 +280,7 @@ h1 {
   <div class="field">
     <label>API Key</label>
     <input type="password" id="byokKey" placeholder="sk-... 或 您的 API Key">
-    <div class="hint">金鑰僅儲存在您的瀏覽器本地端（localStorage），不會傳送至任何伺服器</div>
+    <div class="hint">&#9888; 金鑰僅在本次瀏覽階段有效（sessionStorage），關閉分頁後自動清除。測試連線會從瀏覽器直接呼叫第三方 API。</div>
   </div>
 
   <div class="field" id="fieldCustomEndpoint" style="display:none;">
@@ -360,6 +360,7 @@ h1 {
 
 <script>
 const STORAGE_KEY = 'akasha-ai-settings';
+const KEY_SESSION = 'akasha-ai-apikey';
 const COIN_KEY = 'akasha-coin-balance';
 const USAGE_KEY = 'akasha-coin-usage';
 
@@ -373,7 +374,8 @@ function loadSettings() {
       setMode(saved.mode);
     }
     if (saved.provider) document.getElementById('byokProvider').value = saved.provider;
-    if (saved.apiKey) document.getElementById('byokKey').value = saved.apiKey;
+    const sessionKey = sessionStorage.getItem(KEY_SESSION) || saved.apiKey || '';
+    if (sessionKey) document.getElementById('byokKey').value = sessionKey;
     if (saved.endpoint) document.getElementById('byokEndpoint').value = saved.endpoint;
     if (saved.model) document.getElementById('byokModel').value = saved.model;
     onProviderChange();
@@ -414,14 +416,16 @@ function onProviderChange() {
 }
 
 function saveByok() {
+  const apiKey = document.getElementById('byokKey').value.trim();
   const settings = {
     mode: currentMode,
     provider: document.getElementById('byokProvider').value,
-    apiKey: document.getElementById('byokKey').value.trim(),
     endpoint: document.getElementById('byokEndpoint').value.trim(),
     model: document.getElementById('byokModel').value,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  if (apiKey) sessionStorage.setItem(KEY_SESSION, apiKey);
+  else sessionStorage.removeItem(KEY_SESSION);
   updateByokStatus();
   showToast('設定已儲存');
 }
@@ -430,6 +434,7 @@ function clearByok() {
   if (!confirm('確定要清除 API Key 嗎？')) return;
   document.getElementById('byokKey').value = '';
   document.getElementById('byokEndpoint').value = '';
+  sessionStorage.removeItem(KEY_SESSION);
   const settings = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   delete settings.apiKey;
   delete settings.endpoint;
@@ -575,7 +580,11 @@ function showToast(msg) {
 
 // Export for parent frame communication
 window.akashaAI = {
-  getSettings: () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'),
+  getSettings: () => {
+    const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    s.apiKey = sessionStorage.getItem(KEY_SESSION) || '';
+    return s;
+  },
   getBalance: () => getCoinData().balance,
   deductCoins,
 };

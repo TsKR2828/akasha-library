@@ -13,6 +13,20 @@ const FOLDER_NAME = 'Akasha Library';
 
 let appFolderId = null;
 
+async function driveJson(res) {
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = data?.error?.message || `Drive API ${res.status}`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+async function driveBlob(res) {
+  if (!res.ok) throw new Error(`Drive API ${res.status}`);
+  return await res.blob();
+}
+
 /**
  * Get or create the app's root folder on Drive
  */
@@ -22,19 +36,17 @@ export async function getAppFolder() {
   const token = getToken();
   if (!token) throw new Error('Not authenticated');
 
-  // Search for existing folder
   const query = `name='${FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
   const res = await fetch(`${API_BASE}/files?q=${encodeURIComponent(query)}&fields=files(id,name)`, {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-  const data = await res.json();
+  const data = await driveJson(res);
   if (data.files && data.files.length > 0) {
     appFolderId = data.files[0].id;
     return appFolderId;
   }
 
-  // Create folder
   const createRes = await fetch(`${API_BASE}/files`, {
     method: 'POST',
     headers: {
@@ -47,7 +59,7 @@ export async function getAppFolder() {
     })
   });
 
-  const folder = await createRes.json();
+  const folder = await driveJson(createRes);
   appFolderId = folder.id;
   return appFolderId;
 }
@@ -67,7 +79,7 @@ export async function listFiles() {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-  const data = await res.json();
+  const data = await driveJson(res);
   return data.files || [];
 }
 
@@ -111,7 +123,7 @@ export async function uploadFile(name, content, mimeType, existingId = null) {
     body: form
   });
 
-  return await res.json();
+  return await driveJson(res);
 }
 
 /**
@@ -127,7 +139,7 @@ export async function downloadFile(fileId) {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-  return await res.blob();
+  return await driveBlob(res);
 }
 
 /**
@@ -138,10 +150,14 @@ export async function deleteFile(fileId) {
   const token = getToken();
   if (!token) throw new Error('Not authenticated');
 
-  await fetch(`${API_BASE}/files/${fileId}`, {
+  const res = await fetch(`${API_BASE}/files/${fileId}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${token}` }
   });
+
+  if (!res.ok && res.status !== 204) {
+    throw new Error(`Drive API delete failed: ${res.status}`);
+  }
 }
 
 /**
@@ -156,5 +172,5 @@ export async function getFileMeta(fileId) {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-  return await res.json();
+  return await driveJson(res);
 }

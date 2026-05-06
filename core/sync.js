@@ -10,14 +10,24 @@
  * 3. Conflicts → newer wins (by timestamp)
  */
 
-import { getFileEntries, saveFileEntry, getFileBlob, saveFileBlob, exportIndex, importIndex } from './storage.js';
+import { getFileEntries, saveFileEntry, getFileBlob, saveFileBlob, exportIndex, importIndex, getSetting, setSetting } from './storage.js';
 import { uploadFile, downloadFile, listFiles } from './drive.js';
 import { isSignedIn } from './auth.js';
 
 const INDEX_FILENAME = 'akasha-index.json';
+const QUEUE_KEY = 'offlineQueue';
 let syncInProgress = false;
 let onSyncStatusChange = null;
 let offlineQueue = [];
+
+async function loadQueue() {
+  const saved = await getSetting(QUEUE_KEY, []);
+  offlineQueue = Array.isArray(saved) ? saved : [];
+}
+
+async function persistQueue() {
+  await setSetting(QUEUE_KEY, offlineQueue);
+}
 
 /**
  * Set callback for sync status updates
@@ -135,9 +145,10 @@ export async function syncFile(fileId) {
 /**
  * Queue a file for sync when offline, auto-sync when back online
  */
-export function queueForSync(fileId) {
+export async function queueForSync(fileId) {
   if (!offlineQueue.includes(fileId)) {
     offlineQueue.push(fileId);
+    await persistQueue();
   }
 
   if (navigator.onLine && isSignedIn()) {
@@ -151,6 +162,7 @@ async function flushOfflineQueue() {
   emitStatus('syncing', `同步 ${offlineQueue.length} 個待處理檔案...`);
   const queue = [...offlineQueue];
   offlineQueue = [];
+  await persistQueue();
 
   for (const fileId of queue) {
     await syncFile(fileId);
@@ -162,7 +174,8 @@ async function flushOfflineQueue() {
 /**
  * Initialize offline/online listeners
  */
-export function initOfflineSync() {
+export async function initOfflineSync() {
+  await loadQueue();
   window.addEventListener('online', () => {
     emitStatus('syncing', '網路恢復，開始同步...');
     if (isSignedIn()) {

@@ -945,7 +945,7 @@ body { display: flex; }
 </main>
 
 <script type="module">
-import { getFileEntries, saveFileEntry } from './core/storage.js';
+import { getFileEntries, saveFileEntry, getFileBlob } from './core/storage.js';
 import { initAuth, signIn, signOut, isSignedIn, getUser } from './core/auth.js';
 import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
@@ -1193,11 +1193,50 @@ const savedMode = localStorage.getItem('akasha-mode') || 'dark';
 document.documentElement.setAttribute('data-mode', savedMode);
 updateModeIcon(savedMode);
 
+async function openRecentFile(fileId, moduleName) {
+  const frame = document.getElementById('module-frame');
+  const blob = await getFileBlob(fileId);
+  const entries = await getFileEntries();
+  const entry = entries.find(e => e.id === fileId);
+  const filename = entry?.name || 'file';
+
+  openModule(moduleName);
+
+  if (!blob) return;
+
+  frame.addEventListener('load', async () => {
+    if (moduleName === 'markdown') {
+      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
+      frame.contentWindow.postMessage({
+        type: 'akasha-open-file',
+        filename,
+        content: text,
+        size: text.length,
+      }, '*');
+    } else if (moduleName === 'pdf-reader') {
+      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+      frame.contentWindow.postMessage({
+        type: 'akasha-open-pdf',
+        filename,
+        data: buffer,
+      }, '*');
+    } else if (moduleName === 'spreadsheet') {
+      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+      frame.contentWindow.postMessage({
+        type: 'akasha-open-spreadsheet',
+        filename,
+        data: buffer,
+      }, '*');
+    }
+  }, { once: true });
+}
+
 // Expose functions to global scope for onclick handlers
 window.handleAuth = handleAuth;
 window.importFile = importFile;
 window.newFile = newFile;
 window.openModule = openModule;
+window.openRecentFile = openRecentFile;
 window.switchView = switchView;
 window.toggleMode = toggleMode;
 
@@ -1237,7 +1276,7 @@ async function renderRecent() {
     const sizeStr = f.size ? `${(f.size / 1024).toFixed(1)} KB` : '—';
     const pageStr = f.pages ? `${f.pages} 頁` : '—';
 
-    return `<div class="ledger-row" onclick="openModule('${mod}')">
+    return `<div class="ledger-row" onclick="openRecentFile('${f.id}','${mod}')">
       <div class="ledger-num">${String(i + 1).padStart(2, '0')}</div>
       <div class="ledger-title">
         <span class="ledger-title-icon">${icon}</span>
