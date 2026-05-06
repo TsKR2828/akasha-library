@@ -377,7 +377,7 @@ function useTypewriter(text, speed = 28) {
 
 const DIALOGUE_SCRIPT = [
   {
-    speaker: "圖書館員 · 蘇菲亞",
+    speaker: "圖書館員 · 月上零韻",
     en: "Sophia",
     emotion: "calm",
     text: "我注意到你停在第 142 頁很久了。蒙田論及伯西亞之王的悲痛——這一段，需要我為你說明背景嗎？",
@@ -388,7 +388,7 @@ const DIALOGUE_SCRIPT = [
     ],
   },
   {
-    speaker: "圖書館員 · 蘇菲亞",
+    speaker: "圖書館員 · 月上零韻",
     en: "Sophia",
     emotion: "thinking",
     text: "這個故事原出自希羅多德《歷史》卷三第十四節。蒙田在此引用，並非為了悲痛本身，而是為了揭示一件更深的事——",
@@ -447,8 +447,8 @@ function AiLibrarian({ onClose, currentPage, chapter }) {
         <div style={aiStyles.charSil}><CharacterSilhouette emotion={current.emotion} /></div>
 
         <div style={aiStyles.nameplate}>
-          <div style={aiStyles.nameplateName}>蘇菲亞</div>
-          <div style={aiStyles.nameplateRole}>Sophia · Librarian</div>
+          <div style={aiStyles.nameplateName}>月上零韻</div>
+          <div style={aiStyles.nameplateRole}>Tsukiue Rein · Librarian</div>
         </div>
         <div style={aiStyles.emotion}>{current.emotion === "calm" ? "Serena" : "Cogitans"}</div>
 
