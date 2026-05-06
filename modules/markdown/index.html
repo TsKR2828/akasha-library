@@ -1512,6 +1512,7 @@
 
     // --- PostMessage API for parent shell ---
     window.addEventListener("message", (event) => {
+      if (event.origin !== location.origin) return;
       if (event.data?.type === "akasha-open-file") {
         setFile(event.data.filename || "file.md", event.data.content, event.data.size);
       }
@@ -1524,6 +1525,7 @@
     }
     syncMode();
     window.addEventListener("message", (e) => {
+      if (e.origin !== location.origin) return;
       if (e.data?.type === "akasha-mode-change") {
         document.documentElement.setAttribute("data-mode", e.data.mode);
       }

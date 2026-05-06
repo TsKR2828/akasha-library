@@ -8,9 +8,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="阿卡夏">
 <meta name="description" content="輕量 PDF 閱讀器 · 內建切割工具">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="apple-touch-icon" href="../../icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../../icons/icon-192x192.png">
 <title>阿卡夏圖書館 — PDF 閱讀器</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -1256,6 +1256,7 @@
 
   // ===== PostMessage API for parent shell =====
   window.addEventListener('message', (event) => {
+    if (event.origin !== location.origin) return;
     if (event.data?.type === 'akasha-open-pdf' && event.data.data) {
       const blob = new Blob([event.data.data], { type: 'application/pdf' });
       const file = new File([blob], event.data.filename || 'document.pdf', { type: 'application/pdf' });

@@ -351,6 +351,7 @@ export default function SpreadsheetEditor() {
 
   useEffect(() => {
     const handler = (event) => {
+      if (event.origin !== location.origin) return;
       if (event.data?.type !== "akasha-open-spreadsheet" || !event.data.data) return;
       try {
         const data = new Uint8Array(event.data.data);
@@ -456,6 +457,18 @@ export default function SpreadsheetEditor() {
     setContextMenu({ x: e.clientX, y: e.clientY, r, c });
   };
 
+  const shiftRefs = (val, rowDelta, colDelta, fromRow, fromCol) => {
+    if (typeof val !== "string" || !val.startsWith("=")) return val;
+    return val.replace(/([A-Z])(\d+)/g, (match, col, row) => {
+      let c = col.charCodeAt(0) - 65;
+      let r = parseInt(row) - 1;
+      if (rowDelta !== 0 && r >= fromRow) r += rowDelta;
+      if (colDelta !== 0 && c >= fromCol) c += colDelta;
+      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return "#REF!";
+      return colLabel(c) + (r + 1);
+    });
+  };
+
   const insertRow = (at) => {
     const wouldOverflow = Object.keys(cells).some((id) => {
       const ref = parseCellRef(id);
@@ -468,7 +481,7 @@ export default function SpreadsheetEditor() {
       const ref = parseCellRef(id);
       if (ref) {
         const newR = ref.r >= at ? Math.min(ref.r + 1, ROWS - 1) : ref.r;
-        newCells[cellId(newR, ref.c)] = val;
+        newCells[cellId(newR, ref.c)] = shiftRefs(val, 1, 0, at, 0);
         if (styles[id]) newStyles[cellId(newR, ref.c)] = styles[id];
       }
     });
@@ -489,7 +502,7 @@ export default function SpreadsheetEditor() {
       const ref = parseCellRef(id);
       if (ref) {
         const newC = ref.c >= at ? Math.min(ref.c + 1, COLS - 1) : ref.c;
-        newCells[cellId(ref.r, newC)] = val;
+        newCells[cellId(ref.r, newC)] = shiftRefs(val, 0, 1, 0, at);
         if (styles[id]) newStyles[cellId(ref.r, newC)] = styles[id];
       }
     });
@@ -505,7 +518,7 @@ export default function SpreadsheetEditor() {
       const ref = parseCellRef(id);
       if (ref && ref.r !== at) {
         const newR = ref.r > at ? ref.r - 1 : ref.r;
-        newCells[cellId(newR, ref.c)] = val;
+        newCells[cellId(newR, ref.c)] = shiftRefs(val, -1, 0, at, 0);
         if (styles[id]) newStyles[cellId(newR, ref.c)] = styles[id];
       }
     });
@@ -521,7 +534,7 @@ export default function SpreadsheetEditor() {
       const ref = parseCellRef(id);
       if (ref && ref.c !== at) {
         const newC = ref.c > at ? ref.c - 1 : ref.c;
-        newCells[cellId(ref.r, newC)] = val;
+        newCells[cellId(ref.r, newC)] = shiftRefs(val, 0, -1, 0, at);
         if (styles[id]) newStyles[cellId(ref.r, newC)] = styles[id];
       }
     });

@@ -1263,6 +1263,7 @@ renderRecent();
 
 // Listen for messages from module iframes
 window.addEventListener('message', async (event) => {
+  if (event.origin !== location.origin) return;
   if (event.data?.type === 'akasha-file-opened') {
     await saveFileEntry(event.data.entry);
     renderRecent();
