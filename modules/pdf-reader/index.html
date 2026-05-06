@@ -1254,6 +1254,32 @@
     }
   });
 
+  // ===== PostMessage API for parent shell =====
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'akasha-open-pdf' && event.data.data) {
+      const blob = new Blob([event.data.data], { type: 'application/pdf' });
+      const file = new File([blob], event.data.filename || 'document.pdf', { type: 'application/pdf' });
+      loadFile(file);
+    }
+    if (event.data?.type === 'akasha-open-pdf-url' && event.data.url) {
+      loadFromUrl(event.data.url, event.data.bookTitle || 'PDF');
+    }
+  });
+
+  async function loadFromUrl(url, title) {
+    showLoading('正在從網路載入…');
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const file = new File([blob], title + '.pdf', { type: 'application/pdf' });
+      loadFile(file);
+    } catch (err) {
+      hideLoading();
+      showToast('載入失敗：' + err.message, 'error');
+    }
+  }
+
   // ===== Load PDF =====
   async function loadFile(file) {
     if (file.type !== 'application/pdf') {

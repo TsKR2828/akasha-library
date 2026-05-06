@@ -349,6 +349,69 @@ export default function SpreadsheetEditor() {
     }
   }, []);
 
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.data?.type !== "akasha-open-spreadsheet" || !event.data.data) return;
+      try {
+        const data = new Uint8Array(event.data.data);
+        const filename = event.data.filename || "import.xlsx";
+        const ext = filename.split(".").pop().toLowerCase();
+        if (ext === "xlsx" || ext === "xls") {
+          const wb = XLSX.read(data, { type: "array" });
+          const newSheets = wb.SheetNames.map((name) => {
+            const ws = wb.Sheets[name];
+            const newCells = {};
+            const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+            for (let r = range.s.r; r <= Math.min(range.e.r, ROWS - 1); r++) {
+              for (let c = range.s.c; c <= Math.min(range.e.c, COLS - 1); c++) {
+                const addr = XLSX.utils.encode_cell({ r, c });
+                const cell = ws[addr];
+                if (cell && cell.v !== undefined && cell.v !== null && cell.v !== "") {
+                  newCells[cellId(r, c)] = String(cell.v);
+                }
+              }
+            }
+            return { name, cells: newCells, styles: {}, colWidths: {} };
+          });
+          if (newSheets.length > 0) {
+            setSheets(newSheets);
+            setActiveSheet(0);
+            showNotif(`已匯入 ${filename}（${newSheets.length} 個工作表）`);
+          }
+        } else {
+          const text = new TextDecoder().decode(data);
+          const sep = text.includes("\t") ? "\t" : ",";
+          const lines = text.split("\n");
+          const newCells = {};
+          lines.forEach((line, r) => {
+            if (!line.trim() || r >= ROWS) return;
+            const vals = [];
+            let cur = "", inQuote = false;
+            for (let i = 0; i < line.length; i++) {
+              const ch = line[i];
+              if (ch === '"') inQuote = !inQuote;
+              else if (ch === sep && !inQuote) { vals.push(cur); cur = ""; }
+              else cur += ch;
+            }
+            vals.push(cur);
+            vals.forEach((v, c) => {
+              if (c < COLS && v.trim()) newCells[cellId(r, c)] = v.trim();
+            });
+          });
+          setSheets((prev) => prev.map((s, i) =>
+            i === activeSheet ? { ...s, cells: { ...s.cells, ...newCells } } : s
+          ));
+          showNotif(`已匯入 ${filename}`);
+        }
+      } catch (err) {
+        showNotif("匯入失敗：檔案格式錯誤");
+        console.error(err);
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [activeSheet]);
+
   const getCellStyle = (id) => styles[id] || defaultCellStyle();
   const updateCellStyle = (prop, value) => {
     const targets = [];
@@ -394,12 +457,17 @@ export default function SpreadsheetEditor() {
   };
 
   const insertRow = (at) => {
+    const wouldOverflow = Object.keys(cells).some((id) => {
+      const ref = parseCellRef(id);
+      return ref && ref.r === ROWS - 1 && cells[id] !== "";
+    });
+    if (wouldOverflow) { showNotif("最後一列有資料，無法插入"); setContextMenu(null); return; }
     const newCells = {};
     const newStyles = {};
     Object.entries(cells).forEach(([id, val]) => {
       const ref = parseCellRef(id);
       if (ref) {
-        const newR = ref.r >= at ? ref.r + 1 : ref.r;
+        const newR = ref.r >= at ? Math.min(ref.r + 1, ROWS - 1) : ref.r;
         newCells[cellId(newR, ref.c)] = val;
         if (styles[id]) newStyles[cellId(newR, ref.c)] = styles[id];
       }
@@ -410,12 +478,17 @@ export default function SpreadsheetEditor() {
   };
 
   const insertCol = (at) => {
+    const wouldOverflow = Object.keys(cells).some((id) => {
+      const ref = parseCellRef(id);
+      return ref && ref.c === COLS - 1 && cells[id] !== "";
+    });
+    if (wouldOverflow) { showNotif("最後一欄有資料，無法插入"); setContextMenu(null); return; }
     const newCells = {};
     const newStyles = {};
     Object.entries(cells).forEach(([id, val]) => {
       const ref = parseCellRef(id);
       if (ref) {
-        const newC = ref.c >= at ? ref.c + 1 : ref.c;
+        const newC = ref.c >= at ? Math.min(ref.c + 1, COLS - 1) : ref.c;
         newCells[cellId(ref.r, newC)] = val;
         if (styles[id]) newStyles[cellId(ref.r, newC)] = styles[id];
       }

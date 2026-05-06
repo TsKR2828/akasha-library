@@ -1115,15 +1115,47 @@ initOfflineSync();
 function importFile() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.md,.pdf,.xlsx,.book,.json,.py,.txt';
-  input.onchange = (e) => {
+  input.accept = '.md,.pdf,.xlsx,.book,.json,.py,.txt,.csv,.tsv';
+  input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const ext = file.name.split('.').pop().toLowerCase();
-    if (ext === 'md' || ext === 'markdown' || ext === 'txt' || ext === 'py' || ext === 'json') openModule('markdown');
-    else if (ext === 'pdf') openModule('pdf-reader');
-    else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') openModule('spreadsheet');
-    else if (ext === 'book') openModule('book-editor');
+    const frame = document.getElementById('module-frame');
+
+    if (['md', 'markdown', 'txt', 'py', 'json'].includes(ext)) {
+      const text = await file.text();
+      openModule('markdown');
+      frame.addEventListener('load', () => {
+        frame.contentWindow.postMessage({
+          type: 'akasha-open-file',
+          filename: file.name,
+          content: text,
+          size: file.size,
+        }, '*');
+      }, { once: true });
+    } else if (ext === 'pdf') {
+      const buffer = await file.arrayBuffer();
+      openModule('pdf-reader');
+      frame.addEventListener('load', () => {
+        frame.contentWindow.postMessage({
+          type: 'akasha-open-pdf',
+          filename: file.name,
+          data: buffer,
+        }, '*');
+      }, { once: true });
+    } else if (['xlsx', 'xls', 'csv', 'tsv'].includes(ext)) {
+      const buffer = await file.arrayBuffer();
+      openModule('spreadsheet');
+      frame.addEventListener('load', () => {
+        frame.contentWindow.postMessage({
+          type: 'akasha-open-spreadsheet',
+          filename: file.name,
+          data: buffer,
+        }, '*');
+      }, { once: true });
+    } else if (ext === 'book') {
+      openModule('book-editor');
+    }
   };
   input.click();
 }
@@ -1238,6 +1270,17 @@ window.addEventListener('message', async (event) => {
   if (event.data?.type === MSG_TYPES.READER_EXPORT_TO_SPREADSHEET) {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
     openModule('spreadsheet');
+  }
+  if (event.data?.type === 'akasha-open-public-pdf') {
+    const frame = document.getElementById('module-frame');
+    openModule('pdf-reader');
+    frame.addEventListener('load', () => {
+      frame.contentWindow.postMessage({
+        type: 'akasha-open-pdf-url',
+        url: event.data.url,
+        bookTitle: event.data.book?.title || 'PDF',
+      }, '*');
+    }, { once: true });
   }
 });
 

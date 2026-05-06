@@ -56,14 +56,16 @@ function generateId() {
 export async function saveFileEntry(entry) {
   const db = await openDB();
   const id = entry.id || generateId();
+  const now = Date.now();
   const record = {
     id,
     name: entry.name,
     type: entry.type, // 'md' | 'pdf' | 'xlsx' | 'book'
     size: entry.size || 0,
     pages: entry.pages || null,
-    lastOpened: Date.now(),
-    createdAt: entry.createdAt || Date.now(),
+    lastOpened: entry.lastOpened || now,
+    updatedAt: entry.updatedAt || now,
+    createdAt: entry.createdAt || now,
     driveId: entry.driveId || null,
     syncStatus: entry.syncStatus || 'local', // 'local' | 'synced' | 'pending'
   };

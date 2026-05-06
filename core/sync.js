@@ -57,7 +57,9 @@ export async function fullSync() {
       // Merge: for each remote entry not in local (or newer), pull it
       for (const remote of remoteEntries) {
         const local = localEntries.find(l => l.id === remote.id);
-        if (!local || remote.lastOpened > local.lastOpened) {
+        const remoteTime = remote.updatedAt || remote.lastOpened || 0;
+        const localTime = local ? (local.updatedAt || local.lastOpened || 0) : 0;
+        if (!local || remoteTime > localTime) {
           await saveFileEntry(remote);
           // If remote has a driveId and we don't have the blob locally, download it
           if (remote.driveId) {
