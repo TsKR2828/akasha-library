@@ -576,6 +576,14 @@
     z-index: 2;
   }
 
+  /* Portrait hidden state */
+  .ai-portrait--hidden {
+    min-height: 0;
+    flex: 0 0 0;
+    height: 0;
+    overflow: hidden;
+  }
+
   /* Dialogue box */
   .ai-dialogue {
     position: relative;
@@ -1024,6 +1032,9 @@
       <div class="ai-header-row">
         <span class="ai-status-dot"></span>
         <span class="ai-header-title">Bibliothecaria · 在線</span>
+        <button class="ai-close-btn" id="btnTogglePortrait" onclick="togglePortrait()" title="顯示/隱藏立繪">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
         <button class="ai-close-btn" onclick="toggleAIPanel()" title="關閉">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
@@ -1132,7 +1143,7 @@
       </div>
 
       <!-- Emotion indicator -->
-      <div class="ai-emotion" id="aiEmotion">Serena</div>
+      <div class="ai-emotion" id="aiEmotion">Jabberwocky</div>
 
       <!-- Page badge -->
       <div class="ai-page-badge" id="aiPageBadge">※ 等待開啟書籍</div>
@@ -1643,6 +1654,16 @@
     aiPanelOpen = !aiPanelOpen;
     panel.classList.toggle('ai-panel--hidden', !aiPanelOpen);
     btnText.textContent = aiPanelOpen ? '圖書館員 ●' : '召喚圖書館員';
+  };
+
+  let portraitVisible = true;
+  window.togglePortrait = function() {
+    portraitVisible = !portraitVisible;
+    const portrait = document.getElementById('aiPortrait');
+    const btn = document.getElementById('btnTogglePortrait');
+    portrait.classList.toggle('ai-portrait--hidden', !portraitVisible);
+    btn.title = portraitVisible ? '隱藏立繪' : '顯示立繪';
+    btn.style.opacity = portraitVisible ? '1' : '0.4';
   };
 
   window.setAIMode = function(mode) {
