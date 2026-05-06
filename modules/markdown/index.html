@@ -1,174 +1,629 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-mode="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Markdown 轉 Google Sheets（保留格式版）</title>
+  <title>Code & Data Reader — 阿卡夏圖書館</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/styles/shared.css">
   <style>
-    :root {
-      --bg: #f7f7f8;
-      --panel: #ffffff;
-      --text: #202124;
-      --muted: #6b7280;
-      --border: #d7dce2;
-      --accent: #3f51b5;
-      --ok: #0f766e;
-      --code: #f3f4f6;
-    }
-    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--navy-deep);
+      min-height: 100vh;
     }
+
+    /* Header bar */
     header {
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--navy-line);
+      background: rgba(24,29,40,0.96);
+      backdrop-filter: blur(8px);
     }
+
+    :root[data-mode="light"] header {
+      background: rgba(245,239,225,0.96);
+    }
+
     h1 {
-      font-size: 18px;
-      margin: 0 14px 0 0;
+      margin: 0 8px 0 0;
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.04em;
       white-space: nowrap;
     }
-    button, label.file-label {
+
+    /* Buttons */
+    .btn {
       appearance: none;
-      border: 1px solid var(--border);
-      background: #fff;
-      color: var(--text);
-      padding: 8px 11px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      color: var(--text-primary);
+      padding: 7px 10px;
+      border-radius: var(--r-card);
+      font-size: 12px;
+      font-family: inherit;
       line-height: 1;
+      min-height: 30px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
     }
-    button.primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
+
+    .btn:hover {
+      border-color: var(--gold-dim);
+      background: var(--navy-hover);
     }
-    button.sheet {
-      background: var(--ok);
-      color: #fff;
-      border-color: var(--ok);
+
+    .btn--gold {
+      background: var(--gold-glow);
+      border-color: var(--gold-dim);
+      color: var(--gold);
     }
-    button:hover, label.file-label:hover { filter: brightness(0.98); }
+
+    .btn--gold:hover {
+      background: rgba(201,168,106,0.22);
+      border-color: var(--gold);
+    }
+
+    .btn--sheets {
+      background: rgba(106,174,127,0.12);
+      border-color: rgba(106,174,127,0.4);
+      color: var(--success);
+    }
+
+    .btn--sheets:hover {
+      background: rgba(106,174,127,0.22);
+      border-color: var(--success);
+    }
+
+    .btn--danger {
+      background: rgba(196,96,79,0.1);
+      border-color: rgba(196,96,79,0.3);
+      color: var(--danger);
+    }
+
+    label.file-label {
+      appearance: none;
+      border: 1px solid var(--gold-dim);
+      background: var(--gold-glow);
+      color: var(--gold);
+      padding: 7px 10px;
+      border-radius: var(--r-card);
+      font-size: 12px;
+      font-family: inherit;
+      line-height: 1;
+      min-height: 30px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    label.file-label:hover {
+      background: rgba(201,168,106,0.22);
+      border-color: var(--gold);
+    }
+
     input[type="file"] { display: none; }
-    #status {
-      color: var(--muted);
-      font-size: 13px;
-      min-width: 260px;
-    }
-    .hint {
-      color: var(--muted);
-      font-size: 13px;
-      width: 100%;
-    }
-    main {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      padding: 12px;
-      height: calc(100vh - 102px);
-    }
-    .pane {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-    .pane-title {
-      padding: 10px 12px;
-      border-bottom: 1px solid var(--border);
-      font-weight: 700;
-      color: var(--muted);
-      font-size: 14px;
-      background: #fbfbfc;
-    }
-    textarea {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      resize: none;
-      padding: 16px;
-      font: 15px/1.7 Consolas, "Noto Sans Mono CJK TC", "Microsoft JhengHei", monospace;
+
+    input[type="search"] {
+      appearance: none;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      color: var(--text-primary);
+      padding: 7px 10px;
+      border-radius: var(--r-card);
+      font-size: 12px;
+      font-family: inherit;
+      min-width: 180px;
+      min-height: 30px;
       outline: none;
-      color: var(--text);
+      transition: border-color 0.2s;
     }
-    #preview {
-      padding: 22px;
+
+    input[type="search"]:focus {
+      border-color: var(--gold-dim);
+    }
+
+    input[type="search"]::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    #status {
+      flex: 1 1 200px;
+      color: var(--text-secondary);
+      font-size: 11px;
+      min-width: 160px;
+    }
+
+    .sheets-group {
+      display: none;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .sheets-group.visible {
+      display: flex;
+    }
+
+    .separator {
+      width: 1px;
+      height: 20px;
+      background: var(--navy-line);
+      margin: 0 4px;
+    }
+
+    /* Layout */
+    .app {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 10px;
+      padding: 10px;
+      min-height: calc(100vh - 56px);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .card + .card { margin-top: 10px; }
+
+    .card-title {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--navy-line);
+      background: var(--navy);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .card-body { padding: 10px 12px; }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 5px 8px;
+      font-size: 12px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    .kv .key { color: var(--text-tertiary); }
+
+    .hint-box {
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .hint-box h3 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .hint-box ul { margin: 6px 0 0; padding-left: 1.25em; }
+    .hint-box li { margin: 3px 0; }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--navy-line);
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      background: var(--navy);
+    }
+
+    .badge.warn { background: rgba(180,83,9,0.1); color: #e8a54b; border-color: rgba(180,83,9,0.3); }
+    .badge.danger { background: rgba(196,96,79,0.1); color: var(--danger); border-color: rgba(196,96,79,0.3); }
+    .badge.ok { background: rgba(106,174,127,0.1); color: var(--success); border-color: rgba(106,174,127,0.3); }
+
+    /* Reader panel */
+    .reader {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-height: calc(100vh - 76px);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 6px;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--navy-line);
+      background: var(--navy);
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      cursor: pointer;
+      font-size: 11px;
+      font-family: inherit;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      border-color: var(--gold-dim);
+      color: var(--text-primary);
+    }
+
+    .tab.active {
+      background: var(--gold-glow);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .view-wrap {
+      min-height: 0;
       overflow: auto;
-      line-height: 1.85;
-      font-size: 16px;
+      background: var(--navy-light);
     }
-    #preview h1 { font-size: 30px; margin: 0 0 20px; line-height: 1.35; }
-    #preview h2 { font-size: 24px; margin: 34px 0 12px; line-height: 1.4; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
-    #preview h3 { font-size: 20px; margin: 28px 0 10px; line-height: 1.4; }
-    #preview p { margin: 0 0 14px; }
-    #preview ul, #preview ol { padding-left: 1.4em; margin: 0 0 16px; }
-    #preview li { margin: 4px 0; }
-    #preview a { color: var(--accent); text-decoration: underline; }
-    #preview code { background: var(--code); padding: 2px 5px; border-radius: 5px; }
-    #preview pre { background: var(--code); padding: 12px; overflow: auto; border-radius: 8px; }
-    #preview table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 15px; }
-    #preview th, #preview td { border: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
-    #preview th { background: #f3f4f6; }
-    @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; height: auto; }
-      .pane { min-height: 50vh; }
+
+    .view {
+      display: none;
+      padding: 18px;
+      min-height: 100%;
+    }
+
+    .view.active { display: block; }
+
+    textarea#rawEditor {
+      width: 100%;
+      min-height: calc(100vh - 160px);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      resize: vertical;
+      padding: 14px;
+      font: 13px/1.65 var(--font-mono);
+      outline: none;
+      color: var(--text-primary);
+      background: var(--navy);
+    }
+
+    textarea#rawEditor:focus {
+      border-color: var(--gold-dim);
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--gold-dim) !important;
+      background: var(--gold-glow) !important;
+    }
+
+    /* Markdown body */
+    .markdown-body {
+      max-width: 980px;
+      line-height: 1.82;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .markdown-body h1 { font-size: 26px; margin: 0 0 18px; line-height: 1.35; color: var(--gold-bright); font-family: var(--font-display); }
+    .markdown-body h2 { font-size: 21px; margin: 30px 0 10px; line-height: 1.4; border-bottom: 1px solid var(--navy-line); padding-bottom: 6px; color: var(--gold); }
+    .markdown-body h3 { font-size: 17px; margin: 24px 0 8px; line-height: 1.4; color: var(--gold-dim); }
+    .markdown-body p { margin: 0 0 12px; }
+    .markdown-body ul, .markdown-body ol { padding-left: 1.4em; margin: 0 0 14px; }
+    .markdown-body li { margin: 3px 0; }
+    .markdown-body a { color: var(--gold); text-decoration: underline; text-decoration-color: var(--gold-dim); }
+    .markdown-body code, .inline-code { background: var(--navy); padding: 2px 5px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.9em; color: var(--gold-bright); border: 1px solid var(--navy-line); }
+    .markdown-body pre, pre.code-block {
+      background: var(--navy);
+      padding: 12px;
+      overflow: auto;
+      border-radius: var(--r-card);
+      border: 1px solid var(--navy-line);
+      font: 12px/1.65 var(--font-mono);
+      color: var(--text-primary);
+    }
+    .markdown-body table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 13px; }
+    .markdown-body th, .markdown-body td { border: 1px solid var(--navy-line); padding: 7px 9px; vertical-align: top; }
+    .markdown-body th { background: var(--navy); color: var(--gold); font-weight: 600; }
+
+    /* JSON tree */
+    .json-tree {
+      font: 13px/1.65 var(--font-mono);
+      white-space: nowrap;
+    }
+
+    .tree-node { margin-left: 18px; }
+    .tree-line { cursor: default; padding: 1px 0; }
+    .tree-toggle { cursor: pointer; user-select: none; color: var(--gold); display: inline-block; width: 16px; }
+    .tree-key { color: #b89aff; }
+    .tree-string { color: #6aae7f; }
+    .tree-number { color: #6ba5e8; }
+    .tree-bool { color: #e8a54b; }
+    .tree-null { color: var(--text-tertiary); }
+    .tree-hidden { display: none; }
+
+    /* Score cards */
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .score-card {
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      background: var(--navy);
+      overflow: hidden;
+    }
+
+    .score-card h2 {
+      margin: 0;
+      padding: 8px 12px;
+      background: var(--navy-deep);
+      border-bottom: 1px solid var(--navy-line);
+      font-size: 13px;
+      color: var(--gold);
+    }
+
+    .score-card .inner { padding: 10px 12px; }
+
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin: 8px 0 14px;
+    }
+
+    table.data-table th, table.data-table td {
+      border: 1px solid var(--navy-line);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    table.data-table th { background: var(--navy); color: var(--gold-dim); }
+
+    /* Python view */
+    .py-layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .outline-box {
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      background: var(--navy);
+      overflow: hidden;
+      align-self: start;
+      position: sticky;
+      top: 70px;
+    }
+
+    .outline-box h2 {
+      margin: 0;
+      padding: 8px 12px;
+      font-size: 13px;
+      background: var(--navy-deep);
+      border-bottom: 1px solid var(--navy-line);
+      color: var(--gold);
+    }
+
+    .outline-list { padding: 10px 12px; font-size: 12px; line-height: 1.7; color: var(--text-secondary); }
+    .outline-list code { background: var(--navy-light); padding: 1px 4px; border-radius: 3px; font-family: var(--font-mono); color: var(--gold-bright); border: 1px solid var(--navy-line); }
+
+    .code-table {
+      width: 100%;
+      border-collapse: collapse;
+      font: 12px/1.6 var(--font-mono);
+      background: var(--navy);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      overflow: hidden;
+    }
+
+    .code-table td { vertical-align: top; }
+    .line-no {
+      width: 48px;
+      text-align: right;
+      color: var(--text-tertiary);
+      background: var(--navy-deep);
+      border-right: 1px solid var(--navy-line);
+      padding: 0 8px;
+      user-select: none;
+    }
+    .line-code { padding: 0 10px; white-space: pre; }
+
+    .tok-comment { color: var(--text-tertiary); }
+    .tok-keyword { color: #b89aff; font-weight: 700; }
+    .tok-string { color: #6aae7f; }
+    .tok-number { color: #6ba5e8; }
+    .tok-func { color: var(--danger); }
+
+    .error-box {
+      border: 1px solid rgba(196,96,79,0.3);
+      background: rgba(196,96,79,0.08);
+      color: var(--danger);
+      border-radius: var(--r-card);
+      padding: 10px;
+      line-height: 1.65;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+
+    .search-hit {
+      background: rgba(201,168,106,0.3);
+      padding: 0 2px;
+      border-radius: 3px;
+      color: var(--gold-bright);
+    }
+
+    .empty-state {
+      max-width: 600px;
+      margin: 40px auto;
+      text-align: center;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      border: 2px dashed var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 32px 20px;
+      background: var(--navy);
+    }
+
+    .empty-state h2 {
+      color: var(--gold);
+      font-family: var(--font-display);
+      font-size: 18px;
+      margin: 0 0 10px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+    }
+
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      .py-layout { grid-template-columns: 1fr; }
+      .outline-box { position: static; }
+    }
+
+    /* Light mode overrides */
+    :root[data-mode="light"] .markdown-body code,
+    :root[data-mode="light"] .inline-code {
+      color: var(--gold-deep);
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>Markdown 轉 Google Sheets（保留格式版）</h1>
+    <h1>Code & Data Reader</h1>
     <label class="file-label">
-      開啟 .md
-      <input id="fileInput" type="file" accept=".md,.markdown,.txt,text/markdown,text/plain">
+      開啟檔案
+      <input id="fileInput" type="file" accept=".py,.json,.md,.markdown,.txt,.score.json,text/plain,application/json,text/markdown">
     </label>
-    <button id="saveMd">下載 .md</button>
-    <button id="copyHtml" class="primary">複製 HTML 給 WordPress</button>
-    <button id="copyPlainTables">複製純表格給 Sheets</button>
-    <button id="copyRichSheets" class="sheet">複製格式化內容給 Sheets</button>
-    <button id="openSheetsRich" class="sheet">開新 Sheet 並複製格式化內容</button>
-    <button id="clearText">清空</button>
-    <span id="status">可直接把 Markdown 貼進左邊。</span>
-    <span class="hint">格式化版會把 H1/H2/H3、段落、清單、Markdown 表格轉成 Google Sheets 可貼上的有格式表格。到新 Sheet 的 A1 按 Ctrl+V。</span>
+    <button class="btn" id="copyRaw">複製原始內容</button>
+    <button class="btn--gold btn" id="copyView">複製目前視圖</button>
+    <button class="btn" id="downloadText">下載目前內容</button>
+    <button class="btn--gold btn" id="exportSummary">匯出摘要 .md</button>
+
+    <span class="separator"></span>
+
+    <!-- Sheets export group — visible only in MD mode -->
+    <div class="sheets-group" id="sheetsGroup">
+      <button class="btn" id="copyHtml">複製 HTML (WordPress)</button>
+      <button class="btn" id="copyPlainTables">純表格 → Sheets</button>
+      <button class="btn--sheets btn" id="copyRichSheets">格式化 → Sheets</button>
+      <button class="btn--sheets btn" id="openSheetsRich">開新 Sheet 並貼上</button>
+    </div>
+
+    <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼...">
+    <button class="btn" id="searchBtn">搜尋</button>
+    <span id="status">拖曳 .py / .json / .score.json / .md / .txt 到視窗</span>
   </header>
 
-  <main>
-    <section class="pane">
-      <div class="pane-title">原始 Markdown / 可編輯</div>
-      <textarea id="editor" spellcheck="false" placeholder="把 .md 內容貼在這裡，或點上方「開啟 .md」。"></textarea>
-    </section>
+  <div class="app" id="appRoot">
+    <aside>
+      <section class="card">
+        <div class="card-title">File Info</div>
+        <div class="card-body kv" id="fileInfo"></div>
+      </section>
 
-    <section class="pane">
-      <div class="pane-title">預覽 / 可複製 HTML</div>
-      <article id="preview"></article>
-    </section>
-  </main>
+      <section class="card">
+        <div class="card-title">Hints</div>
+        <div class="card-body hint-box" id="fileHint"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">Checks</div>
+        <div class="card-body" id="checkPanel"></div>
+      </section>
+    </aside>
+
+    <main class="card reader">
+      <nav class="tabs" id="tabs"></nav>
+      <section class="view-wrap">
+        <div id="emptyView" class="view active">
+          <div class="empty-state">
+            <h2>Drag & Drop or Open File</h2>
+            <p>支援 .py、.json、.score.json、.md、.txt<br>閱讀、整理、提示、複製與匯出至 Google Sheets</p>
+          </div>
+        </div>
+        <div id="prettyView" class="view"></div>
+        <div id="treeView" class="view"></div>
+        <div id="scoreView" class="view"></div>
+        <div id="pythonView" class="view"></div>
+        <div id="rawView" class="view"><textarea id="rawEditor" spellcheck="false"></textarea></div>
+      </section>
+    </main>
+  </div>
 
   <script>
-    const editor = document.getElementById("editor");
-    const preview = document.getElementById("preview");
-    const statusEl = document.getElementById("status");
+    // ═══════════════════════════════════════════
+    //  STATE
+    // ═══════════════════════════════════════════
+    const state = {
+      filename: "",
+      extension: "",
+      content: "",
+      parsedJson: null,
+      jsonError: null,
+      mode: "empty",
+      activeTab: "pretty",
+      searchTerm: ""
+    };
 
+    const appRoot = document.getElementById("appRoot");
+    const fileInput = document.getElementById("fileInput");
+    const statusEl = document.getElementById("status");
+    const fileInfo = document.getElementById("fileInfo");
+    const fileHint = document.getElementById("fileHint");
+    const checkPanel = document.getElementById("checkPanel");
+    const tabsEl = document.getElementById("tabs");
+    const rawEditor = document.getElementById("rawEditor");
+    const sheetsGroup = document.getElementById("sheetsGroup");
+
+    const views = {
+      empty: document.getElementById("emptyView"),
+      pretty: document.getElementById("prettyView"),
+      tree: document.getElementById("treeView"),
+      score: document.getElementById("scoreView"),
+      python: document.getElementById("pythonView"),
+      raw: document.getElementById("rawView")
+    };
+
+    // ═══════════════════════════════════════════
+    //  UTILITIES
+    // ═══════════════════════════════════════════
     function escapeHtml(str) {
-      return String(str)
+      return String(str ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     function stripMarkdown(text) {
@@ -185,71 +640,42 @@
 
     function inlineMarkdownToHtml(text) {
       const rawHtml = [];
-      text = String(text).replace(/<a\s+[^>]*>[\s\S]*?<\/a>/gi, match => {
+      let s = String(text ?? "");
+      s = s.replace(/<a\s+[^>]*>[\s\S]*?<\/a>/gi, match => {
         rawHtml.push(match);
         return `@@RAWHTML${rawHtml.length - 1}@@`;
       });
-
-      text = escapeHtml(text);
-      text = text.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
-      text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-
+      s = escapeHtml(s);
+      s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      s = s.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
       rawHtml.forEach((html, i) => {
-        text = text.replace(`@@RAWHTML${i}@@`, html);
+        s = s.replace(`@@RAWHTML${i}@@`, html);
       });
-
-      return text;
+      return s;
     }
 
+    // ═══════════════════════════════════════════
+    //  MARKDOWN TABLE PARSING
+    // ═══════════════════════════════════════════
     function splitMarkdownTableRow(row) {
       let line = row.trim();
       if (line.startsWith("|")) line = line.slice(1);
       if (line.endsWith("|")) line = line.slice(0, -1);
-
       const cells = [];
       let current = "";
       let escaped = false;
       let inBacktick = false;
-
       for (let i = 0; i < line.length; i++) {
         const ch = line[i];
-
-        if (escaped) {
-          current += ch;
-          escaped = false;
-          continue;
-        }
-
-        if (ch === "\\") {
-          escaped = true;
-          current += ch;
-          continue;
-        }
-
-        if (ch === "`") {
-          inBacktick = !inBacktick;
-          current += ch;
-          continue;
-        }
-
-        if (ch === "|" && !inBacktick) {
-          cells.push(current.trim());
-          current = "";
-          continue;
-        }
-
+        if (escaped) { current += ch; escaped = false; continue; }
+        if (ch === "\\") { escaped = true; current += ch; continue; }
+        if (ch === "`") { inBacktick = !inBacktick; current += ch; continue; }
+        if (ch === "|" && !inBacktick) { cells.push(current.trim()); current = ""; continue; }
         current += ch;
       }
-
       cells.push(current.trim());
       return cells;
-    }
-
-    function isSeparatorRow(row) {
-      const cells = splitMarkdownTableRow(row);
-      if (cells.length === 0) return false;
-      return cells.every(cell => /^:?-{3,}:?$/.test(cell.replace(/\s/g, "")));
     }
 
     function isTableRow(line) {
@@ -257,34 +683,33 @@
       return trimmed.startsWith("|") && trimmed.endsWith("|") && trimmed.includes("|");
     }
 
+    function isSeparatorRow(row) {
+      const cells = splitMarkdownTableRow(row);
+      return cells.length > 0 && cells.every(cell => /^:?-{3,}:?$/.test(cell.replace(/\s/g, "")));
+    }
+
     function parseTable(lines, startIndex) {
       const rows = [];
       let i = startIndex;
-
-      while (i < lines.length && isTableRow(lines[i])) {
-        rows.push(lines[i]);
-        i++;
-      }
-
+      while (i < lines.length && isTableRow(lines[i])) { rows.push(lines[i]); i++; }
       if (rows.length < 2 || !isSeparatorRow(rows[1])) return null;
-
       const head = splitMarkdownTableRow(rows[0]);
       const body = rows.slice(2).map(splitMarkdownTableRow);
-
       let html = "<table><thead><tr>";
       head.forEach(c => html += `<th>${inlineMarkdownToHtml(c)}</th>`);
       html += "</tr></thead><tbody>";
-
       body.forEach(row => {
         html += "<tr>";
         row.forEach(c => html += `<td>${inlineMarkdownToHtml(c)}</td>`);
         html += "</tr>";
       });
-
       html += "</tbody></table>";
       return { html, head, body, nextIndex: i };
     }
 
+    // ═══════════════════════════════════════════
+    //  MARKDOWN → HTML
+    // ═══════════════════════════════════════════
     function markdownToHtml(md) {
       const lines = md.replace(/\r\n/g, "\n").split("\n");
       let html = "";
@@ -299,54 +724,26 @@
           paragraph = [];
         }
       }
-
       function closeList() {
-        if (listType) {
-          html += `</${listType}>\n`;
-          listType = null;
-        }
+        if (listType) { html += `</${listType}>\n`; listType = null; }
       }
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-
         if (/^```/.test(line.trim())) {
-          if (!inCode) {
-            flushParagraph();
-            closeList();
-            inCode = true;
-            codeBuffer = [];
-          } else {
-            html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`;
-            inCode = false;
-          }
+          if (!inCode) { flushParagraph(); closeList(); inCode = true; codeBuffer = []; }
+          else { html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`; inCode = false; }
           continue;
         }
-
-        if (inCode) {
-          codeBuffer.push(line);
-          continue;
-        }
-
-        if (line.trim() === "") {
-          flushParagraph();
-          closeList();
-          continue;
-        }
+        if (inCode) { codeBuffer.push(line); continue; }
+        if (line.trim() === "") { flushParagraph(); closeList(); continue; }
 
         const table = parseTable(lines, i);
-        if (table) {
-          flushParagraph();
-          closeList();
-          html += table.html + "\n";
-          i = table.nextIndex - 1;
-          continue;
-        }
+        if (table) { flushParagraph(); closeList(); html += table.html + "\n"; i = table.nextIndex - 1; continue; }
 
         const heading = line.match(/^(#{1,6})\s+(.+)$/);
         if (heading) {
-          flushParagraph();
-          closeList();
+          flushParagraph(); closeList();
           const level = heading[1].length;
           html += `<h${level}>${inlineMarkdownToHtml(heading[2].trim())}</h${level}>\n`;
           continue;
@@ -355,11 +752,7 @@
         const unordered = line.match(/^\s*[-*]\s+(.+)$/);
         if (unordered) {
           flushParagraph();
-          if (listType !== "ul") {
-            closeList();
-            html += "<ul>\n";
-            listType = "ul";
-          }
+          if (listType !== "ul") { closeList(); html += "<ul>\n"; listType = "ul"; }
           html += `<li>${inlineMarkdownToHtml(unordered[1])}</li>\n`;
           continue;
         }
@@ -367,28 +760,22 @@
         const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
         if (ordered) {
           flushParagraph();
-          if (listType !== "ol") {
-            closeList();
-            html += "<ol>\n";
-            listType = "ol";
-          }
+          if (listType !== "ol") { closeList(); html += "<ol>\n"; listType = "ol"; }
           html += `<li>${inlineMarkdownToHtml(ordered[1])}</li>\n`;
           continue;
         }
 
         paragraph.push(line.trim());
       }
-
       flushParagraph();
       closeList();
-
-      if (inCode) {
-        html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`;
-      }
-
+      if (inCode) html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`;
       return html;
     }
 
+    // ═══════════════════════════════════════════
+    //  GOOGLE SHEETS EXPORT FUNCTIONS
+    // ═══════════════════════════════════════════
     function markdownTablesToRows(md) {
       const lines = md.replace(/\r\n/g, "\n").split("\n");
       const allRows = [];
@@ -397,34 +784,32 @@
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
         const heading = line.match(/^(#{1,6})\s+(.+)$/);
-        if (heading) {
-          lastHeading = stripMarkdown(heading[2]);
-          continue;
-        }
-
+        if (heading) { lastHeading = stripMarkdown(heading[2]); continue; }
         if (!isTableRow(lines[i])) continue;
 
         const tableLines = [];
         let j = i;
-        while (j < lines.length && isTableRow(lines[j])) {
-          tableLines.push(lines[j]);
-          j++;
-        }
+        while (j < lines.length && isTableRow(lines[j])) { tableLines.push(lines[j]); j++; }
 
         if (tableLines.length >= 2 && isSeparatorRow(tableLines[1])) {
           if (allRows.length > 0) allRows.push([]);
           if (lastHeading) allRows.push([lastHeading]);
-
           allRows.push(splitMarkdownTableRow(tableLines[0]).map(stripMarkdown));
           tableLines.slice(2).forEach(row => {
             allRows.push(splitMarkdownTableRow(row).map(stripMarkdown));
           });
         }
-
         i = j - 1;
       }
-
       return allRows;
+    }
+
+    function getMaxTableCols(lines) {
+      let max = 1;
+      lines.forEach(line => {
+        if (isTableRow(line)) max = Math.max(max, splitMarkdownTableRow(line).length);
+      });
+      return max;
     }
 
     function markdownToRichSheetHtml(md) {
@@ -440,19 +825,16 @@
       }
 
       function row(cells, options = {}) {
-        const type = options.type || "normal";
         const bg = options.bg || "#ffffff";
         const color = options.color || "#202124";
         const weight = options.weight || "400";
         const size = options.size || "11pt";
         const border = options.border || "1px solid #d7dce2";
-        const first = cells[0] ?? "";
-        const rest = cells.slice(1);
+        const type = options.type || "normal";
 
         html += `<tr style="background:${bg};color:${color};font-weight:${weight};font-size:${size};">`;
-
         if (type === "heading") {
-          html += `<td style="border:${border};padding:8px 10px;font-weight:${weight};font-size:${size};color:${color};background:${bg};">${inlineMarkdownToHtml(first)}</td>`;
+          html += `<td style="border:${border};padding:8px 10px;font-weight:${weight};font-size:${size};color:${color};background:${bg};">${inlineMarkdownToHtml(cells[0] ?? "")}</td>`;
           html += emptyCells(maxCols - 1);
         } else {
           for (let i = 0; i < maxCols; i++) {
@@ -460,7 +842,6 @@
             html += `<td style="border:${border};padding:6px 8px;vertical-align:top;background:${bg};color:${color};font-weight:${weight};font-size:${size};">${inlineMarkdownToHtml(value)}</td>`;
           }
         }
-
         html += `</tr>`;
       }
 
@@ -472,13 +853,8 @@
       }
 
       for (let i = 0; i < lines.length; i++) {
-        const raw = lines[i];
-        const line = raw.trim();
-
-        if (!line) {
-          flushParagraph();
-          continue;
-        }
+        const line = lines[i].trim();
+        if (!line) { flushParagraph(); continue; }
 
         const table = parseTable(lines, i);
         if (table) {
@@ -502,33 +878,16 @@
         }
 
         const unordered = line.match(/^\s*[-*]\s+(.+)$/);
-        if (unordered) {
-          flushParagraph();
-          row(["• " + unordered[1]], { type: "heading", bg: "#ffffff", weight: "400", size: "11pt" });
-          continue;
-        }
+        if (unordered) { flushParagraph(); row(["• " + unordered[1]], { type: "heading" }); continue; }
 
         const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
-        if (ordered) {
-          flushParagraph();
-          row([stripMarkdown(line)], { type: "heading", bg: "#ffffff", weight: "400", size: "11pt" });
-          continue;
-        }
+        if (ordered) { flushParagraph(); row([stripMarkdown(line)], { type: "heading" }); continue; }
 
         paragraph.push(line);
       }
-
       flushParagraph();
       html += `</table>`;
       return html;
-    }
-
-    function getMaxTableCols(lines) {
-      let max = 1;
-      lines.forEach(line => {
-        if (isTableRow(line)) max = Math.max(max, splitMarkdownTableRow(line).length);
-      });
-      return max;
     }
 
     function htmlToPlainTextTable(html) {
@@ -540,19 +899,18 @@
 
     function toTSV(rows) {
       return rows.map(row => row.map(cell => {
-        return String(cell ?? "")
-          .replace(/\r?\n/g, " ")
-          .replace(/\t/g, " ")
-          .trim();
+        return String(cell ?? "").replace(/\r?\n/g, " ").replace(/\t/g, " ").trim();
       }).join("\t")).join("\n");
     }
 
-    async function copyPlainText(text) {
+    // ═══════════════════════════════════════════
+    //  CLIPBOARD HELPERS
+    // ═══════════════════════════════════════════
+    function copyPlain(text) {
       const temp = document.createElement("textarea");
       temp.value = text;
       temp.style.position = "fixed";
       temp.style.left = "-9999px";
-      temp.style.top = "0";
       document.body.appendChild(temp);
       temp.focus();
       temp.select();
@@ -563,7 +921,6 @@
 
     async function copyRichHtml(html) {
       const plain = htmlToPlainTextTable(html);
-
       if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
         const item = new ClipboardItem({
           "text/html": new Blob([html], { type: "text/html" }),
@@ -572,130 +929,593 @@
         await navigator.clipboard.write([item]);
         return true;
       }
-
       const container = document.createElement("div");
       container.innerHTML = html;
       container.contentEditable = "true";
       container.style.position = "fixed";
       container.style.left = "-9999px";
-      container.style.top = "0";
       document.body.appendChild(container);
-
       const range = document.createRange();
       range.selectNodeContents(container);
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
-
       const ok = document.execCommand("copy");
       selection.removeAllRanges();
       document.body.removeChild(container);
       return ok;
     }
 
-    function render() {
-      preview.innerHTML = markdownToHtml(editor.value);
-      localStorage.setItem("mdRichSheetDraft", editor.value);
+    // ═══════════════════════════════════════════
+    //  JSON FUNCTIONS
+    // ═══════════════════════════════════════════
+    function getExtension(filename) {
+      const lower = filename.toLowerCase();
+      if (lower.endsWith(".score.json")) return ".score.json";
+      const match = lower.match(/\.[^.]+$/);
+      return match ? match[0] : ".txt";
     }
 
-    editor.addEventListener("input", render);
+    function detectMode(filename) {
+      const ext = getExtension(filename);
+      if (ext === ".md" || ext === ".markdown") return "md";
+      if (ext === ".py") return "py";
+      if (ext === ".json" || ext === ".score.json") return "json";
+      return "txt";
+    }
 
-    document.getElementById("fileInput").addEventListener("change", event => {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        editor.value = reader.result;
-        render();
-        statusEl.textContent = `已開啟：${file.name}`;
+    function parseJsonWithInfo(text) {
+      try {
+        return { data: JSON.parse(text), error: null };
+      } catch (error) {
+        const message = String(error.message || error);
+        const posMatch = message.match(/position\s+(\d+)/i);
+        let line = null, col = null;
+        if (posMatch) {
+          const pos = Number(posMatch[1]);
+          const before = text.slice(0, pos);
+          const parts = before.split(/\r?\n/);
+          line = parts.length;
+          col = parts[parts.length - 1].length + 1;
+        }
+        return { data: null, error: { message, line, col } };
+      }
+    }
+
+    function isScoreJson(data) {
+      if (!data || typeof data !== "object") return false;
+      const schema = String(data.$schema || "").toLowerCase();
+      return schema.includes("tsukisynth score") || (data.meta && data.global && Array.isArray(data.events) && data.export);
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes && bytes !== 0) return "—";
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    // ═══════════════════════════════════════════
+    //  CORE — SET FILE & RENDER
+    // ═══════════════════════════════════════════
+    function setFile(filename, content, size) {
+      state.filename = filename || "untitled.txt";
+      state.extension = getExtension(state.filename);
+      state.content = String(content ?? "");
+      state.parsedJson = null;
+      state.jsonError = null;
+      state.mode = detectMode(state.filename);
+
+      if (state.mode === "json") {
+        const parsed = parseJsonWithInfo(state.content);
+        state.parsedJson = parsed.data;
+        state.jsonError = parsed.error;
+      }
+
+      rawEditor.value = state.content;
+      updateAll(size ?? new Blob([state.content]).size);
+      localStorage.setItem("akasha-reader-draft", state.content);
+      localStorage.setItem("akasha-reader-filename", state.filename);
+    }
+
+    function updateAll(size) {
+      renderFileInfo(size);
+      renderHint();
+      renderChecks();
+      renderViews();
+      renderTabs();
+      updateSheetsVisibility();
+      statusEl.textContent = `已載入：${state.filename}（${state.extension || "文字"}）`;
+    }
+
+    function updateSheetsVisibility() {
+      sheetsGroup.classList.toggle("visible", state.mode === "md");
+    }
+
+    function renderFileInfo(size) {
+      const jsonValid = state.mode === "json" ? (state.jsonError ? "格式錯誤" : "有效") : "—";
+      const score = state.parsedJson && isScoreJson(state.parsedJson) ? "是" : "—";
+      fileInfo.innerHTML = `
+        <div class="key">檔名</div><div>${escapeHtml(state.filename || "尚未開啟")}</div>
+        <div class="key">類型</div><div>${escapeHtml(state.extension || "—")}</div>
+        <div class="key">大小</div><div>${formatBytes(size ?? state.content.length)}</div>
+        <div class="key">JSON</div><div>${jsonValid}</div>
+        <div class="key">Score</div><div>${score}</div>
+      `;
+    }
+
+    function hintForFile() {
+      const name = state.filename.toLowerCase();
+      if (state.extension === ".py") return {
+        title: ".py — Python 程式碼",
+        body: `工具、腳本或資料處理。本工具只閱讀不執行。<code>os.remove</code> 可能刪檔；<code>requests</code> 可能連網；<code>subprocess</code> 可能執行系統指令。`
       };
-      reader.readAsText(file, "utf-8");
-    });
+      if (state.extension === ".score.json") return {
+        title: ".score.json — TsukiSynth 樂譜配方",
+        body: `記錄素材描述、全域效果、發聲事件與 WAV 匯出設定。含物理建模資訊（材質、敲擊位置、阻尼、引擎）。`
+      };
+      if (state.extension === ".json") return {
+        title: ".json — 結構化資料",
+        body: `設定、參數、API 回傳資料。格式嚴格：雙引號、不能尾逗號、括號成對。`
+      };
+      if (state.extension === ".md" || state.extension === ".markdown") return {
+        title: ".md — Markdown 文件",
+        body: `README、開發筆記、規格文件。支援匯出至 Google Sheets（格式化版）。<code>#</code> 標題、<code>-</code> 清單、<code>**粗體**</code>、三反引號是程式碼。`
+      };
+      return {
+        title: ".txt — 純文字",
+        body: `簡單筆記、log、暫存文字。直接閱讀即可。`
+      };
+    }
 
-    document.getElementById("saveMd").addEventListener("click", () => {
-      const blob = new Blob([editor.value], { type: "text/markdown;charset=utf-8" });
+    function renderHint() {
+      const hint = hintForFile();
+      fileHint.innerHTML = `<h3>${hint.title}</h3><p>${hint.body}</p>`;
+    }
+
+    function renderChecks() {
+      const badges = [];
+      if (!state.content) {
+        checkPanel.innerHTML = `<span class="badge">尚未載入檔案</span>`;
+        return;
+      }
+      if (state.mode === "json") {
+        if (state.jsonError) badges.push(`<span class="badge danger">JSON 格式錯誤</span>`);
+        else badges.push(`<span class="badge ok">JSON 格式有效</span>`);
+        if (state.parsedJson && isScoreJson(state.parsedJson)) badges.push(`<span class="badge ok">TsukiSynth Score</span>`);
+      }
+      if (state.mode === "py") {
+        const risks = scanPythonRisks(state.content);
+        badges.push(`<span class="badge ok">Python 閱讀模式</span>`);
+        if (risks.length) risks.forEach(r => badges.push(`<span class="badge warn">${escapeHtml(r.label)}</span>`));
+      }
+      if (state.mode === "md") badges.push(`<span class="badge ok">Markdown 預覽</span>`, `<span class="badge ok">Sheets 匯出可用</span>`);
+      if (state.mode === "txt") badges.push(`<span class="badge">純文字閱讀</span>`);
+      checkPanel.innerHTML = `<div class="badge-row">${badges.join("")}</div>`;
+      if (state.jsonError) {
+        const lineText = state.jsonError.line ? `第 ${state.jsonError.line} 行，第 ${state.jsonError.col} 欄` : "瀏覽器未回傳位置";
+        checkPanel.innerHTML += `<div class="error-box" style="margin-top:8px;"><strong>錯誤：</strong>${escapeHtml(state.jsonError.message)}<br>${lineText}</div>`;
+      }
+    }
+
+    function renderTabs() {
+      const tabs = [];
+      if (!state.content) tabs.push(["empty", "開始"]);
+      if (state.mode === "md") tabs.push(["pretty", "Markdown 預覽"]);
+      if (state.mode === "json" && !state.jsonError) tabs.push(["pretty", "Pretty JSON"], ["tree", "樹狀 JSON"]);
+      if (state.mode === "json" && state.parsedJson && isScoreJson(state.parsedJson)) tabs.push(["score", "Score View"]);
+      if (state.mode === "py") tabs.push(["python", "Python View"]);
+      if (state.mode === "txt") tabs.push(["pretty", "文字閱讀"]);
+      tabs.push(["raw", "原始碼"]);
+
+      if (!tabs.some(t => t[0] === state.activeTab)) state.activeTab = tabs[0][0];
+      tabsEl.innerHTML = tabs.map(([id, label]) => `<button class="tab ${id === state.activeTab ? "active" : ""}" data-tab="${id}">${label}</button>`).join("");
+      tabsEl.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+        state.activeTab = btn.dataset.tab;
+        showActiveView();
+        renderTabs();
+      }));
+      showActiveView();
+    }
+
+    function showActiveView() {
+      Object.values(views).forEach(v => v.classList.remove("active"));
+      (views[state.activeTab] || views.empty).classList.add("active");
+    }
+
+    function highlightSearchHtml(html) {
+      const term = state.searchTerm.trim();
+      if (!term) return html;
+      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const re = new RegExp(`(${escaped})`, "gi");
+      return html.replace(re, '<span class="search-hit">$1</span>');
+    }
+
+    function renderViews() {
+      if (!state.content) return;
+      rawEditor.value = state.content;
+
+      if (state.mode === "md") {
+        views.pretty.innerHTML = `<article class="markdown-body">${highlightSearchHtml(markdownToHtml(state.content))}</article>`;
+      }
+
+      if (state.mode === "txt") {
+        views.pretty.innerHTML = `<pre class="code-block">${highlightSearchHtml(escapeHtml(state.content))}</pre>`;
+      }
+
+      if (state.mode === "json") {
+        if (state.jsonError) {
+          views.pretty.innerHTML = `<div class="error-box"><strong>JSON 讀取失敗</strong><br>${escapeHtml(state.jsonError.message)}</div><pre class="code-block">${highlightSearchHtml(escapeHtml(state.content))}</pre>`;
+        } else {
+          const pretty = JSON.stringify(state.parsedJson, null, 2);
+          views.pretty.innerHTML = `<pre class="code-block">${highlightSearchHtml(syntaxJson(pretty))}</pre>`;
+          views.tree.innerHTML = `<div class="json-tree">${renderJsonTree(state.parsedJson, "root")}</div>`;
+          attachTreeToggles();
+          if (isScoreJson(state.parsedJson)) views.score.innerHTML = renderScoreView(state.parsedJson);
+        }
+      }
+
+      if (state.mode === "py") {
+        views.python.innerHTML = renderPythonView(state.content);
+      }
+    }
+
+    // ═══════════════════════════════════════════
+    //  JSON RENDERING
+    // ═══════════════════════════════════════════
+    function syntaxJson(json) {
+      let s = escapeHtml(json);
+      s = s.replace(/(&quot;[^&]*?&quot;)(\s*:)/g, '<span class="tree-key">$1</span>$2');
+      s = s.replace(/:\s*(&quot;.*?&quot;)/g, ': <span class="tree-string">$1</span>');
+      s = s.replace(/:\s*(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)/gi, ': <span class="tree-number">$1</span>');
+      s = s.replace(/:\s*(true|false)/gi, ': <span class="tree-bool">$1</span>');
+      s = s.replace(/:\s*(null)/gi, ': <span class="tree-null">$1</span>');
+      return highlightSearchHtml(s);
+    }
+
+    function renderJsonTree(value, key) {
+      const type = Array.isArray(value) ? "array" : value === null ? "null" : typeof value;
+      if (type !== "object" && type !== "array") {
+        return `<div class="tree-line"><span class="tree-key">${escapeHtml(key)}</span>: ${renderPrimitive(value)}</div>`;
+      }
+      const entries = type === "array" ? value.map((v, i) => [i, v]) : Object.entries(value);
+      const id = `node_${Math.random().toString(36).slice(2)}`;
+      const open = key === "root" ? "" : "tree-hidden";
+      const label = type === "array" ? `[${entries.length}]` : `{${entries.length}}`;
+      let html = `<div class="tree-line"><span class="tree-toggle" data-target="${id}">${key === "root" ? "▾" : "▸"}</span><span class="tree-key">${escapeHtml(key)}</span> ${label}</div>`;
+      html += `<div class="tree-node ${open}" id="${id}">`;
+      entries.forEach(([k, v]) => { html += renderJsonTree(v, k); });
+      html += `</div>`;
+      return html;
+    }
+
+    function renderPrimitive(value) {
+      if (typeof value === "string") return `<span class="tree-string">&quot;${escapeHtml(value)}&quot;</span>`;
+      if (typeof value === "number") return `<span class="tree-number">${value}</span>`;
+      if (typeof value === "boolean") return `<span class="tree-bool">${value}</span>`;
+      if (value === null) return `<span class="tree-null">null</span>`;
+      return escapeHtml(String(value));
+    }
+
+    function attachTreeToggles() {
+      document.querySelectorAll(".tree-toggle").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = document.getElementById(btn.dataset.target);
+          if (!target) return;
+          const hidden = target.classList.toggle("tree-hidden");
+          btn.textContent = hidden ? "▸" : "▾";
+        });
+      });
+    }
+
+    function renderScoreView(data) {
+      const meta = data.meta || {};
+      const global = data.global || {};
+      const effects = global.effects || {};
+      const events = Array.isArray(data.events) ? data.events : [];
+      const exp = data.export || {};
+
+      const tags = Array.isArray(meta.tags) ? meta.tags : [];
+      const tagHtml = tags.map(t => `<span class="badge">${escapeHtml(t)}</span>`).join("");
+
+      let html = `<div class="score-grid">
+        <section class="score-card"><h2>素材資訊</h2><div class="inner kv">
+          <div class="key">Title</div><div>${escapeHtml(meta.title || "—")}</div>
+          <div class="key">ID</div><div>${escapeHtml(meta.id || "—")}</div>
+          <div class="key">Author</div><div>${escapeHtml(meta.author || "—")}</div>
+          <div class="key">Mood</div><div>${escapeHtml(meta.mood || "—")}</div>
+          <div class="key">Use case</div><div>${escapeHtml(meta.use_case || "—")}</div>
+          <div class="key">Tags</div><div><div class="badge-row">${tagHtml || "—"}</div></div>
+        </div></section>
+        <section class="score-card"><h2>全域設定</h2><div class="inner kv">
+          <div class="key">BPM</div><div>${escapeHtml(global.bpm ?? "—")}</div>
+          <div class="key">Sample rate</div><div>${escapeHtml(global.sample_rate ?? "—")}</div>
+          <div class="key">Volume</div><div>${escapeHtml(global.master_volume ?? "—")}</div>
+          <div class="key">Reverb</div><div>${escapeHtml(JSON.stringify(effects.reverb || {}))}</div>
+          <div class="key">Delay</div><div>${escapeHtml(JSON.stringify(effects.delay || {}))}</div>
+          <div class="key">Wall</div><div>${escapeHtml(JSON.stringify(effects.wall || {}))}</div>
+        </div></section>
+        <section class="score-card"><h2>匯出設定</h2><div class="inner kv">
+          <div class="key">Filename</div><div>${escapeHtml(exp.filename || "—")}</div>
+          <div class="key">Format</div><div>${escapeHtml(exp.format || "—")}</div>
+          <div class="key">Bit depth</div><div>${escapeHtml(exp.bit_depth ?? "—")}</div>
+          <div class="key">Normalize</div><div>${escapeHtml(exp.normalize ?? "—")}</div>
+          <div class="key">Tail</div><div>${escapeHtml(exp.tail_silence_ms ?? "—")} ms</div>
+        </div></section>
+      </div>`;
+
+      html += `<h2 style="color:var(--gold);font-size:15px;margin:16px 0 8px;">Events</h2><table class="data-table"><thead><tr><th>#</th><th>time</th><th>duration</th><th>engine</th><th>note</th><th>velocity</th><th>params</th></tr></thead><tbody>`;
+      events.forEach((event, i) => {
+        html += `<tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(event.time ?? "—")}</td>
+          <td>${escapeHtml(event.duration ?? "—")}</td>
+          <td>${escapeHtml(event.engine ?? "—")}</td>
+          <td>${escapeHtml(event.note ?? "—")}</td>
+          <td>${escapeHtml(event.velocity ?? "—")}</td>
+          <td><code style="font-size:11px;">${escapeHtml(JSON.stringify(event.params || {}))}</code>${event.comment ? `<br><small>${escapeHtml(event.comment)}</small>` : ""}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    // ═══════════════════════════════════════════
+    //  PYTHON VIEW
+    // ═══════════════════════════════════════════
+    function scanPython(content) {
+      const lines = content.replace(/\r\n/g, "\n").split("\n");
+      const imports = [], functions = [], classes = [];
+      let hasMain = false;
+      lines.forEach((line, index) => {
+        const lineNo = index + 1;
+        const im = line.match(/^\s*(?:import\s+(.+)|from\s+([\w.]+)\s+import\s+(.+))/);
+        if (im) imports.push({ line: lineNo, text: line.trim() });
+        const fn = line.match(/^\s*def\s+([\w_]+)\s*\(/);
+        if (fn) functions.push({ line: lineNo, name: fn[1] });
+        const cl = line.match(/^\s*class\s+([\w_]+)/);
+        if (cl) classes.push({ line: lineNo, name: cl[1] });
+        if (line.includes('if __name__ == "__main__"') || line.includes("if __name__ == '__main__'")) hasMain = true;
+      });
+      return { imports, functions, classes, hasMain };
+    }
+
+    function scanPythonRisks(content) {
+      const checks = [
+        { re: /os\.remove|os\.unlink|shutil\.rmtree/g, label: "可能刪除檔案" },
+        { re: /open\s*\([^\n]*["']w["']|open\s*\([^\n]*["']a["']/g, label: "可能寫入檔案" },
+        { re: /requests\.|httpx\.|urllib\./g, label: "可能連網" },
+        { re: /subprocess\.|os\.system/g, label: "可能執行系統指令" },
+        { re: /API_KEY|\.env|os\.environ|getenv/g, label: "可能讀取金鑰" }
+      ];
+      return checks.filter(c => c.re.test(content));
+    }
+
+    function highlightPythonLine(line) {
+      let s = escapeHtml(line);
+      s = s.replace(/(#.*)$/g, '<span class="tok-comment">$1</span>');
+      s = s.replace(/(&quot;.*?&quot;|&#039;.*?&#039;)/g, '<span class="tok-string">$1</span>');
+      s = s.replace(/\b(def|class|import|from|as|if|elif|else|for|while|return|try|except|finally|with|lambda|yield|in|is|not|and|or|True|False|None)\b/g, '<span class="tok-keyword">$1</span>');
+      s = s.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-number">$1</span>');
+      s = s.replace(/\b([a-zA-Z_]\w*)(?=\s*\()/g, '<span class="tok-func">$1</span>');
+      return s;
+    }
+
+    function renderPythonView(content) {
+      const info = scanPython(content);
+      const risks = scanPythonRisks(content);
+      const imports = info.imports.length ? info.imports.map(x => `<li><code>${escapeHtml(x.text)}</code> <span class="badge">L${x.line}</span></li>`).join("") : "<li>無 import</li>";
+      const functions = info.functions.length ? info.functions.map(x => `<li><code>${escapeHtml(x.name)}()</code> <span class="badge">L${x.line}</span></li>`).join("") : "<li>無 function</li>";
+      const classes = info.classes.length ? info.classes.map(x => `<li><code>${escapeHtml(x.name)}</code> <span class="badge">L${x.line}</span></li>`).join("") : "<li>無 class</li>";
+      const riskHtml = risks.length ? risks.map(r => `<span class="badge warn">${escapeHtml(r.label)}</span>`).join("") : `<span class="badge ok">未偵測到風險關鍵字</span>`;
+
+      const lines = content.replace(/\r\n/g, "\n").split("\n");
+      let table = `<table class="code-table"><tbody>`;
+      lines.forEach((line, i) => {
+        table += `<tr><td class="line-no">${i + 1}</td><td class="line-code">${highlightSearchHtml(highlightPythonLine(line))}</td></tr>`;
+      });
+      table += `</tbody></table>`;
+
+      return `<div class="py-layout">
+        <aside class="outline-box">
+          <h2>Python 摘要</h2>
+          <div class="outline-list">
+            <strong>Imports</strong><ul>${imports}</ul>
+            <strong>Functions</strong><ul>${functions}</ul>
+            <strong>Classes</strong><ul>${classes}</ul>
+            <strong>Main guard</strong><div style="margin:6px 0;">${info.hasMain ? '<span class="badge ok">if __name__ == "__main__"</span>' : '<span class="badge">未偵測到</span>'}</div>
+            <strong>安全提醒</strong><div class="badge-row">${riskHtml}</div>
+          </div>
+        </aside>
+        <section>${table}</section>
+      </div>`;
+    }
+
+    // ═══════════════════════════════════════════
+    //  SUMMARY EXPORT
+    // ═══════════════════════════════════════════
+    function makeSummary() {
+      if (state.mode === "json" && state.parsedJson && isScoreJson(state.parsedJson)) {
+        const data = state.parsedJson;
+        const meta = data.meta || {};
+        const global = data.global || {};
+        const exp = data.export || {};
+        const events = Array.isArray(data.events) ? data.events : [];
+        return `# ${meta.title || state.filename}\n\n## 素材資訊\n\n- ID：${meta.id || "—"}\n- 描述：${meta.description || "—"}\n- Mood：${meta.mood || "—"}\n- Use case：${meta.use_case || "—"}\n- Tags：${Array.isArray(meta.tags) ? meta.tags.join(", ") : "—"}\n\n## 全域設定\n\n- BPM：${global.bpm ?? "—"}\n- Sample rate：${global.sample_rate ?? "—"}\n- Master volume：${global.master_volume ?? "—"}\n\n## Events\n\n${events.map((e, i) => `### Event ${i + 1}\n\n- Time：${e.time ?? "—"}\n- Duration：${e.duration ?? "—"}\n- Engine：${e.engine ?? "—"}\n- Note：${e.note ?? "—"}\n- Velocity：${e.velocity ?? "—"}\n- Params：\`${JSON.stringify(e.params || {})}\``).join("\n\n")}\n\n## Export\n\n- Filename：${exp.filename || "—"}\n- Format：${exp.format || "—"}\n- Bit depth：${exp.bit_depth ?? "—"}\n`;
+      }
+      if (state.mode === "py") {
+        const info = scanPython(state.content);
+        return `# ${state.filename} 摘要\n\n## Imports\n\n${info.imports.map(x => `- L${x.line}: \`${x.text}\``).join("\n") || "- 無"}\n\n## Functions\n\n${info.functions.map(x => `- L${x.line}: \`${x.name}()\``).join("\n") || "- 無"}\n\n## Classes\n\n${info.classes.map(x => `- L${x.line}: \`${x.name}\``).join("\n") || "- 無"}\n\n## Main guard\n\n${info.hasMain ? "有" : "未偵測到"}\n`;
+      }
+      return `# ${state.filename} 摘要\n\n檔案類型：${state.extension}\n\n## 內容預覽\n\n\`\`\`\n${state.content.slice(0, 4000)}\n\`\`\`\n`;
+    }
+
+    function getCurrentViewText() {
+      const active = document.querySelector(".view.active");
+      return active ? active.innerText.trim() : state.content;
+    }
+
+    function download(filename, text, type = "text/plain") {
+      const blob = new Blob([text], { type: `${type};charset=utf-8` });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "edited.md";
+      a.download = filename;
       a.click();
       URL.revokeObjectURL(url);
-      statusEl.textContent = "已下載 edited.md";
+    }
+
+    // ═══════════════════════════════════════════
+    //  EVENT LISTENERS
+    // ═══════════════════════════════════════════
+    fileInput.addEventListener("change", event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setFile(file.name, reader.result, file.size);
+      reader.readAsText(file, "utf-8");
     });
 
+    rawEditor.addEventListener("input", () => {
+      state.content = rawEditor.value;
+      setFile(state.filename || "edited.txt", state.content);
+    });
+
+    document.getElementById("copyRaw").addEventListener("click", () => {
+      copyPlain(state.content);
+      statusEl.textContent = "已複製原始內容";
+    });
+
+    document.getElementById("copyView").addEventListener("click", () => {
+      copyPlain(getCurrentViewText());
+      statusEl.textContent = "已複製目前視圖文字";
+    });
+
+    document.getElementById("downloadText").addEventListener("click", () => {
+      let text = state.content;
+      let name = state.filename || "download.txt";
+      if (state.mode === "json" && state.parsedJson && !state.jsonError) {
+        text = JSON.stringify(state.parsedJson, null, 2);
+        name = name.replace(/\.json$/i, ".pretty.json");
+      }
+      download(name, text);
+      statusEl.textContent = `已下載：${name}`;
+    });
+
+    document.getElementById("exportSummary").addEventListener("click", () => {
+      const base = (state.filename || "summary").replace(/\.[^.]+$/g, "").replace(/[^\w一-龥-]+/g, "_");
+      download(`${base}_summary.md`, makeSummary(), "text/markdown");
+      statusEl.textContent = "已匯出摘要 .md";
+    });
+
+    // --- Sheets export buttons ---
     document.getElementById("copyHtml").addEventListener("click", async () => {
       try {
-        await copyPlainText(preview.innerHTML.trim());
-        statusEl.textContent = "已複製 HTML。";
-      } catch (error) {
-        statusEl.textContent = "瀏覽器不允許自動複製。";
+        const html = markdownToHtml(state.content);
+        copyPlain(html);
+        statusEl.textContent = "已複製 HTML（可貼到 WordPress）";
+      } catch (e) {
+        statusEl.textContent = "複製失敗";
       }
     });
 
     document.getElementById("copyPlainTables").addEventListener("click", async () => {
-      const rows = markdownTablesToRows(editor.value);
+      const rows = markdownTablesToRows(state.content);
       if (!rows.length) {
-        statusEl.textContent = "沒有偵測到 Markdown 表格。";
+        statusEl.textContent = "沒有偵測到 Markdown 表格";
         return;
       }
-      await copyPlainText(toTSV(rows));
-      statusEl.textContent = `已複製純表格資料，貼到 Google Sheets A1。`;
+      copyPlain(toTSV(rows));
+      statusEl.textContent = "已複製純表格，貼到 Sheets A1";
     });
 
     document.getElementById("copyRichSheets").addEventListener("click", async () => {
-      const richHtml = markdownToRichSheetHtml(editor.value);
+      const richHtml = markdownToRichSheetHtml(state.content);
       try {
         await copyRichHtml(richHtml);
-        statusEl.textContent = "已複製格式化內容，貼到 Google Sheets A1。";
-      } catch (error) {
-        await copyPlainText(htmlToPlainTextTable(richHtml));
-        statusEl.textContent = "格式化複製失敗，已改複製純文字表格。";
+        statusEl.textContent = "已複製格式化內容，貼到 Sheets A1";
+      } catch (e) {
+        copyPlain(htmlToPlainTextTable(richHtml));
+        statusEl.textContent = "格式化複製失敗，已改複製純文字表格";
       }
     });
 
     document.getElementById("openSheetsRich").addEventListener("click", async () => {
-      const richHtml = markdownToRichSheetHtml(editor.value);
+      const richHtml = markdownToRichSheetHtml(state.content);
       try {
         await copyRichHtml(richHtml);
         window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
-        statusEl.textContent = "已開新 Google Sheet；到 A1 按 Ctrl+V。";
-      } catch (error) {
-        await copyPlainText(htmlToPlainTextTable(richHtml));
+        statusEl.textContent = "已開新 Sheet；到 A1 按 Ctrl+V";
+      } catch (e) {
+        copyPlain(htmlToPlainTextTable(richHtml));
         window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
-        statusEl.textContent = "格式化複製失敗，已改複製純文字表格；到 A1 貼上。";
+        statusEl.textContent = "已改複製純文字；到 A1 貼上";
       }
     });
 
-    document.getElementById("clearText").addEventListener("click", () => {
-      editor.value = "";
-      render();
-      statusEl.textContent = "已清空。";
+    // --- Search ---
+    document.getElementById("searchBtn").addEventListener("click", () => {
+      state.searchTerm = document.getElementById("searchInput").value;
+      renderViews();
+      renderTabs();
+      statusEl.textContent = state.searchTerm ? `搜尋：${state.searchTerm}` : "搜尋已清空";
     });
 
-    const saved = localStorage.getItem("mdRichSheetDraft");
-    editor.value = saved || `# 內部連結審計報告 — 2026-05-05
+    document.getElementById("searchInput").addEventListener("keydown", event => {
+      if (event.key === "Enter") document.getElementById("searchBtn").click();
+    });
 
-## 概覽
+    // --- Drag & drop ---
+    ["dragenter", "dragover"].forEach(type => {
+      document.addEventListener(type, event => {
+        event.preventDefault();
+        appRoot.classList.add("drop-zone");
+      });
+    });
+    ["dragleave", "drop"].forEach(type => {
+      document.addEventListener(type, event => {
+        event.preventDefault();
+        appRoot.classList.remove("drop-zone");
+      });
+    });
+    document.addEventListener("drop", event => {
+      const file = event.dataTransfer.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setFile(file.name, reader.result, file.size);
+      reader.readAsText(file, "utf-8");
+    });
 
-| 項目 | 數值 |
-|---|---|
-| 總頁數 | 87（草稿 0） |
-| 內部連結數 | 159 |
-| 孤兒頁 | 39 |
+    // --- PostMessage API for parent shell ---
+    window.addEventListener("message", (event) => {
+      if (event.data?.type === "akasha-open-file") {
+        setFile(event.data.filename || "file.md", event.data.content, event.data.size);
+      }
+    });
 
-## 1. 孤兒頁（無人連入）
+    // --- Dark/Light mode inheritance ---
+    function syncMode() {
+      const parentMode = window.parent?.document?.documentElement?.getAttribute("data-mode");
+      if (parentMode) document.documentElement.setAttribute("data-mode", parentMode);
+    }
+    syncMode();
+    window.addEventListener("message", (e) => {
+      if (e.data?.type === "akasha-mode-change") {
+        document.documentElement.setAttribute("data-mode", e.data.mode);
+      }
+    });
 
-| slug | title | draft | GSC clicks | GSC impressions |
-|---|---|---|---|---|
-| 3c-loan | **3C借款懶人包：筆電、平板、手機借款行情＋管道＋利率一次看清楚** | — | — | — |
-| about-us-loannow | 關於現貸人 | — | — | — |
-
-### 備註
-
-- 這裡會保留成清單列。
-- **粗體**會盡量保留。
-`;
-    render();
+    // --- Restore draft ---
+    const saved = localStorage.getItem("akasha-reader-draft");
+    const savedName = localStorage.getItem("akasha-reader-filename");
+    if (saved) setFile(savedName || "draft.txt", saved);
+    else {
+      renderFileInfo(0);
+      renderHint();
+      renderChecks();
+      renderTabs();
+      updateSheetsVisibility();
+    }
   </script>
 </body>
 </html>

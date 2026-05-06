@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-v1';
+const CACHE_NAME = 'akasha-library-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -6,6 +6,7 @@ const ASSETS_TO_CACHE = [
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
   './icons/apple-touch-icon.png',
+  './assets/styles/shared.css',
   './modules/markdown/index.html',
   './modules/pdf-reader/index.html',
   './modules/book-editor/index.html',
