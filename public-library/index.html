@@ -1,22 +1,12 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-mode="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>公共書庫 — 阿卡夏圖書館</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/styles/shared.css">
 <style>
-:root {
-  --navy: #1E2430;
-  --navy-light: #2A3240;
-  --navy-hover: #343E4E;
-  --gold: #C9A86A;
-  --gold-dim: #A08550;
-  --gold-glow: rgba(201,168,106,0.15);
-  --cream: #F4F0E6;
-  --text-primary: #F4F0E6;
-  --text-secondary: #9BA3B0;
-}
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -34,10 +24,11 @@ body {
 }
 
 .header-brand {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--font-serif-en, 'Cormorant Garamond', serif);
   font-size: 28px;
   color: var(--gold);
-  letter-spacing: 3px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
 
 .header-sub {
@@ -89,7 +80,7 @@ body {
   width: 100%;
   padding: 10px 16px 10px 38px;
   background: var(--navy-light);
-  border: 1px solid var(--navy-hover);
+  border: 1px solid var(--navy-line, var(--navy-hover));
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 13px;
@@ -126,7 +117,7 @@ body {
 
 .book-card {
   background: var(--navy-light);
-  border: 1px solid var(--navy-hover);
+  border: 1px solid var(--navy-line, var(--navy-hover));
   border-radius: 10px;
   padding: 20px;
   cursor: pointer;
@@ -150,7 +141,7 @@ body {
   margin-bottom: 14px;
   font-size: 32px;
   color: var(--gold-dim);
-  border: 1px solid var(--navy-hover);
+  border: 1px solid var(--navy-line, var(--navy-hover));
 }
 
 .book-card__cover img {

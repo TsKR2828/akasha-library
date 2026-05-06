@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-mode="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#1E2430">
+<meta name="theme-color" content="#181d28">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="阿卡夏">
@@ -12,195 +12,247 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
 <title>阿卡夏圖書館</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/styles/shared.css">
 <style>
-:root {
-  --navy: #1E2430;
-  --navy-light: #2A3240;
-  --navy-hover: #343E4E;
-  --gold: #C9A86A;
-  --gold-dim: #A08550;
-  --gold-glow: rgba(201,168,106,0.15);
-  --cream: #F4F0E6;
-  --text-primary: #F4F0E6;
-  --text-secondary: #9BA3B0;
-  --danger: #C75B5B;
-  --success: #6AAE7F;
-  --sidebar-width: 260px;
-}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  font-family: 'Noto Serif TC', serif;
-  background: var(--navy);
-  color: var(--text-primary);
-  height: 100vh;
-  overflow: hidden;
-  display: flex;
-}
+html, body { height: 100%; overflow: hidden; }
+body { display: flex; }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
-  width: var(--sidebar-width);
-  background: var(--navy);
-  border-right: 1px solid var(--navy-light);
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: linear-gradient(180deg, #1c2230 0%, #161b25 70%, #11151d 100%);
+  border-right: 1px solid var(--navy-line);
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  height: 100vh;
+  position: relative;
+  font-family: var(--font-body);
 }
 
-.sidebar-header {
-  padding: 20px 18px 16px;
-  border-bottom: 1px solid var(--navy-light);
+.sidebar-brass-edge {
+  position: absolute;
+  right: 0; top: 0; bottom: 0; width: 1px;
+  background: linear-gradient(180deg, transparent 0%, var(--gold-line) 8%, var(--gold-line) 92%, transparent 100%);
+  pointer-events: none;
 }
 
-.brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--gold);
-  letter-spacing: 2px;
-}
-
-.brand-sub {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: 4px;
-  letter-spacing: 0.5px;
-}
-
-/* Auth area */
-.auth-area {
-  padding: 12px 18px;
-  border-bottom: 1px solid var(--navy-light);
-}
-
-.auth-btn {
-  width: 100%;
-  padding: 9px 14px;
-  border: 1px solid var(--navy-light);
-  border-radius: 6px;
-  background: var(--navy-light);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.2s;
+/* Brand */
+.sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
+  padding: 22px 22px 18px;
 }
 
-.auth-btn:hover {
-  border-color: var(--gold-dim);
-  background: var(--navy-hover);
+.sidebar-brand-text {
+  display: flex; flex-direction: column; line-height: 1.05;
 }
 
-.auth-btn.connected {
-  border-color: var(--success);
-  color: var(--success);
+.brand-en {
+  font-family: var(--font-serif-en);
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  color: var(--gold);
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.brand-tc {
+  font-family: var(--font-serif-tc);
+  font-size: 13px;
+  color: var(--text-secondary);
+  letter-spacing: 0.32em;
+  margin-top: 4px;
+}
+
+/* Auth block */
+.auth-block {
+  margin: 8px 18px 14px;
+  padding: 14px;
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+  background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(0,0,0,0.18));
+  position: relative;
+}
+
+.auth-row {
+  display: flex; align-items: center; gap: 10px;
 }
 
 .auth-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--navy-hover);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #4a3a26, #2a1f12);
+  border: 1px solid var(--gold-line);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  font-family: var(--font-serif-en);
+  font-size: 16px; font-weight: 500;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
+  flex-shrink: 0;
+}
+
+.auth-text { flex: 1; min-width: 0; }
+
+.auth-name {
+  font-family: var(--font-serif-tc);
+  font-size: 13.5px; color: var(--text-primary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.auth-meta {
+  font-size: 11px; color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-tertiary);
+  display: inline-block;
+}
+.sync-dot.synced { background: var(--success); }
+.sync-dot.syncing { background: var(--gold); box-shadow: 0 0 8px var(--gold); animation: pulse 1.4s ease-in-out infinite; }
+.sync-dot.error { background: var(--danger); }
+
+.auth-login-btn {
+  margin-top: 10px; width: 100%;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--gold-line);
+  background: transparent;
+  color: var(--gold);
+  font-family: var(--font-serif-tc);
+  font-size: 12.5px; letter-spacing: 0.1em;
+  border-radius: var(--r-soft);
+  cursor: pointer;
+  transition: all 160ms;
+}
+.auth-login-btn:hover {
+  background: var(--gold-glow);
 }
 
 /* Nav */
-.nav-section {
-  padding: 14px 12px 8px;
+.nav-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px 16px;
 }
 
-.nav-label {
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  color: var(--text-secondary);
+.nav-section-label {
+  font-family: var(--font-serif-en);
+  font-size: 10.5px;
+  letter-spacing: 0.32em;
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  padding: 0 6px;
-  margin-bottom: 6px;
+  padding: 16px 10px 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+
+.nav-section-rule {
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, var(--navy-line), transparent);
 }
 
 .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 13px;
+  display: flex; align-items: center; gap: 12px;
+  padding: 9px 12px;
   color: var(--text-secondary);
-  transition: all 0.15s;
+  background: transparent;
   border: none;
-  background: none;
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--r-soft) var(--r-soft) 0;
+  cursor: pointer;
+  transition: all 160ms ease;
+  position: relative;
+  font-family: var(--font-serif-tc);
   width: 100%;
   text-align: left;
-  font-family: inherit;
 }
 
 .nav-item:hover {
-  background: var(--navy-light);
+  background: rgba(255,255,255,0.025);
   color: var(--text-primary);
 }
 
 .nav-item.active {
+  color: var(--gold-bright);
   background: var(--gold-glow);
-  color: var(--gold);
+  border-left-color: var(--gold);
 }
 
-.nav-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: var(--navy-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
+.nav-item-icon {
+  opacity: 0.85;
+  display: flex; align-items: center;
+  color: inherit;
 }
 
-.nav-item.active .nav-icon {
-  background: rgba(201,168,106,0.2);
+.nav-item-text {
+  display: flex; flex-direction: column; line-height: 1.15; flex: 1;
 }
 
-.nav-info {
-  flex: 1;
-  min-width: 0;
+.nav-item-title {
+  font-size: 13.5px; letter-spacing: 0.08em;
 }
 
-.nav-info-title {
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.nav-item-sub {
+  font-family: var(--font-serif-en);
+  font-size: 10px; letter-spacing: 0.18em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
-.nav-info-sub {
-  font-size: 10px;
-  color: var(--text-secondary);
-  margin-top: 1px;
+.nav-item.active .nav-item-sub { color: var(--gold-dim); }
+
+.nav-active-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+  display: none;
 }
+.nav-item.active .nav-active-dot { display: block; }
 
 /* Sidebar footer */
 .sidebar-footer {
-  margin-top: auto;
-  padding: 14px 18px;
-  border-top: 1px solid var(--navy-light);
-  font-size: 10px;
-  color: var(--text-secondary);
-  text-align: center;
-  letter-spacing: 0.5px;
+  padding: 14px 22px 18px;
+  border-top: 1px solid var(--navy-line);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.06em;
+  display: flex; justify-content: space-between; align-items: center;
 }
 
-/* ===== MAIN CONTENT ===== */
+.sidebar-footer a {
+  color: var(--text-tertiary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.sidebar-footer a:hover { color: var(--gold); }
+
+.mode-toggle-btn {
+  background: none; border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+  color: var(--text-tertiary);
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 160ms;
+}
+.mode-toggle-btn:hover {
+  color: var(--gold);
+  border-color: var(--gold-line);
+}
+
+/* ===== MAIN ===== */
 .main {
   flex: 1;
   display: flex;
@@ -208,204 +260,373 @@ body {
   overflow: hidden;
 }
 
-/* Top bar */
+/* Topbar */
 .topbar {
-  height: 48px;
-  background: var(--navy);
-  border-bottom: 1px solid var(--navy-light);
-  display: flex;
-  align-items: center;
-  padding: 0 20px;
-  gap: 12px;
-  flex-shrink: 0;
+  height: var(--topbar-h);
+  min-height: var(--topbar-h);
+  background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
+  border-bottom: 1px solid var(--navy-line);
+  display: flex; align-items: center;
+  padding: 0 28px;
+  gap: 16px;
+  position: relative;
+}
+
+.topbar-brass {
+  position: absolute; left: 28px; right: 28px; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-line) 25%, var(--gold-line) 75%, transparent);
+}
+
+.topbar-info {
+  display: flex; flex-direction: column; line-height: 1.15;
+}
+
+.topbar-breadcrumb {
+  font-family: var(--font-serif-en);
+  font-size: 10.5px; letter-spacing: 0.3em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  margin-bottom: 3px;
 }
 
 .topbar-title {
-  font-size: 15px;
-  color: var(--text-primary);
-  font-weight: 600;
+  font-family: var(--font-serif-tc);
+  font-size: 15.5px; color: var(--text-primary);
+  letter-spacing: 0.06em;
+  display: flex; align-items: baseline; gap: 10px;
+}
+
+.topbar-subtitle {
+  font-family: var(--font-serif-en);
+  font-style: italic;
+  font-size: 12px; color: var(--text-tertiary);
+  letter-spacing: 0.04em;
 }
 
 .topbar-actions {
   margin-left: auto;
-  display: flex;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
 
+/* Buttons */
 .btn {
-  font-family: inherit;
-  font-size: 12px;
+  font-family: var(--font-serif-tc);
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
   padding: 7px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--navy-light);
-  background: var(--navy-light);
-  color: var(--text-primary);
+  border-radius: var(--r-soft);
+  border: 1px solid var(--navy-line);
+  background: transparent;
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  display: inline-flex; align-items: center; gap: 7px;
+  transition: all 160ms;
 }
-
 .btn:hover {
-  border-color: var(--gold-dim);
-  background: var(--navy-hover);
+  background: rgba(201,168,106,0.05);
+  color: var(--gold-bright);
+  border-color: var(--gold-line);
 }
 
 .btn-gold {
-  background: var(--gold);
-  color: var(--navy);
+  background: rgba(201,168,106,0.12);
   border-color: var(--gold);
-  font-weight: 600;
+  color: var(--gold-bright);
 }
-
 .btn-gold:hover {
-  background: var(--gold-dim);
+  background: var(--gold);
+  color: var(--navy-deep);
 }
 
-/* Content area */
-.content {
+/* ===== DASHBOARD ===== */
+.dashboard {
   flex: 1;
-  overflow-y: auto;
-  padding: 28px;
+  overflow: auto;
+  padding: 32px 48px 56px;
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  position: relative;
 }
 
-/* Dashboard grid */
-.dashboard-grid {
+/* Hero */
+.dash-hero {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 32px; gap: 24px;
+}
+
+.hero-left { max-width: 600px; }
+
+.hero-eyebrow {
+  font-family: var(--font-serif-en);
+  font-size: 11px; letter-spacing: 0.4em;
+  color: var(--gold);
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+
+.hero-eyebrow-orn {
+  width: 28px; height: 1px; background: var(--gold);
+}
+
+.hero-title {
+  font-family: var(--font-serif-tc);
+  font-size: 38px; line-height: 1.2;
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.hero-en {
+  font-family: var(--font-serif-en);
+  font-style: italic;
+  font-size: 17px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  letter-spacing: 0.04em;
+}
+
+.hero-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.08em;
+}
+
+.hero-time {
+  font-family: var(--font-serif-en);
+  font-size: 22px; color: var(--gold);
+  letter-spacing: 0.18em;
+}
+
+.hero-time-sep { color: var(--text-tertiary); }
+
+/* Shelf header */
+.shelf-header {
+  display: flex; align-items: baseline; gap: 16px;
+  margin-top: 16px; margin-bottom: 18px;
+}
+
+.shelf-num {
+  font-family: var(--font-serif-en);
+  font-size: 34px; color: var(--gold-deep);
+  font-style: italic; line-height: 1;
+}
+
+.shelf-label {
+  font-family: var(--font-serif-tc);
+  font-size: 18px; color: var(--text-primary);
+  letter-spacing: 0.18em;
+}
+
+.shelf-en {
+  font-family: var(--font-serif-en);
+  font-size: 11px; letter-spacing: 0.3em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.shelf-rule { flex: 1; height: 1px; background: var(--navy-line); }
+
+/* Module shelf */
+.module-shelf {
+  position: relative;
+  padding: 0 0 28px;
+  margin-bottom: 36px;
+}
+
+.shelf-board {
+  position: absolute;
+  bottom: 8px; left: -8px; right: -8px; height: 14px;
+  background: linear-gradient(180deg, #5b3a2a 0%, #3a2618 70%, #1f130a 100%);
+  border-radius: 1px;
+  box-shadow: 0 6px 18px -4px rgba(0,0,0,0.6), inset 0 1px 0 var(--gold-line);
+}
+
+.cards-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-top: 20px;
+  position: relative;
+  z-index: 1;
 }
 
+/* Module card */
 .module-card {
-  background: var(--navy-light);
-  border: 1px solid var(--navy-hover);
-  border-radius: 10px;
-  padding: 22px;
+  position: relative;
+  background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy-light) 100%);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-card);
+  padding: 22px 22px 20px;
   cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-  color: inherit;
-  display: block;
+  transition: transform 220ms cubic-bezier(.2,.8,.2,1), border-color 200ms, box-shadow 220ms;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  min-height: 220px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  text-decoration: none; color: inherit;
 }
-
 .module-card:hover {
-  border-color: var(--gold-dim);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  border-color: var(--gold-line);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lift);
+}
+.module-card.featured {
+  background: linear-gradient(180deg, var(--navy-light) 0%, #262d3c 100%);
+  border-color: var(--gold-line);
 }
 
-.card-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: var(--gold-glow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  margin-bottom: 14px;
+.card-spine {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+  box-shadow: 1px 0 0 rgba(0,0,0,0.4), inset 0 0 4px rgba(0,0,0,0.5);
 }
+
+.card-roman {
+  position: absolute; top: 14px; right: 18px;
+  font-family: var(--font-serif-en);
+  font-size: 22px; font-style: italic;
+  color: var(--gold-deep);
+  letter-spacing: 0.05em;
+}
+
+.card-icon-box {
+  width: 48px; height: 48px;
+  border: 1px solid var(--gold-line);
+  border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  background: rgba(201,168,106,0.04);
+  margin-bottom: 18px;
+  transition: all 200ms;
+}
+.module-card:hover .card-icon-box { color: var(--gold-bright); }
 
 .card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 6px;
+  font-family: var(--font-serif-tc);
+  font-size: 19px; color: var(--text-primary);
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.card-en {
+  font-family: var(--font-serif-en);
+  font-style: italic;
+  font-size: 12.5px; color: var(--gold);
+  letter-spacing: 0.16em;
+  margin-bottom: 10px;
 }
 
 .card-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-family: var(--font-serif-tc);
+  font-size: 12.5px; color: var(--text-secondary);
   line-height: 1.6;
 }
 
-.card-formats {
-  margin-top: 12px;
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.card-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; padding-top: 12px;
+  border-top: 1px dashed rgba(201,168,106,0.18);
 }
+
+.card-formats { display: flex; gap: 5px; }
 
 .format-tag {
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: var(--navy);
-  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  padding: 2px 6px;
   border: 1px solid var(--navy-hover);
+  border-radius: 2px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.05em;
 }
 
-/* Recent files */
-.section-title {
-  font-size: 13px;
-  color: var(--text-secondary);
-  letter-spacing: 0.1em;
+.card-open-hint {
+  font-family: var(--font-serif-en);
+  font-size: 11px; letter-spacing: 0.24em;
+  color: var(--text-tertiary);
   text-transform: uppercase;
-  margin-bottom: 14px;
+  transition: color 180ms;
 }
+.module-card:hover .card-open-hint { color: var(--gold); }
 
-.recent-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 24px;
-}
-
-.recent-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.recent-item:hover {
+/* Recent files ledger */
+.recent-ledger {
   background: var(--navy-light);
-}
-
-.recent-icon {
-  font-size: 18px;
-  width: 32px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.recent-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.recent-name {
-  font-size: 13px;
-  white-space: nowrap;
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-card);
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.recent-meta {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: 2px;
+.ledger-header {
+  display: grid;
+  grid-template-columns: 32px 2.5fr 1fr 1.2fr 0.6fr 60px;
+  gap: 16px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--navy-line);
+  font-family: var(--font-serif-en);
+  font-size: 10.5px; letter-spacing: 0.28em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.18);
 }
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 32px 2.5fr 1fr 1.2fr 0.6fr 60px;
+  gap: 16px;
+  padding: 13px 22px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  align-items: center;
+  cursor: pointer;
+  transition: background 140ms;
+}
+.ledger-row:last-child { border-bottom: none; }
+.ledger-row:hover { background: rgba(201,168,106,0.04); }
+
+.ledger-num {
+  font-family: var(--font-serif-en); font-style: italic;
+  font-size: 14px; color: var(--gold-deep);
+}
+
+.ledger-title {
+  font-family: var(--font-serif-tc); font-size: 13.5px;
+  color: var(--text-primary); display: flex; align-items: center; gap: 10px;
+}
+
+.ledger-title-icon { color: var(--gold); opacity: 0.85; display: flex; align-items: center; }
+
+.ledger-format {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--text-tertiary); letter-spacing: 0.08em;
+}
+
+.ledger-time {
+  font-family: var(--font-serif-tc); font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ledger-mark {
+  font-family: var(--font-serif-en); font-style: italic;
+  font-size: 12px; color: var(--gold);
+}
+
+.ledger-action {
+  font-family: var(--font-serif-en); font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.2em; text-align: right;
+  text-transform: uppercase;
+}
+.ledger-row:hover .ledger-action { color: var(--gold); }
 
 /* Empty state */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary);
+  padding: 40px 20px;
+  color: var(--text-tertiary);
 }
-
-.empty-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.empty-text {
-  font-size: 14px;
-  line-height: 1.8;
-}
+.empty-state-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.4; }
+.empty-state-text { font-size: 13px; line-height: 1.8; font-family: var(--font-serif-tc); }
 
 /* Module iframe */
 .module-frame {
@@ -414,162 +635,305 @@ body {
   border: none;
   display: none;
 }
-
-.module-frame.active {
-  display: block;
-}
+.module-frame.active { display: block; }
 
 /* Responsive */
+@media (max-width: 900px) {
+  .cards-row { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 768px) {
   .sidebar { display: none; }
-  .content { padding: 16px; }
-  .dashboard-grid { grid-template-columns: 1fr; }
+  .dashboard { padding: 20px; }
+  .cards-row { grid-template-columns: 1fr; }
+  .dash-hero { flex-direction: column; align-items: flex-start; }
+  .ledger-header, .ledger-row {
+    grid-template-columns: 32px 2fr 1fr 60px;
+  }
+  .ledger-header > :nth-child(4),
+  .ledger-header > :nth-child(5),
+  .ledger-row > :nth-child(4),
+  .ledger-row > :nth-child(5) { display: none; }
 }
 </style>
 </head>
 <body>
 
 <!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <div class="brand">AKASHA</div>
-    <div class="brand-sub">阿卡夏圖書館</div>
+<aside class="sidebar tex-paper">
+  <div class="sidebar-brass-edge"></div>
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <svg width="42" height="42" viewBox="0 0 60 60" fill="none" style="flex-shrink:0">
+      <path d="M30 4 L52 16 L52 44 L30 56 L8 44 L8 16 Z" stroke="var(--gold)" stroke-width="1" opacity="0.55" fill="none"/>
+      <path d="M30 8 L48 18 L48 42 L30 52 L12 42 L12 18 Z" stroke="var(--gold)" stroke-width="0.5" opacity="0.35" fill="none"/>
+      <path d="M30 14 c1.5 2 3 3 3 5.5 a3 3 0 11-6 0 c0-1.2 .6-1.8 1.2-2.4 0 1.2 1.2 1.8 1.8 .6 0-1.8-.6-2.4 0-3.7z" fill="var(--gold)" opacity="0.9"/>
+      <path d="M19 42 L30 22 L41 42 M23.5 35 H36.5" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M16 46 L44 46" stroke="var(--gold)" stroke-width="0.8" opacity="0.6"/>
+    </svg>
+    <div class="sidebar-brand-text">
+      <div class="brand-en">Akasha</div>
+      <div class="brand-tc">阿卡夏圖書館</div>
+    </div>
   </div>
 
-  <div class="auth-area">
-    <button class="auth-btn" id="auth-btn" onclick="handleAuth()">
-      <span class="auth-avatar">G</span>
-      <span id="auth-text">連接 Google Drive</span>
+  <div class="brass-rule brass-rule--thin" style="margin:0 22px"></div>
+
+  <!-- Auth -->
+  <div class="auth-block" id="auth-block">
+    <div class="auth-row">
+      <div class="auth-avatar" id="auth-avatar">客</div>
+      <div class="auth-text">
+        <div class="auth-name" id="auth-name">訪客 — 未登入</div>
+        <div class="auth-meta">
+          <span class="sync-dot" id="sync-dot"></span>
+          <span id="sync-label">離線模式</span>
+        </div>
+      </div>
+    </div>
+    <button class="auth-login-btn" id="auth-login-btn" onclick="handleAuth()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-3-6.7l-2.4 2.4A5.5 5.5 0 1017.5 14H12v-3h9z"/></svg>
+      以 Google 簽到入館
     </button>
   </div>
 
-  <nav class="nav-section">
-    <div class="nav-label">書庫</div>
+  <!-- Nav -->
+  <nav class="nav-wrap">
+    <div class="nav-section-label">
+      <span>I &middot; Navigate</span>
+      <span class="nav-section-rule"></span>
+    </div>
     <button class="nav-item active" data-view="dashboard">
-      <span class="nav-icon">&#9776;</span>
-      <span class="nav-info"><span class="nav-info-title">總覽</span></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">總覽</span>
+        <span class="nav-item-sub">Overview</span>
+      </span>
+      <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-view="personal">
-      <span class="nav-icon">&#128218;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">個人書庫</span>
-        <span class="nav-info-sub">我的檔案</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/><path d="M8 8v0M12 8v0M16 8v0M8 16v0M12 16v0M16 16v0"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">個人書庫</span>
+        <span class="nav-item-sub">My Library</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-view="public">
-      <span class="nav-icon">&#127758;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">公共書庫</span>
-        <span class="nav-info-sub">同樂會</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">公共書庫</span>
+        <span class="nav-item-sub">Public Stacks</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
-  </nav>
 
-  <nav class="nav-section">
-    <div class="nav-label">工具</div>
+    <div class="nav-section-label">
+      <span>II &middot; Tools</span>
+      <span class="nav-section-rule"></span>
+    </div>
     <button class="nav-item" data-module="markdown">
-      <span class="nav-icon">&#9998;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">Markdown 編輯器</span>
-        <span class="nav-info-sub">撰寫 / 匯出</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">Markdown</span>
+        <span class="nav-item-sub">Manuscripts</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-module="pdf-reader">
-      <span class="nav-icon">&#128214;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">PDF 閱讀器</span>
-        <span class="nav-info-sub">閱讀 / 切割</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">PDF 閱讀器</span>
+        <span class="nav-item-sub">Reading Hall</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-module="spreadsheet">
-      <span class="nav-icon">&#128202;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">試算表</span>
-        <span class="nav-info-sub">Excel 編輯</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">試算表</span>
+        <span class="nav-item-sub">Ledgers</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-module="book-editor">
-      <span class="nav-icon">&#128155;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">書籍排版器</span>
-        <span class="nav-info-sub">視覺化編書</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">書籍排版器</span>
+        <span class="nav-item-sub">Bindery</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-module="ai-settings">
-      <span class="nav-icon">&#9881;</span>
-      <span class="nav-info">
-        <span class="nav-info-title">AI 設定</span>
-        <span class="nav-info-sub">BYOK / 月幣</span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">AI 設定</span>
+        <span class="nav-item-sub">Aetherium</span>
       </span>
+      <span class="nav-active-dot"></span>
     </button>
   </nav>
 
+  <!-- Footer -->
   <div class="sidebar-footer">
-    Akasha Library v0.1 &middot; <a href="privacy.html" target="_blank" style="color:var(--text-secondary);font-size:10px;">隱私權政策</a>
+    <span>v0.1 &middot; MMXXVI</span>
+    <button class="mode-toggle-btn" id="mode-toggle" onclick="toggleMode()" title="切換明暗模式">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" id="mode-icon"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+    <a href="privacy.html" target="_blank">Privacy</a>
   </div>
 </aside>
 
 <!-- MAIN -->
 <main class="main">
-  <div class="topbar">
-    <span class="topbar-title" id="topbar-title">總覽</span>
+  <!-- Topbar -->
+  <div class="topbar" id="topbar">
+    <div class="topbar-brass"></div>
+    <div class="topbar-info">
+      <div class="topbar-breadcrumb" id="topbar-breadcrumb">Akasha Library</div>
+      <div class="topbar-title">
+        <span id="topbar-title">總覽</span>
+        <span class="topbar-subtitle" id="topbar-subtitle">&middot; Overview</span>
+      </div>
+    </div>
     <div class="topbar-actions">
-      <button class="btn" id="btn-import" onclick="importFile()">匯入檔案</button>
-      <button class="btn btn-gold" id="btn-new" onclick="newFile()">新建</button>
+      <button class="btn" id="btn-import" onclick="importFile()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+        匯入
+      </button>
+      <button class="btn btn-gold" id="btn-new" onclick="newFile()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        新建
+      </button>
     </div>
   </div>
 
   <!-- Dashboard view -->
-  <div class="content" id="view-dashboard">
-    <div class="section-title">開啟工具</div>
-    <div class="dashboard-grid">
-      <a class="module-card" data-module="markdown">
-        <div class="card-icon">&#9998;</div>
-        <div class="card-title">Markdown 編輯器</div>
-        <div class="card-desc">撰寫文章、預覽排版、同步到 Google Sheets 或匯出檔案</div>
-        <div class="card-formats">
-          <span class="format-tag">.md</span>
-          <span class="format-tag">HTML</span>
-          <span class="format-tag">Google Sheets</span>
+  <div class="dashboard tex-paper" id="view-dashboard">
+    <!-- Hero -->
+    <div class="dash-hero">
+      <div class="hero-left">
+        <div class="hero-eyebrow">
+          <span class="hero-eyebrow-orn"></span>
+          Bibliotheca &middot; 阿卡夏
+          <span class="hero-eyebrow-orn"></span>
         </div>
-      </a>
-      <a class="module-card" data-module="pdf-reader">
-        <div class="card-icon">&#128214;</div>
-        <div class="card-title">PDF 閱讀器</div>
-        <div class="card-desc">閱讀 PDF、切割頁面、管理本地書庫</div>
-        <div class="card-formats">
-          <span class="format-tag">.pdf</span>
-          <span class="format-tag">切割</span>
-          <span class="format-tag">書庫</span>
-        </div>
-      </a>
-      <a class="module-card" data-module="spreadsheet">
-        <div class="card-icon">&#128202;</div>
-        <div class="card-title">試算表編輯器</div>
-        <div class="card-desc">免買 Office 也能編輯 Excel，支援公式與多工作表</div>
-        <div class="card-formats">
-          <span class="format-tag">.xlsx</span>
-          <span class="format-tag">公式</span>
-          <span class="format-tag">多工作表</span>
-        </div>
-      </a>
-      <a class="module-card" data-module="book-editor">
-        <div class="card-icon">&#128155;</div>
-        <div class="card-title">書籍排版器</div>
-        <div class="card-desc">視覺化排版童話書、小說，可加圖片並匯出成 PDF</div>
-        <div class="card-formats">
-          <span class="format-tag">.pdf</span>
-          <span class="format-tag">.html</span>
-          <span class="format-tag">.book</span>
-        </div>
-      </a>
+        <h1 class="hero-title" id="hero-greeting">晚安，旅人。書庫今晚靜謐。</h1>
+        <div class="hero-en">"All knowledge that the world has ever received comes from the mind."</div>
+      </div>
+      <div class="hero-right">
+        <div class="hero-time" id="hero-time">00<span class="hero-time-sep">:</span>00</div>
+        <div id="hero-date">MMXXVI &middot; MAY &middot; V</div>
+      </div>
     </div>
 
-    <div class="recent-list" id="recent-list">
-      <div class="section-title">最近開啟</div>
-      <div class="empty-state">
-        <div class="empty-icon">&#128218;</div>
-        <div class="empty-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
+    <!-- Shelf I: Modules -->
+    <div class="shelf-header">
+      <span class="shelf-num">I.</span>
+      <span class="shelf-label">四廳</span>
+      <span class="shelf-en">Quattuor Aulae &middot; Four Halls</span>
+      <span class="shelf-rule"></span>
+    </div>
+    <div class="module-shelf">
+      <div class="cards-row">
+        <!-- Markdown -->
+        <a class="module-card" data-module="markdown">
+          <div class="card-spine" style="background:linear-gradient(180deg,#5b3a2a,#5b3a2acc,#5b3a2a88)"></div>
+          <div class="card-roman">I</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
+            </div>
+            <div class="card-title">Markdown</div>
+            <div class="card-en">— Manuscripta</div>
+            <div class="card-desc">雙欄即時預覽。羽毛筆下的文字，自有重量。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">.md</span>
+              <span class="format-tag">.html</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
+        <!-- PDF -->
+        <a class="module-card featured" data-module="pdf-reader">
+          <div class="card-spine" style="background:linear-gradient(180deg,#3a2818,#3a2818cc,#3a281888)"></div>
+          <div class="card-roman">II</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+            </div>
+            <div class="card-title">PDF 閱讀器</div>
+            <div class="card-en">— Lectorium</div>
+            <div class="card-desc">翻頁、註解、頁面切割；圖書館員為您伴讀。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">.pdf</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
+        <!-- Spreadsheet -->
+        <a class="module-card" data-module="spreadsheet">
+          <div class="card-spine" style="background:linear-gradient(180deg,#3d3220,#3d3220cc,#3d322088)"></div>
+          <div class="card-roman">III</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>
+            </div>
+            <div class="card-title">試算表</div>
+            <div class="card-en">— Tabularium</div>
+            <div class="card-desc">公式、儲存格、多工作表。冷靜的數字之地。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">.xlsx</span>
+              <span class="format-tag">.csv</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
+        <!-- Book editor -->
+        <a class="module-card" data-module="book-editor">
+          <div class="card-spine" style="background:linear-gradient(180deg,#4a2828,#4a2828cc,#4a282888)"></div>
+          <div class="card-roman">IV</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>
+            </div>
+            <div class="card-title">書籍排版器</div>
+            <div class="card-en">— Bibliopegia</div>
+            <div class="card-desc">頁面重排、封面、匯出 PDF。為文字製作一具身體。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">.pdf</span>
+              <span class="format-tag">.html</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
+      </div>
+      <div class="shelf-board"></div>
+    </div>
+
+    <!-- Shelf II: Recent files -->
+    <div class="shelf-header">
+      <span class="shelf-num">II.</span>
+      <span class="shelf-label">近日卷帙</span>
+      <span class="shelf-en">Recentes &middot; Last Opened</span>
+      <span class="shelf-rule"></span>
+    </div>
+    <div id="recent-list">
+      <div class="recent-ledger">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg>
+          </div>
+          <div class="empty-state-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
+        </div>
       </div>
     </div>
   </div>
@@ -585,14 +949,40 @@ import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
 
 const modules = {
-  'markdown': { title: 'Markdown 編輯器', src: 'modules/markdown/index.html' },
-  'pdf-reader': { title: 'PDF 閱讀器', src: 'modules/pdf-reader/index.html' },
-  'spreadsheet': { title: '試算表編輯器', src: 'dist/spreadsheet/index.html' },
-  'book-editor': { title: '書籍排版器', src: 'modules/book-editor/index.html' },
+  'markdown': { title: 'Markdown', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
+  'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
+  'spreadsheet': { title: '試算表', subtitle: 'Tabularium', src: 'dist/spreadsheet/index.html' },
+  'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
+  'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
+};
+
+const viewTitles = {
+  'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'Akasha Library' },
+  'personal': { title: '個人書庫', subtitle: 'My Library', breadcrumb: 'Akasha Library' },
+  'public': { title: '公共書庫', subtitle: 'Public Stacks', breadcrumb: 'Akasha Library' },
 };
 
 let currentView = 'dashboard';
 let isAuthed = false;
+
+// Clock & greeting
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('hero-time').innerHTML = `${hh}<span class="hero-time-sep">:</span>${mm}`;
+
+  // Greeting based on hour
+  const h = now.getHours();
+  let greeting;
+  if (h >= 5 && h < 12) greeting = '早安，旅人。晨光正灑入書庫。';
+  else if (h >= 12 && h < 17) greeting = '午安，旅人。書頁在等你翻閱。';
+  else if (h >= 17 && h < 21) greeting = '晚安，旅人。書庫今晚靜謐。';
+  else greeting = '深夜好，旅人。萬物沉眠，唯書不寐。';
+  document.getElementById('hero-greeting').textContent = greeting;
+}
+updateClock();
+setInterval(updateClock, 30000);
 
 // Navigation
 document.querySelectorAll('.nav-item').forEach(btn => {
@@ -621,21 +1011,25 @@ function switchView(view) {
   currentView = view;
   const dashboard = document.getElementById('view-dashboard');
   const frame = document.getElementById('module-frame');
-  const title = document.getElementById('topbar-title');
+  const titleEl = document.getElementById('topbar-title');
+  const subtitleEl = document.getElementById('topbar-subtitle');
+  const breadcrumbEl = document.getElementById('topbar-breadcrumb');
+
+  const info = viewTitles[view] || viewTitles['dashboard'];
+  titleEl.textContent = info.title;
+  subtitleEl.textContent = info.subtitle ? `· ${info.subtitle}` : '';
+  breadcrumbEl.textContent = info.breadcrumb;
 
   if (view === 'dashboard') {
     dashboard.style.display = '';
     frame.classList.remove('active');
-    title.textContent = '總覽';
   } else if (view === 'personal') {
     dashboard.style.display = '';
     frame.classList.remove('active');
-    title.textContent = '個人書庫';
   } else if (view === 'public') {
     dashboard.style.display = 'none';
     frame.src = 'public-library/index.html';
     frame.classList.add('active');
-    title.textContent = '公共書庫 — 同樂會';
   }
 }
 
@@ -645,12 +1039,16 @@ function openModule(name) {
 
   const dashboard = document.getElementById('view-dashboard');
   const frame = document.getElementById('module-frame');
-  const title = document.getElementById('topbar-title');
+  const titleEl = document.getElementById('topbar-title');
+  const subtitleEl = document.getElementById('topbar-subtitle');
+  const breadcrumbEl = document.getElementById('topbar-breadcrumb');
 
   dashboard.style.display = 'none';
   frame.src = mod.src;
   frame.classList.add('active');
-  title.textContent = mod.title;
+  titleEl.textContent = mod.title;
+  subtitleEl.textContent = mod.subtitle ? `· ${mod.subtitle}` : '';
+  breadcrumbEl.textContent = 'Akasha Library · Tools';
 }
 
 // Auth
@@ -664,15 +1062,25 @@ function handleAuth() {
 
 function onAuthChange({ signedIn, user }) {
   isAuthed = signedIn;
-  const btn = document.getElementById('auth-btn');
-  const text = document.getElementById('auth-text');
+  const avatarEl = document.getElementById('auth-avatar');
+  const nameEl = document.getElementById('auth-name');
+  const loginBtn = document.getElementById('auth-login-btn');
+  const syncDot = document.getElementById('sync-dot');
+  const syncLabel = document.getElementById('sync-label');
+
   if (signedIn && user) {
-    btn.classList.add('connected');
-    text.textContent = user.name || '已連接 Drive';
+    avatarEl.textContent = user.name ? user.name.charAt(0) : 'U';
+    nameEl.textContent = user.name || '已連接';
+    loginBtn.style.display = 'none';
+    syncDot.className = 'sync-dot synced';
+    syncLabel.textContent = '已同步';
     fullSync().then(() => renderRecent());
   } else {
-    btn.classList.remove('connected');
-    text.textContent = '連接 Google Drive';
+    avatarEl.textContent = '客';
+    nameEl.textContent = '訪客 — 未登入';
+    loginBtn.style.display = 'flex';
+    syncDot.className = 'sync-dot';
+    syncLabel.textContent = '離線模式';
   }
 }
 
@@ -683,15 +1091,24 @@ if (CONFIG.GOOGLE_CLIENT_ID !== 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
 
 // Sync status display
 setSyncCallback(({ status, detail }) => {
-  const btn = document.getElementById('auth-btn');
-  if (status === 'syncing') btn.style.opacity = '0.7';
-  else btn.style.opacity = '1';
+  const syncDot = document.getElementById('sync-dot');
+  const syncLabel = document.getElementById('sync-label');
+  if (status === 'syncing') {
+    syncDot.className = 'sync-dot syncing';
+    syncLabel.textContent = '同步中…';
+  } else if (status === 'error') {
+    syncDot.className = 'sync-dot error';
+    syncLabel.textContent = '同步失敗';
+  } else {
+    syncDot.className = 'sync-dot synced';
+    syncLabel.textContent = '已同步';
+  }
 });
 
 // Init offline sync listeners
 initOfflineSync();
 
-// File actions placeholder
+// File actions
 function importFile() {
   const input = document.createElement('input');
   input.type = 'file';
@@ -709,12 +1126,37 @@ function importFile() {
 }
 
 function newFile() {
-  // Show a small picker - for now just open markdown
   const choice = prompt('新建類型：\n1. Markdown 文件\n2. 試算表\n3. 書籍\n\n輸入數字：');
   if (choice === '1') openModule('markdown');
   else if (choice === '2') openModule('spreadsheet');
   else if (choice === '3') openModule('book-editor');
 }
+
+// Dark/Light mode toggle
+function toggleMode() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-mode');
+  const next = current === 'light' ? 'dark' : 'light';
+  html.setAttribute('data-mode', next);
+  localStorage.setItem('akasha-mode', next);
+  updateModeIcon(next);
+}
+
+function updateModeIcon(mode) {
+  const icon = document.getElementById('mode-icon');
+  if (mode === 'light') {
+    // Sun icon
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
+  } else {
+    // Moon icon
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+  }
+}
+
+// Restore saved mode
+const savedMode = localStorage.getItem('akasha-mode') || 'dark';
+document.documentElement.setAttribute('data-mode', savedMode);
+updateModeIcon(savedMode);
 
 // Expose functions to global scope for onclick handlers
 window.handleAuth = handleAuth;
@@ -722,41 +1164,64 @@ window.importFile = importFile;
 window.newFile = newFile;
 window.openModule = openModule;
 window.switchView = switchView;
+window.toggleMode = toggleMode;
 
-// Recent files
+// Recent files (ledger style)
+const TYPE_ICONS = {
+  md: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>',
+  pdf: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>',
+  xlsx: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>',
+  book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
+};
+const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', xlsx: 'spreadsheet', book: 'book-editor' };
+
 async function renderRecent() {
   const entries = await getFileEntries();
   const container = document.getElementById('recent-list');
 
   if (entries.length === 0) {
     container.innerHTML = `
-      <div class="section-title">最近開啟</div>
-      <div class="empty-state">
-        <div class="empty-icon">&#128218;</div>
-        <div class="empty-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
+      <div class="recent-ledger">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg>
+          </div>
+          <div class="empty-state-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
+        </div>
       </div>`;
     return;
   }
 
-  const typeIcons = { md: '&#9998;', pdf: '&#128214;', xlsx: '&#128202;', book: '&#128155;' };
-  const typeModules = { md: 'markdown', pdf: 'pdf-reader', xlsx: 'spreadsheet', book: 'book-editor' };
-
-  const items = entries.slice(0, 10).map(f => {
-    const icon = typeIcons[f.type] || '&#128196;';
+  const rows = entries.slice(0, 10).map((f, i) => {
+    const icon = TYPE_ICONS[f.type] || TYPE_ICONS['md'];
+    const label = TYPE_LABELS[f.type] || 'FILE';
+    const mod = TYPE_MODULES[f.type] || 'markdown';
     const date = new Date(f.lastOpened);
     const dateStr = `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}`;
-    const sizeStr = f.size ? `${(f.size / 1024).toFixed(1)} KB` : '';
-    const meta = [dateStr, sizeStr, f.pages ? `${f.pages} 頁` : ''].filter(Boolean).join(' · ');
-    return `<div class="recent-item" onclick="openModule('${typeModules[f.type] || 'markdown'}')">
-      <span class="recent-icon">${icon}</span>
-      <div class="recent-info">
-        <div class="recent-name">${f.name}</div>
-        <div class="recent-meta">${meta}</div>
+    const sizeStr = f.size ? `${(f.size / 1024).toFixed(1)} KB` : '—';
+    const pageStr = f.pages ? `${f.pages} 頁` : '—';
+
+    return `<div class="ledger-row" onclick="openModule('${mod}')">
+      <div class="ledger-num">${String(i + 1).padStart(2, '0')}</div>
+      <div class="ledger-title">
+        <span class="ledger-title-icon">${icon}</span>
+        ${f.name}
       </div>
+      <div class="ledger-format">${label} · ${sizeStr}</div>
+      <div class="ledger-time">${dateStr}</div>
+      <div class="ledger-mark">${pageStr}</div>
+      <div class="ledger-action">—</div>
     </div>`;
   }).join('');
 
-  container.innerHTML = `<div class="section-title">最近開啟</div>${items}`;
+  container.innerHTML = `
+    <div class="recent-ledger">
+      <div class="ledger-header">
+        <div>№</div><div>Title</div><div>Format</div><div>Last Touched</div><div>Mark</div><div></div>
+      </div>
+      ${rows}
+    </div>`;
 }
 
 renderRecent();

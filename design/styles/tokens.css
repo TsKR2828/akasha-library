@@ -1,0 +1,158 @@
+/* AKASHA LIBRARY — Design Tokens
+   深夜大學圖書館：navy + brass + cream + 木質 + 黃銅 */
+
+:root {
+  /* Base — deepened navy with warm undertone */
+  --navy: #181d28;
+  --navy-deep: #11151d;
+  --navy-light: #232a37;
+  --navy-hover: #2e3645;
+  --navy-line: #313a4b;
+
+  /* Wood + leather notes — used for module accents, side rails */
+  --wood: #3a2a1c;
+  --wood-shadow: #1f160e;
+  --leather: #5b3a2a;
+  --oxblood: #6b2c2c;
+
+  /* Brass / gold */
+  --gold: #c9a86a;
+  --gold-bright: #e3c486;
+  --gold-dim: #a08550;
+  --gold-deep: #7a6638;
+  --gold-glow: rgba(201,168,106,0.14);
+  --gold-line: rgba(201,168,106,0.22);
+
+  /* Paper / text */
+  --cream: #f1ead6;
+  --cream-dim: #d6cfb8;
+  --paper: #f5efe1;
+  --text-primary: #ece5cf;
+  --text-secondary: #9aa1ad;
+  --text-tertiary: #646b78;
+
+  /* States */
+  --danger: #c4604f;
+  --success: #6aae7f;
+  --info: #c9a86a;
+
+  /* Type */
+  --font-serif-en: "Cormorant Garamond", "EB Garamond", Garamond, serif;
+  --font-serif-tc: "Noto Serif TC", "Source Han Serif TC", "PingFang TC", serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", monospace;
+  --font-display: var(--font-serif-en);
+  --font-body: var(--font-serif-tc);
+
+  /* Sizing — restrained, library-document scale */
+  --r-sharp: 2px;
+  --r-soft: 4px;
+  --r-card: 6px;
+
+  /* Shadows — like depth in a wood-panelled room */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px -12px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-lift: 0 1px 0 rgba(255,255,255,0.06) inset, 0 18px 40px -20px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.35);
+  --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
+
+  /* Layout */
+  --sidebar-w: 268px;
+  --topbar-h: 56px;
+
+  /* Density */
+  --density: 1;
+}
+
+/* Light mode — cream paper inversion */
+:root[data-mode="light"] {
+  --navy: #efe7d3;
+  --navy-deep: #e6dcc3;
+  --navy-light: #f5efe1;
+  --navy-hover: #ddd1b3;
+  --navy-line: #cfc2a3;
+
+  --text-primary: #2a2118;
+  --text-secondary: #6b5d49;
+  --text-tertiary: #9c8d75;
+
+  --gold: #8a6f30;
+  --gold-bright: #a78640;
+  --gold-dim: #6b552a;
+  --gold-deep: #4d3e1f;
+  --gold-glow: rgba(138,111,48,0.12);
+  --gold-line: rgba(138,111,48,0.28);
+
+  --cream: #2a2118;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
+  --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
+}
+
+/* Texture overlay — paper grain on dark */
+.tex-paper {
+  position: relative;
+}
+.tex-paper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image:
+    radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
+    radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+}
+
+/* Brass rule — used as section dividers */
+.brass-rule {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold-dim) 15%,
+    var(--gold) 50%,
+    var(--gold-dim) 85%,
+    transparent 100%);
+  opacity: 0.5;
+}
+
+.brass-rule--thin {
+  background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
+  opacity: 0.7;
+}
+
+/* Custom scrollbar — narrow brass */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(201,168,106,0.18);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(201,168,106,0.36);
+}
+
+/* Selection */
+::selection {
+  background: var(--gold-glow);
+  color: var(--gold-bright);
+}
+
+/* Reset basics */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  background: var(--navy-deep);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+button { font-family: inherit; cursor: pointer; }

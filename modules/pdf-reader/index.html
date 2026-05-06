@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-mode="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#1E2430">
+<meta name="theme-color" content="#11151d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="阿卡夏">
@@ -13,129 +13,106 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
 <title>阿卡夏圖書館 — PDF 閱讀器</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/styles/shared.css">
 <style>
-  :root {
-    --navy: #1E2430;
-    --navy-light: #2A3240;
-    --navy-hover: #343E4E;
-    --gold: #C9A86A;
-    --gold-dim: #A08550;
-    --gold-glow: rgba(201,168,106,0.15);
-    --cream: #F4F0E6;
-    --cream-dark: #E8E2D4;
-    --text-primary: #F4F0E6;
-    --text-secondary: #9BA3B0;
-    --text-dark: #1E2430;
-    --danger: #C75B5B;
-    --success: #6AAE7F;
-    --sidebar-width: 280px;
-    --topbar-height: 52px;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Noto Serif TC', serif;
-    background: var(--navy);
-    color: var(--text-primary);
-    height: 100vh;
+  /* ===== Layout Shell ===== */
+  html, body {
+    height: 100%;
     overflow: hidden;
+  }
+  body {
     display: flex;
     flex-direction: column;
   }
 
-  /* ===== TOP BAR ===== */
+  /* ===== TOPBAR ===== */
   .topbar {
-    height: var(--topbar-height);
-    background: var(--navy);
-    border-bottom: 1px solid var(--navy-light);
+    height: var(--topbar-h);
+    min-height: var(--topbar-h);
+    background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
+    border-bottom: 1px solid var(--navy-line);
     display: flex;
     align-items: center;
-    padding: 0 20px;
+    padding: 0 28px;
     gap: 16px;
+    position: relative;
     flex-shrink: 0;
     z-index: 100;
   }
-
-  .topbar-brand {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--gold);
-    letter-spacing: 2px;
-    cursor: default;
-    user-select: none;
-    white-space: nowrap;
+  .topbar::after {
+    content: "";
+    position: absolute;
+    left: 28px; right: 28px; bottom: -1px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-line) 25%, var(--gold-line) 75%, transparent);
   }
-
-  .topbar-brand span {
-    font-family: 'Noto Serif TC', serif;
-    font-size: 14px;
+  .topbar-back {
+    background: transparent;
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-soft);
     color: var(--text-secondary);
-    margin-left: 8px;
-    font-weight: 400;
+    padding: 6px 8px;
+    display: flex; align-items: center;
   }
-
-  .topbar-divider {
-    width: 1px;
-    height: 24px;
-    background: var(--navy-light);
+  .topbar-back:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .topbar-info { display: flex; flex-direction: column; line-height: 1.15; }
+  .topbar-breadcrumb {
+    font-family: var(--font-serif-en);
+    font-size: 10.5px; letter-spacing: 0.3em;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    margin-bottom: 3px;
   }
-
-  .topbar-filename {
-    font-size: 13px;
-    color: var(--text-secondary);
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .topbar-title {
+    font-family: var(--font-serif-tc);
+    font-size: 15.5px; color: var(--text-primary);
+    letter-spacing: 0.06em;
+    display: flex; align-items: baseline; gap: 10px;
   }
-
-  .topbar-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
+  .topbar-subtitle {
+    font-family: var(--font-serif-en);
+    font-style: italic;
+    font-size: 12px; color: var(--text-tertiary);
+    letter-spacing: 0.04em;
   }
+  .topbar-spacer { flex: 1; }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
 
+  /* ===== BUTTONS ===== */
   .btn {
-    font-family: 'Noto Serif TC', serif;
-    font-size: 12px;
-    padding: 6px 14px;
-    border-radius: 4px;
-    border: 1px solid var(--navy-light);
-    background: var(--navy-light);
-    color: var(--text-primary);
+    font-family: var(--font-serif-tc);
+    font-size: 11.5px;
+    letter-spacing: 0.12em;
+    padding: 5px 10px;
+    border-radius: var(--r-soft);
+    border: 1px solid var(--navy-line);
+    background: transparent;
+    color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: all 160ms;
     cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
   }
-
-  .btn:hover {
-    background: var(--navy-hover);
-    border-color: var(--gold-dim);
-  }
-
+  .btn:hover { background: rgba(201,168,106,0.05); border-color: var(--gold-dim); color: var(--gold-bright); }
   .btn-gold {
-    background: var(--gold);
-    color: var(--navy);
-    border-color: var(--gold);
-    font-weight: 600;
+    background: rgba(201,168,106,0.12);
+    border: 1px solid var(--gold);
+    color: var(--gold-bright);
   }
+  .btn-gold:hover { background: var(--gold); color: var(--navy-deep); }
+  .btn-danger { border-color: var(--danger); color: var(--danger); }
+  .btn-danger:hover { background: var(--danger); color: var(--cream); }
+  .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
 
-  .btn-gold:hover {
-    background: var(--gold-dim);
-    border-color: var(--gold-dim);
+  .zoom-display {
+    font-family: var(--font-mono); font-size: 11.5px;
+    color: var(--text-secondary);
+    padding: 0 8px; letter-spacing: 0.06em;
+    min-width: 48px; text-align: center;
   }
-
-  .btn-danger {
-    border-color: var(--danger);
-    color: var(--danger);
-  }
-
-  .btn-danger:hover {
-    background: var(--danger);
-    color: var(--cream);
+  .topbar-sep {
+    width: 1px; height: 20px;
+    background: var(--navy-line);
+    margin: 0 6px;
   }
 
   /* ===== MAIN LAYOUT ===== */
@@ -145,304 +122,176 @@
     overflow: hidden;
   }
 
-  /* ===== SIDEBAR ===== */
+  /* ===== LEFT SIDEBAR ===== */
   .sidebar {
-    width: var(--sidebar-width);
-    background: var(--navy);
-    border-right: 1px solid var(--navy-light);
+    width: 200px;
+    background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
+    border-right: 1px solid var(--navy-line);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    overflow: hidden;
     transition: margin-left 0.3s ease;
   }
-
-  .sidebar.collapsed {
-    margin-left: calc(-1 * var(--sidebar-width));
-  }
+  .sidebar.collapsed { margin-left: -200px; }
 
   .sidebar-tabs {
     display: flex;
-    border-bottom: 1px solid var(--navy-light);
+    border-bottom: 1px solid var(--navy-line);
     flex-shrink: 0;
   }
-
   .sidebar-tab {
     flex: 1;
-    padding: 10px;
-    font-size: 12px;
+    padding: 9px 6px;
+    font-family: var(--font-serif-en);
+    font-size: 10.5px; letter-spacing: 0.22em;
+    text-transform: uppercase;
     text-align: center;
-    cursor: pointer;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
+    border: none;
     border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-    font-family: 'Noto Serif TC', serif;
+    background: transparent;
+    cursor: pointer;
+    transition: all 160ms;
   }
-
   .sidebar-tab.active {
-    color: var(--gold);
+    color: var(--gold-bright);
     border-bottom-color: var(--gold);
+    background: rgba(201,168,106,0.04);
   }
-
-  .sidebar-tab:hover {
-    color: var(--text-primary);
-  }
+  .sidebar-tab:hover { color: var(--text-primary); }
 
   .sidebar-content {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: 12px 14px 18px;
   }
 
-  .sidebar-content::-webkit-scrollbar { width: 4px; }
-  .sidebar-content::-webkit-scrollbar-track { background: transparent; }
-  .sidebar-content::-webkit-scrollbar-thumb { background: var(--navy-hover); border-radius: 2px; }
-
-  /* Thumbnail list */
+  /* Thumbnail cards */
   .thumb-item {
+    position: relative;
+    background: transparent;
+    padding: 8px 8px 8px 12px;
+    margin-bottom: 8px;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: background 140ms;
+  }
+  .thumb-item:hover { background: rgba(201,168,106,0.04); }
+  .thumb-item.active {
+    background: rgba(201,168,106,0.06);
+    border-left-color: var(--gold);
+  }
+
+  .thumb-card {
+    width: 100%;
+    aspect-ratio: 0.71;
+    background: var(--paper);
+    border: 1px solid rgba(0,0,0,0.5);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.15s;
-    margin-bottom: 4px;
+    justify-content: center;
+  }
+  .thumb-item.active .thumb-card {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold-glow), 0 4px 10px rgba(0,0,0,0.4);
+  }
+  .thumb-card canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 
-  .thumb-item:hover, .thumb-item.active {
-    background: var(--navy-light);
+  .thumb-num {
+    font-family: var(--font-serif-en);
+    font-style: italic;
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.14em;
   }
 
-  .thumb-item.active {
-    border-left: 2px solid var(--gold);
-  }
-
-  .thumb-item canvas {
-    width: 48px;
-    height: 64px;
-    border-radius: 2px;
-    border: 1px solid var(--navy-light);
-    flex-shrink: 0;
-  }
-
-  .thumb-page-num {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-
-  /* Split panel */
+  /* ===== CUT/SPLIT PANEL ===== */
   .split-panel { display: none; }
   .split-panel.visible { display: block; }
 
-  .split-group {
-    background: var(--navy-light);
-    border-radius: 6px;
-    padding: 14px;
+  .split-header {
+    font-family: var(--font-serif-en);
+    font-size: 10.5px; letter-spacing: 0.28em;
+    color: var(--gold); text-transform: uppercase;
     margin-bottom: 12px;
-  }
-
-  .split-group label {
-    display: block;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-bottom: 6px;
-  }
-
-  .split-input-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .split-input-row span {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-
-  .split-input {
-    width: 70px;
-    padding: 6px 8px;
-    background: var(--navy);
-    border: 1px solid var(--navy-hover);
-    color: var(--text-primary);
-    border-radius: 4px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 15px;
-    text-align: center;
-  }
-
-  .split-input:focus {
-    outline: none;
-    border-color: var(--gold);
-  }
-
-  .split-mode-toggle {
-    display: flex;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 14px;
-    border: 1px solid var(--navy-hover);
   }
 
   .split-mode-btn {
-    flex: 1;
-    padding: 8px;
-    font-size: 11px;
-    text-align: center;
-    background: var(--navy);
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--navy-line);
     color: var(--text-secondary);
-    border: none;
+    padding: 8px 10px;
+    border-radius: var(--r-soft);
+    font-family: var(--font-serif-tc);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-align: left;
     cursor: pointer;
-    font-family: 'Noto Serif TC', serif;
-    transition: all 0.2s;
+    display: flex; justify-content: space-between;
+    margin-bottom: 4px;
+    transition: all 140ms;
+  }
+  .split-mode-btn.active {
+    background: var(--gold-glow);
+    border-color: var(--gold-line);
+    color: var(--gold-bright);
+  }
+  .split-mode-btn .en-label {
+    font-family: var(--font-serif-en); font-style: italic;
+    color: var(--text-tertiary); font-size: 11px;
   }
 
-  .split-mode-btn.active {
-    background: var(--gold);
-    color: var(--navy);
-    font-weight: 600;
+  .split-label {
+    font-size: 11px; color: var(--text-tertiary);
+    font-family: var(--font-serif-en); letter-spacing: 0.18em;
+    text-transform: uppercase; margin: 14px 0 8px;
   }
+
+  .split-input-row {
+    display: flex; gap: 6px; align-items: center; margin-bottom: 14px;
+  }
+  .split-input-row span { color: var(--text-tertiary); font-size: 12px; }
+
+  .split-input {
+    flex: 1;
+    background: var(--navy-deep);
+    border: 1px solid var(--navy-line);
+    color: var(--cream);
+    padding: 6px 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border-radius: var(--r-soft);
+    text-align: center;
+  }
+  .split-input:focus { outline: none; border-color: var(--gold); }
 
   .split-preview {
-    font-size: 11px;
-    color: var(--text-secondary);
-    padding: 8px;
-    background: var(--navy);
-    border-radius: 4px;
-    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.25);
+    border: 1px dashed var(--navy-hover);
+    border-radius: var(--r-soft);
+    font-size: 11.5px; color: var(--text-secondary);
     line-height: 1.6;
+    margin-bottom: 14px;
     max-height: 200px;
     overflow-y: auto;
   }
+  .split-preview .gold { color: var(--gold); }
 
-  .split-preview-item {
-    padding: 2px 0;
-  }
-
-  .split-preview-item.current {
-    color: var(--gold);
-  }
-
-  /* Library panel */
-  .library-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.15s;
-    margin-bottom: 4px;
-  }
-
-  .library-item:hover {
-    background: var(--navy-light);
-  }
-
-  .library-item-info {
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .library-item-title {
-    font-size: 13px;
-    color: var(--text-primary);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .library-item-meta {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-top: 2px;
-  }
-
-  .library-item-remove {
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
-    border-radius: 4px;
-    transition: all 0.15s;
-    background: none;
-    border: none;
-  }
-
-  .library-item-remove:hover {
-    color: var(--danger);
-    background: rgba(199,91,91,0.1);
-  }
-
-  .library-empty {
-    text-align: center;
-    color: var(--text-secondary);
-    font-size: 12px;
-    padding: 32px 16px;
-    line-height: 1.8;
-  }
-
-  /* ===== SYNC CHECKBOX ===== */
-  .sync-checkbox {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-    user-select: none;
-    padding: 8px 10px;
-    border-radius: 4px;
-    transition: background 0.15s;
-  }
-
-  .sync-checkbox:hover {
-    background: var(--navy-light);
-  }
-
-  .sync-checkbox input { display: none; }
-
-  .sync-checkbox-mark {
-    width: 16px;
-    height: 16px;
-    border: 1.5px solid var(--text-secondary);
-    border-radius: 3px;
-    flex-shrink: 0;
-    position: relative;
-    transition: all 0.2s;
-  }
-
-  .sync-checkbox input:checked + .sync-checkbox-mark {
-    background: var(--gold);
-    border-color: var(--gold);
-  }
-
-  .sync-checkbox input:checked + .sync-checkbox-mark::after {
-    content: '';
-    position: absolute;
-    left: 4px;
-    top: 1px;
-    width: 5px;
-    height: 9px;
-    border: solid var(--navy);
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-  }
-
-  .sync-checkbox-label {
-    font-size: 12px;
-    color: var(--text-secondary);
-    transition: color 0.2s;
-  }
-
-  .sync-checkbox input:checked ~ .sync-checkbox-label {
-    color: var(--gold);
-  }
-
-  /* ===== READER AREA ===== */
+  /* ===== CENTER CANVAS ===== */
   .reader-area {
     flex: 1;
     display: flex;
@@ -451,70 +300,81 @@
     position: relative;
   }
 
-  .reader-toolbar {
-    height: 40px;
-    background: var(--navy);
-    border-bottom: 1px solid var(--navy-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    flex-shrink: 0;
-    padding: 0 12px;
-  }
-
-  .reader-toolbar .btn { padding: 4px 10px; font-size: 11px; }
-
-  .page-indicator {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 14px;
-    color: var(--text-secondary);
-    min-width: 90px;
-    text-align: center;
-  }
-
-  .page-jump-input {
-    width: 48px;
-    padding: 3px 6px;
-    background: var(--navy-light);
-    border: 1px solid var(--navy-hover);
-    color: var(--text-primary);
-    border-radius: 3px;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 13px;
-    text-align: center;
-  }
-
-  .page-jump-input:focus {
-    outline: none;
-    border-color: var(--gold);
-  }
-
-  .zoom-display {
-    font-size: 11px;
-    color: var(--text-secondary);
-    min-width: 40px;
-    text-align: center;
-  }
-
   .reader-viewport {
     flex: 1;
     overflow: auto;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 24px;
-    background: #151A22;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 32px 56px;
+    background:
+      radial-gradient(ellipse at center top, rgba(201,168,106,0.05) 0%, transparent 60%),
+      var(--navy-deep);
+    position: relative;
   }
-
-  .reader-viewport::-webkit-scrollbar { width: 8px; }
-  .reader-viewport::-webkit-scrollbar-track { background: #151A22; }
-  .reader-viewport::-webkit-scrollbar-thumb { background: var(--navy-hover); border-radius: 4px; }
+  .reader-viewport.tex-paper::before { z-index: 0; }
 
   #pdf-canvas {
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
-    border-radius: 2px;
+    background: var(--paper);
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.7), 0 8px 18px rgba(0,0,0,0.4);
+    position: relative;
+    z-index: 1;
+    transition: transform 200ms;
   }
+
+  /* Page navigation floater (pill-shaped, brass border) */
+  .page-nav-floater {
+    position: sticky;
+    bottom: 12px;
+    margin-top: 24px;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--navy-light);
+    border: 1px solid var(--gold-line);
+    border-radius: 24px;
+    padding: 6px 14px;
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.6);
+    z-index: 10;
+  }
+  .page-nav-floater button {
+    background: transparent; border: none;
+    color: var(--gold); cursor: pointer;
+    display: flex; align-items: center; padding: 4px;
+  }
+  .page-nav-floater button:hover { color: var(--gold-bright); }
+  .page-nav-floater .page-display {
+    font-family: var(--font-serif-en);
+    font-style: italic;
+    font-size: 14px; color: var(--cream-dim);
+    letter-spacing: 0.1em;
+    min-width: 80px; text-align: center;
+  }
+  .page-nav-floater .page-total { color: var(--text-tertiary); }
+  .page-nav-floater .page-jump {
+    width: 42px; padding: 2px 4px;
+    background: var(--navy-deep); border: 1px solid var(--navy-line);
+    color: var(--cream); border-radius: var(--r-soft);
+    font-family: var(--font-serif-en); font-style: italic;
+    font-size: 13px; text-align: center;
+  }
+  .page-nav-floater .page-jump:focus { outline: none; border-color: var(--gold); }
+
+  /* Sidebar toggle */
+  .sidebar-toggle {
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 20px; height: 48px;
+    background: var(--navy-light);
+    border: 1px solid var(--navy-line);
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    z-index: 50;
+    transition: all 0.2s;
+  }
+  .sidebar-toggle:hover { background: var(--navy-hover); color: var(--gold); }
 
   /* ===== WELCOME SCREEN ===== */
   .welcome-screen {
@@ -526,69 +386,325 @@
     gap: 24px;
     padding: 40px;
   }
-
   .welcome-icon {
-    width: 80px;
-    height: 80px;
+    width: 80px; height: 80px;
     border: 2px solid var(--gold);
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     color: var(--gold);
     font-size: 32px;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: var(--font-serif-en);
   }
-
   .welcome-title {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: var(--font-display);
     font-size: 28px;
     color: var(--gold);
     letter-spacing: 3px;
   }
-
   .welcome-sub {
     font-size: 13px;
     color: var(--text-secondary);
     text-align: center;
     line-height: 1.8;
   }
-
   .drop-zone {
-    width: 360px;
-    max-width: 100%;
+    width: 360px; max-width: 100%;
     padding: 40px;
-    border: 2px dashed var(--navy-hover);
-    border-radius: 8px;
+    border: 2px dashed var(--navy-line);
+    border-radius: var(--r-card);
     text-align: center;
     cursor: pointer;
     transition: all 0.3s;
-    position: relative;
   }
-
   .drop-zone:hover, .drop-zone.dragover {
     border-color: var(--gold);
     background: var(--gold-glow);
   }
-
-  .drop-zone-text {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.8;
-  }
-
-  .drop-zone-text strong {
-    color: var(--gold);
-    font-weight: 600;
-  }
+  .drop-zone-text { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+  .drop-zone-text strong { color: var(--gold); font-weight: 600; }
 
   #file-input { display: none; }
+
+  /* ===== AI PANEL (AVG Visual Novel Style) ===== */
+  .ai-panel {
+    width: 340px;
+    min-width: 340px;
+    background: linear-gradient(180deg, #11151d 0%, #0a0d13 100%);
+    border-left: 1px solid var(--gold-line);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: var(--font-serif-tc);
+    position: relative;
+    flex-shrink: 0;
+    transition: margin-right 0.3s ease;
+  }
+  .ai-panel--hidden { margin-right: -340px; }
+
+  /* AI Header */
+  .ai-header {
+    padding: 10px 14px 0;
+    border-bottom: 1px solid var(--navy-line);
+  }
+  .ai-header-row {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 8px;
+  }
+  .ai-status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+  }
+  .ai-header-title {
+    font-family: var(--font-serif-en);
+    font-size: 11px; letter-spacing: 0.32em;
+    color: var(--gold);
+    text-transform: uppercase;
+    flex: 1;
+  }
+  .ai-close-btn {
+    background: transparent;
+    border: 1px solid var(--navy-line);
+    color: var(--text-secondary);
+    width: 24px; height: 24px; border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .ai-close-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  .ai-mode-row {
+    display: flex; gap: 4px; padding-bottom: 0;
+  }
+  .ai-mode-tab {
+    flex: 1;
+    padding: 8px 6px;
+    font-family: var(--font-serif-tc);
+    font-size: 12px; letter-spacing: 0.16em;
+    color: var(--text-tertiary);
+    border: none;
+    border-bottom: 2px solid transparent;
+    text-align: center;
+    cursor: pointer;
+    background: transparent;
+    transition: all 160ms;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .ai-mode-tab.active {
+    color: var(--gold-bright);
+    border-bottom-color: var(--gold);
+    background: rgba(201,168,106,0.04);
+  }
+
+  /* Portrait zone */
+  .ai-portrait {
+    flex: 1 1 320px;
+    min-height: 280px;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 90%, rgba(201,168,106,0.18) 0%, transparent 55%),
+      linear-gradient(180deg, #1a2030 0%, #0d1018 100%);
+    display: flex; align-items: flex-end; justify-content: center;
+    cursor: pointer;
+  }
+  .ai-scene {
+    position: absolute; inset: 0;
+    pointer-events: none;
+  }
+  .ai-character {
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 250px;
+    pointer-events: none;
+  }
+  .ai-nameplate {
+    position: absolute;
+    top: 12px; left: 14px;
+    background: linear-gradient(180deg, #2a1f12 0%, #1a130a 100%);
+    border: 1px solid var(--gold-line);
+    padding: 6px 12px 7px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 var(--gold-line);
+    display: flex; flex-direction: column;
+    min-width: 110px;
+    z-index: 2;
+  }
+  .ai-nameplate-name {
+    font-family: var(--font-serif-tc);
+    font-size: 14px; color: var(--gold-bright);
+    letter-spacing: 0.18em;
+    line-height: 1.1;
+  }
+  .ai-nameplate-role {
+    font-family: var(--font-serif-en);
+    font-style: italic;
+    font-size: 9.5px;
+    color: var(--gold-deep);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .ai-emotion {
+    position: absolute;
+    top: 16px; right: 16px;
+    font-family: var(--font-serif-en);
+    font-style: italic;
+    font-size: 11px;
+    color: var(--gold-dim);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border: 1px solid var(--gold-line);
+    background: rgba(0,0,0,0.4);
+    z-index: 2;
+  }
+  .ai-page-badge {
+    position: absolute;
+    bottom: 14px; right: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px; color: var(--text-tertiary);
+    letter-spacing: 0.08em;
+    padding: 3px 8px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--navy-hover);
+    border-radius: 2px;
+    z-index: 2;
+  }
+
+  /* Dialogue box */
+  .ai-dialogue {
+    position: relative;
+    margin: 8px 12px 0;
+    padding: 20px 18px 16px;
+    background: rgba(15,18,25,0.92);
+    border: 1px solid var(--gold-line);
+    min-height: 110px;
+  }
+  .ai-dialogue-ornament {
+    position: absolute;
+    top: -1px; left: -1px; right: -1px; height: 4px;
+    background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-deep));
+    opacity: 0.7;
+  }
+  .ai-dialogue-corner {
+    position: absolute;
+    width: 10px; height: 10px;
+  }
+  .ai-dialogue-corner--tl { top: -1px; left: -1px; border-top: 1px solid var(--gold); border-left: 1px solid var(--gold); }
+  .ai-dialogue-corner--tr { top: -1px; right: -1px; border-top: 1px solid var(--gold); border-right: 1px solid var(--gold); }
+  .ai-dialogue-corner--bl { bottom: -1px; left: -1px; border-bottom: 1px solid var(--gold); border-left: 1px solid var(--gold); }
+  .ai-dialogue-corner--br { bottom: -1px; right: -1px; border-bottom: 1px solid var(--gold); border-right: 1px solid var(--gold); }
+
+  .ai-dialogue-speaker {
+    position: absolute;
+    top: -10px; left: 18px;
+    background: var(--navy-deep);
+    padding: 0 10px;
+    font-family: var(--font-serif-tc);
+    font-size: 13px; color: var(--gold-bright);
+    letter-spacing: 0.18em;
+  }
+  .ai-dialogue-text {
+    font-family: var(--font-serif-tc);
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--cream);
+    letter-spacing: 0.04em;
+    min-height: 60px;
+  }
+  .ai-cursor {
+    display: inline-block;
+    width: 6px; height: 14px;
+    background: var(--gold);
+    margin-left: 2px;
+    vertical-align: middle;
+    animation: blink 1s steps(2) infinite;
+  }
+  .ai-cursor--continue {
+    animation: blink 1.4s steps(2) infinite;
+  }
+
+  /* Choices */
+  .ai-choices {
+    display: flex; flex-direction: column; gap: 4px;
+    padding: 10px 12px 6px;
+  }
+  .ai-choice {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--navy-line);
+    color: var(--cream);
+    padding: 8px 12px 9px;
+    font-family: var(--font-serif-tc);
+    font-size: 12.5px; letter-spacing: 0.06em;
+    text-align: left;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+    transition: all 140ms;
+  }
+  .ai-choice:hover {
+    background: var(--gold-glow);
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    transform: translateX(3px);
+  }
+  .ai-choice-mark {
+    font-family: var(--font-serif-en); font-style: italic;
+    color: var(--gold);
+    font-size: 13px;
+    min-width: 16px;
+  }
+
+  /* Token bar */
+  .ai-token-bar {
+    margin: 0 12px;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--navy-line);
+    border-radius: var(--r-soft);
+    display: flex; align-items: center; gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.06em;
+  }
+  .ai-token-bar .coins { margin-left: auto; color: var(--gold); }
+  .ai-token-bar .remain { color: var(--text-tertiary); }
+
+  /* Input row */
+  .ai-input-row {
+    margin: 8px 12px 14px;
+    display: flex; gap: 6px;
+  }
+  .ai-input {
+    flex: 1;
+    background: var(--navy-light);
+    border: 1px solid var(--navy-line);
+    color: var(--cream);
+    padding: 9px 12px;
+    font-family: var(--font-serif-tc);
+    font-size: 13px;
+    border-radius: var(--r-soft);
+    outline: none;
+    letter-spacing: 0.04em;
+  }
+  .ai-input:focus { border-color: var(--gold-dim); }
+  .ai-input::placeholder { color: var(--text-tertiary); }
+  .ai-send-btn {
+    background: var(--gold-glow);
+    border: 1px solid var(--gold);
+    color: var(--gold-bright);
+    padding: 0 14px;
+    border-radius: var(--r-soft);
+    cursor: pointer;
+    display: flex; align-items: center;
+  }
+  .ai-send-btn:hover { background: var(--gold); color: var(--navy-deep); }
 
   /* ===== LOADING ===== */
   .loading-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(30,36,48,0.85);
+    background: rgba(17,21,29,0.85);
     display: none;
     align-items: center;
     justify-content: center;
@@ -596,34 +712,25 @@
     gap: 16px;
     z-index: 200;
   }
-
   .loading-overlay.visible { display: flex; }
-
   .loading-spinner {
-    width: 32px;
-    height: 32px;
-    border: 2px solid var(--navy-light);
+    width: 32px; height: 32px;
+    border: 2px solid var(--navy-line);
     border-top-color: var(--gold);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
-
-  .loading-text {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-
+  .loading-text { font-size: 12px; color: var(--text-secondary); }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ===== TOAST ===== */
   .toast {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    bottom: 24px; right: 24px;
     padding: 12px 20px;
     background: var(--navy-light);
     border: 1px solid var(--gold-dim);
-    border-radius: 6px;
+    border-radius: var(--r-card);
     font-size: 12px;
     color: var(--text-primary);
     z-index: 999;
@@ -632,347 +739,93 @@
     transition: all 0.3s ease;
     max-width: 320px;
   }
+  .toast.visible { transform: translateY(0); opacity: 1; }
+  .toast.error { border-color: var(--danger); }
+  .toast.success { border-color: var(--success); }
 
-  .toast.visible {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  .toast.error {
-    border-color: var(--danger);
-  }
-
-  .toast.success {
-    border-color: var(--success);
-  }
-
-  /* ===== SIDEBAR TOGGLE ===== */
-  .sidebar-toggle {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 48px;
-    background: var(--navy-light);
-    border: 1px solid var(--navy-hover);
-    border-left: none;
-    border-radius: 0 4px 4px 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    font-size: 12px;
-    z-index: 50;
-    transition: all 0.2s;
-  }
-
-  .sidebar-toggle:hover {
-    background: var(--navy-hover);
-    color: var(--gold);
-  }
-
-  /* ===== AI PANEL ===== */
-  .ai-panel {
-    width: 340px;
-    background: var(--navy);
-    border-left: 1px solid var(--navy-light);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    transition: margin-right 0.3s ease;
-    height: 100%;
-  }
-
-  .ai-panel--hidden {
-    margin-right: -340px;
-  }
-
-  .ai-panel__header {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--navy-light);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-  }
-
-  .ai-panel__avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--gold-glow);
-    border: 1.5px solid var(--gold-dim);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-  }
-
-  .ai-panel__name {
-    font-size: 13px;
-    color: var(--text-primary);
-    font-weight: 600;
-    flex: 1;
-  }
-
-  .ai-panel__status {
-    font-size: 10px;
-    color: var(--text-secondary);
-    margin-top: 1px;
-  }
-
-  .ai-panel__close {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 4px;
-    transition: all 0.15s;
-  }
-
-  .ai-panel__close:hover {
-    color: var(--text-primary);
-    background: var(--navy-light);
-  }
-
-  /* Mode switcher */
-  .ai-panel__modes {
-    display: flex;
-    padding: 8px 16px;
-    gap: 4px;
-    border-bottom: 1px solid var(--navy-light);
-    flex-shrink: 0;
-  }
-
-  .ai-panel__mode-btn {
-    flex: 1;
-    padding: 6px 8px;
-    font-size: 11px;
-    text-align: center;
-    background: none;
-    border: 1px solid var(--navy-light);
-    border-radius: 4px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-  }
-
-  .ai-panel__mode-btn:hover {
-    border-color: var(--gold-dim);
-    color: var(--text-primary);
-  }
-
-  .ai-panel__mode-btn--active {
-    border-color: var(--gold);
-    background: var(--gold-glow);
-    color: var(--gold);
-  }
-
-  /* Chat messages */
-  .ai-panel__messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .ai-panel__messages::-webkit-scrollbar { width: 4px; }
-  .ai-panel__messages::-webkit-scrollbar-track { background: transparent; }
-  .ai-panel__messages::-webkit-scrollbar-thumb { background: var(--navy-hover); border-radius: 2px; }
-
-  .ai-msg {
-    max-width: 88%;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    line-height: 1.7;
-  }
-
-  .ai-msg--assistant {
-    background: var(--navy-light);
-    color: var(--text-primary);
-    align-self: flex-start;
-    border-bottom-left-radius: 3px;
-  }
-
-  .ai-msg--user {
-    background: var(--gold-glow);
-    color: var(--cream);
-    align-self: flex-end;
-    border-bottom-right-radius: 3px;
-    border: 1px solid rgba(201,168,106,0.2);
-  }
-
-  .ai-msg__typing {
-    display: flex;
-    gap: 4px;
-    padding: 12px 16px;
-    align-self: flex-start;
-  }
-
-  .ai-msg__typing span {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--text-secondary);
-    animation: typing-dot 1.2s infinite;
-  }
-
-  .ai-msg__typing span:nth-child(2) { animation-delay: 0.2s; }
-  .ai-msg__typing span:nth-child(3) { animation-delay: 0.4s; }
-
-  @keyframes typing-dot {
-    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-    30% { opacity: 1; transform: translateY(-3px); }
-  }
-
-  /* Token/cost display */
-  .ai-panel__cost {
-    padding: 6px 16px;
-    font-size: 10px;
-    color: var(--text-secondary);
-    border-top: 1px solid var(--navy-light);
-    display: flex;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
-
-  .ai-panel__cost-coins {
-    color: var(--gold);
-  }
-
-  /* Input area */
-  .ai-panel__input-area {
-    padding: 12px 16px;
-    border-top: 1px solid var(--navy-light);
-    flex-shrink: 0;
-  }
-
-  .ai-panel__input-row {
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
-  }
-
-  .ai-panel__input {
-    flex: 1;
-    padding: 10px 14px;
-    background: var(--navy-light);
-    border: 1px solid var(--navy-hover);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 13px;
-    font-family: inherit;
-    resize: none;
-    min-height: 40px;
-    max-height: 120px;
-    line-height: 1.5;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
-  .ai-panel__input:focus {
-    border-color: var(--gold-dim);
-  }
-
-  .ai-panel__input::placeholder {
-    color: var(--text-secondary);
-  }
-
-  .ai-panel__send {
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    background: var(--gold);
-    border: none;
-    color: var(--navy);
-    font-size: 16px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: all 0.15s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .ai-panel__send:hover {
-    background: var(--gold-dim);
-  }
-
-  .ai-panel__send:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  /* AI toggle button in topbar */
-  .btn-ai {
-    background: var(--gold-glow);
-    border-color: var(--gold-dim);
-    color: var(--gold);
-  }
-
-  .btn-ai:hover {
-    background: rgba(201,168,106,0.25);
-  }
-
-  .btn-ai--active {
-    background: var(--gold);
-    color: var(--navy);
-    font-weight: 600;
+  /* ===== ANIMATIONS ===== */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 
   /* ===== RESPONSIVE ===== */
   @media (max-width: 768px) {
-    .sidebar { 
-      position: absolute; 
-      z-index: 90; 
-      height: calc(100vh - var(--topbar-height));
-      width: 260px;
+    .sidebar {
+      position: absolute;
+      z-index: 90;
+      height: calc(100vh - var(--topbar-h));
+      width: 200px;
     }
-    .sidebar.collapsed { margin-left: -260px; }
-    .topbar-brand span { display: none; }
-    .topbar-brand { font-size: 16px; }
-    .reader-viewport { padding: 12px; }
+    .sidebar.collapsed { margin-left: -200px; }
+    .topbar { padding: 0 16px; gap: 10px; }
+    .topbar-breadcrumb { display: none; }
+    .reader-viewport { padding: 16px 12px 48px; }
     .welcome-screen { padding: 24px; }
     .drop-zone { width: 100%; padding: 32px 20px; }
     .welcome-title { font-size: 22px; }
-    .reader-toolbar { gap: 6px; padding: 0 8px; }
-    .reader-toolbar .btn { padding: 4px 8px; font-size: 10px; }
-    .page-jump-input { width: 40px; }
-    .toast { left: 16px; right: 16px; max-width: none; }
-
-    /* Touch-friendly: larger tap targets */
-    .thumb-item { padding: 10px; }
-    .btn { min-height: 36px; }
-    .sidebar-tab { padding: 12px; }
-
-    /* Start with sidebar collapsed on mobile */
-    .sidebar { margin-left: -260px; }
-
-    /* AI panel full-width overlay on mobile */
+    .sidebar { margin-left: -200px; }
     .ai-panel {
       position: absolute;
-      right: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
+      right: 0; top: 0;
+      width: 100%; height: 100%;
       z-index: 95;
     }
     .ai-panel--hidden { margin-right: -100%; }
+    .toast { left: 16px; right: 16px; max-width: none; }
   }
 
-  /* Safe area for notched phones */
   @supports (padding: env(safe-area-inset-top)) {
     .topbar { padding-top: env(safe-area-inset-top); }
     .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
+  }
+
+  /* Sync checkbox */
+  .sync-checkbox {
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+    padding: 8px 0; margin-top: 10px;
+  }
+  .sync-checkbox input { display: none; }
+  .sync-checkbox-mark {
+    width: 16px; height: 16px;
+    border: 1.5px solid var(--text-secondary);
+    border-radius: 3px; flex-shrink: 0;
+    position: relative; transition: all 0.2s;
+  }
+  .sync-checkbox input:checked + .sync-checkbox-mark {
+    background: var(--gold); border-color: var(--gold);
+  }
+  .sync-checkbox input:checked + .sync-checkbox-mark::after {
+    content: ''; position: absolute;
+    left: 4px; top: 1px;
+    width: 5px; height: 9px;
+    border: solid var(--navy-deep);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  .sync-checkbox-label { font-size: 12px; color: var(--text-secondary); }
+  .sync-checkbox input:checked ~ .sync-checkbox-label { color: var(--gold); }
+
+  /* Library panel */
+  .library-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px; border-radius: var(--r-soft);
+    cursor: pointer; transition: background 0.15s;
+    margin-bottom: 4px;
+  }
+  .library-item:hover { background: var(--navy-hover); }
+  .library-item-title { font-size: 13px; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .library-item-meta { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+  .library-item-remove {
+    color: var(--text-secondary); cursor: pointer;
+    font-size: 16px; padding: 4px;
+    border-radius: var(--r-soft); background: none; border: none;
+  }
+  .library-item-remove:hover { color: var(--danger); background: rgba(196,96,79,0.1); }
+  .library-empty {
+    text-align: center; color: var(--text-secondary);
+    font-size: 12px; padding: 32px 16px; line-height: 1.8;
   }
 </style>
 </head>
@@ -980,24 +833,54 @@
 
 <!-- Top Bar -->
 <div class="topbar">
-  <div class="topbar-brand">阿卡夏圖書館 <span>Akasha Library</span></div>
-  <div class="topbar-divider"></div>
-  <div class="topbar-filename" id="currentFileName">未開啟檔案</div>
+  <div class="topbar-info">
+    <div class="topbar-breadcrumb">Reading Hall · 閱讀廳</div>
+    <div class="topbar-title">
+      <span id="currentFileName">PDF 閱讀器</span>
+      <span class="topbar-subtitle" id="topbarSubtitle">Akasha Library Reader</span>
+    </div>
+  </div>
+  <div class="topbar-spacer"></div>
   <div class="topbar-actions">
-    <button class="btn btn-ai" id="btnAI" onclick="toggleAIPanel()">AI 圖書館員</button>
-    <button class="btn" id="btnOpen" onclick="document.getElementById('file-input').click()">開啟檔案</button>
+    <button class="btn" onclick="window.zoomOut()" title="縮小">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4M8 11h6"/></svg>
+    </button>
+    <span class="zoom-display" id="zoomDisplay">100%</span>
+    <button class="btn" onclick="window.zoomIn()" title="放大">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4M11 8v6M8 11h6"/></svg>
+    </button>
+    <button class="btn" onclick="window.zoomFit()" title="符合畫面">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+    </button>
+    <div class="topbar-sep"></div>
+    <button class="btn" onclick="document.getElementById('file-input').click()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+      開啟
+    </button>
+    <button class="btn" id="btnDownload" onclick="window.downloadCurrent()" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+      匯出
+    </button>
+    <div class="topbar-sep"></div>
+    <button class="btn btn-gold" id="btnAI" onclick="toggleAIPanel()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c0-2 2-4 5-4h8c3 0 5 2 5 4v3a9 9 0 01-18 0z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
+      <span id="btnAIText">召喚圖書館員</span>
+    </button>
+    <button class="btn" onclick="toggleDarkMode()" title="切換明暗模式">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 11-10 0c0-2 1-3 2-4 0 2 2 3 3 1 0-3-1-5 0-7z"/></svg>
+    </button>
     <input type="file" id="file-input" accept=".pdf">
   </div>
 </div>
 
 <!-- Main -->
 <div class="main-container">
-  <!-- Sidebar -->
+  <!-- Left Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-tabs">
-      <button class="sidebar-tab active" data-tab="pages" onclick="switchTab('pages')">頁面</button>
-      <button class="sidebar-tab" data-tab="split" onclick="switchTab('split')">切割</button>
-      <button class="sidebar-tab" data-tab="library" onclick="switchTab('library')">書庫</button>
+      <button class="sidebar-tab active" data-tab="pages" onclick="switchTab('pages')">Pages · 頁</button>
+      <button class="sidebar-tab" data-tab="split" onclick="switchTab('split')">Cut · 切割</button>
+      <button class="sidebar-tab" data-tab="library" onclick="switchTab('library')">Lib · 書庫</button>
     </div>
 
     <!-- Pages Tab -->
@@ -1006,50 +889,65 @@
       <div id="thumb-list"></div>
     </div>
 
-    <!-- Split Tab -->
+    <!-- Split/Cut Tab -->
     <div class="sidebar-content" id="tab-split" style="display:none;">
       <div class="split-panel visible">
-        <div class="split-mode-toggle">
-          <button class="split-mode-btn active" data-mode="range" onclick="setSplitMode('range')">範圍擷取</button>
-          <button class="split-mode-btn" data-mode="every" onclick="setSplitMode('every')">等分切割</button>
-        </div>
+        <div class="split-header">Sectio · 頁面切割</div>
+
+        <button class="split-mode-btn active" data-mode="range" onclick="setSplitMode('range')">
+          <span>指定範圍</span><span class="en-label">Range</span>
+        </button>
+        <button class="split-mode-btn" data-mode="every" onclick="setSplitMode('every')">
+          <span>每 N 頁</span><span class="en-label">Stride</span>
+        </button>
+        <button class="split-mode-btn" data-mode="custom" onclick="setSplitMode('custom')">
+          <span>自訂選擇</span><span class="en-label">Custom</span>
+        </button>
 
         <!-- Range mode -->
         <div id="split-range">
-          <div class="split-group">
-            <label>擷取頁面範圍</label>
-            <div class="split-input-row">
-              <span>從第</span>
-              <input type="number" class="split-input" id="splitFrom" min="1" value="1">
-              <span>頁 到第</span>
-              <input type="number" class="split-input" id="splitTo" min="1" value="1">
-              <span>頁</span>
-            </div>
+          <div class="split-label">From · To</div>
+          <div class="split-input-row">
+            <input type="number" class="split-input" id="splitFrom" min="1" value="1">
+            <span>—</span>
+            <input type="number" class="split-input" id="splitTo" min="1" value="1">
           </div>
-          <button class="btn btn-gold" style="width:100%" onclick="splitRange()">擷取並下載</button>
+          <div class="split-preview" id="splitRangePreview">
+            將切割 <span class="gold">0 頁</span>，輸出為一份新文件，置於書庫「片段」夾。
+          </div>
+          <button class="btn btn-gold" style="width:100%" onclick="splitRange()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 11M9 16l11-11"/></svg>
+            執行切割
+          </button>
         </div>
 
         <!-- Every-N mode -->
         <div id="split-every" style="display:none;">
-          <div class="split-group">
-            <label>每幾頁切割一個檔案</label>
-            <div class="split-input-row">
-              <span>每</span>
-              <input type="number" class="split-input" id="splitEvery" min="1" value="50">
-              <span>頁為一檔</span>
-            </div>
+          <div class="split-label">Every · 每</div>
+          <div class="split-input-row">
+            <input type="number" class="split-input" id="splitEvery" min="1" value="50">
+            <span>頁為一檔</span>
           </div>
           <div class="split-preview" id="splitPreview"></div>
-          <button class="btn btn-gold" style="width:100%" onclick="splitEvery()">全部切割並下載</button>
+          <button class="btn btn-gold" style="width:100%" onclick="splitEvery()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 11M9 16l11-11"/></svg>
+            全部切割並下載
+          </button>
         </div>
 
-        <label class="sync-checkbox" style="margin-top:14px;">
+        <!-- Custom mode placeholder -->
+        <div id="split-custom" style="display:none;">
+          <div class="split-label">Custom Selection</div>
+          <div class="split-preview">在頁面縮圖中點選要匯出的頁面</div>
+        </div>
+
+        <label class="sync-checkbox">
           <input type="checkbox" id="syncToLibrary">
           <span class="sync-checkbox-mark"></span>
           <span class="sync-checkbox-label">同步更新書庫</span>
         </label>
 
-        <div style="margin-top:10px; font-size:11px; color:var(--text-secondary); line-height:1.6;" id="splitInfo">
+        <div style="margin-top:10px; font-size:11px; color:var(--text-tertiary); line-height:1.6; font-family:var(--font-serif-en); letter-spacing:0.12em;" id="splitInfo">
           開啟 PDF 後即可使用切割功能
         </div>
       </div>
@@ -1064,14 +962,18 @@
     </div>
   </div>
 
-  <!-- Reader -->
+  <!-- Center Reader -->
   <div class="reader-area">
-    <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">◀</div>
+    <div class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+    </div>
 
     <!-- Welcome -->
     <div class="welcome-screen" id="welcomeScreen">
-      <div class="welcome-icon">書</div>
-      <div class="welcome-title">阿卡夏圖書館</div>
+      <div class="welcome-icon">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>
+      </div>
+      <div class="welcome-title">Akasha Library</div>
       <div class="welcome-sub">
         輕量 PDF 閱讀器 · 內建切割工具<br>
         拖放檔案或點擊下方開啟
@@ -1086,19 +988,21 @@
 
     <!-- Reader View (hidden until file opens) -->
     <div id="readerView" style="display:none;">
-      <div class="reader-toolbar">
-        <button class="btn" onclick="prevPage()">‹ 上一頁</button>
-        <input type="number" class="page-jump-input" id="pageJumpInput" min="1" value="1" onchange="jumpToPage(this.value)">
-        <span class="page-indicator" id="pageIndicator">/ 0</span>
-        <button class="btn" onclick="nextPage()">下一頁 ›</button>
-        <div class="topbar-divider"></div>
-        <button class="btn" onclick="zoomOut()">−</button>
-        <span class="zoom-display" id="zoomDisplay">100%</span>
-        <button class="btn" onclick="zoomIn()">+</button>
-        <button class="btn" onclick="zoomFit()">適合寬度</button>
-      </div>
-      <div class="reader-viewport" id="readerViewport">
+      <div class="reader-viewport tex-paper" id="readerViewport">
         <canvas id="pdf-canvas"></canvas>
+        <!-- Page navigation floater -->
+        <div class="page-nav-floater" id="pageNavFloater">
+          <button onclick="prevPage()" title="上一頁">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>
+          </button>
+          <div class="page-display">
+            p. <input type="number" class="page-jump" id="pageJumpInput" min="1" value="1" onchange="jumpToPage(this.value)">
+            <span class="page-total" id="pageIndicator">/ 0</span>
+          </div>
+          <button onclick="nextPage()" title="下一頁">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1108,39 +1012,203 @@
     </div>
   </div>
 
-  <!-- AI Librarian Panel -->
+  <!-- AI Librarian Panel (AVG Visual Novel Style) -->
   <aside class="ai-panel ai-panel--hidden" id="aiPanel">
-    <div class="ai-panel__header">
-      <div class="ai-panel__avatar">&#128218;</div>
-      <div>
-        <div class="ai-panel__name">AI 圖書館員</div>
-        <div class="ai-panel__status" id="aiStatus">待機中</div>
+    <!-- Header -->
+    <div class="ai-header">
+      <div class="ai-header-row">
+        <span class="ai-status-dot"></span>
+        <span class="ai-header-title">Bibliothecaria · 在線</span>
+        <button class="ai-close-btn" onclick="toggleAIPanel()" title="關閉">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
-      <button class="ai-panel__close" onclick="toggleAIPanel()" title="關閉">&times;</button>
-    </div>
-
-    <div class="ai-panel__modes">
-      <button class="ai-panel__mode-btn ai-panel__mode-btn--active" data-ai-mode="text" onclick="setAIMode('text')">純文字</button>
-      <button class="ai-panel__mode-btn" data-ai-mode="voice" onclick="setAIMode('voice')">含語音</button>
-      <button class="ai-panel__mode-btn" data-ai-mode="persona" onclick="setAIMode('persona')">含形象</button>
-    </div>
-
-    <div class="ai-panel__messages" id="aiMessages">
-      <div class="ai-msg ai-msg--assistant">
-        你好！我是你的 AI 圖書館員。開啟一本書後，可以問我任何關於內容的問題。
+      <div class="ai-mode-row">
+        <button class="ai-mode-tab active" data-ai-mode="text" onclick="setAIMode('text')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
+          文字
+        </button>
+        <button class="ai-mode-tab" data-ai-mode="voice" onclick="setAIMode('voice')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+          語音
+        </button>
+        <button class="ai-mode-tab" data-ai-mode="persona" onclick="setAIMode('persona')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c0-2 2-4 5-4h8c3 0 5 2 5 4v3a9 9 0 01-18 0z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
+          人設
+        </button>
       </div>
     </div>
 
-    <div class="ai-panel__cost">
-      <span>預估：<span id="aiTokenEstimate">—</span> tokens</span>
-      <span class="ai-panel__cost-coins">&#9679; 餘額：<span id="aiCoins">40</span> 月幣</span>
+    <!-- Portrait Zone -->
+    <div class="ai-portrait" id="aiPortrait" onclick="aiAdvance()">
+      <!-- Bookshelf Scene Background -->
+      <div class="ai-scene">
+        <svg viewBox="0 0 340 320" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;opacity:0.42">
+          <defs>
+            <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#1a2030"/>
+              <stop offset="100%" stop-color="#0a0d15"/>
+            </linearGradient>
+          </defs>
+          <rect width="340" height="320" fill="url(#bg)"/>
+          <!-- shelf 1 -->
+          <rect x="0" y="110" width="340" height="3" fill="#2a1f12"/>
+          <rect x="0" y="72" width="8" height="38" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="19" y="75" width="15" height="35" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="38" y="68" width="10" height="42" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="57" y="74" width="12" height="36" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="76" y="70" width="9" height="40" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="95" y="76" width="14" height="34" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="114" y="72" width="11" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="133" y="68" width="8" height="42" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="152" y="74" width="15" height="36" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="171" y="70" width="10" height="40" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="190" y="76" width="12" height="34" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="209" y="72" width="14" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="228" y="68" width="9" height="42" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="247" y="74" width="11" height="36" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="266" y="70" width="15" height="40" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="285" y="76" width="8" height="34" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="304" y="72" width="12" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="323" y="68" width="10" height="42" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <!-- shelf 2 -->
+          <rect x="0" y="180" width="340" height="3" fill="#2a1f12"/>
+          <rect x="7" y="142" width="14" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="26" y="145" width="10" height="35" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="45" y="138" width="12" height="42" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="64" y="144" width="9" height="36" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="83" y="140" width="15" height="40" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="102" y="146" width="11" height="34" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="121" y="142" width="8" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="140" y="138" width="14" height="42" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="159" y="144" width="10" height="36" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="178" y="140" width="12" height="40" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="197" y="146" width="9" height="34" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="216" y="142" width="15" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="235" y="138" width="11" height="42" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="254" y="144" width="8" height="36" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="273" y="140" width="14" height="40" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="292" y="146" width="10" height="34" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="311" y="142" width="12" height="38" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <!-- shelf 3 -->
+          <rect x="0" y="250" width="340" height="3" fill="#2a1f12"/>
+          <rect x="0" y="212" width="10" height="38" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="19" y="215" width="12" height="35" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="38" y="208" width="9" height="42" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="57" y="214" width="15" height="36" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="76" y="210" width="11" height="40" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="95" y="216" width="8" height="34" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="114" y="212" width="14" height="38" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="133" y="208" width="10" height="42" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="152" y="214" width="12" height="36" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="171" y="210" width="9" height="40" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="190" y="216" width="15" height="34" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="209" y="212" width="11" height="38" fill="#2a1f12" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="228" y="208" width="8" height="42" fill="#3a2818" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="247" y="214" width="14" height="36" fill="#3a2a1c" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="266" y="210" width="10" height="40" fill="#2a1418" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <rect x="285" y="216" width="12" height="34" fill="#1a2030" stroke="rgba(0,0,0,0.5)" stroke-width="0.4"/>
+          <!-- candle glow -->
+          <radialGradient id="candle" cx="80%" cy="60%" r="30%">
+            <stop offset="0%" stop-color="rgba(255,200,120,0.4)"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+          <rect width="340" height="320" fill="url(#candle)"/>
+        </svg>
+      </div>
+
+      <!-- Character Silhouette -->
+      <div class="ai-character">
+        <svg viewBox="0 0 200 250" style="width:100%;height:100%">
+          <defs>
+            <linearGradient id="robeGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#3a2818" stop-opacity="0.9"/>
+              <stop offset="100%" stop-color="#1a1208" stop-opacity="0.95"/>
+            </linearGradient>
+            <radialGradient id="halo" cx="50%" cy="35%" r="50%">
+              <stop offset="0%" stop-color="rgba(201,168,106,0.35)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </radialGradient>
+          </defs>
+          <!-- halo -->
+          <ellipse cx="100" cy="80" rx="70" ry="60" fill="url(#halo)"/>
+          <!-- robe / shoulders -->
+          <path d="M40 250 C 40 180, 60 150, 100 150 C 140 150, 160 180, 160 250 Z" fill="url(#robeGrad)" stroke="rgba(201,168,106,0.25)" stroke-width="0.5"/>
+          <!-- collar -->
+          <path d="M75 158 L100 174 L125 158 L120 200 L100 188 L80 200 Z" fill="rgba(201,168,106,0.12)" stroke="rgba(201,168,106,0.4)" stroke-width="0.6"/>
+          <!-- head -->
+          <ellipse cx="100" cy="100" rx="32" ry="40" fill="#2a2118" stroke="rgba(201,168,106,0.4)" stroke-width="0.6"/>
+          <!-- face -->
+          <ellipse cx="100" cy="100" rx="28" ry="36" fill="rgba(241,234,214,0.04)"/>
+          <!-- hair drape -->
+          <path d="M68 88 Q 70 60 100 56 Q 130 60 132 88 L 130 110 Q 125 95 120 92 Q 110 78 100 80 Q 90 78 80 92 Q 75 95 70 110 Z" fill="#1a1208" stroke="rgba(201,168,106,0.3)" stroke-width="0.5"/>
+          <!-- eyes — calm (closed serene line) -->
+          <path id="eyeL-calm" d="M88 102 Q 92 100 96 102" stroke="rgba(241,234,214,0.85)" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <path id="eyeR-calm" d="M104 102 Q 108 100 112 102" stroke="rgba(241,234,214,0.85)" stroke-width="1" fill="none" stroke-linecap="round"/>
+          <!-- eyes — thinking (dots, hidden by default) -->
+          <circle id="eyeL-think" cx="92" cy="102" r="1.4" fill="rgba(241,234,214,0.85)" style="display:none"/>
+          <circle id="eyeR-think" cx="108" cy="102" r="1.4" fill="rgba(241,234,214,0.85)" style="display:none"/>
+          <!-- small smile -->
+          <path d="M93 118 Q 100 122 107 118" stroke="rgba(241,234,214,0.85)" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+          <!-- glasses -->
+          <circle cx="92" cy="103" r="7" fill="none" stroke="rgba(201,168,106,0.6)" stroke-width="0.8"/>
+          <circle cx="108" cy="103" r="7" fill="none" stroke="rgba(201,168,106,0.6)" stroke-width="0.8"/>
+          <line x1="99" y1="103" x2="101" y2="103" stroke="rgba(201,168,106,0.6)" stroke-width="0.8"/>
+          <!-- book in hands -->
+          <rect x="78" y="200" width="44" height="32" fill="#5b3a2a" stroke="rgba(201,168,106,0.5)" stroke-width="0.8"/>
+          <line x1="100" y1="200" x2="100" y2="232" stroke="rgba(201,168,106,0.4)" stroke-width="0.5"/>
+          <path d="M82 206 L96 206 M82 212 L94 212 M104 206 L118 206 M104 212 L116 212" stroke="rgba(241,234,214,0.4)" stroke-width="0.4"/>
+          <!-- hands hint -->
+          <ellipse cx="76" cy="216" rx="5" ry="4" fill="rgba(241,234,214,0.5)"/>
+          <ellipse cx="124" cy="216" rx="5" ry="4" fill="rgba(241,234,214,0.5)"/>
+        </svg>
+      </div>
+
+      <!-- Nameplate -->
+      <div class="ai-nameplate">
+        <div class="ai-nameplate-name">蘇菲亞</div>
+        <div class="ai-nameplate-role">Sophia · Librarian</div>
+      </div>
+
+      <!-- Emotion indicator -->
+      <div class="ai-emotion" id="aiEmotion">Serena</div>
+
+      <!-- Page badge -->
+      <div class="ai-page-badge" id="aiPageBadge">※ 等待開啟書籍</div>
     </div>
 
-    <div class="ai-panel__input-area">
-      <div class="ai-panel__input-row">
-        <textarea class="ai-panel__input" id="aiInput" placeholder="問點什麼..." rows="1" onkeydown="handleAIKeydown(event)"></textarea>
-        <button class="ai-panel__send" id="aiSend" onclick="sendAIMessage()" title="送出">&#10148;</button>
+    <!-- Dialogue Box -->
+    <div class="ai-dialogue" id="aiDialogue">
+      <div class="ai-dialogue-ornament"></div>
+      <div class="ai-dialogue-corner ai-dialogue-corner--tl"></div>
+      <div class="ai-dialogue-corner ai-dialogue-corner--tr"></div>
+      <div class="ai-dialogue-corner ai-dialogue-corner--bl"></div>
+      <div class="ai-dialogue-corner ai-dialogue-corner--br"></div>
+      <div class="ai-dialogue-speaker" id="aiDialogueSpeaker">圖書館員 · 蘇菲亞</div>
+      <div class="ai-dialogue-text" id="aiDialogueText">
+        歡迎來到阿卡夏圖書館。開啟一本書後，我可以為你解說任何段落或回答疑問。<span class="ai-cursor"></span>
       </div>
+    </div>
+
+    <!-- Choices -->
+    <div class="ai-choices" id="aiChoices"></div>
+
+    <div style="flex:1"></div>
+
+    <!-- Token/Coin Bar -->
+    <div class="ai-token-bar">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 7v10M9 9l6 6M9 15l6-6"/></svg>
+      <span>預估 ~ <span id="aiTokenEstimate">0</span> tokens</span>
+      <span class="coins">1 月幣</span>
+      <span class="remain">· 餘 <span id="aiCoins">99</span></span>
+    </div>
+
+    <!-- Input Row -->
+    <div class="ai-input-row">
+      <input class="ai-input" id="aiInput" placeholder="…向圖書館員提問" onkeydown="handleAIKeydown(event)">
+      <button class="ai-send-btn" id="aiSend" onclick="sendAIMessage()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L21 4l-7 17-3-7-8-2z"/></svg>
+      </button>
     </div>
   </aside>
 </div>
@@ -1177,6 +1245,14 @@
   window.splitEvery = splitEveryFn;
   window.toggleSidebar = toggleSidebar;
   window.goToPage = (p) => { currentPage = p; renderPage(); switchTab('pages'); };
+  window.downloadCurrent = downloadCurrent;
+
+  // ===== Dark/Light Mode Toggle =====
+  window.toggleDarkMode = function() {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-mode');
+    html.setAttribute('data-mode', current === 'light' ? 'dark' : 'light');
+  };
 
   // ===== File Input =====
   const fileInput = document.getElementById('file-input');
@@ -1187,7 +1263,7 @@
   });
 
   dropZone?.addEventListener('click', () => fileInput.click());
-  
+
   // Drag & drop on welcome zone
   dropZone?.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
   dropZone?.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
@@ -1216,6 +1292,7 @@
     showLoading('正在載入 ' + file.name + '…');
     currentFileName = file.name;
     document.getElementById('currentFileName').textContent = file.name;
+    document.getElementById('topbarSubtitle').textContent = '';
 
     try {
       const arrayBuffer = await file.arrayBuffer();
@@ -1228,11 +1305,17 @@
       // Update UI
       document.getElementById('welcomeScreen').style.display = 'none';
       document.getElementById('readerView').style.display = 'flex';
+      document.getElementById('readerView').style.flex = '1';
+      document.getElementById('readerView').style.overflow = 'hidden';
       document.getElementById('pages-empty').style.display = 'none';
       document.getElementById('splitInfo').textContent = `共 ${totalPages} 頁`;
       document.getElementById('splitTo').value = totalPages;
       document.getElementById('splitTo').max = totalPages;
       document.getElementById('splitFrom').max = totalPages;
+      document.getElementById('btnDownload').style.display = '';
+
+      // Update AI panel page badge
+      updateAIPageBadge();
 
       // Save to library
       saveToLibrary(file.name, totalPages);
@@ -1279,6 +1362,12 @@
     document.querySelectorAll('.thumb-item').forEach((el, i) => {
       el.classList.toggle('active', i + 1 === currentPage);
     });
+
+    // Update AI page badge
+    updateAIPageBadge();
+
+    // Update split range preview
+    updateRangePreview();
   }
 
   // ===== Fit Width =====
@@ -1287,7 +1376,7 @@
     pdfDoc.getPage(currentPage).then(page => {
       const vp = page.getViewport({ scale: 1.0 });
       const container = document.getElementById('readerViewport');
-      const targetWidth = container.clientWidth - 48;
+      const targetWidth = container.clientWidth - 64;
       scale = targetWidth / vp.width;
       renderPage();
     });
@@ -1311,12 +1400,16 @@
       const item = document.createElement('div');
       item.className = 'thumb-item' + (i === currentPage ? ' active' : '');
       item.onclick = () => { currentPage = i; renderPage(); };
-      
-      const num = document.createElement('span');
-      num.className = 'thumb-page-num';
-      num.textContent = i;
 
-      item.appendChild(canvas);
+      const card = document.createElement('div');
+      card.className = 'thumb-card';
+      card.appendChild(canvas);
+
+      const num = document.createElement('span');
+      num.className = 'thumb-num';
+      num.textContent = `p. ${i}`;
+
+      item.appendChild(card);
       item.appendChild(num);
       list.appendChild(item);
 
@@ -1338,7 +1431,9 @@
     const sb = document.getElementById('sidebar');
     const btn = document.getElementById('sidebarToggle');
     sb.classList.toggle('collapsed');
-    btn.textContent = sb.classList.contains('collapsed') ? '▶' : '◀';
+    btn.innerHTML = sb.classList.contains('collapsed')
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg>'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>';
   }
 
   // ===== Split Mode =====
@@ -1346,6 +1441,7 @@
     document.querySelectorAll('.split-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
     document.getElementById('split-range').style.display = mode === 'range' ? '' : 'none';
     document.getElementById('split-every').style.display = mode === 'every' ? '' : 'none';
+    document.getElementById('split-custom').style.display = mode === 'custom' ? '' : 'none';
     if (mode === 'every') updateSplitPreview();
   }
 
@@ -1357,20 +1453,29 @@
     let fileNum = 1;
     for (let start = 1; start <= totalPages; start += n) {
       const end = Math.min(start + n - 1, totalPages);
-      html += `<div class="split-preview-item">檔案 ${fileNum}：第 ${start} – ${end} 頁（${end - start + 1} 頁）</div>`;
+      html += `<div>檔案 ${fileNum}：第 ${start} – ${end} 頁（${end - start + 1} 頁）</div>`;
       fileNum++;
     }
     preview.innerHTML = html;
   }
 
+  function updateRangePreview() {
+    const from = parseInt(document.getElementById('splitFrom').value) || 1;
+    const to = parseInt(document.getElementById('splitTo').value) || 1;
+    const count = Math.max(0, to - from + 1);
+    const el = document.getElementById('splitRangePreview');
+    if (el) el.innerHTML = `將切割 <span class="gold">${count} 頁</span>，輸出為一份新文件，置於書庫「片段」夾。`;
+  }
+
   document.getElementById('splitEvery')?.addEventListener('input', updateSplitPreview);
+  document.getElementById('splitFrom')?.addEventListener('input', updateRangePreview);
+  document.getElementById('splitTo')?.addEventListener('input', updateRangePreview);
 
   // ===== PDF Splitting (using pdf-lib via CDN) =====
   let PDFLib = null;
 
   async function loadPDFLib() {
     if (PDFLib) return PDFLib;
-    // Dynamically load pdf-lib
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
     document.head.appendChild(script);
@@ -1434,7 +1539,6 @@
           saveToLibrary(partName, end - start);
         }
         fileNum++;
-        // Small delay so browser doesn't choke on multi-download
         await new Promise(r => setTimeout(r, 300));
       }
 
@@ -1447,9 +1551,14 @@
     }
   }
 
+  function downloadCurrent() {
+    if (!pdfBytes) return;
+    downloadBlob(pdfBytes, currentFileName);
+  }
+
   // ===== Library (localStorage) =====
   function getLibrary() {
-    try { return JSON.parse(localStorage.getItem('akasha-library') || '[]'); } 
+    try { return JSON.parse(localStorage.getItem('akasha-library') || '[]'); }
     catch { return []; }
   }
 
@@ -1459,7 +1568,6 @@
     const entry = { name, pages, lastOpened: Date.now() };
     if (existing >= 0) lib[existing] = entry;
     else lib.unshift(entry);
-    // Keep max 50
     localStorage.setItem('akasha-library', JSON.stringify(lib.slice(0, 50)));
   }
 
@@ -1473,7 +1581,7 @@
     const lib = getLibrary();
     const list = document.getElementById('library-list');
     const empty = document.getElementById('library-empty');
-    
+
     if (lib.length === 0) {
       empty.style.display = '';
       list.innerHTML = '';
@@ -1483,11 +1591,13 @@
     empty.style.display = 'none';
     list.innerHTML = lib.map(b => `
       <div class="library-item">
-        <div class="library-item-info">
+        <div style="flex:1;overflow:hidden">
           <div class="library-item-title">${escapeHtml(b.name)}</div>
           <div class="library-item-meta">${b.pages} 頁 · ${formatDate(b.lastOpened)}</div>
         </div>
-        <button class="library-item-remove" onclick="event.stopPropagation(); removeFromLibrary('${escapeHtml(b.name)}')" title="從書庫移除">×</button>
+        <button class="library-item-remove" onclick="event.stopPropagation(); removeFromLibrary('${escapeHtml(b.name)}')" title="從書庫移除">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
       </div>
     `).join('');
   }
@@ -1496,7 +1606,7 @@
 
   // ===== Keyboard shortcuts =====
   document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); window.prevPage(); }
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); window.nextPage(); }
     if (e.key === '+' || e.key === '=') { e.preventDefault(); window.zoomIn(); }
@@ -1546,28 +1656,39 @@
   // Initial library render
   renderLibrary();
 
-  // ===== AI PANEL =====
+  // ===== AI PANEL (AVG Visual Novel Style) =====
   let aiPanelOpen = false;
-  let aiMode = 'text'; // 'text' | 'voice' | 'persona'
-  let aiCoins = 40;
+  let aiMode = 'text';
+  let aiCoins = 99;
+  let aiScriptIdx = 0;
+  let aiTypewriterTimer = null;
+  let aiTypeDone = true;
+  let aiCurrentText = '';
+  let aiShownLength = 0;
+
+  const AI_SCRIPT = [
+    {
+      speaker: "圖書館員 · 蘇菲亞",
+      emotion: "calm",
+      text: "歡迎來到阿卡夏圖書館。開啟一本書後，我可以為你解說任何段落或回答疑問。",
+      choices: []
+    }
+  ];
 
   window.toggleAIPanel = function() {
     const panel = document.getElementById('aiPanel');
     const btn = document.getElementById('btnAI');
+    const btnText = document.getElementById('btnAIText');
     aiPanelOpen = !aiPanelOpen;
     panel.classList.toggle('ai-panel--hidden', !aiPanelOpen);
-    btn.classList.toggle('btn-ai--active', aiPanelOpen);
+    btnText.textContent = aiPanelOpen ? '圖書館員 ●' : '召喚圖書館員';
   };
 
   window.setAIMode = function(mode) {
     aiMode = mode;
-    document.querySelectorAll('.ai-panel__mode-btn').forEach(b => {
-      b.classList.toggle('ai-panel__mode-btn--active', b.dataset.aiMode === mode);
+    document.querySelectorAll('.ai-mode-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.aiMode === mode);
     });
-    const statusEl = document.getElementById('aiStatus');
-    if (mode === 'text') statusEl.textContent = '純文字模式';
-    else if (mode === 'voice') statusEl.textContent = '語音模式（開發中）';
-    else if (mode === 'persona') statusEl.textContent = '形象模式��開發中）';
   };
 
   window.handleAIKeydown = function(e) {
@@ -1581,65 +1702,104 @@
     const input = document.getElementById('aiInput');
     const text = input.value.trim();
     if (!text) return;
-
-    // Add user message
-    appendAIMessage(text, 'user');
     input.value = '';
-    autoResizeInput();
 
-    // Update token estimate (placeholder calc)
+    // Update token estimate
     const estimatedTokens = Math.ceil(text.length * 1.5);
-    document.getElementById('aiTokenEstimate').textContent = `~${estimatedTokens + 2000}`;
+    document.getElementById('aiTokenEstimate').textContent = `${estimatedTokens + 2000}`;
 
-    // Show typing indicator
-    showAITyping();
+    // Generate response
+    let responseText;
+    if (!pdfDoc) {
+      responseText = '請先開啟一本 PDF，我才能回答關於書籍內容的問題。';
+    } else {
+      responseText = `你正在閱讀「${currentFileName}」的第 ${currentPage} 頁。這裡之後會接入 RAG 檢索 + LLM API。\n\n你的問題：「${text}」`;
+      aiCoins = Math.max(0, aiCoins - 1);
+      document.getElementById('aiCoins').textContent = aiCoins;
+    }
 
-    // Placeholder response (replace with real API call later)
-    setTimeout(() => {
-      hideAITyping();
-      if (!pdfDoc) {
-        appendAIMessage('請先開啟一本 PDF，我才能回答關於書籍內容的問題。', 'assistant');
-      } else {
-        appendAIMessage(`[Placeholder] 你正在閱讀「${currentFileName}」的第 ${currentPage} 頁。這裡之後會接入 RAG 檢索 + LLM API。\n\n你的問題：「${text}」`, 'assistant');
-        // Deduct coins (placeholder)
-        aiCoins = Math.max(0, aiCoins - 0.5);
-        document.getElementById('aiCoins').textContent = aiCoins;
-      }
-    }, 1200);
+    // Start typewriter for response
+    startTypewriter(responseText, "圖書館員 · 蘇菲亞", "thinking", []);
   };
 
-  function appendAIMessage(text, role) {
-    const container = document.getElementById('aiMessages');
-    const msg = document.createElement('div');
-    msg.className = `ai-msg ai-msg--${role}`;
-    msg.textContent = text;
-    container.appendChild(msg);
-    container.scrollTop = container.scrollHeight;
+  window.aiAdvance = function() {
+    if (!aiTypeDone) return;
+    // Advance to next script item if available
+  };
+
+  function startTypewriter(text, speaker, emotion, choices) {
+    // Clear previous timer
+    if (aiTypewriterTimer) clearInterval(aiTypewriterTimer);
+
+    // Set speaker
+    document.getElementById('aiDialogueSpeaker').textContent = speaker || '圖書館員 · 蘇菲亞';
+
+    // Set emotion
+    setCharacterEmotion(emotion);
+    document.getElementById('aiEmotion').textContent = emotion === 'calm' ? 'Serena' : 'Cogitans';
+
+    // Start typewriter
+    aiCurrentText = text;
+    aiShownLength = 0;
+    aiTypeDone = false;
+    const textEl = document.getElementById('aiDialogueText');
+
+    aiTypewriterTimer = setInterval(() => {
+      aiShownLength++;
+      if (aiShownLength >= aiCurrentText.length) {
+        clearInterval(aiTypewriterTimer);
+        aiTypeDone = true;
+        textEl.innerHTML = escapeHtml(aiCurrentText) + (choices.length === 0 ? '<span class="ai-cursor ai-cursor--continue">&#9662;</span>' : '');
+        // Show choices
+        if (choices.length > 0) {
+          renderChoices(choices);
+        }
+      } else {
+        textEl.innerHTML = escapeHtml(aiCurrentText.slice(0, aiShownLength)) + '<span class="ai-cursor"></span>';
+      }
+    }, 22);
   }
 
-  function showAITyping() {
-    const container = document.getElementById('aiMessages');
-    const typing = document.createElement('div');
-    typing.className = 'ai-msg__typing';
-    typing.id = 'aiTyping';
-    typing.innerHTML = '<span></span><span></span><span></span>';
-    container.appendChild(typing);
-    container.scrollTop = container.scrollHeight;
+  function setCharacterEmotion(emotion) {
+    const calmL = document.getElementById('eyeL-calm');
+    const calmR = document.getElementById('eyeR-calm');
+    const thinkL = document.getElementById('eyeL-think');
+    const thinkR = document.getElementById('eyeR-think');
+    if (!calmL) return;
+
+    if (emotion === 'thinking') {
+      calmL.style.display = 'none';
+      calmR.style.display = 'none';
+      thinkL.style.display = '';
+      thinkR.style.display = '';
+    } else {
+      calmL.style.display = '';
+      calmR.style.display = '';
+      thinkL.style.display = 'none';
+      thinkR.style.display = 'none';
+    }
   }
 
-  function hideAITyping() {
-    const el = document.getElementById('aiTyping');
-    if (el) el.remove();
+  function renderChoices(choices) {
+    const container = document.getElementById('aiChoices');
+    container.innerHTML = choices.map(c => `
+      <button class="ai-choice" onclick="handleAIChoice('${c.id}')">
+        <span class="ai-choice-mark">${c.mark}</span>
+        <span style="flex:1">${escapeHtml(c.text)}</span>
+      </button>
+    `).join('');
   }
 
-  // Auto-resize textarea
-  const aiInput = document.getElementById('aiInput');
-  aiInput?.addEventListener('input', autoResizeInput);
+  window.handleAIChoice = function(id) {
+    document.getElementById('aiChoices').innerHTML = '';
+    // placeholder: respond to choice
+  };
 
-  function autoResizeInput() {
-    const el = document.getElementById('aiInput');
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  function updateAIPageBadge() {
+    const badge = document.getElementById('aiPageBadge');
+    if (pdfDoc) {
+      badge.textContent = `※ 正在閱讀 · p. ${currentPage} / ${totalPages}`;
+    }
   }
 
   // ===== PWA Service Worker =====
