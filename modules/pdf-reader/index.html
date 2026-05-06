@@ -1188,6 +1188,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+  import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry } from '../../core/storage.js';
+
   // ===== PDF.js Setup =====
   const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
@@ -1317,7 +1319,7 @@
       updateAIPageBadge();
 
       // Save to library
-      saveToLibrary(file.name, totalPages);
+      await saveToLibrary(file.name, totalPages, pdfBytes);
 
       // Render
       await renderPage();
@@ -1505,7 +1507,7 @@
       const bytes = await newDoc.save();
       downloadBlob(bytes, `${stripExt(currentFileName)}_p${from}-${to}.pdf`);
       if (document.getElementById('syncToLibrary').checked) {
-        saveToLibrary(`${stripExt(currentFileName)}_p${from}-${to}.pdf`, to - from + 1);
+        await saveToLibrary(`${stripExt(currentFileName)}_p${from}-${to}.pdf`, to - from + 1, bytes);
       }
       hideLoading();
       showToast(`已下載第 ${from}–${to} 頁` + (document.getElementById('syncToLibrary').checked ? '（已加入書庫）' : ''), 'success');
@@ -1535,7 +1537,7 @@
         const partName = `${stripExt(currentFileName)}_part${fileNum}.pdf`;
         downloadBlob(bytes, partName);
         if (document.getElementById('syncToLibrary').checked) {
-          saveToLibrary(partName, end - start);
+          await saveToLibrary(partName, end - start, bytes);
         }
         fileNum++;
         await new Promise(r => setTimeout(r, 300));
@@ -1561,18 +1563,32 @@
     catch { return []; }
   }
 
-  function saveToLibrary(name, pages) {
+  async function saveToLibrary(name, pages, bytes) {
+    const entry = await saveFileEntry({
+      name,
+      type: 'pdf',
+      size: bytes.byteLength,
+      pages,
+    });
+    await saveFileBlob(entry.id, new Blob([bytes], { type: 'application/pdf' }));
+
     const lib = getLibrary();
     const existing = lib.findIndex(b => b.name === name);
-    const entry = { name, pages, lastOpened: Date.now() };
-    if (existing >= 0) lib[existing] = entry;
-    else lib.unshift(entry);
+    const item = { name, pages, lastOpened: Date.now(), id: entry.id };
+    if (existing >= 0) lib[existing] = item;
+    else lib.unshift(item);
     localStorage.setItem('akasha-library', JSON.stringify(lib.slice(0, 50)));
+    renderLibrary();
   }
 
-  function removeFromLibrary(name) {
-    const lib = getLibrary().filter(b => b.name !== name);
-    localStorage.setItem('akasha-library', JSON.stringify(lib));
+  async function removeFromLibrary(name) {
+    const lib = getLibrary();
+    const item = lib.find(b => b.name === name);
+    const remaining = lib.filter(b => b.name !== name);
+    localStorage.setItem('akasha-library', JSON.stringify(remaining));
+    if (item?.id) {
+      try { await deleteFileEntry(item.id); } catch (e) { /* best effort */ }
+    }
     renderLibrary();
   }
 
@@ -1589,7 +1605,7 @@
 
     empty.style.display = 'none';
     list.innerHTML = lib.map(b => `
-      <div class="library-item">
+      <div class="library-item" onclick="openFromLibrary('${escapeHtml(b.id || '')}', '${escapeHtml(b.name)}')" style="cursor:pointer" title="點擊開啟">
         <div style="flex:1;overflow:hidden">
           <div class="library-item-title">${escapeHtml(b.name)}</div>
           <div class="library-item-meta">${b.pages} 頁 · ${formatDate(b.lastOpened)}</div>
@@ -1601,6 +1617,28 @@
     `).join('');
   }
 
+  async function openFromLibrary(id, name) {
+    if (!id) {
+      showToast('此為舊版條目，無法開啟（未存儲 PDF 資料）', 'error');
+      return;
+    }
+    showLoading('正在從書庫載入…');
+    try {
+      const blob = await getFileBlob(id);
+      if (!blob) {
+        hideLoading();
+        showToast('書庫中找不到此 PDF 的資料', 'error');
+        return;
+      }
+      const file = new File([blob], name, { type: 'application/pdf' });
+      await loadFile(file);
+    } catch (err) {
+      hideLoading();
+      showToast('載入失敗：' + err.message, 'error');
+    }
+  }
+
+  window.openFromLibrary = openFromLibrary;
   window.removeFromLibrary = removeFromLibrary;
 
   // ===== Keyboard shortcuts =====
@@ -1623,8 +1661,13 @@
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
   }
 
   function showLoading(text) {
