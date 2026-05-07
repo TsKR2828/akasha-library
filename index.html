@@ -748,11 +748,11 @@ body { display: flex; }
       </span>
       <span class="nav-active-dot"></span>
     </button>
-    <button class="nav-item" data-module="spreadsheet">
+    <button class="nav-item" data-module="table-forge">
       <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg></span>
       <span class="nav-item-text">
-        <span class="nav-item-title">試算表</span>
-        <span class="nav-item-sub">Ledgers</span>
+        <span class="nav-item-title">Table Forge</span>
+        <span class="nav-item-sub">Tabularium</span>
       </span>
       <span class="nav-active-dot"></span>
     </button>
@@ -877,21 +877,22 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
-        <!-- Spreadsheet -->
-        <a class="module-card" data-module="spreadsheet">
+        <!-- Table Forge -->
+        <a class="module-card" data-module="table-forge">
           <div class="card-spine" style="background:linear-gradient(180deg,#3d3220,#3d3220cc,#3d322088)"></div>
           <div class="card-roman">III</div>
           <div>
             <div class="card-icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>
             </div>
-            <div class="card-title">試算表</div>
+            <div class="card-title">Table Forge</div>
             <div class="card-en">— Tabularium</div>
-            <div class="card-desc">公式、儲存格、多工作表。冷靜的數字之地。</div>
+            <div class="card-desc">Markdown、JSON、CSV 資料表整理與格式轉換。</div>
           </div>
           <div class="card-footer">
             <div class="card-formats">
-              <span class="format-tag">.xlsx</span>
+              <span class="format-tag">.md</span>
+              <span class="format-tag">.json</span>
               <span class="format-tag">.csv</span>
             </div>
             <div class="card-open-hint">Open &rarr;</div>
@@ -951,10 +952,19 @@ import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
 import { MSG_TYPES, STORAGE_KEY } from './core/export/bridge.js';
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const modules = {
   'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
   'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
-  'spreadsheet': { title: '試算表', subtitle: 'Tabularium', src: 'dist/spreadsheet/index.html' },
+  'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
   'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
   'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
 };
@@ -1023,6 +1033,9 @@ function switchView(view) {
   subtitleEl.textContent = info.subtitle ? `· ${info.subtitle}` : '';
   breadcrumbEl.textContent = info.breadcrumb;
 
+  const actions = document.querySelector('.topbar-actions');
+  if (actions) actions.style.display = '';
+
   if (view === 'dashboard') {
     dashboard.style.display = '';
     frame.classList.remove('active');
@@ -1035,6 +1048,8 @@ function switchView(view) {
     frame.classList.add('active');
   }
 }
+
+const MODULES_WITH_OWN_ACTIONS = new Set(['table-forge', 'pdf-reader', 'ai-settings']);
 
 function openModule(name) {
   const mod = modules[name];
@@ -1052,6 +1067,11 @@ function openModule(name) {
   titleEl.textContent = mod.title;
   subtitleEl.textContent = mod.subtitle ? `· ${mod.subtitle}` : '';
   breadcrumbEl.textContent = 'Akasha Library · Tools';
+
+  const actions = document.querySelector('.topbar-actions');
+  if (actions) {
+    actions.style.display = MODULES_WITH_OWN_ACTIONS.has(name) ? 'none' : '';
+  }
 }
 
 // Auth
@@ -1115,7 +1135,7 @@ initOfflineSync();
 function importFile() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.md,.pdf,.xlsx,.book,.json,.py,.txt,.csv,.tsv';
+  input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv';
   input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1143,14 +1163,15 @@ function importFile() {
           data: buffer,
         }, '*');
       }, { once: true });
-    } else if (['xlsx', 'xls', 'csv', 'tsv'].includes(ext)) {
-      const buffer = await file.arrayBuffer();
-      openModule('spreadsheet');
+    } else if (['csv', 'tsv'].includes(ext)) {
+      const text = await file.text();
+      openModule('table-forge');
       frame.addEventListener('load', () => {
         frame.contentWindow.postMessage({
-          type: 'akasha-open-spreadsheet',
-          filename: file.name,
-          data: buffer,
+          type: 'akasha-export-to-table-forge',
+          text,
+          format: 'csv',
+          title: file.name,
         }, '*');
       }, { once: true });
     } else if (ext === 'book') {
@@ -1161,9 +1182,9 @@ function importFile() {
 }
 
 function newFile() {
-  const choice = prompt('新建類型：\n1. Code & Data (MD/PY/JSON/TXT)\n2. 試算表\n3. 書籍\n\n輸入數字：');
+  const choice = prompt('新建類型：\n1. Code & Data (MD/PY/JSON/TXT)\n2. Table Forge (資料表整理)\n3. 書籍\n\n輸入數字：');
   if (choice === '1') openModule('markdown');
-  else if (choice === '2') openModule('spreadsheet');
+  else if (choice === '2') openModule('table-forge');
   else if (choice === '3') openModule('book-editor');
 }
 
@@ -1220,12 +1241,13 @@ async function openRecentFile(fileId, moduleName) {
         filename,
         data: buffer,
       }, '*');
-    } else if (moduleName === 'spreadsheet') {
-      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+    } else if (moduleName === 'table-forge') {
+      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
       frame.contentWindow.postMessage({
-        type: 'akasha-open-spreadsheet',
-        filename,
-        data: buffer,
+        type: 'akasha-export-to-table-forge',
+        text,
+        format: 'csv',
+        title: filename,
       }, '*');
     }
   }, { once: true });
@@ -1248,7 +1270,7 @@ const TYPE_ICONS = {
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
 const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', xlsx: 'spreadsheet', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown' };
 
 async function renderRecent() {
   const entries = await getFileEntries();
@@ -1280,7 +1302,7 @@ async function renderRecent() {
       <div class="ledger-num">${String(i + 1).padStart(2, '0')}</div>
       <div class="ledger-title">
         <span class="ledger-title-icon">${icon}</span>
-        ${f.name}
+        ${escapeHtml(f.name)}
       </div>
       <div class="ledger-format">${label} · ${sizeStr}</div>
       <div class="ledger-time">${dateStr}</div>
@@ -1308,8 +1330,12 @@ window.addEventListener('message', async (event) => {
     renderRecent();
   }
   if (event.data?.type === MSG_TYPES.READER_EXPORT_TO_SPREADSHEET) {
+    const frame = document.getElementById('module-frame');
+    if (frame.classList.contains('active') && frame.src.includes('table-forge')) {
+      if (!confirm('Table Forge 中的資料將被取代，是否繼續？')) return;
+    }
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
-    openModule('spreadsheet');
+    openModule('table-forge');
   }
   if (event.data?.type === 'akasha-open-public-pdf') {
     const frame = document.getElementById('module-frame');
