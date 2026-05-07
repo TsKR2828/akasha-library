@@ -212,6 +212,36 @@ export function parseCSV(text, Papa) {
   return doc;
 }
 
+// --- Reader Payload ---
+
+export function parseReaderPayload(payload) {
+  if (!payload || !payload.blocks) {
+    return { error: 'Reader payload 無效' };
+  }
+
+  const tableBlock = payload.blocks.find(b => b.type === 'table');
+  if (!tableBlock) {
+    return { error: 'Reader payload 中沒有表格資料' };
+  }
+
+  const doc = createDocument(payload.filename || 'Reader Import', 'markdown');
+  const sheet = doc.sheets[0];
+
+  for (const name of tableBlock.head) {
+    addColumn(sheet, name || 'col');
+  }
+
+  for (const row of tableBlock.body) {
+    const cells = {};
+    for (let j = 0; j < sheet.columns.length; j++) {
+      cells[sheet.columns[j].id] = (j < row.length) ? String(row[j] ?? '') : '';
+    }
+    addRow(sheet, cells);
+  }
+
+  return doc;
+}
+
 // --- Auto-detect ---
 
 export function autoDetectAndParse(text, Papa) {

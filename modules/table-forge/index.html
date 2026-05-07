@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Table Forge — 阿卡夏圖書館</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/styles/shared.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--navy-deep);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Header --- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--navy-line);
+      background: rgba(24,29,40,0.96);
+      backdrop-filter: blur(8px);
+    }
+
+    :root[data-mode="light"] header {
+      background: rgba(245,239,225,0.96);
+    }
+
+    h1 {
+      margin: 0 8px 0 0;
+      font-family: var(--font-display);
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    /* --- Buttons --- */
+    .btn {
+      appearance: none;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      color: var(--text-primary);
+      padding: 7px 10px;
+      border-radius: var(--r-card);
+      font-size: 12px;
+      font-family: inherit;
+      line-height: 1;
+      min-height: 30px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .btn:hover { border-color: var(--gold-dim); background: var(--navy-hover); }
+
+    .btn--gold {
+      background: var(--gold-glow);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+
+    .btn--gold:hover {
+      background: rgba(201,168,106,0.22);
+      border-color: var(--gold);
+    }
+
+    .btn--danger {
+      background: rgba(196,96,79,0.1);
+      border-color: rgba(196,96,79,0.3);
+      color: var(--danger);
+    }
+
+    .btn--danger:hover {
+      background: rgba(196,96,79,0.2);
+      border-color: var(--danger);
+    }
+
+    label.file-label {
+      appearance: none;
+      border: 1px solid var(--gold-dim);
+      background: var(--gold-glow);
+      color: var(--gold);
+      padding: 7px 10px;
+      border-radius: var(--r-card);
+      font-size: 12px;
+      font-family: inherit;
+      line-height: 1;
+      min-height: 30px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    label.file-label:hover {
+      background: rgba(201,168,106,0.22);
+      border-color: var(--gold);
+    }
+
+    /* --- Import Panel --- */
+    #import-panel {
+      padding: 16px;
+      border-bottom: 1px solid var(--navy-line);
+    }
+
+    #import-panel.hidden { display: none; }
+
+    #import-textarea {
+      width: 100%;
+      min-height: 120px;
+      max-height: 300px;
+      resize: vertical;
+      background: var(--navy);
+      color: var(--text-primary);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.5;
+      box-sizing: border-box;
+    }
+
+    #import-textarea::placeholder { color: var(--text-tertiary); }
+    #import-textarea:focus { outline: none; border-color: var(--gold-dim); }
+
+    .import-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .import-actions input[type="file"] { display: none; }
+
+    #import-error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    #import-error:empty { display: none; }
+
+    /* --- Table Area --- */
+    #table-area {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+    }
+
+    #empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      gap: 12px;
+    }
+
+    #empty-state .hint { font-size: 12px; }
+
+    /* --- Editable Table --- */
+    .tf-table-wrap {
+      overflow-x: auto;
+    }
+
+    .tf-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+
+    .tf-table th,
+    .tf-table td {
+      border: 1px solid var(--navy-line);
+      padding: 6px 10px;
+      text-align: left;
+      white-space: pre-wrap;
+      min-width: 80px;
+      max-width: 400px;
+    }
+
+    .tf-table th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--navy-light);
+      color: var(--gold);
+      font-weight: 500;
+      font-size: 12px;
+      cursor: text;
+    }
+
+    .tf-table td {
+      background: var(--navy);
+      color: var(--text-primary);
+    }
+
+    .tf-table td:focus {
+      outline: 2px solid var(--gold-dim);
+      outline-offset: -2px;
+      background: var(--navy-light);
+    }
+
+    .tf-table .row-actions,
+    .tf-table .col-actions {
+      border: none;
+      background: transparent;
+      padding: 2px;
+      text-align: center;
+      min-width: 32px;
+      max-width: 32px;
+      width: 32px;
+    }
+
+    .tf-table .col-actions { vertical-align: bottom; }
+
+    .tf-del-btn {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 4px;
+      border-radius: var(--r-sharp);
+      line-height: 1;
+    }
+
+    .tf-del-btn:hover { color: var(--danger); background: rgba(196,96,79,0.15); }
+
+    .tf-add-row,
+    .tf-add-col {
+      appearance: none;
+      border: 1px dashed var(--navy-line);
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: var(--r-card);
+      margin-top: 8px;
+      transition: all 0.15s;
+    }
+
+    .tf-add-row:hover,
+    .tf-add-col:hover {
+      color: var(--gold);
+      border-color: var(--gold-dim);
+    }
+
+    .tf-table-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    /* --- Export Panel --- */
+    #export-panel {
+      padding: 16px;
+      border-top: 1px solid var(--navy-line);
+    }
+
+    #export-panel.hidden { display: none; }
+
+    .export-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    #export-preview {
+      margin-top: 10px;
+      background: var(--navy);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      max-height: 260px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    #export-preview:empty { display: none; }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--navy-light);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      padding: 8px 18px;
+      border-radius: var(--r-card);
+      font-size: 13px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <h1>Table Forge</h1>
+    <div class="header-actions">
+      <button class="btn btn--gold" id="btn-toggle-import">匯入</button>
+      <button class="btn btn--gold" id="btn-toggle-export" disabled>匯出</button>
+      <button class="btn btn--danger" id="btn-clear" disabled>清除</button>
+    </div>
+  </header>
+
+  <!-- Import Panel -->
+  <div id="import-panel">
+    <textarea id="import-textarea" placeholder="貼上 Markdown Table、JSON Array 或 CSV⋯⋯"></textarea>
+    <div class="import-actions">
+      <button class="btn btn--gold" id="btn-parse">解析</button>
+      <label class="file-label" for="import-file">開啟檔案</label>
+      <input type="file" id="import-file" accept=".md,.json,.csv,.txt,.tsv">
+      <span id="import-error"></span>
+    </div>
+  </div>
+
+  <!-- Table Area -->
+  <div id="table-area">
+    <div id="empty-state">
+      <span>尚未載入資料</span>
+      <span class="hint">貼上文字或開啟檔案開始</span>
+    </div>
+    <div id="table-container"></div>
+  </div>
+
+  <!-- Export Panel -->
+  <div id="export-panel" class="hidden">
+    <div class="export-actions">
+      <button class="btn" id="btn-export-md">Markdown</button>
+      <button class="btn" id="btn-export-json">JSON</button>
+      <button class="btn" id="btn-export-csv">CSV</button>
+      <span style="margin-left:auto"></span>
+      <button class="btn btn--gold" id="btn-copy">複製</button>
+      <button class="btn btn--gold" id="btn-download">下載</button>
+    </div>
+    <pre id="export-preview"></pre>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
+  <script type="module">
+    import './table-ui.js';
+  </script>
+</body>
+</html>
