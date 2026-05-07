@@ -178,22 +178,71 @@ function normalizeJsonValue(val) {
   return String(val);
 }
 
-// --- CSV (PapaParse) ---
+// --- CSV (PapaParse with inline fallback) ---
+
+function detectDelimiter(text) {
+  const firstLine = text.split('\n')[0] || '';
+  const tabs = (firstLine.match(/\t/g) || []).length;
+  const commas = (firstLine.match(/,/g) || []).length;
+  return tabs > commas ? '\t' : ',';
+}
+
+function parseCsvBasic(text, delimiter) {
+  const sep = delimiter || detectDelimiter(text);
+  const input = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < input.length; i++) {
+    const ch = input[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < input.length && input[i + 1] === '"') {
+          cell += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cell += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === sep) {
+      row.push(cell);
+      cell = '';
+    } else if (ch === '\n') {
+      row.push(cell);
+      cell = '';
+      if (row.length > 1 || row.some(c => c !== '')) rows.push(row);
+      row = [];
+    } else {
+      cell += ch;
+    }
+  }
+  row.push(cell);
+  if (row.length > 1 || row.some(c => c !== '')) rows.push(row);
+
+  return rows;
+}
 
 export function parseCSV(text, Papa, delimiter) {
-  if (!Papa) {
-    return { error: 'PapaParse 未載入' };
+  let rows;
+
+  if (Papa) {
+    const opts = { header: false, skipEmptyLines: true };
+    if (delimiter) opts.delimiter = delimiter;
+    const result = Papa.parse(text, opts);
+    if (result.errors.length > 0 && result.data.length === 0) {
+      return { error: 'CSV 解析失敗：' + result.errors[0].message };
+    }
+    rows = result.data;
+  } else {
+    rows = parseCsvBasic(text, delimiter);
   }
 
-  const opts = { header: false, skipEmptyLines: true };
-  if (delimiter) opts.delimiter = delimiter;
-  const result = Papa.parse(text, opts);
-
-  if (result.errors.length > 0 && result.data.length === 0) {
-    return { error: 'CSV 解析失敗：' + result.errors[0].message };
-  }
-
-  const rows = result.data;
   if (rows.length === 0) {
     return { error: 'CSV 是空的' };
   }

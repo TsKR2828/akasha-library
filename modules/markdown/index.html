@@ -1438,8 +1438,9 @@
       const a = document.createElement("a");
       a.href = url;
       a.download = filename;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 300);
     }
 
     // ═══════════════════════════════════════════
@@ -1453,10 +1454,16 @@
       reader.readAsText(file, "utf-8");
     });
 
+    let _editDraftTimer = 0;
     rawEditor.addEventListener("input", () => {
       state.content = rawEditor.value;
       if (!state.editMode) {
         setFile(state.filename || "edited.txt", state.content);
+      } else {
+        clearTimeout(_editDraftTimer);
+        _editDraftTimer = setTimeout(() => {
+          localStorage.setItem("akasha-reader-draft", rawEditor.value);
+        }, 2000);
       }
     });
 

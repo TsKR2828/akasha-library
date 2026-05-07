@@ -952,6 +952,15 @@ import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
 import { MSG_TYPES, STORAGE_KEY } from './core/export/bridge.js';
 
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const modules = {
   'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
   'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
@@ -1126,7 +1135,7 @@ initOfflineSync();
 function importFile() {
   const input = document.createElement('input');
   input.type = 'file';
-  input.accept = '.md,.pdf,.xlsx,.book,.json,.py,.txt,.csv,.tsv';
+  input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv';
   input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -1232,6 +1241,14 @@ async function openRecentFile(fileId, moduleName) {
         filename,
         data: buffer,
       }, '*');
+    } else if (moduleName === 'table-forge') {
+      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
+      frame.contentWindow.postMessage({
+        type: 'akasha-export-to-table-forge',
+        text,
+        format: 'csv',
+        title: filename,
+      }, '*');
     }
   }, { once: true });
 }
@@ -1253,7 +1270,7 @@ const TYPE_ICONS = {
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
 const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown' };
 
 async function renderRecent() {
   const entries = await getFileEntries();
@@ -1285,7 +1302,7 @@ async function renderRecent() {
       <div class="ledger-num">${String(i + 1).padStart(2, '0')}</div>
       <div class="ledger-title">
         <span class="ledger-title-icon">${icon}</span>
-        ${f.name}
+        ${escapeHtml(f.name)}
       </div>
       <div class="ledger-format">${label} · ${sizeStr}</div>
       <div class="ledger-time">${dateStr}</div>
@@ -1313,6 +1330,10 @@ window.addEventListener('message', async (event) => {
     renderRecent();
   }
   if (event.data?.type === MSG_TYPES.READER_EXPORT_TO_SPREADSHEET) {
+    const frame = document.getElementById('module-frame');
+    if (frame.classList.contains('active') && frame.src.includes('table-forge')) {
+      if (!confirm('Table Forge 中的資料將被取代，是否繼續？')) return;
+    }
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
     openModule('table-forge');
   }

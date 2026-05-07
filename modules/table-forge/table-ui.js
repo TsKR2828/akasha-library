@@ -8,6 +8,7 @@ import {
 
 import { parseMarkdownTable, parseJSON, parseCSV, autoDetectAndParse, parseReaderPayload } from './parsers.js';
 import { exportMarkdown, exportJSON, exportCSV } from './exporters.js';
+import { STORAGE_KEY as READER_STORAGE_KEY } from '../../core/export/bridge.js';
 
 // --- State ---
 
@@ -381,8 +382,6 @@ function showToast(msg) {
 }
 
 // --- Reader Bridge ---
-
-const READER_STORAGE_KEY = 'reader_export_payload';
 
 function checkReaderPayload() {
   const raw = sessionStorage.getItem(READER_STORAGE_KEY);
