@@ -1,5 +1,5 @@
-const CACHE_NAME = 'akasha-library-v2';
-const ASSETS_TO_CACHE = [
+const CACHE_NAME = 'akasha-library-v3';
+const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
@@ -10,17 +10,13 @@ const ASSETS_TO_CACHE = [
   './modules/markdown/index.html',
   './modules/pdf-reader/index.html',
   './modules/book-editor/index.html',
-  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+TC:wght@400;600;700&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs',
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'
 ];
 
-// Install: cache core assets
+// Install: cache local assets only (third-party cached opportunistically during fetch)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(LOCAL_ASSETS);
     })
   );
   self.skipWaiting();

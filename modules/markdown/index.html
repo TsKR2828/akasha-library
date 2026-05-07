@@ -653,19 +653,28 @@
         .trim();
     }
 
+    function sanitizeAnchor(html) {
+      const hrefMatch = html.match(/href\s*=\s*["']([^"']*)["']/i);
+      const href = hrefMatch ? hrefMatch[1] : '';
+      if (!/^https?:\/\//i.test(href)) return escapeHtml(html);
+      const textMatch = html.match(/>([^<]*)<\/a>/i);
+      const text = textMatch ? escapeHtml(textMatch[1]) : escapeHtml(href);
+      return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    }
+
     function inlineMarkdownToHtml(text) {
-      const rawHtml = [];
+      const rawAnchors = [];
       let s = String(text ?? "");
       s = s.replace(/<a\s+[^>]*>[\s\S]*?<\/a>/gi, match => {
-        rawHtml.push(match);
-        return `@@RAWHTML${rawHtml.length - 1}@@`;
+        rawAnchors.push(match);
+        return `@@RAWHTML${rawAnchors.length - 1}@@`;
       });
       s = escapeHtml(s);
       s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
       s = s.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
       s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-      rawHtml.forEach((html, i) => {
-        s = s.replace(`@@RAWHTML${i}@@`, html);
+      rawAnchors.forEach((html, i) => {
+        s = s.replace(`@@RAWHTML${i}@@`, sanitizeAnchor(html));
       });
       return s;
     }
@@ -1468,7 +1477,20 @@
       if (!file) return;
       if (!confirmDiscardEdits()) { fileInput.value = ""; return; }
       const reader = new FileReader();
-      reader.onload = () => setFile(file.name, reader.result, file.size);
+      reader.onload = async () => {
+        setFile(file.name, reader.result, file.size);
+        try {
+          const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
+          const ext = getExtension(file.name) || 'txt';
+          const entry = await saveFileEntry({ name: file.name, type: ext, size: file.size });
+          await saveFileBlob(entry.id, new Blob([reader.result], { type: file.type || 'text/plain' }));
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+          }
+        } catch (e) {
+          console.warn('Failed to persist file to library:', e);
+        }
+      };
       reader.readAsText(file, "utf-8");
     });
 

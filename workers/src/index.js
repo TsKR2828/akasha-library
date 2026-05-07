@@ -73,22 +73,11 @@ async function handleChat(request, env) {
     return json({ error: 'Missing required fields: provider, model, messages' }, 400);
   }
 
-  // Determine API key
-  let key;
-  if (mode === 'byok' && apiKey) {
-    key = apiKey;
-  } else {
-    // Coin mode — use server secrets
-    switch (provider) {
-      case 'openai': key = env.OPENAI_API_KEY; break;
-      case 'anthropic': key = env.ANTHROPIC_API_KEY; break;
-      case 'google': key = env.GOOGLE_API_KEY; break;
-      default: return json({ error: `Unsupported provider: ${provider}` }, 400);
-    }
-    if (!key) {
-      return json({ error: `Server API key not configured for ${provider}` }, 500);
-    }
+  // Determine API key — only BYOK mode is supported; coin mode is disabled
+  if (mode !== 'byok' || !apiKey) {
+    return json({ error: 'Only BYOK mode is currently supported. Please provide your own API key.' }, 403);
   }
+  const key = apiKey;
 
   try {
     let content;

@@ -273,24 +273,33 @@ export function parseReaderPayload(payload) {
     return { error: 'Reader payload 無效' };
   }
 
-  const tableBlock = payload.blocks.find(b => b.type === 'table');
-  if (!tableBlock) {
+  const tableBlocks = payload.blocks.filter(b => b.type === 'table');
+  if (tableBlocks.length === 0) {
     return { error: 'Reader payload 中沒有表格資料' };
   }
 
   const doc = createDocument(payload.filename || 'Reader Import', 'markdown');
   const sheet = doc.sheets[0];
 
-  for (const name of tableBlock.head) {
-    addColumn(sheet, name || 'col');
-  }
-
-  for (const row of tableBlock.body) {
-    const cells = {};
-    for (let j = 0; j < sheet.columns.length; j++) {
-      cells[sheet.columns[j].id] = (j < row.length) ? String(row[j] ?? '') : '';
+  for (const tableBlock of tableBlocks) {
+    for (const name of tableBlock.head) {
+      const colName = name || 'col';
+      if (!sheet.columns.some(c => c.name === colName)) {
+        addColumn(sheet, colName);
+      }
     }
-    addRow(sheet, cells);
+
+    for (const row of tableBlock.body) {
+      const cells = {};
+      for (let j = 0; j < tableBlock.head.length; j++) {
+        const colName = tableBlock.head[j] || 'col';
+        const col = sheet.columns.find(c => c.name === colName);
+        if (col && j < row.length) {
+          cells[col.id] = String(row[j] ?? '');
+        }
+      }
+      addRow(sheet, cells);
+    }
   }
 
   return doc;

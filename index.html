@@ -1345,8 +1345,16 @@ window.addEventListener('message', async (event) => {
         type: 'akasha-open-pdf-url',
         url: event.data.url,
         bookTitle: event.data.book?.title || 'PDF',
+        bookId: event.data.book?.id || null,
       }, '*');
     }, { once: true });
+  }
+  if (event.data?.type === 'akasha-reading-progress' && event.data.bookId) {
+    try {
+      const data = JSON.parse(localStorage.getItem('akasha-reading-progress') || '{}');
+      data[event.data.bookId] = { page: event.data.page, lastRead: Date.now() };
+      localStorage.setItem('akasha-reading-progress', JSON.stringify(data));
+    } catch {}
   }
 });
 

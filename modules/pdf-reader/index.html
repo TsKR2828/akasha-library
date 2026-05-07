@@ -1217,6 +1217,7 @@
   let scale = 1.0;
   let currentFileName = '';
   let currentFileId = null;   // IndexedDB file ID for embedding index
+  let currentBookId = null;   // public-library catalog book ID for progress tracking
   let indexReady = false;     // true when embedding index is built
 
   // Make functions globally accessible
@@ -1273,6 +1274,16 @@
     }
   });
 
+  // ===== Standalone query-param loading =====
+  (() => {
+    const params = new URLSearchParams(location.search);
+    const url = params.get('url');
+    if (url) {
+      currentBookId = params.get('bookId') || null;
+      loadFromUrl(url, params.get('title') || 'PDF');
+    }
+  })();
+
   // ===== PostMessage API for parent shell =====
   window.addEventListener('message', (event) => {
     if (event.origin !== location.origin) return;
@@ -1282,6 +1293,7 @@
       loadFile(file);
     }
     if (event.data?.type === 'akasha-open-pdf-url' && event.data.url) {
+      currentBookId = event.data.bookId || null;
       loadFromUrl(event.data.url, event.data.bookTitle || 'PDF');
     }
   });
@@ -1389,6 +1401,16 @@
 
     // Update split range preview
     updateRangePreview();
+
+    // Notify parent of reading progress
+    if (currentBookId && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'akasha-reading-progress',
+        bookId: currentBookId,
+        page: currentPage,
+        totalPages,
+      }, location.origin);
+    }
   }
 
   // ===== Fit Width =====
@@ -1585,7 +1607,10 @@
   }
 
   async function saveToLibrary(name, pages, bytes) {
+    const lib = getLibrary();
+    const existingItem = lib.find(b => b.name === name);
     const entry = await saveFileEntry({
+      id: existingItem?.id || undefined,
       name,
       type: 'pdf',
       size: bytes.byteLength,
@@ -1594,10 +1619,9 @@
     currentFileId = entry.id;
     await saveFileBlob(entry.id, new Blob([bytes], { type: 'application/pdf' }));
 
-    const lib = getLibrary();
-    const existing = lib.findIndex(b => b.name === name);
+    const existingIdx = lib.findIndex(b => b.name === name);
     const item = { name, pages, lastOpened: Date.now(), id: entry.id };
-    if (existing >= 0) lib[existing] = item;
+    if (existingIdx >= 0) lib[existingIdx] = item;
     else lib.unshift(item);
     localStorage.setItem('akasha-library', JSON.stringify(lib.slice(0, 50)));
     renderLibrary();
@@ -1627,16 +1651,24 @@
 
     empty.style.display = 'none';
     list.innerHTML = lib.map(b => `
-      <div class="library-item" onclick="openFromLibrary('${escapeHtml(b.id || '')}', '${escapeHtml(b.name)}')" style="cursor:pointer" title="點擊開啟">
+      <div class="library-item" data-id="${escapeHtml(b.id || '')}" data-name="${escapeHtml(b.name)}" style="cursor:pointer" title="點擊開啟">
         <div style="flex:1;overflow:hidden">
           <div class="library-item-title">${escapeHtml(b.name)}</div>
           <div class="library-item-meta">${b.pages} 頁 · ${formatDate(b.lastOpened)}</div>
         </div>
-        <button class="library-item-remove" onclick="event.stopPropagation(); removeFromLibrary('${escapeHtml(b.name)}')" title="從書庫移除">
+        <button class="library-item-remove" title="從書庫移除">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
     `).join('');
+
+    list.querySelectorAll('.library-item').forEach(el => {
+      el.addEventListener('click', () => openFromLibrary(el.dataset.id, el.dataset.name));
+      el.querySelector('.library-item-remove').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeFromLibrary(el.dataset.name);
+      });
+    });
   }
 
   async function openFromLibrary(id, name) {

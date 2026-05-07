@@ -325,7 +325,7 @@ function openBook(bookId) {
   if (window.parent !== window) {
     window.parent.postMessage({ type: 'akasha-open-public-pdf', url: driveUrl, book }, '*');
   } else {
-    window.location.href = `../modules/pdf-reader/index.html?url=${encodeURIComponent(driveUrl)}`;
+    window.location.href = `../modules/pdf-reader/index.html?url=${encodeURIComponent(driveUrl)}&bookId=${encodeURIComponent(bookId)}&title=${encodeURIComponent(book.title || '')}`;
   }
 }
 
