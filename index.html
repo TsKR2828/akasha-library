@@ -1033,6 +1033,9 @@ function switchView(view) {
   subtitleEl.textContent = info.subtitle ? `· ${info.subtitle}` : '';
   breadcrumbEl.textContent = info.breadcrumb;
 
+  const actions = document.querySelector('.topbar-actions');
+  if (actions) actions.style.display = '';
+
   if (view === 'dashboard') {
     dashboard.style.display = '';
     frame.classList.remove('active');
@@ -1045,6 +1048,8 @@ function switchView(view) {
     frame.classList.add('active');
   }
 }
+
+const MODULES_WITH_OWN_ACTIONS = new Set(['table-forge', 'pdf-reader', 'ai-settings']);
 
 function openModule(name) {
   const mod = modules[name];
@@ -1062,6 +1067,11 @@ function openModule(name) {
   titleEl.textContent = mod.title;
   subtitleEl.textContent = mod.subtitle ? `· ${mod.subtitle}` : '';
   breadcrumbEl.textContent = 'Akasha Library · Tools';
+
+  const actions = document.querySelector('.topbar-actions');
+  if (actions) {
+    actions.style.display = MODULES_WITH_OWN_ACTIONS.has(name) ? 'none' : '';
+  }
 }
 
 // Auth

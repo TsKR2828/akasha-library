@@ -5,31 +5,37 @@ import { createDocument, createSheet, addColumn, addRow } from './table-model.js
 // --- Markdown Table ---
 
 export function parseMarkdownTable(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const allLines = text.split('\n');
 
-  const tableLines = [];
-  for (const line of lines) {
-    if (line.startsWith('|') || line.includes('|')) {
-      tableLines.push(line);
-    } else if (tableLines.length > 0) {
+  let headerIdx = -1;
+  for (let i = 0; i < allLines.length - 1; i++) {
+    const line = allLines[i].trim();
+    const next = allLines[i + 1].trim();
+    if (line.includes('|') && /^[\s|:-]+$/.test(next) && next.includes('-')) {
+      headerIdx = i;
       break;
     }
   }
 
-  if (tableLines.length < 3) {
-    return { error: '找不到有效的 Markdown 表格（至少需要 header + separator + 一列資料）' };
+  if (headerIdx === -1) {
+    return { error: '找不到 Markdown 表格。\n格式範例：\n| name | value |\n|---|---|\n| a | b |' };
   }
 
-  const headerLine = tableLines[0];
-  const sepLine = tableLines[1];
-
-  if (!/^[\s|:-]+$/.test(sepLine)) {
-    return { error: '第二列不是有效的 separator（應為 |---|---|）' };
-  }
-
+  const headerLine = allLines[headerIdx].trim();
   const headers = parseMdRow(headerLine);
   if (headers.length === 0) {
     return { error: 'Header 列沒有欄位' };
+  }
+
+  const dataLines = [];
+  for (let i = headerIdx + 2; i < allLines.length; i++) {
+    const line = allLines[i].trim();
+    if (!line.includes('|')) break;
+    dataLines.push(line);
+  }
+
+  if (dataLines.length === 0) {
+    return { error: '表格只有 header 沒有資料列' };
   }
 
   const doc = createDocument('Markdown Import', 'markdown');
@@ -39,8 +45,8 @@ export function parseMarkdownTable(text) {
     addColumn(sheet, name || 'col');
   }
 
-  for (let i = 2; i < tableLines.length; i++) {
-    const values = parseMdRow(tableLines[i]);
+  for (const line of dataLines) {
+    const values = parseMdRow(line);
     const cells = {};
     for (let j = 0; j < sheet.columns.length; j++) {
       cells[sheet.columns[j].id] = (j < values.length) ? values[j] : '';
@@ -174,15 +180,14 @@ function normalizeJsonValue(val) {
 
 // --- CSV (PapaParse) ---
 
-export function parseCSV(text, Papa) {
+export function parseCSV(text, Papa, delimiter) {
   if (!Papa) {
     return { error: 'PapaParse 未載入' };
   }
 
-  const result = Papa.parse(text, {
-    header: false,
-    skipEmptyLines: true,
-  });
+  const opts = { header: false, skipEmptyLines: true };
+  if (delimiter) opts.delimiter = delimiter;
+  const result = Papa.parse(text, opts);
 
   if (result.errors.length > 0 && result.data.length === 0) {
     return { error: 'CSV 解析失敗：' + result.errors[0].message };
@@ -246,28 +251,65 @@ export function parseReaderPayload(payload) {
 
 export function autoDetectAndParse(text, Papa) {
   const trimmed = text.trim();
+  const detected = [];
 
   if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+    detected.push('JSON');
     const result = parseJSON(trimmed);
     if (!result.error) return result;
   }
 
-  if (looksLikeMarkdownTable(trimmed)) {
+  if (containsMarkdownTable(trimmed)) {
+    detected.push('Markdown Table');
     const result = parseMarkdownTable(trimmed);
     if (!result.error) return result;
   }
 
-  if (Papa && looksLikeCSV(trimmed)) {
-    const result = parseCSV(trimmed, Papa);
-    if (!result.error) return result;
+  if (looksLikeTSV(trimmed)) {
+    detected.push('TSV');
+    if (Papa) {
+      const result = parseCSV(trimmed, Papa, '\t');
+      if (!result.error) return result;
+    }
   }
 
-  return { error: '無法辨識格式。支援 Markdown Table、JSON Array、CSV。' };
+  if (looksLikeCSV(trimmed)) {
+    detected.push('CSV');
+    if (Papa) {
+      const result = parseCSV(trimmed, Papa);
+      if (!result.error) return result;
+    }
+  }
+
+  let msg = '無法解析為表格。';
+  if (detected.length > 0) {
+    msg += `\n偵測到可能是 ${detected.join(' / ')}，但解析失敗。`;
+  }
+  msg += '\n\n支援格式：';
+  msg += '\n• Markdown Table（整段文章中有 table 也行）';
+  msg += '\n• JSON Array of Objects / Arrays';
+  msg += '\n• CSV（逗號分隔）';
+  msg += '\n• TSV（Tab 分隔，如 Excel / Sheets 複製）';
+  return { error: msg };
 }
 
-function looksLikeMarkdownTable(text) {
+function containsMarkdownTable(text) {
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length - 1; i++) {
+    const line = lines[i].trim();
+    const next = lines[i + 1].trim();
+    if (line.includes('|') && /^[\s|:-]+$/.test(next) && next.includes('-')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function looksLikeTSV(text) {
   const lines = text.split('\n').filter(l => l.trim().length > 0);
-  return lines.length >= 3 && lines[0].includes('|') && /^[\s|:-]+$/.test(lines[1].trim());
+  if (lines.length < 2) return false;
+  const tabCount = (lines[0].match(/\t/g) || []).length;
+  return tabCount >= 1;
 }
 
 function looksLikeCSV(text) {
