@@ -1,5 +1,86 @@
 # Akasha Library — Dev Log
 
+## 2026-05-07：AI 圖書館員上線 — 文字擷取 + RAG + LLM 整合
+
+### PDF 切割 / 書庫 Bug 修復（`a351e5b`, `c5aa98b`）
+
+| 問題 | 根因 | 修法 |
+|------|------|------|
+| 切割後 PDF 不下載 | iframe sandbox 缺 `allow-downloads`；`downloadBlob()` 的 `<a>` 未加入 DOM、`revokeObjectURL` 即刻呼叫造成 race | sandbox 加 `allow-downloads`；`<a>` 加入 body 並延遲 revoke；新增 fallback 下載列 |
+| 書庫只存標題沒存檔案 | `saveToLibrary()` 只寫 `{name, pages}` 到 localStorage | 改寫為 async，接收 bytes，存入 IndexedDB（`saveFileEntry` + `saveFileBlob`） |
+| 書庫 PDF 無法開啟 | library item 無 click handler、無 blob | 新增 `openFromLibrary(id, name)`，從 IndexedDB 取 blob 重新 `loadFile()` |
+| 刪除不清理 blob | `removeFromLibrary` 只刪 localStorage | 同步呼叫 `deleteFileEntry(id)` 清 IndexedDB |
+
+### Phase 4.1：文字擷取層（`3258f6d`）
+
+新增 `core/ai.js`：
+- `extractPageText(pdfDoc, pageNum)` — pdf.js `getTextContent()` + y/x 座標排序重建閱讀順序
+- `extractContextPages(pdfDoc, currentPage, range=2)` — 目前頁 ±2 頁，帶頁碼標記，12K 字安全上限
+- `buildSystemPrompt()` — 圖書館員「月上零韻」人設 + 頁面內容注入
+
+### Phase 4.4：LLM 對話整合（`3258f6d`）
+
+`core/ai.js` 新增 LLM 路由：
+- `callLLM(settings, systemPrompt, userMessage)` — 依 provider 分流
+- OpenAI：`/v1/chat/completions`，Authorization header
+- Anthropic：`/v1/messages`，`anthropic-dangerous-direct-browser-access` header
+- Google：`/v1beta/models/.../generateContent`，API key in URL
+- Custom：OpenAI-compatible 格式（支援 Ollama / LM Studio）
+- 月幣系統：`estimateTokens()` → `coinCost()` → `deductCoins()`
+
+`modules/pdf-reader/index.html` 改寫 `sendAIMessage()`：
+- 讀取 `akasha-ai-settings`（localStorage）+ `akasha-ai-apikey`（sessionStorage）
+- 無 Key → 提示設定；無 PDF → 提示開啟；掃描頁 → 提示無文字
+- loading 鎖 + 送出鈕 disabled 防重複
+- try/catch 完整錯誤訊息
+
+Cloudflare Worker proxy（`workers/`）：
+- `POST /v1/chat` — BYOK 透傳 / 月幣用 server secret
+- per-IP rate limit 12 req/min
+- 待部署，BYOK 模式無需 proxy 即可使用
+
+### Phase 4.2 + 4.3：Embedding 索引 + RAG 檢索（`261d08f`）
+
+新增 `core/embedding.js` — 雙層檢索：
+
+**Tier 1 · BM25（免 API，離線可用）：**
+- CJK 感知分詞器（正則拆中日韓字元 + 拉丁詞組）
+- BM25 排名（k1=1.5, b=0.75）
+- 零依賴，純 JS
+
+**Tier 2 · Dense Embedding（有 API Key 時自動啟用）：**
+- OpenAI `text-embedding-3-small` / Google `text-embedding-004`
+- 批次呼叫（100 chunks/batch）
+- cosine similarity 向量搜尋
+- 向量存入 IndexedDB `embeddings` store，跨 session 複用
+
+索引流程：
+- PDF 開啟後背景執行 `indexPDF()` — 全書分頁擷取 → 300 字分塊（60 字重疊）→ BM25 索引 + API 向量化
+- 使用者提問時 `queryRelevant()` 取 top 3 → `formatRetrievalContext()` 合併目前頁 + 全書相關段落
+- 已索引的檔案下次開啟跳過重建
+
+`core/storage.js` 升級：
+- `DB_VERSION` 1 → 2
+- 新增 `embeddings` object store（keyPath: `id`，index: `fileId`）
+- `saveEmbeddings()` / `getEmbeddings()` / `deleteEmbeddings()`
+
+### 目前 Phase 4 進度
+
+```
+4.1 文字擷取  ✅  core/ai.js
+4.2 Embedding ✅  core/embedding.js（BM25 + API 雙層）
+4.3 RAG 檢索  ✅  queryRelevant() → formatRetrievalContext()
+4.4 LLM proxy ✅  workers/src/index.js（待部署）
+4.5 聊天 UI   ✅  sendAIMessage() 已接入真實 LLM
+4.6 月幣系統  ✅  前端完成（proxy 啟用後生效）
+4.7 BYOK      ✅  直接可用
+4.8 人設載入  ⬜  待做
+4.9 TTS 語音  ⬜  待做
+4.10 AI 立繪  ⬜  待做
+```
+
+---
+
 ## 2026-05-06：健檢修復 + Reader→Spreadsheet 匯出管線
 
 ### Reader → Spreadsheet 匯出架構（`6dc1a0d`）
