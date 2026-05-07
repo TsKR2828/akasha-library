@@ -93,6 +93,13 @@
       color: var(--danger);
     }
 
+    #editError {
+      color: var(--danger);
+      font-size: 12px;
+      max-width: 320px;
+      line-height: 1.4;
+    }
+
     label.file-label {
       appearance: none;
       border: 1px solid var(--gold-dim);
@@ -524,6 +531,9 @@
       開啟檔案
       <input id="fileInput" type="file" accept=".py,.json,.md,.markdown,.txt,.score.json,text/plain,application/json,text/markdown">
     </label>
+    <button class="btn" id="btnEditToggle" style="display:none">編輯模式</button>
+    <button class="btn--gold btn" id="btnDownloadEdited" style="display:none">下載新檔</button>
+    <span id="editError" style="display:none"></span>
     <button class="btn" id="copyRaw">複製原始內容</button>
     <button class="btn--gold btn" id="copyView">複製目前視圖</button>
     <button class="btn" id="downloadText">下載目前內容</button>
@@ -595,7 +605,8 @@
       jsonError: null,
       mode: "empty",
       activeTab: "pretty",
-      searchTerm: ""
+      searchTerm: "",
+      editMode: false
     };
 
     const appRoot = document.getElementById("appRoot");
@@ -1007,6 +1018,7 @@
       state.content = String(content ?? "");
       state.parsedJson = null;
       state.jsonError = null;
+      state.editMode = false;
       state.mode = detectMode(state.filename);
 
       if (state.mode === "json") {
@@ -1028,6 +1040,7 @@
       renderViews();
       renderTabs();
       updateSheetsVisibility();
+      updateEditUI();
       statusEl.textContent = `已載入：${state.filename}（${state.extension || "文字"}）`;
     }
 
@@ -1101,15 +1114,76 @@
       }
     }
 
+    // ═══════════════════════════════════════════
+    //  EDIT MODE
+    // ═══════════════════════════════════════════
+    const EDITABLE_MODES = new Set(["md", "txt", "json"]);
+
+    function updateEditUI() {
+      const btnToggle = document.getElementById("btnEditToggle");
+      const btnDownload = document.getElementById("btnDownloadEdited");
+      const editError = document.getElementById("editError");
+      const canEdit = state.content && EDITABLE_MODES.has(state.mode);
+      btnToggle.style.display = canEdit ? "" : "none";
+      if (state.editMode) {
+        btnToggle.textContent = "閱讀模式";
+        btnToggle.className = "btn btn--gold";
+        btnDownload.style.display = "";
+      } else {
+        btnToggle.textContent = "編輯模式";
+        btnToggle.className = "btn";
+        btnDownload.style.display = "none";
+        editError.style.display = "none";
+        editError.textContent = "";
+      }
+    }
+
+    function toggleEditMode() {
+      state.editMode = !state.editMode;
+      if (state.editMode) {
+        rawEditor.value = state.content;
+        state.activeTab = "raw";
+        updateEditUI();
+        renderTabs();
+      } else {
+        state.content = rawEditor.value;
+        state.editMode = false;
+        setFile(state.filename, state.content);
+      }
+    }
+
+    function downloadEdited() {
+      const content = rawEditor.value;
+      const editError = document.getElementById("editError");
+      if (state.mode === "json") {
+        try {
+          JSON.parse(content);
+        } catch (e) {
+          editError.textContent = "JSON 格式錯誤：" + e.message;
+          editError.style.display = "";
+          return;
+        }
+      }
+      editError.style.display = "none";
+      editError.textContent = "";
+      download(state.filename || "edited.txt", content);
+      statusEl.textContent = "已下載新檔：" + state.filename;
+    }
+
     function renderTabs() {
       const tabs = [];
       if (!state.content) tabs.push(["empty", "開始"]);
-      if (state.mode === "md") tabs.push(["pretty", "Markdown 預覽"]);
-      if (state.mode === "json" && !state.jsonError) tabs.push(["pretty", "Pretty JSON"], ["tree", "樹狀 JSON"]);
-      if (state.mode === "json" && state.parsedJson && isScoreJson(state.parsedJson)) tabs.push(["score", "Score View"]);
-      if (state.mode === "py") tabs.push(["python", "Python View"]);
-      if (state.mode === "txt") tabs.push(["pretty", "文字閱讀"]);
-      tabs.push(["raw", "原始碼"]);
+
+      if (state.editMode) {
+        tabs.push(["raw", "編輯中"]);
+      } else {
+        if (state.mode === "md") tabs.push(["pretty", "Markdown 預覽"]);
+        if (state.mode === "json" && !state.jsonError) tabs.push(["pretty", "Pretty JSON"], ["tree", "樹狀 JSON"]);
+        if (state.mode === "json" && state.parsedJson && isScoreJson(state.parsedJson)) tabs.push(["score", "Score View"]);
+        if (state.mode === "py") tabs.push(["python", "Python View"]);
+        if (state.mode === "txt") tabs.push(["pretty", "文字閱讀"]);
+        tabs.push(["raw", "原始碼"]);
+      }
 
       if (!tabs.some(t => t[0] === state.activeTab)) state.activeTab = tabs[0][0];
       tabsEl.innerHTML = tabs.map(([id, label]) => `<button class="tab ${id === state.activeTab ? "active" : ""}" data-tab="${id}">${label}</button>`).join("");
@@ -1381,7 +1455,9 @@
 
     rawEditor.addEventListener("input", () => {
       state.content = rawEditor.value;
-      setFile(state.filename || "edited.txt", state.content);
+      if (!state.editMode) {
+        setFile(state.filename || "edited.txt", state.content);
+      }
     });
 
     document.getElementById("copyRaw").addEventListener("click", () => {
@@ -1410,6 +1486,10 @@
       download(`${base}_summary.md`, makeSummary(), "text/markdown");
       statusEl.textContent = "已匯出摘要 .md";
     });
+
+    // --- Edit mode ---
+    document.getElementById("btnEditToggle").addEventListener("click", toggleEditMode);
+    document.getElementById("btnDownloadEdited").addEventListener("click", downloadEdited);
 
     // --- Sheets export buttons ---
     document.getElementById("copyHtml").addEventListener("click", async () => {
