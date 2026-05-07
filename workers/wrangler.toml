@@ -1,0 +1,9 @@
+name = "akasha-ai-proxy"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# Deploy: wrangler deploy
+# Secrets (set via `wrangler secret put`):
+#   OPENAI_API_KEY
+#   ANTHROPIC_API_KEY
+#   GOOGLE_API_KEY

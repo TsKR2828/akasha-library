@@ -1189,6 +1189,7 @@
 
 <script type="module">
   import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry } from '../../core/storage.js';
+  import { extractContextPages, getAISettings, callLLM, buildSystemPrompt, estimateTokens, coinCost, deductCoins } from '../../core/ai.js';
 
   // ===== PDF.js Setup =====
   const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
@@ -1779,28 +1780,74 @@
     }
   };
 
-  window.sendAIMessage = function() {
+  let isAILoading = false;
+
+  window.sendAIMessage = async function() {
+    if (isAILoading) return;
+
     const input = document.getElementById('aiInput');
     const text = input.value.trim();
     if (!text) return;
     input.value = '';
 
-    // Update token estimate
-    const estimatedTokens = Math.ceil(text.length * 1.5);
-    document.getElementById('aiTokenEstimate').textContent = `${estimatedTokens + 2000}`;
-
-    // Generate response
-    let responseText;
+    // No PDF loaded
     if (!pdfDoc) {
-      responseText = '請先開啟一本 PDF，我才能回答關於書籍內容的問題。';
-    } else {
-      responseText = `你正在閱讀「${currentFileName}」的第 ${currentPage} 頁。這裡之後會接入 RAG 檢索 + LLM API。\n\n你的問題：「${text}」`;
-      aiCoins = Math.max(0, aiCoins - 1);
-      document.getElementById('aiCoins').textContent = aiCoins;
+      startTypewriter('請先開啟一本 PDF，我才能回答關於書籍內容的問題。', '圖書館員 · 月上零韻', 'calm', []);
+      return;
     }
 
-    // Start typewriter for response
-    startTypewriter(responseText, "圖書館員 · 月上零韻", "thinking", []);
+    // Check settings
+    const settings = getAISettings();
+    if (settings.error === 'no-api-key') {
+      startTypewriter('尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰，方可向圖書館員提問。', '圖書館員 · 月上零韻', 'thinking', []);
+      return;
+    }
+    if (settings.error === 'no-proxy') {
+      startTypewriter('月幣模式尚未啟用（代理伺服器未部署）。請先切換至 BYOK 模式並設定自己的 API Key。', '圖書館員 · 月上零韻', 'thinking', []);
+      return;
+    }
+
+    // Lock UI
+    isAILoading = true;
+    const sendBtn = document.getElementById('aiSend');
+    if (sendBtn) sendBtn.disabled = true;
+    startTypewriter('正在閱讀書頁中…', '圖書館員 · 月上零韻', 'thinking', []);
+
+    try {
+      // 1. Extract text from current ± 2 pages
+      const pageContext = await extractContextPages(pdfDoc, currentPage, 2);
+
+      if (!pageContext.trim()) {
+        startTypewriter('此頁面似乎沒有可擷取的文字（可能是掃描圖片頁面）。目前尚無法分析純圖片內容。', '圖書館員 · 月上零韻', 'thinking', []);
+        return;
+      }
+
+      // 2. Update token estimate
+      const totalTokens = estimateTokens(pageContext) + estimateTokens(text);
+      document.getElementById('aiTokenEstimate').textContent = `${totalTokens}`;
+
+      // 3. Build system prompt & call LLM
+      const systemPrompt = buildSystemPrompt(pageContext, currentPage, currentFileName);
+      const response = await callLLM(settings, systemPrompt, text);
+
+      // 4. Coin deduction (if coin mode)
+      if (settings.mode === 'coin') {
+        const cost = coinCost(totalTokens);
+        const remaining = deductCoins(cost, `p.${currentPage} · ${text.slice(0, 20)}`);
+        aiCoins = remaining;
+        document.getElementById('aiCoins').textContent = remaining;
+      }
+
+      // 5. Display response
+      startTypewriter(response, '圖書館員 · 月上零韻', 'calm', []);
+
+    } catch (err) {
+      console.error('AI call failed:', err);
+      startTypewriter(`連線時發生了問題：${err.message}\n\n請確認 API Key 是否正確，以及網路連線是否正常。`, '圖書館員 · 月上零韻', 'thinking', []);
+    } finally {
+      isAILoading = false;
+      if (sendBtn) sendBtn.disabled = false;
+    }
   };
 
   window.aiAdvance = function() {
