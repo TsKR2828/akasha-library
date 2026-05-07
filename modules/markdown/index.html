@@ -550,7 +550,7 @@
     </div>
 
     <span class="separator"></span>
-    <button class="btn--gold btn" id="exportToSpreadsheet">送到內建試算表</button>
+    <button class="btn--gold btn" id="exportToSpreadsheet">送到 Table Forge</button>
 
     <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼...">
     <button class="btn" id="searchBtn">搜尋</button>
@@ -1536,7 +1536,7 @@
       }
     });
 
-    // --- Export to built-in Spreadsheet ---
+    // --- Export to Table Forge ---
     document.getElementById("exportToSpreadsheet").addEventListener("click", async () => {
       if (!state.content) {
         statusEl.textContent = "尚未載入檔案";
@@ -1550,7 +1550,7 @@
           type: MSG_TYPES.READER_EXPORT_TO_SPREADSHEET,
           payload,
         }, "*");
-        statusEl.textContent = "已送出至內建試算表";
+        statusEl.textContent = "已送出至 Table Forge";
       } catch (e) {
         console.error("Export failed:", e);
         statusEl.textContent = "匯出失敗：" + e.message;
