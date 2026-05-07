@@ -1,0 +1,320 @@
+/**
+ * Akasha Library — Embedding & Retrieval Module
+ *
+ * Two-tier retrieval for RAG:
+ *   Tier 1: BM25 keyword scoring (always available, no API needed)
+ *   Tier 2: Dense vector embedding via API (when BYOK key available)
+ *
+ * Flow: indexPDF() on open → queryRelevant() on user question
+ */
+
+import { extractPageText } from './ai.js';
+import { saveEmbeddings, getEmbeddings } from './storage.js';
+
+// ===== Text Chunking =====
+
+/**
+ * Split text into overlapping chunks for indexing.
+ */
+export function chunkText(text, chunkSize = 300, overlap = 60) {
+  if (!text || text.length <= chunkSize) return [text].filter(Boolean);
+
+  const chunks = [];
+  let start = 0;
+  while (start < text.length) {
+    const end = Math.min(start + chunkSize, text.length);
+    chunks.push(text.slice(start, end));
+    start += chunkSize - overlap;
+  }
+  return chunks;
+}
+
+// ===== BM25 Scoring (Tier 1) =====
+
+/**
+ * Tokenize text for BM25. Handles CJK + Latin.
+ * CJK: each character is a token. Latin: split by whitespace/punctuation.
+ */
+function tokenize(text) {
+  if (!text) return [];
+  const tokens = [];
+  // Match CJK chars individually, or runs of Latin word chars
+  const re = /[一-鿿㐀-䶿豈-﫿]|[a-zA-Z0-9À-ɏ]+/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    tokens.push(m[0].toLowerCase());
+  }
+  return tokens;
+}
+
+/**
+ * Build BM25 index from chunks.
+ */
+function buildBM25Index(chunks) {
+  const N = chunks.length;
+  const avgDL = chunks.reduce((s, c) => s + tokenize(c.text).length, 0) / (N || 1);
+
+  // Document frequency for each term
+  const df = {};
+  const docTokens = chunks.map(c => {
+    const tokens = tokenize(c.text);
+    const unique = new Set(tokens);
+    for (const t of unique) {
+      df[t] = (df[t] || 0) + 1;
+    }
+    return tokens;
+  });
+
+  return { N, avgDL, df, docTokens, chunks };
+}
+
+/**
+ * BM25 scoring: rank chunks by relevance to query.
+ */
+function bm25Query(index, queryText, topK = 5) {
+  const { N, avgDL, df, docTokens, chunks } = index;
+  const queryTokens = tokenize(queryText);
+  const k1 = 1.5, b = 0.75;
+
+  const scores = chunks.map((chunk, i) => {
+    const dl = docTokens[i].length;
+    const tf = {};
+    for (const t of docTokens[i]) {
+      tf[t] = (tf[t] || 0) + 1;
+    }
+
+    let score = 0;
+    for (const qt of queryTokens) {
+      if (!tf[qt]) continue;
+      const idf = Math.log((N - (df[qt] || 0) + 0.5) / ((df[qt] || 0) + 0.5) + 1);
+      const tfNorm = (tf[qt] * (k1 + 1)) / (tf[qt] + k1 * (1 - b + b * dl / avgDL));
+      score += idf * tfNorm;
+    }
+
+    return { ...chunk, score };
+  });
+
+  return scores
+    .filter(s => s.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topK);
+}
+
+// ===== Dense Embedding (Tier 2) =====
+
+/**
+ * Call OpenAI embedding API (batch).
+ */
+async function embedOpenAI(texts, apiKey, model = 'text-embedding-3-small') {
+  const res = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ model, input: texts }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Embedding API ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+
+  const json = await res.json();
+  return json.data.map(d => new Float32Array(d.embedding));
+}
+
+/**
+ * Call Google embedding API.
+ */
+async function embedGoogle(texts, apiKey, model = 'text-embedding-004') {
+  // Google's batch embedding endpoint
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:batchEmbedContents?key=${apiKey}`;
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      requests: texts.map(text => ({
+        model: `models/${model}`,
+        content: { parts: [{ text }] },
+      })),
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Google Embedding ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+
+  const json = await res.json();
+  return json.embeddings.map(e => new Float32Array(e.values));
+}
+
+/**
+ * Generate embeddings via the user's configured provider.
+ * Returns null if provider doesn't support embeddings.
+ */
+async function generateEmbeddings(texts, settings) {
+  if (!settings.apiKey) return null;
+
+  // Batch in groups of 100 (API limits)
+  const batchSize = 100;
+  const allEmbeddings = [];
+
+  for (let i = 0; i < texts.length; i += batchSize) {
+    const batch = texts.slice(i, i + batchSize);
+    let embeddings;
+
+    switch (settings.provider) {
+      case 'openai':
+        embeddings = await embedOpenAI(batch, settings.apiKey);
+        break;
+      case 'google':
+        embeddings = await embedGoogle(batch, settings.apiKey);
+        break;
+      default:
+        // Anthropic and custom don't have standard embedding APIs
+        return null;
+    }
+    allEmbeddings.push(...embeddings);
+  }
+
+  return allEmbeddings;
+}
+
+// ===== Cosine Similarity =====
+
+function cosineSim(a, b) {
+  if (!a || !b || a.length !== b.length) return 0;
+  let dot = 0, normA = 0, normB = 0;
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+// ===== Main API =====
+
+/**
+ * Index a PDF: extract text, chunk, optionally embed.
+ * Runs in background — returns a promise.
+ *
+ * @param {Object} pdfDoc - pdf.js document
+ * @param {string} fileId - unique file identifier for IndexedDB
+ * @param {Object} settings - from getAISettings()
+ * @param {Function} onProgress - (pagesIndexed, totalPages) callback
+ * @returns {{ chunkCount, hasEmbeddings }}
+ */
+export async function indexPDF(pdfDoc, fileId, settings, onProgress) {
+  const totalPages = pdfDoc.numPages;
+  const allChunks = [];
+
+  // 1. Extract & chunk all pages
+  for (let p = 1; p <= totalPages; p++) {
+    const text = await extractPageText(pdfDoc, p);
+    if (!text.trim()) {
+      if (onProgress) onProgress(p, totalPages);
+      continue;
+    }
+
+    const chunks = chunkText(text);
+    for (let ci = 0; ci < chunks.length; ci++) {
+      allChunks.push({
+        pageNum: p,
+        chunkIdx: ci,
+        text: chunks[ci],
+        embedding: null,
+      });
+    }
+    if (onProgress) onProgress(p, totalPages);
+  }
+
+  if (allChunks.length === 0) return { chunkCount: 0, hasEmbeddings: false };
+
+  // 2. Generate dense embeddings (if provider supports it)
+  let hasEmbeddings = false;
+  if (settings?.apiKey && (settings.provider === 'openai' || settings.provider === 'google')) {
+    try {
+      const texts = allChunks.map(c => c.text);
+      const embeddings = await generateEmbeddings(texts, settings);
+      if (embeddings && embeddings.length === allChunks.length) {
+        for (let i = 0; i < allChunks.length; i++) {
+          // Store as regular array for IndexedDB serialization
+          allChunks[i].embedding = Array.from(embeddings[i]);
+        }
+        hasEmbeddings = true;
+      }
+    } catch (err) {
+      console.warn('Embedding generation failed, using BM25 only:', err.message);
+    }
+  }
+
+  // 3. Store in IndexedDB
+  await saveEmbeddings(fileId, allChunks);
+
+  return { chunkCount: allChunks.length, hasEmbeddings };
+}
+
+/**
+ * Query the index: find most relevant chunks for a question.
+ * Uses dense embedding similarity when available, BM25 as fallback.
+ *
+ * @param {string} fileId - file to search
+ * @param {string} query - user's question
+ * @param {Object} settings - from getAISettings()
+ * @param {number} topK - number of results
+ * @returns {Array<{pageNum, text, score}>}
+ */
+export async function queryRelevant(fileId, query, settings, topK = 5) {
+  const chunks = await getEmbeddings(fileId);
+  if (!chunks || chunks.length === 0) return [];
+
+  // Check if we have dense embeddings
+  const hasDense = chunks[0]?.embedding && chunks[0].embedding.length > 0;
+
+  if (hasDense && settings?.apiKey && (settings.provider === 'openai' || settings.provider === 'google')) {
+    // Tier 2: Dense vector search
+    try {
+      const [queryVec] = await generateEmbeddings([query], settings);
+      if (queryVec) {
+        const scored = chunks.map(c => ({
+          pageNum: c.pageNum,
+          text: c.text,
+          score: cosineSim(new Float32Array(c.embedding), queryVec),
+        }));
+        return scored.sort((a, b) => b.score - a.score).slice(0, topK);
+      }
+    } catch (err) {
+      console.warn('Dense retrieval failed, falling back to BM25:', err.message);
+    }
+  }
+
+  // Tier 1: BM25 keyword search (always works)
+  const bm25Index = buildBM25Index(chunks);
+  return bm25Query(bm25Index, query, topK);
+}
+
+/**
+ * Check if a file has been indexed.
+ */
+export async function isIndexed(fileId) {
+  const chunks = await getEmbeddings(fileId);
+  return chunks && chunks.length > 0;
+}
+
+/**
+ * Format retrieval results as context for the LLM.
+ */
+export function formatRetrievalContext(results, currentPageContext) {
+  if (!results || results.length === 0) return currentPageContext;
+
+  const retrievedPages = new Set(results.map(r => r.pageNum));
+  const ragSection = results
+    .map(r => `【第 ${r.pageNum} 頁 · 相關段落】\n${r.text}`)
+    .join('\n\n');
+
+  return `${currentPageContext}\n\n── 以下為全書中與問題相關的段落 ──\n\n${ragSection}`;
+}

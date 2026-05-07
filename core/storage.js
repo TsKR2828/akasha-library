@@ -6,7 +6,7 @@
  */
 
 const DB_NAME = 'akasha-library';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbInstance = null;
 
@@ -32,6 +32,12 @@ function openDB() {
 
       if (!db.objectStoreNames.contains('settings')) {
         db.createObjectStore('settings', { keyPath: 'key' });
+      }
+
+      // v2: embedding index for RAG retrieval
+      if (!db.objectStoreNames.contains('embeddings')) {
+        const embStore = db.createObjectStore('embeddings', { keyPath: 'id' });
+        embStore.createIndex('fileId', 'fileId', { unique: false });
       }
     };
 
@@ -169,6 +175,65 @@ export async function setSetting(key, value) {
   return new Promise((resolve, reject) => {
     const tx = db.transaction('settings', 'readwrite');
     tx.objectStore('settings').put({ key, value });
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ===== Embeddings Store =====
+
+/**
+ * Save embedding index for a file (replaces existing)
+ */
+export async function saveEmbeddings(fileId, chunks) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('embeddings', 'readwrite');
+    const store = tx.objectStore('embeddings');
+    // Delete existing embeddings for this file
+    const idx = store.index('fileId');
+    const range = IDBKeyRange.only(fileId);
+    idx.openCursor(range).onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { cursor.delete(); cursor.continue(); }
+    };
+    // Insert new chunks (after delete completes via same transaction)
+    for (const chunk of chunks) {
+      store.put({ ...chunk, fileId, id: chunk.id || generateId() });
+    }
+    tx.oncomplete = () => resolve(chunks.length);
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+/**
+ * Get all embedding chunks for a file
+ */
+export async function getEmbeddings(fileId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('embeddings', 'readonly');
+    const idx = tx.objectStore('embeddings').index('fileId');
+    const request = idx.getAll(fileId);
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = (e) => reject(e.target.error);
+  });
+}
+
+/**
+ * Delete all embeddings for a file
+ */
+export async function deleteEmbeddings(fileId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('embeddings', 'readwrite');
+    const store = tx.objectStore('embeddings');
+    const idx = store.index('fileId');
+    const range = IDBKeyRange.only(fileId);
+    idx.openCursor(range).onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { cursor.delete(); cursor.continue(); }
+    };
     tx.oncomplete = () => resolve();
     tx.onerror = (e) => reject(e.target.error);
   });

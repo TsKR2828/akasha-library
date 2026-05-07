@@ -69,8 +69,8 @@
 | Step | 功能 | 狀態 |
 |------|------|------|
 | 4.1 | 文字擷取層（pdf.js 抽文字 / Tesseract.js OCR） | ✅ pdf.js 完成（OCR 待做） |
-| 4.2 | Embedding 索引（本地 transformers.js 或 API） | ⬜ 待做 |
-| 4.3 | RAG 檢索（cosine similarity 找相關頁） | ⬜ 待做 |
+| 4.2 | Embedding 索引（本地 transformers.js 或 API） | ✅ BM25 + API 雙層 |
+| 4.3 | RAG 檢索（cosine similarity 找相關頁） | ✅ 完成（自動啟用） |
 | 4.4 | LLM 對話 proxy（Cloudflare Workers） | ✅ Worker 完成（待部署） |
 | 4.5 | 聊天 UI（側邊面板、對話紀錄） | ✅ 已接入 LLM |
 | 4.6 | 月幣系統（餘額、扣款、報價預估） | ✅ 前端完成（proxy 後生效） |
@@ -170,6 +170,6 @@
 Phase 1 ████████████████ 100%
 Phase 2 ████████████████ 100%
 Phase 3 ████████████████ 100%
-Phase 4 ████████░░░░░░░░  50% (4.1/4.4-4.7 完成，BYOK 可用)
+Phase 4 ██████████░░░░░░  70% (4.1-4.7 完成，RAG + BYOK 可用)
 Phase 5 █████████░░░░░░░  40% (5.2-5.3 完成)
 ```

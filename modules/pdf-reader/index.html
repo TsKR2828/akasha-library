@@ -1190,6 +1190,7 @@
 <script type="module">
   import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry } from '../../core/storage.js';
   import { extractContextPages, getAISettings, callLLM, buildSystemPrompt, estimateTokens, coinCost, deductCoins } from '../../core/ai.js';
+  import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
 
   // ===== PDF.js Setup =====
   const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
@@ -1202,6 +1203,8 @@
   let totalPages = 0;
   let scale = 1.0;
   let currentFileName = '';
+  let currentFileId = null;   // IndexedDB file ID for embedding index
+  let indexReady = false;     // true when embedding index is built
 
   // Make functions globally accessible
   window.prevPage = () => { if (currentPage > 1) { currentPage--; renderPage(); } };
@@ -1331,6 +1334,9 @@
 
       // Auto fit width after first render
       setTimeout(fitWidth, 100);
+
+      // Background: build embedding index for RAG
+      buildEmbeddingIndex();
     } catch (err) {
       hideLoading();
       showToast('載入失敗：' + err.message, 'error');
@@ -1572,6 +1578,7 @@
       size: bytes.byteLength,
       pages,
     });
+    currentFileId = entry.id;
     await saveFileBlob(entry.id, new Blob([bytes], { type: 'application/pdf' }));
 
     const lib = getLibrary();
@@ -1773,6 +1780,31 @@
     });
   };
 
+  // ===== Embedding Index (background) =====
+  async function buildEmbeddingIndex() {
+    if (!pdfDoc || !currentFileId) return;
+
+    // Check if already indexed
+    const alreadyDone = await isIndexed(currentFileId);
+    if (alreadyDone) { indexReady = true; return; }
+
+    indexReady = false;
+    const settings = getAISettings();
+    try {
+      const result = await indexPDF(pdfDoc, currentFileId, settings, (done, total) => {
+        // Optional: update UI progress (non-blocking)
+        const pct = Math.round(done / total * 100);
+        const badge = document.getElementById('aiIndexBadge');
+        if (badge) badge.textContent = pct < 100 ? `索引 ${pct}%` : '';
+      });
+      indexReady = true;
+      console.log(`Index built: ${result.chunkCount} chunks, dense=${result.hasEmbeddings}`);
+    } catch (err) {
+      console.warn('Index build failed:', err.message);
+      // BM25 still works from cached page texts on next query
+    }
+  }
+
   window.handleAIKeydown = function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -1822,12 +1854,25 @@
         return;
       }
 
-      // 2. Update token estimate
-      const totalTokens = estimateTokens(pageContext) + estimateTokens(text);
+      // 2. RAG retrieval: find relevant chunks from the whole book
+      let fullContext = pageContext;
+      if (indexReady && currentFileId) {
+        try {
+          const relevant = await queryRelevant(currentFileId, text, settings, 3);
+          if (relevant.length > 0) {
+            fullContext = formatRetrievalContext(relevant, pageContext);
+          }
+        } catch (err) {
+          console.warn('RAG retrieval failed, using local pages only:', err.message);
+        }
+      }
+
+      // 3. Update token estimate
+      const totalTokens = estimateTokens(fullContext) + estimateTokens(text);
       document.getElementById('aiTokenEstimate').textContent = `${totalTokens}`;
 
-      // 3. Build system prompt & call LLM
-      const systemPrompt = buildSystemPrompt(pageContext, currentPage, currentFileName);
+      // 4. Build system prompt & call LLM
+      const systemPrompt = buildSystemPrompt(fullContext, currentPage, currentFileName);
       const response = await callLLM(settings, systemPrompt, text);
 
       // 4. Coin deduction (if coin mode)
