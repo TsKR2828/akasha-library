@@ -1426,6 +1426,7 @@
     document.getElementById('tab-split').style.display = tab === 'split' ? '' : 'none';
     document.getElementById('tab-library').style.display = tab === 'library' ? '' : 'none';
     if (tab === 'library') renderLibrary();
+    if (tab === 'split') loadPDFLib().catch(() => {}); // preload pdf-lib
   }
 
   function toggleSidebar() {
@@ -1658,16 +1659,44 @@
   function downloadBlob(bytes, filename) {
     const blob = new Blob([bytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
+
+    // Attempt programmatic download
     const a = document.createElement('a');
     a.href = url;
     a.download = filename;
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
+
+    // Show fallback download bar (in case auto-download was blocked)
+    showDownloadBar(url, filename);
+
     setTimeout(() => {
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 1000);
+    }, 500);
+  }
+
+  function showDownloadBar(url, filename) {
+    let bar = document.getElementById('download-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'download-bar';
+      bar.style.cssText = `
+        position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+        background:#1a2233; border:1px solid #c9a86a44; border-radius:8px;
+        padding:10px 18px; display:flex; align-items:center; gap:12px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.5); z-index:9999;
+        font-family:var(--font-serif-tc); font-size:13px; color:#e8dcc8;
+      `;
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = `
+      <span style="color:#c9a86a">⬇</span>
+      <a href="${url}" download="${filename}" style="color:#c9a86a;text-decoration:underline;font-size:12.5px">${filename}</a>
+      <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#666;cursor:pointer;font-size:16px;padding:0 4px">✕</button>
+    `;
+    // Auto-hide after 30s
+    setTimeout(() => { bar?.remove(); URL.revokeObjectURL(url); }, 30000);
   }
 
   function showLoading(text) {
