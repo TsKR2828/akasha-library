@@ -606,7 +606,8 @@
       mode: "empty",
       activeTab: "pretty",
       searchTerm: "",
-      editMode: false
+      editMode: false,
+      dirty: false
     };
 
     const appRoot = document.getElementById("appRoot");
@@ -1119,6 +1120,18 @@
     // ═══════════════════════════════════════════
     const EDITABLE_MODES = new Set(["md", "txt", "json"]);
 
+    function confirmDiscardEdits() {
+      if (!state.editMode || !state.dirty) return true;
+      return confirm("編輯中的變更尚未下載，確定要捨棄嗎？");
+    }
+
+    window.addEventListener("beforeunload", (e) => {
+      if (state.editMode && state.dirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+
     function updateEditUI() {
       const btnToggle = document.getElementById("btnEditToggle");
       const btnDownload = document.getElementById("btnDownloadEdited");
@@ -1139,16 +1152,19 @@
     }
 
     function toggleEditMode() {
-      state.editMode = !state.editMode;
       if (state.editMode) {
+        if (!confirmDiscardEdits()) return;
+        state.dirty = false;
+        state.content = rawEditor.value;
+        state.editMode = false;
+        setFile(state.filename, state.content);
+      } else {
+        state.editMode = true;
+        state.dirty = false;
         rawEditor.value = state.content;
         state.activeTab = "raw";
         updateEditUI();
         renderTabs();
-      } else {
-        state.content = rawEditor.value;
-        state.editMode = false;
-        setFile(state.filename, state.content);
       }
     }
 
@@ -1167,6 +1183,7 @@
       editError.style.display = "none";
       editError.textContent = "";
       download(state.filename || "edited.txt", content);
+      state.dirty = false;
       statusEl.textContent = "已下載新檔：" + state.filename;
     }
 
@@ -1449,21 +1466,18 @@
     fileInput.addEventListener("change", event => {
       const file = event.target.files[0];
       if (!file) return;
+      if (!confirmDiscardEdits()) { fileInput.value = ""; return; }
       const reader = new FileReader();
       reader.onload = () => setFile(file.name, reader.result, file.size);
       reader.readAsText(file, "utf-8");
     });
 
-    let _editDraftTimer = 0;
     rawEditor.addEventListener("input", () => {
       state.content = rawEditor.value;
       if (!state.editMode) {
         setFile(state.filename || "edited.txt", state.content);
       } else {
-        clearTimeout(_editDraftTimer);
-        _editDraftTimer = setTimeout(() => {
-          localStorage.setItem("akasha-reader-draft", rawEditor.value);
-        }, 2000);
+        state.dirty = true;
       }
     });
 
@@ -1592,6 +1606,7 @@
     document.addEventListener("drop", event => {
       const file = event.dataTransfer.files[0];
       if (!file) return;
+      if (!confirmDiscardEdits()) return;
       const reader = new FileReader();
       reader.onload = () => setFile(file.name, reader.result, file.size);
       reader.readAsText(file, "utf-8");
@@ -1601,6 +1616,7 @@
     window.addEventListener("message", (event) => {
       if (event.origin !== location.origin) return;
       if (event.data?.type === "akasha-open-file") {
+        if (!confirmDiscardEdits()) return;
         setFile(event.data.filename || "file.md", event.data.content, event.data.size);
       }
     });
