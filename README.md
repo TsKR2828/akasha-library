@@ -1,7 +1,7 @@
 # 阿卡夏圖書館 Akasha Library
 
-通用 MD / Excel / PDF 線上雲端編輯書庫。
-支援文件切割、Google Drive 同步、離線使用，可匯出 PDF / Excel / Markdown。
+通用文件雲端閱讀書庫。
+支援 Markdown / PDF / 程式碼 / 資料表閱讀編輯，Google Drive 同步、離線使用、AI 閱讀助手。
 
 ## 概念
 
@@ -16,21 +16,21 @@
 └───────────────┴─────────────────────────┘
 ```
 
-## 四大模組
+## 五大模組
 
 | 模組 | 功能 | 輸入 | 輸出 |
 |------|------|------|------|
 | Markdown 編輯器 | 撰寫 / 預覽 / 同步 Sheets | .md, 手打 | .md, HTML, Google Sheets |
-| PDF 閱讀器 | 閱讀 / 頁面切割 / 書庫管理 | .pdf | 切割後 .pdf |
-| 試算表編輯器 | 本地 Excel 編輯（免買 Office）| .xlsx | .xlsx |
+| PDF 閱讀器 | 閱讀 / 頁面切割 / AI 圖書館員 | .pdf | 切割後 .pdf |
+| Code & Data 檢視器 | 程式碼 / 資料檔閱讀與編輯 | .md, .txt, .json, .py, .js 等 | 下載編輯後檔案 |
+| Table Forge | CSV / TSV 資料表編輯 | .csv, .tsv | .csv |
 | 書籍排版器 | 視覺化書頁排版 | 文字 + 圖片 | .pdf, .html, .book |
 
 ## 技術棧
 
-- **前端**：純 HTML/CSS/JS（MD/PDF/Book）+ React（試算表）
-- **打包**：Vite（僅試算表模組需要）
+- **前端**：純 HTML/CSS/JS（全模組，無框架）
 - **PDF**：pdf.js（閱讀）+ pdf-lib（切割/匯出）
-- **Excel**：SheetJS (xlsx)
+- **AI**：BM25 + Dense Embedding 雙層 RAG，支援 OpenAI / Anthropic / Google / Custom
 - **儲存**：IndexedDB（本地快取）+ Google Drive API（雲端同步）
 - **部署**：GitHub Pages + PWA
 - **OAuth**：Google `drive.file` scope（僅存取 APP 建立的檔案）
@@ -86,14 +86,14 @@
 ## 開發 / 建置
 
 ```bash
-# 安裝依賴（僅試算表模組需要）
+# 安裝依賴
 npm install
 
-# 開發伺服器
-npm run dev
+# 開發伺服器（靜態檔案，無需建置）
+npx http-server . -p 3460 -c-1
 
-# 建置靜態檔案
-npm run build
+# 測試（建置 + 關鍵檔案檢查）
+npm test
 ```
 
 ## 授權

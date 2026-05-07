@@ -1,5 +1,50 @@
 # Akasha Library — Dev Log
 
+## 2026-05-08：Table Forge MVP + Edit Mode + 舊試算表移除
+
+### Table Forge MVP（`767fb3c`, `c0f4884`）
+
+**資料層** `modules/table-forge/`：
+- `model.js` — 80×50 grid，公式引擎（SUM / AVG / COUNT / MIN / MAX / IF），A1 ↔ RC 轉換
+- `parsers.js` — CSV / TSV 解析，含引號 / 逗號 / 換行 edge case；自動偵測分隔符
+- `exporters.js` — 匯出 CSV（RFC 4180 compliant）
+
+**UI 層** `modules/table-forge/index.html`：
+- Canvas 畫布渲染（column / row header + frozen），滑鼠選取 / 拖曳 / 雙擊編輯
+- 公式列 + 工具列（對齊 / 粗體 / 刪除列欄 / 新增列欄）
+- 主殼層整合：nav 新增 Table Forge 入口，`.csv` / `.tsv` 匯入導向 Table Forge
+
+### Bug 修復 A / B / C（`305c17d`）
+
+| Bug | 問題 | 修法 |
+|-----|------|------|
+| A | 模組 topbar 覆蓋主殼層 actions | `MODULES_WITH_OWN_ACTIONS` set，`openModule()` 隱藏 `.topbar-actions`，`switchView()` 恢復 |
+| B | Table Forge CSV 解析器引號 edge case | 重寫 `parseCSV()` 為逐字元 FSM，正確處理 `""` 轉義和引號內換行 |
+| C | PDF AI 面板疊在內容上方（overlay） | 改為 flex docked，`width: 0` + `min-width: 0` 折疊；mobile 改 bottom sheet `transform: translateY(100%)` |
+
+### Code & Data Edit Mode（`d4c9957`）
+
+`modules/markdown/index.html`：
+- 可編輯格式：`.md` / `.txt` / `.json`（其餘唯讀）
+- 編輯模式 toggle → 強制切到 raw tab → textarea 直接編輯
+- 「下載新檔」按鈕：JSON 下載前執行 `JSON.parse()` 驗證
+- 不覆寫原檔、不寫回 Drive、不自動儲存
+
+### 舊試算表 Ledger 移除（`63c165d`）
+
+- `index.html`：移除 nav 入口、modules 物件、import route、newFile 選項、TYPE_MODULES 映射
+- `modules/markdown/index.html`：「送到內建試算表」→「送到 Table Forge」
+- `privacy.html`：「試算表」→「資料表」
+- 模組檔案保留不刪（legacy reference）
+
+### README 更新
+
+- 模組表：移除「試算表編輯器」，新增 Table Forge + Code & Data 檢視器
+- 技術棧：移除 React / Vite / SheetJS，新增 AI RAG 描述
+- 開發指令：更新為 http-server 靜態伺服器
+
+---
+
 ## 2026-05-07：AI 圖書館員上線 — 文字擷取 + RAG + LLM 整合
 
 ### PDF 切割 / 書庫 Bug 修復（`a351e5b`, `c5aa98b`）
