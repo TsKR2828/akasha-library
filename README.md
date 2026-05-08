@@ -33,7 +33,7 @@
 - **搜尋**：全文關鍵字搜尋，高亮標示於所有視圖
 - **複製匯出**：複製原始內容 / 複製目前視圖 / 下載檔案 / 匯出結構化摘要 .md
 - **Sheets 匯出**：複製 HTML (WordPress) / 純表格 TSV / 格式化貼上 / 開新 Google Sheet
-- **跨模組**：一鍵送到 Table Forge
+- **跨模組**：一鍵送到 Table Forge、自動偵測表格結構（MD table / JSON array）
 - **安全檢查**：Python 風險掃描（刪檔 / 連網 / 系統指令 / 金鑰讀取）、JSON 格式驗證（錯誤定位到行列）
 
 ### Table Forge 架構
@@ -52,12 +52,18 @@ modules/table-forge/
 - **書籤**：新增 / 列表 / 跳頁 / 刪除，localStorage 持久化
 - **自訂切割**：頁碼網格勾選 → pdf-lib 合併 → 下載或存書庫
 - **截圖框選**：Canvas 拖拉選取 → PNG 存書庫
+- **OCR 文字摘錄**：單頁 OCR + 版權鎖定面板 + 月幣計費
 
 ### AI 圖書館員 — 月上零韻
 
 - **App Shell 面板**：「召喚圖書館員」按鈕開啟右側面板，角色立繪 + 對話框 + 打字機效果
 - **PDF RAG 問答**：BM25 + Dense Embedding 雙層檢索，支援 OpenAI / Anthropic / Google / Custom API
-- **跨模組 Context**：面板自動顯示當前模組名稱（Phase 3-B 接入 LLM 對話）
+- **跨模組 Context**：切換模組時自動切換角色（圖書館員 / 手稿解讀員 / 資料檢查員），LLM 對話已接入
+- **人設管理**：`persona.md` 外部化 + 場景動態注入
+- **對話紀錄**：每模組獨立對話，統一存書庫（IndexedDB）
+- **預寫回應**：常見問答 JSON 優先匹配，免打 API
+- **計費系統**：月幣統一計費 + BYOK + token 預估 + App Shell token bar 同步
+- **版權邊界**：copyrightProtected 欄位 + 鎖定圖示 + 開啟攔截
 
 ## 技術棧
 
@@ -128,6 +134,17 @@ npx http-server . -p 3460 -c-1
 # 測試（建置 + 關鍵檔案檢查）
 npm test
 ```
+
+## 開發進度
+
+| 階段 | 狀態 |
+|------|:----:|
+| 基礎書庫 + Drive 同步 + 公共書庫 | ✅ |
+| AI 圖書館員（RAG / BYOK / 人設 / 計費） | ✅ 90% |
+| Enhancement Phase 1–6（App Shell / PDF / 零韻 / 版權） | ✅ |
+| Enhancement Phase 7–16（Translation / Script Editor / Memory / Security …） | ⬜ |
+
+詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## 授權
 

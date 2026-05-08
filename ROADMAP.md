@@ -16,16 +16,16 @@
 | 1-D | Toast 提示統一 — 操作完成 → toast + HINTS 下半段同步更新 | ✅ |
 | 1-E | 手機版 popover — 長按按鈕彈出說明氣泡，取代桌面 hover | ✅ |
 
-## Phase 2：PDF Reader 補強
+## Phase 2：PDF Reader 補強 ✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
 | 2-A | 書籤功能 — 新增/列表/跳頁/刪除，localStorage 持久化 | ✅ |
 | 2-B | 自訂選擇切割 — 頁碼網格勾選 → pdf-lib 合併 → 下載或存書庫 | ✅ |
 | 2-C | 截圖框選 — Canvas 拖拉選取 → PNG 存書庫 | ✅ |
-| 2-D | OCR 文字摘錄 — 單頁 OCR + 版權鎖定 + 月幣計費 | ⬜ |
+| 2-D | OCR 文字摘錄 — 單頁 OCR + 版權鎖定 + 月幣計費 | ✅ |
 
-## Phase 3：零韻面板（跨模組 AI 圖書館員）
+## Phase 3：零韻面板（跨模組 AI 圖書館員） ✅ 完成
 
 依賴 Phase 1。
 
@@ -33,30 +33,30 @@
 |------|------|:----:|
 | 3-A | 面板 UI 抽出 — 從 PDF Reader 抽成獨立元件，掛到 App Shell | ✅ |
 | 3-B | Context 切換 — 根據當前模組自動切換角色 + 真正 LLM 呼叫 | ✅ |
-| 3-C | 人設管理 — `persona.md` 外部化 + 場景動態注入（追加 spec §7.1–7.2） | ⬜ |
-| 3-D | 對話紀錄 — 每模組獨立對話，統一存書庫 | ⬜ |
-| 3-E | 預寫回應 DB — JSON 常見問答，優先匹配免打 API（追加 spec §7.3–7.4） | ⬜ |
-| 3-F | 計費系統 — 月幣 + BYOK + token 預估（前端骨架已有） | ⬜ |
+| 3-C | 人設管理 — `persona.md` 外部化 + 場景動態注入（追加 spec §7.1–7.2） | ✅ |
+| 3-D | 對話紀錄 — 每模組獨立對話，統一存書庫 | ✅ |
+| 3-E | 預寫回應 DB — JSON 常見問答，優先匹配免打 API（追加 spec §7.3–7.4） | ✅ |
+| 3-F | 計費系統 — 月幣 + BYOK + token 預估（前端骨架已有） | ✅ |
 
-## Phase 4：Code & Data 整合
+## Phase 4：Code & Data 整合 ✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
 | 4-A | 零韻接入 — 手稿解讀員 context（3-B 已完成） | ✅ |
-| 4-B | 自動偵測表格 — .md/.json 開啟時偵測 → 提示條 | ⬜ |
+| 4-B | 自動偵測表格 — .md/.json 開啟時偵測 → 提示條 | ✅ |
 
-## Phase 5：Table Forge 整合
+## Phase 5：Table Forge 整合 ✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
 | 5-A | 零韻接入 — 資料檢查員 context（3-B 已完成） | ✅ |
-| 5-B | Script Editor 資料橋 — PostMessage 接收 blocks → 表格（預留接口） | ⬜ |
+| 5-B | Script Editor 資料橋 — PostMessage 接收 blocks → 表格（預留接口） | ✅ |
 
-## Phase 6：版權邊界
+## Phase 6：版權邊界 ✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 6-A | 版權邊界實作 — OCR/截圖鎖定 + 警示文案 | ⬜ |
+| 6-A | 版權邊界實作 — OCR/截圖鎖定 + 警示文案 | ✅ |
 
 ---
 
@@ -174,19 +174,15 @@
 ## 相依關係
 
 ```
-已完成基礎
+已完成（Phase 1–6 全部完成）
 ├─ Phase 1 (App Shell) ✅
-├─ Phase 2 (PDF Reader 2-A~C) ✅
-└─ Phase 3-A~B (零韻面板 + Context 切換) ✅
+├─ Phase 2 (PDF Reader) ✅
+├─ Phase 3 (零韻面板) ✅
+├─ Phase 4 (Code & Data 整合) ✅
+├─ Phase 5 (Table Forge 整合) ✅
+└─ Phase 6 (版權邊界) ✅
 
 目前可做（無新相依）
-├─ Phase 2-D (OCR)
-├─ Phase 3-C~F (人設 / 對話紀錄 / 預寫回應 / 計費)
-├─ Phase 4-B (自動偵測表格)
-├─ Phase 5-B (Script Editor 資料橋預留)
-└─ Phase 6 (版權邊界)
-
-追加功能鏈
 ├─ Phase 7 (Translation Core) ──→ Phase 8 (Script Editor)
 │                               ──→ Phase 9 (Table Forge 抽取強化)
 ├─ Phase 10 (Memory) ──→ Phase 15 (談心 + 館報)

@@ -68,16 +68,16 @@
 
 | Step | 功能 | 狀態 |
 |------|------|------|
-| 4.1 | 文字擷取層（pdf.js 抽文字 / Tesseract.js OCR） | ✅ pdf.js 完成（OCR 待做） |
+| 4.1 | 文字擷取層（pdf.js 抽文字 / Tesseract.js OCR） | ✅ 完成 |
 | 4.2 | Embedding 索引（本地 transformers.js 或 API） | ✅ BM25 + API 雙層 |
 | 4.3 | RAG 檢索（cosine similarity 找相關頁） | ✅ 完成（自動啟用） |
 | 4.4 | LLM 對話 proxy（Cloudflare Workers） | ✅ Worker 完成（待部署） |
-| 4.5 | 聊天 UI（側邊面板、對話紀錄） | ✅ 已接入 LLM |
-| 4.6 | 月幣系統（餘額、扣款、報價預估） | ✅ 前端完成（proxy 後生效） |
+| 4.5 | 聊天 UI（側邊面板、對話紀錄） | ✅ 完成（含每模組獨立對話紀錄） |
+| 4.6 | 月幣系統（餘額、扣款、報價預估） | ✅ 完成（billing.js 統一計費 + token bar） |
 | 4.7 | BYOK 模式（使用者自帶 API Key） | ✅ 完成（可直接使用） |
-| 4.8 | Persona.md 人設載入 | ⬜ 待做 |
+| 4.8 | Persona.md 人設載入 | ✅ 完成（persona.md 外部化 + 動態注入） |
 | 4.9 | TTS 語音回覆（接語音資料庫） | ⬜ 待做 |
-| 4.10 | AI 形象顯示（立繪/動態） | ⬜ 待做 |
+| 4.10 | AI 形象顯示（立繪/動態） | ✅ 立繪完成（動態待做） |
 
 交付物：讀書時可問 AI、AI 用設定好的人設和聲音回答
 
@@ -120,12 +120,43 @@
 
 ## 獨立專案對照
 
-| 獨立專案 | 對應 Phase | 整合點 |
-|----------|-----------|--------|
-| `akasha-library`（本專案） | Phase 1-3, 5 | — |
-| `akasha-ai`（另開） | Phase 4 | 完成後複製到 modules/ai-librarian/ |
-| 語音資料庫（另開） | Phase 4.9 | 完成後 AI 模組引用音檔 |
-| Persona.md（另開） | Phase 4.8 | 完成後放入 AI 模組 config |
+| 獨立專案 | 對應 Phase | 整合點 | 狀態 |
+|----------|-----------|--------|:----:|
+| `akasha-library`（本專案） | Phase 1-3, 5 + Enhancement 1-6 | — | 進行中 |
+| AI 圖書館員 | Phase 4 | 已整合到 App Shell + core/ | ✅ 已整合 |
+| 語音資料庫 | Phase 4.9 / Enhancement 14 | 完成後 AI 模組引用音檔 | ⬜ |
+| Persona.md | Phase 4.8 | `persona.md` 已在專案根目錄 | ✅ 已整合 |
+
+---
+
+## Enhancement ROADMAP（Phase 1–16）
+
+原始開發 Phase 1–5 之外，另有 Enhancement 規格書展開的 16 Phase 計畫。
+詳見 `ROADMAP.md`。
+
+| 階段 | 內容 | 狀態 |
+|------|------|:----:|
+| Phase 1–6 | App Shell 重構 / PDF 補強 / 零韻面板 / Code&Data / Table Forge / 版權邊界 | ✅ 全部完成 |
+| Phase 7 | Translation Core（格式翻譯核心） | ⬜ |
+| Phase 8 | Script Editor MVP | ⬜ |
+| Phase 9 | Table Forge 文字抽取強化 | ⬜ |
+| Phase 10 | Memory System（零韻記憶） | ⬜ |
+| Phase 11 | Notion Connector | ⬜ |
+| Phase 12 | Security Layer | ⬜ |
+| Phase 13 | Document Bridge（DOCX 匯入匯出） | ⬜ |
+| Phase 14 | Voice / BGM Prototype | ⬜ |
+| Phase 15 | Private Reading Room + 每日館報 | ⬜ |
+| Phase 16 | Export Core + 部署 | ⬜ |
+
+Enhancement Phase 1–6 新增的核心模組：
+
+| 檔案 | 功能 |
+|------|------|
+| `core/persona.js` | 人設解析器 + 載入器 |
+| `core/chat-history.js` | 每模組獨立對話紀錄 |
+| `core/prewritten.js` | 預寫回應 DB（免 API 匹配） |
+| `core/billing.js` | 月幣統一計費系統 |
+| `persona.md` | 外部化人設檔 |
 
 ---
 
@@ -170,6 +201,10 @@
 Phase 1 ████████████████ 100%
 Phase 2 ████████████████ 100%
 Phase 3 ████████████████ 100%
-Phase 4 ██████████░░░░░░  70% (4.1-4.7 完成，RAG + BYOK 可用)
+Phase 4 █████████████░░░  90% (4.1-4.8 完成，剩 TTS + 動態立繪)
 Phase 5 █████████░░░░░░░  40% (5.2-5.3 完成)
+
+Enhancement ROADMAP
+Phase 1–6 ████████████████ 100% (App Shell / PDF / 零韻 / Code&Data / Table Forge / 版權)
+Phase 7–16 ░░░░░░░░░░░░░░░░   0% (Translation Core → 部署，見 ROADMAP.md)
 ```

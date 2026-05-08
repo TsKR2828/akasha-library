@@ -1,6 +1,6 @@
 # 阿卡夏圖書館 — TODO
 
-> Phase 1：App Shell 基礎重構
+> Enhancement Phase 1–6 已全部完成，下一步：Phase 7+
 > Branch: `feature/cool-stuff`
 
 ---
@@ -69,23 +69,44 @@
 
 ---
 
-## 待做（原始規格）
+## 已完成（Phase 3-C~F + 2-D + 4-B + 5-B + 6-A）
 
-- Phase 2-D：OCR 文字摘錄
-- Phase 3-C~F：零韻面板（人設 / 對話紀錄 / 預寫回應 / 計費）
-- Phase 4-B：自動偵測表格（4-A 已在 3-B 完成）
-- Phase 5-B：Script Editor 資料橋預留（5-A 已在 3-B 完成）
-- Phase 6：版權邊界
+### 3-C 人設管理 ✅
+- [x] `persona.md` 外部化 + `core/persona.js` 解析器
+- [x] 場景動態注入（模組切換時載入對應人設段落）
 
-## 待做（追加規格 · akasha-feature-additions-spec）
+### 3-D 對話紀錄 ✅
+- [x] `core/chat-history.js` — 每模組獨立對話，統一存書庫（IndexedDB）
+
+### 3-E 預寫回應 DB ✅
+- [x] `core/prewritten.js` — JSON 常見問答，優先匹配免打 API
+
+### 3-F 計費系統 ✅
+- [x] `core/billing.js` — 月幣統一計費 + App Shell token bar 同步
+
+### 2-D OCR 文字摘錄 ✅
+- [x] 單頁 OCR + 版權鎖定面板 + 月幣計費
+
+### 4-B 自動偵測表格 ✅
+- [x] .md / .json 開啟時偵測表格結構 → 提示條（4-A 已在 3-B 完成）
+
+### 5-B Script Editor 資料橋 ✅
+- [x] PostMessage 接收 blocks → 表格（預留接口）（5-A 已在 3-B 完成）
+
+### 6-A 版權邊界 ✅
+- [x] copyrightProtected 欄位 + 鎖定圖示 + 開啟攔截
+
+---
+
+## 待做（追加規格 · Phase 7–16）
 
 - Phase 7：Translation Core（格式翻譯核心）
-- Phase 8：Script Editor MVP（Plain Script → blocks → .ks / AVG JSON / PDF）
-- Phase 9：Table Forge 文字抽取強化（Markdown 章節表 / 大綱 / 回寫 diff）
+- Phase 8：Script Editor MVP（Plain Script → blocks → .ks / AVG JSON / PDF）— 依賴 Phase 7
+- Phase 9：Table Forge 文字抽取強化（Markdown 章節表 / 大綱 / 回寫 diff）— 依賴 Phase 7
 - Phase 10：Memory System（session / room summary / 零韻手札）
 - Phase 11：Notion Connector（雲端索引 + 可讀備份）
 - Phase 12：Security Layer（資料分級 / IndexedDB 加密 / 版本標記）
 - Phase 13：Document Bridge（DOCX 匯入匯出）
 - Phase 14：Voice / BGM Prototype（Rein-Voice + TsukiSynth）
-- Phase 15：Private Reading Room + 每日館報
+- Phase 15：Private Reading Room + 每日館報 — 依賴 Phase 10 + 14
 - Phase 16：Export Core + 部署切分
