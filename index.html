@@ -945,144 +945,229 @@ body { display: flex; }
   <iframe class="module-frame" id="module-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-clipboard-write allow-downloads"></iframe>
 </main>
 
+<!-- ====== Layer 1: Core UI — works on file:// and http:// ====== -->
+<script>
+(function() {
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+  window._escapeHtml = escapeHtml;
+
+  var modules = {
+    'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
+    'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
+    'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
+    'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
+    'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
+  };
+
+  var viewTitles = {
+    'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'Akasha Library' },
+    'personal': { title: '個人書庫', subtitle: 'My Library', breadcrumb: 'Akasha Library' },
+    'public': { title: '公共書庫', subtitle: 'Public Stacks', breadcrumb: 'Akasha Library' },
+  };
+
+  var MODULES_WITH_OWN_ACTIONS = { 'table-forge': 1, 'pdf-reader': 1, 'ai-settings': 1 };
+
+  // Clock & greeting
+  function updateClock() {
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2, '0');
+    var mm = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('hero-time').innerHTML = hh + '<span class="hero-time-sep">:</span>' + mm;
+    var h = now.getHours();
+    var greeting;
+    if (h >= 5 && h < 12) greeting = '早安，旅人。晨光正灑入書庫。';
+    else if (h >= 12 && h < 17) greeting = '午安，旅人。書頁在等你翻閱。';
+    else if (h >= 17 && h < 21) greeting = '晚安，旅人。書庫今晚靜謐。';
+    else greeting = '深夜好，旅人。萬物沉眠，唯書不寐。';
+    document.getElementById('hero-greeting').textContent = greeting;
+  }
+  updateClock();
+  setInterval(updateClock, 30000);
+
+  // Navigation
+  function switchView(view) {
+    var dashboard = document.getElementById('view-dashboard');
+    var frame = document.getElementById('module-frame');
+    var titleEl = document.getElementById('topbar-title');
+    var subtitleEl = document.getElementById('topbar-subtitle');
+    var breadcrumbEl = document.getElementById('topbar-breadcrumb');
+    var info = viewTitles[view] || viewTitles['dashboard'];
+    titleEl.textContent = info.title;
+    subtitleEl.textContent = info.subtitle ? '· ' + info.subtitle : '';
+    breadcrumbEl.textContent = info.breadcrumb;
+    var actions = document.querySelector('.topbar-actions');
+    if (actions) actions.style.display = '';
+    if (view === 'dashboard' || view === 'personal') {
+      dashboard.style.display = '';
+      frame.classList.remove('active');
+    } else if (view === 'public') {
+      dashboard.style.display = 'none';
+      frame.src = 'public-library/index.html';
+      frame.classList.add('active');
+    }
+  }
+
+  function openModule(name) {
+    var mod = modules[name];
+    if (!mod) return;
+    var dashboard = document.getElementById('view-dashboard');
+    var frame = document.getElementById('module-frame');
+    var titleEl = document.getElementById('topbar-title');
+    var subtitleEl = document.getElementById('topbar-subtitle');
+    var breadcrumbEl = document.getElementById('topbar-breadcrumb');
+    dashboard.style.display = 'none';
+    frame.src = mod.src;
+    frame.classList.add('active');
+    titleEl.textContent = mod.title;
+    subtitleEl.textContent = mod.subtitle ? '· ' + mod.subtitle : '';
+    breadcrumbEl.textContent = 'Akasha Library · Tools';
+    var actions = document.querySelector('.topbar-actions');
+    if (actions) actions.style.display = MODULES_WITH_OWN_ACTIONS[name] ? 'none' : '';
+  }
+
+  // File import (basic — no storage dependency)
+  function importFile() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv';
+    input.onchange = function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      var ext = file.name.split('.').pop().toLowerCase();
+      var frame = document.getElementById('module-frame');
+      if (['md', 'markdown', 'txt', 'py', 'json'].includes(ext)) {
+        file.text().then(function(text) {
+          openModule('markdown');
+          frame.addEventListener('load', function() {
+            frame.contentWindow.postMessage({ type: 'akasha-open-file', filename: file.name, content: text, size: file.size }, '*');
+          }, { once: true });
+        });
+      } else if (ext === 'pdf') {
+        file.arrayBuffer().then(function(buffer) {
+          openModule('pdf-reader');
+          frame.addEventListener('load', function() {
+            frame.contentWindow.postMessage({ type: 'akasha-open-pdf', filename: file.name, data: buffer }, '*');
+          }, { once: true });
+        });
+      } else if (['csv', 'tsv'].includes(ext)) {
+        file.text().then(function(text) {
+          openModule('table-forge');
+          frame.addEventListener('load', function() {
+            frame.contentWindow.postMessage({ type: 'akasha-export-to-table-forge', text: text, format: 'csv', title: file.name }, '*');
+          }, { once: true });
+        });
+      } else if (ext === 'book') {
+        openModule('book-editor');
+      }
+    };
+    input.click();
+  }
+
+  function newFile() {
+    var choice = prompt('新建類型：\n1. Code & Data (MD/PY/JSON/TXT)\n2. Table Forge (資料表整理)\n3. 書籍\n\n輸入數字：');
+    if (choice === '1') openModule('markdown');
+    else if (choice === '2') openModule('table-forge');
+    else if (choice === '3') openModule('book-editor');
+  }
+
+  // Dark/Light mode
+  function updateModeIcon(mode) {
+    var icon = document.getElementById('mode-icon');
+    if (mode === 'light') {
+      icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
+    } else {
+      icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+    }
+  }
+  function toggleMode() {
+    var html = document.documentElement;
+    var next = html.getAttribute('data-mode') === 'light' ? 'dark' : 'light';
+    html.setAttribute('data-mode', next);
+    localStorage.setItem('akasha-mode', next);
+    updateModeIcon(next);
+  }
+  var savedMode = localStorage.getItem('akasha-mode') || 'dark';
+  document.documentElement.setAttribute('data-mode', savedMode);
+  updateModeIcon(savedMode);
+
+  // Auth stub (overridden by module script when available)
+  function handleAuth() {
+    alert('登入功能需要透過 HTTP 伺服器執行。\n請使用 npx http-server . -p 3460 -c-1');
+  }
+
+  // Bind nav buttons
+  document.querySelectorAll('.nav-item').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var view = btn.dataset.view;
+      var module = btn.dataset.module;
+      if (view) switchView(view);
+      if (module) openModule(module);
+      document.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.module-card').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      e.preventDefault();
+      var module = card.dataset.module;
+      if (module) openModule(module);
+      document.querySelectorAll('.nav-item').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.module === module);
+      });
+    });
+  });
+
+  // Listen for reading progress (no import needed)
+  window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'akasha-reading-progress' && event.data.bookId) {
+      try {
+        var data = JSON.parse(localStorage.getItem('akasha-reading-progress') || '{}');
+        data[event.data.bookId] = { page: event.data.page, lastRead: Date.now() };
+        localStorage.setItem('akasha-reading-progress', JSON.stringify(data));
+      } catch(e) {}
+    }
+    if (event.data && event.data.type === 'akasha-open-public-pdf') {
+      var frame = document.getElementById('module-frame');
+      openModule('pdf-reader');
+      frame.addEventListener('load', function() {
+        frame.contentWindow.postMessage({
+          type: 'akasha-open-pdf-url',
+          url: event.data.url,
+          bookTitle: (event.data.book && event.data.book.title) || 'PDF',
+          bookId: (event.data.book && event.data.book.id) || null,
+        }, '*');
+      }, { once: true });
+    }
+  });
+
+  // Expose to global
+  window.handleAuth = handleAuth;
+  window.importFile = importFile;
+  window.newFile = newFile;
+  window.openModule = openModule;
+  window.switchView = switchView;
+  window.toggleMode = toggleMode;
+})();
+</script>
+
+<!-- ====== Layer 2: Storage / Auth / Sync — requires HTTP server ====== -->
 <script type="module">
 import { getFileEntries, saveFileEntry, getFileBlob } from './core/storage.js';
-import { initAuth, signIn, signOut, isSignedIn, getUser } from './core/auth.js';
+import { initAuth, signIn, signOut } from './core/auth.js';
 import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
 import { MSG_TYPES, STORAGE_KEY } from './core/export/bridge.js';
 
-function escapeHtml(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-const modules = {
-  'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
-  'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
-  'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
-  'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
-  'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
-};
-
-const viewTitles = {
-  'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'Akasha Library' },
-  'personal': { title: '個人書庫', subtitle: 'My Library', breadcrumb: 'Akasha Library' },
-  'public': { title: '公共書庫', subtitle: 'Public Stacks', breadcrumb: 'Akasha Library' },
-};
-
-let currentView = 'dashboard';
 let isAuthed = false;
 
-// Clock & greeting
-function updateClock() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('hero-time').innerHTML = `${hh}<span class="hero-time-sep">:</span>${mm}`;
-
-  // Greeting based on hour
-  const h = now.getHours();
-  let greeting;
-  if (h >= 5 && h < 12) greeting = '早安，旅人。晨光正灑入書庫。';
-  else if (h >= 12 && h < 17) greeting = '午安，旅人。書頁在等你翻閱。';
-  else if (h >= 17 && h < 21) greeting = '晚安，旅人。書庫今晚靜謐。';
-  else greeting = '深夜好，旅人。萬物沉眠，唯書不寐。';
-  document.getElementById('hero-greeting').textContent = greeting;
-}
-updateClock();
-setInterval(updateClock, 30000);
-
-// Navigation
-document.querySelectorAll('.nav-item').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const view = btn.dataset.view;
-    const module = btn.dataset.module;
-    if (view) switchView(view);
-    if (module) openModule(module);
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-  });
-});
-
-document.querySelectorAll('.module-card').forEach(card => {
-  card.addEventListener('click', (e) => {
-    e.preventDefault();
-    const module = card.dataset.module;
-    if (module) openModule(module);
-    document.querySelectorAll('.nav-item').forEach(b => {
-      b.classList.toggle('active', b.dataset.module === module);
-    });
-  });
-});
-
-function switchView(view) {
-  currentView = view;
-  const dashboard = document.getElementById('view-dashboard');
-  const frame = document.getElementById('module-frame');
-  const titleEl = document.getElementById('topbar-title');
-  const subtitleEl = document.getElementById('topbar-subtitle');
-  const breadcrumbEl = document.getElementById('topbar-breadcrumb');
-
-  const info = viewTitles[view] || viewTitles['dashboard'];
-  titleEl.textContent = info.title;
-  subtitleEl.textContent = info.subtitle ? `· ${info.subtitle}` : '';
-  breadcrumbEl.textContent = info.breadcrumb;
-
-  const actions = document.querySelector('.topbar-actions');
-  if (actions) actions.style.display = '';
-
-  if (view === 'dashboard') {
-    dashboard.style.display = '';
-    frame.classList.remove('active');
-  } else if (view === 'personal') {
-    dashboard.style.display = '';
-    frame.classList.remove('active');
-  } else if (view === 'public') {
-    dashboard.style.display = 'none';
-    frame.src = 'public-library/index.html';
-    frame.classList.add('active');
-  }
-}
-
-const MODULES_WITH_OWN_ACTIONS = new Set(['table-forge', 'pdf-reader', 'ai-settings']);
-
-function openModule(name) {
-  const mod = modules[name];
-  if (!mod) return;
-
-  const dashboard = document.getElementById('view-dashboard');
-  const frame = document.getElementById('module-frame');
-  const titleEl = document.getElementById('topbar-title');
-  const subtitleEl = document.getElementById('topbar-subtitle');
-  const breadcrumbEl = document.getElementById('topbar-breadcrumb');
-
-  dashboard.style.display = 'none';
-  frame.src = mod.src;
-  frame.classList.add('active');
-  titleEl.textContent = mod.title;
-  subtitleEl.textContent = mod.subtitle ? `· ${mod.subtitle}` : '';
-  breadcrumbEl.textContent = 'Akasha Library · Tools';
-
-  const actions = document.querySelector('.topbar-actions');
-  if (actions) {
-    actions.style.display = MODULES_WITH_OWN_ACTIONS.has(name) ? 'none' : '';
-  }
-}
-
-// Auth
-function handleAuth() {
-  if (isAuthed) {
-    signOut(onAuthChange);
-  } else {
-    signIn();
-  }
-}
-
+// Override auth stub
 function onAuthChange({ signedIn, user }) {
   isAuthed = signedIn;
   const avatarEl = document.getElementById('auth-avatar');
@@ -1090,7 +1175,6 @@ function onAuthChange({ signedIn, user }) {
   const loginBtn = document.getElementById('auth-login-btn');
   const syncDot = document.getElementById('sync-dot');
   const syncLabel = document.getElementById('sync-label');
-
   if (signedIn && user) {
     avatarEl.textContent = user.name ? user.name.charAt(0) : 'U';
     nameEl.textContent = user.name || '已連接';
@@ -1107,162 +1191,25 @@ function onAuthChange({ signedIn, user }) {
   }
 }
 
-// Init auth on load
+window.handleAuth = function() {
+  if (isAuthed) signOut(onAuthChange);
+  else signIn();
+};
+
 if (CONFIG.GOOGLE_CLIENT_ID !== 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
   initAuth(CONFIG.GOOGLE_CLIENT_ID, onAuthChange);
 }
 
-// Sync status display
-setSyncCallback(({ status, detail }) => {
+setSyncCallback(({ status }) => {
   const syncDot = document.getElementById('sync-dot');
   const syncLabel = document.getElementById('sync-label');
-  if (status === 'syncing') {
-    syncDot.className = 'sync-dot syncing';
-    syncLabel.textContent = '同步中…';
-  } else if (status === 'error') {
-    syncDot.className = 'sync-dot error';
-    syncLabel.textContent = '同步失敗';
-  } else {
-    syncDot.className = 'sync-dot synced';
-    syncLabel.textContent = '已同步';
-  }
+  if (status === 'syncing') { syncDot.className = 'sync-dot syncing'; syncLabel.textContent = '同步中…'; }
+  else if (status === 'error') { syncDot.className = 'sync-dot error'; syncLabel.textContent = '同步失敗'; }
+  else { syncDot.className = 'sync-dot synced'; syncLabel.textContent = '已同步'; }
 });
-
-// Init offline sync listeners
 initOfflineSync();
 
-// File actions
-function importFile() {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const ext = file.name.split('.').pop().toLowerCase();
-    const frame = document.getElementById('module-frame');
-
-    if (['md', 'markdown', 'txt', 'py', 'json'].includes(ext)) {
-      const text = await file.text();
-      openModule('markdown');
-      frame.addEventListener('load', () => {
-        frame.contentWindow.postMessage({
-          type: 'akasha-open-file',
-          filename: file.name,
-          content: text,
-          size: file.size,
-        }, '*');
-      }, { once: true });
-    } else if (ext === 'pdf') {
-      const buffer = await file.arrayBuffer();
-      openModule('pdf-reader');
-      frame.addEventListener('load', () => {
-        frame.contentWindow.postMessage({
-          type: 'akasha-open-pdf',
-          filename: file.name,
-          data: buffer,
-        }, '*');
-      }, { once: true });
-    } else if (['csv', 'tsv'].includes(ext)) {
-      const text = await file.text();
-      openModule('table-forge');
-      frame.addEventListener('load', () => {
-        frame.contentWindow.postMessage({
-          type: 'akasha-export-to-table-forge',
-          text,
-          format: 'csv',
-          title: file.name,
-        }, '*');
-      }, { once: true });
-    } else if (ext === 'book') {
-      openModule('book-editor');
-    }
-  };
-  input.click();
-}
-
-function newFile() {
-  const choice = prompt('新建類型：\n1. Code & Data (MD/PY/JSON/TXT)\n2. Table Forge (資料表整理)\n3. 書籍\n\n輸入數字：');
-  if (choice === '1') openModule('markdown');
-  else if (choice === '2') openModule('table-forge');
-  else if (choice === '3') openModule('book-editor');
-}
-
-// Dark/Light mode toggle
-function toggleMode() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-mode');
-  const next = current === 'light' ? 'dark' : 'light';
-  html.setAttribute('data-mode', next);
-  localStorage.setItem('akasha-mode', next);
-  updateModeIcon(next);
-}
-
-function updateModeIcon(mode) {
-  const icon = document.getElementById('mode-icon');
-  if (mode === 'light') {
-    // Sun icon
-    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
-  } else {
-    // Moon icon
-    icon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
-  }
-}
-
-// Restore saved mode
-const savedMode = localStorage.getItem('akasha-mode') || 'dark';
-document.documentElement.setAttribute('data-mode', savedMode);
-updateModeIcon(savedMode);
-
-async function openRecentFile(fileId, moduleName) {
-  const frame = document.getElementById('module-frame');
-  const blob = await getFileBlob(fileId);
-  const entries = await getFileEntries();
-  const entry = entries.find(e => e.id === fileId);
-  const filename = entry?.name || 'file';
-
-  openModule(moduleName);
-
-  if (!blob) return;
-
-  frame.addEventListener('load', async () => {
-    if (moduleName === 'markdown') {
-      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
-      frame.contentWindow.postMessage({
-        type: 'akasha-open-file',
-        filename,
-        content: text,
-        size: text.length,
-      }, '*');
-    } else if (moduleName === 'pdf-reader') {
-      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
-      frame.contentWindow.postMessage({
-        type: 'akasha-open-pdf',
-        filename,
-        data: buffer,
-      }, '*');
-    } else if (moduleName === 'table-forge') {
-      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
-      frame.contentWindow.postMessage({
-        type: 'akasha-export-to-table-forge',
-        text,
-        format: 'csv',
-        title: filename,
-      }, '*');
-    }
-  }, { once: true });
-}
-
-// Expose functions to global scope for onclick handlers
-window.handleAuth = handleAuth;
-window.importFile = importFile;
-window.newFile = newFile;
-window.openModule = openModule;
-window.openRecentFile = openRecentFile;
-window.switchView = switchView;
-window.toggleMode = toggleMode;
-
-// Recent files (ledger style)
+// Recent files
 const TYPE_ICONS = {
   md: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>',
   pdf: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>',
@@ -1275,20 +1222,11 @@ const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', ts
 async function renderRecent() {
   const entries = await getFileEntries();
   const container = document.getElementById('recent-list');
-
   if (entries.length === 0) {
-    container.innerHTML = `
-      <div class="recent-ledger">
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg>
-          </div>
-          <div class="empty-state-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div>
-        </div>
-      </div>`;
+    container.innerHTML = '<div class="recent-ledger"><div class="empty-state"><div class="empty-state-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.4"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg></div><div class="empty-state-text">尚未開啟任何檔案<br>選擇上方工具開始，或匯入現有檔案</div></div></div>';
     return;
   }
-
+  const escapeHtml = window._escapeHtml;
   const rows = entries.slice(0, 10).map((f, i) => {
     const icon = TYPE_ICONS[f.type] || TYPE_ICONS['md'];
     const label = TYPE_LABELS[f.type] || 'FILE';
@@ -1297,32 +1235,36 @@ async function renderRecent() {
     const dateStr = `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}`;
     const sizeStr = f.size ? `${(f.size / 1024).toFixed(1)} KB` : '—';
     const pageStr = f.pages ? `${f.pages} 頁` : '—';
-
-    return `<div class="ledger-row" onclick="openRecentFile('${f.id}','${mod}')">
-      <div class="ledger-num">${String(i + 1).padStart(2, '0')}</div>
-      <div class="ledger-title">
-        <span class="ledger-title-icon">${icon}</span>
-        ${escapeHtml(f.name)}
-      </div>
-      <div class="ledger-format">${label} · ${sizeStr}</div>
-      <div class="ledger-time">${dateStr}</div>
-      <div class="ledger-mark">${pageStr}</div>
-      <div class="ledger-action">—</div>
-    </div>`;
+    return `<div class="ledger-row" onclick="openRecentFile('${f.id}','${mod}')"><div class="ledger-num">${String(i+1).padStart(2,'0')}</div><div class="ledger-title"><span class="ledger-title-icon">${icon}</span>${escapeHtml(f.name)}</div><div class="ledger-format">${label} · ${sizeStr}</div><div class="ledger-time">${dateStr}</div><div class="ledger-mark">${pageStr}</div><div class="ledger-action">—</div></div>`;
   }).join('');
-
-  container.innerHTML = `
-    <div class="recent-ledger">
-      <div class="ledger-header">
-        <div>№</div><div>Title</div><div>Format</div><div>Last Touched</div><div>Mark</div><div></div>
-      </div>
-      ${rows}
-    </div>`;
+  container.innerHTML = `<div class="recent-ledger"><div class="ledger-header"><div>№</div><div>Title</div><div>Format</div><div>Last Touched</div><div>Mark</div><div></div></div>${rows}</div>`;
 }
+
+window.openRecentFile = async function(fileId, moduleName) {
+  const frame = document.getElementById('module-frame');
+  const blob = await getFileBlob(fileId);
+  const entries = await getFileEntries();
+  const entry = entries.find(e => e.id === fileId);
+  const filename = entry?.name || 'file';
+  openModule(moduleName);
+  if (!blob) return;
+  frame.addEventListener('load', async () => {
+    if (moduleName === 'markdown') {
+      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
+      frame.contentWindow.postMessage({ type: 'akasha-open-file', filename, content: text, size: text.length }, '*');
+    } else if (moduleName === 'pdf-reader') {
+      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+      frame.contentWindow.postMessage({ type: 'akasha-open-pdf', filename, data: buffer }, '*');
+    } else if (moduleName === 'table-forge') {
+      const text = typeof blob === 'string' ? blob : await new Blob([blob]).text();
+      frame.contentWindow.postMessage({ type: 'akasha-export-to-table-forge', text, format: 'csv', title: filename }, '*');
+    }
+  }, { once: true });
+};
 
 renderRecent();
 
-// Listen for messages from module iframes
+// Cross-module messages (needs imports)
 window.addEventListener('message', async (event) => {
   if (event.origin !== location.origin) return;
   if (event.data?.type === 'akasha-file-opened') {
@@ -1337,28 +1279,9 @@ window.addEventListener('message', async (event) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
     openModule('table-forge');
   }
-  if (event.data?.type === 'akasha-open-public-pdf') {
-    const frame = document.getElementById('module-frame');
-    openModule('pdf-reader');
-    frame.addEventListener('load', () => {
-      frame.contentWindow.postMessage({
-        type: 'akasha-open-pdf-url',
-        url: event.data.url,
-        bookTitle: event.data.book?.title || 'PDF',
-        bookId: event.data.book?.id || null,
-      }, '*');
-    }, { once: true });
-  }
-  if (event.data?.type === 'akasha-reading-progress' && event.data.bookId) {
-    try {
-      const data = JSON.parse(localStorage.getItem('akasha-reading-progress') || '{}');
-      data[event.data.bookId] = { page: event.data.page, lastRead: Date.now() };
-      localStorage.setItem('akasha-reading-progress', JSON.stringify(data));
-    } catch {}
-  }
 });
 
-// Register service worker
+// Service worker
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

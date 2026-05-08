@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Code & Data Reader — 阿卡夏圖書館</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/styles/shared.css">
@@ -517,6 +520,75 @@
       .outline-box { position: static; }
     }
 
+    /* Disabled button */
+    .btn[disabled] {
+      opacity: 0.35;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Edit group (undo/redo + diff) */
+    .edit-group {
+      display: none;
+      gap: 4px;
+      align-items: center;
+    }
+    .edit-group.visible { display: flex; }
+
+    /* Diff highlight in raw editor */
+    .diff-bar {
+      display: none;
+      gap: 6px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .diff-bar.visible { display: flex; }
+    .diff-count { color: var(--gold); font-family: var(--font-mono); }
+
+    /* Diff overlay (shown in pretty view after edit) */
+    .diff-line-added {
+      background: rgba(106,174,127,0.12);
+      border-left: 3px solid var(--success);
+      padding-left: 8px;
+      margin: 0 -12px;
+      padding-right: 12px;
+    }
+    .diff-line-removed {
+      background: rgba(196,96,79,0.08);
+      border-left: 3px solid var(--danger);
+      padding-left: 8px;
+      margin: 0 -12px;
+      padding-right: 12px;
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    /* History panel */
+    .history-panel {
+      display: none;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .history-panel.visible { display: block; }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--navy-line);
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .history-item:hover { background: var(--navy-hover); }
+    .history-item-time {
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+    .history-item-label { color: var(--text-secondary); }
+    .history-item-active { color: var(--gold); font-weight: 600; }
+
     /* Light mode overrides */
     :root[data-mode="light"] .markdown-body code,
     :root[data-mode="light"] .inline-code {
@@ -527,33 +599,45 @@
 <body>
   <header>
     <h1>Code & Data Reader</h1>
-    <label class="file-label">
+    <label class="file-label" title="從電腦選一個檔案打開">
       開啟檔案
       <input id="fileInput" type="file" accept=".py,.json,.md,.markdown,.txt,.score.json,text/plain,application/json,text/markdown">
     </label>
-    <button class="btn" id="btnEditToggle" style="display:none">編輯模式</button>
-    <button class="btn--gold btn" id="btnDownloadEdited" style="display:none">下載新檔</button>
+    <button class="btn" id="btnEditToggle" style="display:none" title="直接修改檔案內容（支援 md / txt / json）">編輯模式</button>
+    <button class="btn--gold btn" id="btnDownloadEdited" style="display:none" title="把編輯後的檔案存到你的電腦">下載新檔</button>
+    <button class="btn--gold btn" id="btnSaveToLibrary" style="display:none" title="把編輯後的檔案存進圖書館，下次不用重新上傳">存檔至書庫</button>
+
+    <!-- Edit tools: undo/redo + diff -->
+    <div class="edit-group" id="editGroup">
+      <button class="btn" id="btnUndo" title="復原上一步操作">↩ 復原</button>
+      <button class="btn" id="btnRedo" title="重做剛才復原的操作">↪ 重做</button>
+      <span class="separator"></span>
+      <button class="btn" id="btnShowDiff" title="標記你改過的地方">變更標示</button>
+      <button class="btn" id="btnClearDiff" style="display:none" title="清除所有變更標記">清除標示</button>
+    </div>
+
     <span id="editError" style="display:none"></span>
-    <button class="btn" id="copyRaw">複製原始內容</button>
-    <button class="btn--gold btn" id="copyView">複製目前視圖</button>
-    <button class="btn" id="downloadText">下載目前內容</button>
-    <button class="btn--gold btn" id="exportSummary">匯出摘要 .md</button>
+    <button class="btn" id="copyRaw" title="複製你實際打的文字，包含 ### 這些符號">複製原始內容</button>
+    <button class="btn--gold btn" id="copyView" title="複製畫面上看到的樣子，符號會變成標題粗體等">複製目前視圖</button>
+    <button class="btn" id="downloadText" title="把檔案存到你的電腦">下載目前內容</button>
+    <button class="btn--gold btn" id="exportSummary" title="自動幫你整理這個檔案的重點大綱">匯出摘要 .md</button>
+    <button class="btn" id="btnSaveSummaryToLibrary" style="display:none" title="把摘要存進圖書館，與原始檔案建立關聯">摘要存入書庫</button>
 
     <span class="separator"></span>
 
     <!-- Sheets export group — visible only in MD mode -->
     <div class="sheets-group" id="sheetsGroup">
-      <button class="btn" id="copyHtml">複製 HTML (WordPress)</button>
-      <button class="btn" id="copyPlainTables">純表格 → Sheets</button>
-      <button class="btn--sheets btn" id="copyRichSheets">格式化 → Sheets</button>
-      <button class="btn--sheets btn" id="openSheetsRich">開新 Sheet 並貼上</button>
+      <button class="btn" id="copyHtml" title="把 Markdown 轉成 HTML 原始碼複製到剪貼簿">複製 HTML (WordPress)</button>
+      <button class="btn" id="copyPlainTables" title="抽取 Markdown 表格轉成 TSV 格式">純表格 → Sheets</button>
+      <button class="btn--sheets btn" id="copyRichSheets" title="Markdown 全文轉格式化表格，貼到 Google Sheets">格式化 → Sheets</button>
+      <button class="btn--sheets btn" id="openSheetsRich" title="自動開新 Google Sheet 並複製格式化內容">開新 Sheet 並貼上</button>
     </div>
 
     <span class="separator"></span>
-    <button class="btn--gold btn" id="exportToSpreadsheet">送到 Table Forge</button>
+    <button class="btn--gold btn" id="exportToSpreadsheet" title="把內容傳到表格工具做進一步處理">送到 Table Forge</button>
 
-    <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼...">
-    <button class="btn" id="searchBtn">搜尋</button>
+    <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼..." title="在檔案中搜尋關鍵字">
+    <button class="btn" id="searchBtn" title="在檔案中搜尋關鍵字">搜尋</button>
     <span id="status">拖曳 .py / .json / .score.json / .md / .txt 到視窗</span>
   </header>
 
@@ -572,6 +656,15 @@
       <section class="card">
         <div class="card-title">Checks</div>
         <div class="card-body" id="checkPanel"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title">History · 編輯紀錄</div>
+        <div class="card-body">
+          <div class="history-panel visible" id="historyPanel">
+            <div style="font-size:11px;color:var(--text-tertiary);padding:8px 0;">尚無編輯紀錄</div>
+          </div>
+        </div>
       </section>
     </aside>
 
@@ -1051,11 +1144,29 @@
       renderTabs();
       updateSheetsVisibility();
       updateEditUI();
+      updateSummaryButton();
       statusEl.textContent = `已載入：${state.filename}（${state.extension || "文字"}）`;
     }
 
     function updateSheetsVisibility() {
       sheetsGroup.classList.toggle("visible", state.mode === "md");
+    }
+
+    function updateSummaryButton() {
+      const btn = document.getElementById("exportSummary");
+      const btnSaveSum = document.getElementById("btnSaveSummaryToLibrary");
+      if (state.mode === "txt") {
+        btn.disabled = true;
+        btn.title = "純文字檔不適用匯出摘要";
+        btnSaveSum.style.display = "none";
+      } else if (state.content) {
+        btn.disabled = false;
+        btn.title = "自動幫你整理這個檔案的重點大綱";
+        btnSaveSum.style.display = "";
+      } else {
+        btn.disabled = true;
+        btnSaveSum.style.display = "none";
+      }
     }
 
     function renderFileInfo(size) {
@@ -1074,23 +1185,23 @@
       const name = state.filename.toLowerCase();
       if (state.extension === ".py") return {
         title: ".py — Python 程式碼",
-        body: `工具、腳本或資料處理。本工具只閱讀不執行。<code>os.remove</code> 可能刪檔；<code>requests</code> 可能連網；<code>subprocess</code> 可能執行系統指令。`
+        body: `Python 程式碼。左側摘要會自動列出 imports、functions、classes。系統會掃描是否有刪檔、連網等風險操作。本工具只閱讀不執行。`
       };
       if (state.extension === ".score.json") return {
         title: ".score.json — TsukiSynth 樂譜配方",
-        body: `記錄素材描述、全域效果、發聲事件與 WAV 匯出設定。含物理建模資訊（材質、敲擊位置、阻尼、引擎）。`
+        body: `TsukiSynth 專用格式，使用「Score 儀表板」查看音色設定、事件編排和渲染參數。也可用「樹狀 JSON」展開結構細節。`
       };
       if (state.extension === ".json") return {
         title: ".json — 結構化資料",
-        body: `設定、參數、API 回傳資料。格式嚴格：雙引號、不能尾逗號、括號成對。`
+        body: `JSON 資料格式。可用「Pretty JSON」看排版後的版本，或用「樹狀 JSON」展開結構。編輯時會自動檢查格式是否正確。`
       };
       if (state.extension === ".md" || state.extension === ".markdown") return {
         title: ".md — Markdown 文件",
-        body: `README、開發筆記、規格文件。支援匯出至 Google Sheets（格式化版）。<code>#</code> 標題、<code>-</code> 清單、<code>**粗體**</code>、三反引號是程式碼。`
+        body: `Markdown 格式，支援標題、粗體、表格等語法。切換「Markdown 預覽」可看到渲染後的效果，「原始碼」可看到原始語法。支援匯出至 Google Sheets。`
       };
       return {
         title: ".txt — 純文字",
-        body: `簡單筆記、log、暫存文字。直接閱讀即可。`
+        body: `簡單筆記、log、暫存文字。直接閱讀即可，「文字閱讀」和「原始碼」顯示的內容會完全一樣，這是正常的！匯出摘要不適用這個格式。`
       };
     }
 
@@ -1129,9 +1240,54 @@
     // ═══════════════════════════════════════════
     const EDITABLE_MODES = new Set(["md", "txt", "json"]);
 
+    // --- Diff tracking ---
+    let originalContent = "";
+    let diffActive = false;
+
+    // --- Edit history ---
+    const MAX_HISTORY = 10;
+    function getHistoryKey() { return "akasha-history-" + state.filename; }
+    function getHistory() {
+      try { return JSON.parse(localStorage.getItem(getHistoryKey()) || "[]"); }
+      catch { return []; }
+    }
+    function pushHistory(content, label) {
+      const hist = getHistory();
+      hist.unshift({ time: Date.now(), label: label || "手動存檔", content });
+      if (hist.length > MAX_HISTORY) hist.length = MAX_HISTORY;
+      localStorage.setItem(getHistoryKey(), JSON.stringify(hist));
+      renderHistory();
+    }
+    function renderHistory() {
+      const panel = document.getElementById("historyPanel");
+      const hist = getHistory();
+      if (!hist.length) {
+        panel.innerHTML = '<div style="font-size:11px;color:var(--text-tertiary);padding:8px 0;">尚無編輯紀錄</div>';
+        return;
+      }
+      panel.innerHTML = hist.map((h, i) => {
+        const d = new Date(h.time);
+        const ts = `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+        return `<div class="history-item" data-idx="${i}">
+          <span class="history-item-label">${escapeHtml(h.label)}</span>
+          <span class="history-item-time">${ts}</span>
+        </div>`;
+      }).join("");
+      panel.querySelectorAll(".history-item").forEach(el => {
+        el.addEventListener("click", () => {
+          const idx = parseInt(el.dataset.idx);
+          const h = hist[idx];
+          if (h && confirm("載入此版本？目前未存的編輯會遺失。")) {
+            setFile(state.filename, h.content);
+            statusEl.textContent = "已還原版本：" + new Date(h.time).toLocaleString();
+          }
+        });
+      });
+    }
+
     function confirmDiscardEdits() {
       if (!state.editMode || !state.dirty) return true;
-      return confirm("編輯中的變更尚未下載，確定要捨棄嗎？");
+      return confirm("編輯中的變更尚未儲存，確定要捨棄嗎？");
     }
 
     window.addEventListener("beforeunload", (e) => {
@@ -1144,6 +1300,8 @@
     function updateEditUI() {
       const btnToggle = document.getElementById("btnEditToggle");
       const btnDownload = document.getElementById("btnDownloadEdited");
+      const btnSave = document.getElementById("btnSaveToLibrary");
+      const editGroup = document.getElementById("editGroup");
       const editError = document.getElementById("editError");
       const canEdit = state.content && EDITABLE_MODES.has(state.mode);
       btnToggle.style.display = canEdit ? "" : "none";
@@ -1151,13 +1309,19 @@
         btnToggle.textContent = "閱讀模式";
         btnToggle.className = "btn btn--gold";
         btnDownload.style.display = "";
+        btnSave.style.display = "";
+        editGroup.classList.add("visible");
       } else {
         btnToggle.textContent = "編輯模式";
         btnToggle.className = "btn";
         btnDownload.style.display = "none";
+        btnSave.style.display = "none";
+        editGroup.classList.remove("visible");
         editError.style.display = "none";
         editError.textContent = "";
+        hideDiff();
       }
+      renderHistory();
     }
 
     function toggleEditMode() {
@@ -1168,6 +1332,7 @@
         state.editMode = false;
         setFile(state.filename, state.content);
       } else {
+        originalContent = state.content;
         state.editMode = true;
         state.dirty = false;
         rawEditor.value = state.content;
@@ -1192,8 +1357,123 @@
       editError.style.display = "none";
       editError.textContent = "";
       download(state.filename || "edited.txt", content);
+      pushHistory(content, "下載新檔");
       state.dirty = false;
       statusEl.textContent = "已下載新檔：" + state.filename;
+    }
+
+    // --- Save to library ---
+    async function saveEditedToLibrary() {
+      const content = rawEditor.value;
+      const editError = document.getElementById("editError");
+      if (state.mode === "json") {
+        try { JSON.parse(content); }
+        catch (e) {
+          editError.textContent = "JSON 格式錯誤：" + e.message;
+          editError.style.display = "";
+          return;
+        }
+      }
+      editError.style.display = "none";
+      try {
+        const { saveFileEntry, saveFileBlob } = await import("../../core/storage.js");
+        const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+        const entry = await saveFileEntry({
+          name: state.filename,
+          type: state.extension.replace(".", ""),
+          size: blob.size,
+        });
+        await saveFileBlob(entry.id, blob);
+        pushHistory(content, "存入書庫");
+        state.dirty = false;
+        state.content = content;
+        statusEl.textContent = "已存入書庫：" + state.filename;
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: "akasha-file-opened", entry }, location.origin);
+        }
+      } catch (e) {
+        statusEl.textContent = "儲存失敗：" + e.message;
+      }
+    }
+
+    // --- Save summary to library ---
+    async function saveSummaryToLibrary() {
+      if (state.mode === "txt") return;
+      const summary = makeSummary();
+      const baseName = (state.filename || "summary").replace(/\.[^.]+$/g, "");
+      const summaryName = baseName + "_summary.md";
+      try {
+        const { saveFileEntry, saveFileBlob } = await import("../../core/storage.js");
+        const blob = new Blob([summary], { type: "text/markdown;charset=utf-8" });
+        const entry = await saveFileEntry({
+          name: summaryName,
+          type: "md",
+          size: blob.size,
+        });
+        await saveFileBlob(entry.id, blob);
+        statusEl.textContent = "摘要已存入書庫：" + summaryName;
+        if (window.parent !== window) {
+          window.parent.postMessage({ type: "akasha-file-opened", entry }, location.origin);
+        }
+      } catch (e) {
+        statusEl.textContent = "儲存失敗：" + e.message;
+      }
+    }
+
+    // --- Diff ---
+    function showDiff() {
+      if (!originalContent) return;
+      diffActive = true;
+      document.getElementById("btnShowDiff").style.display = "none";
+      document.getElementById("btnClearDiff").style.display = "";
+
+      const oldLines = originalContent.split("\n");
+      const newLines = rawEditor.value.split("\n");
+      let changed = 0;
+      const maxLen = Math.max(oldLines.length, newLines.length);
+      const diffHtml = [];
+
+      for (let i = 0; i < maxLen; i++) {
+        const oldL = oldLines[i];
+        const newL = newLines[i];
+        if (oldL === undefined) {
+          diffHtml.push(`<div class="diff-line-added">+ ${escapeHtml(newL)}</div>`);
+          changed++;
+        } else if (newL === undefined) {
+          diffHtml.push(`<div class="diff-line-removed">- ${escapeHtml(oldL)}</div>`);
+          changed++;
+        } else if (oldL !== newL) {
+          diffHtml.push(`<div class="diff-line-removed">- ${escapeHtml(oldL)}</div>`);
+          diffHtml.push(`<div class="diff-line-added">+ ${escapeHtml(newL)}</div>`);
+          changed++;
+        } else {
+          diffHtml.push(`<div>${escapeHtml(newL)}</div>`);
+        }
+      }
+
+      views.pretty.innerHTML = `<div style="margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
+        變更行數：<span class="diff-count">${changed}</span> / ${maxLen}
+      </div><pre class="code-block" style="white-space:pre-wrap;">${diffHtml.join("\n")}</pre>`;
+      state.activeTab = "pretty";
+      showActiveView();
+      renderTabs();
+      statusEl.textContent = `變更標示：${changed} 行有差異`;
+    }
+
+    function hideDiff() {
+      diffActive = false;
+      document.getElementById("btnShowDiff").style.display = "";
+      document.getElementById("btnClearDiff").style.display = "none";
+    }
+
+    // --- Undo / Redo ---
+    function editorUndo() {
+      rawEditor.focus();
+      document.execCommand("undo");
+    }
+    function editorRedo() {
+      rawEditor.focus();
+      document.execCommand("redo");
     }
 
     function renderTabs() {
@@ -1533,6 +1813,20 @@
     // --- Edit mode ---
     document.getElementById("btnEditToggle").addEventListener("click", toggleEditMode);
     document.getElementById("btnDownloadEdited").addEventListener("click", downloadEdited);
+    document.getElementById("btnSaveToLibrary").addEventListener("click", saveEditedToLibrary);
+    document.getElementById("btnSaveSummaryToLibrary").addEventListener("click", saveSummaryToLibrary);
+    document.getElementById("btnUndo").addEventListener("click", editorUndo);
+    document.getElementById("btnRedo").addEventListener("click", editorRedo);
+    document.getElementById("btnShowDiff").addEventListener("click", showDiff);
+    document.getElementById("btnClearDiff").addEventListener("click", () => {
+      hideDiff();
+      if (state.editMode) {
+        state.activeTab = "raw";
+        showActiveView();
+        renderTabs();
+      }
+      statusEl.textContent = "已清除變更標示";
+    });
 
     // --- Sheets export buttons ---
     document.getElementById("copyHtml").addEventListener("click", async () => {

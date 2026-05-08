@@ -18,21 +18,49 @@
 
 ## 五大模組
 
-| 模組 | 功能 | 輸入 | 輸出 |
-|------|------|------|------|
-| Markdown 編輯器 | 撰寫 / 預覽 / 同步 Sheets | .md, 手打 | .md, HTML, Google Sheets |
-| PDF 閱讀器 | 閱讀 / 頁面切割 / AI 圖書館員 | .pdf | 切割後 .pdf |
-| Code & Data 檢視器 | 程式碼 / 資料檔閱讀與編輯 | .md, .txt, .json, .py, .js 等 | 下載編輯後檔案 |
-| Table Forge | CSV / TSV 資料表編輯 | .csv, .tsv | .csv |
-| 書籍排版器 | 視覺化書頁排版 | 文字 + 圖片 | .pdf, .html, .book |
+| 模組 | 別名 | 功能 | 支援格式 |
+|------|------|------|----------|
+| Code & Data Reader | Manuscripta | 多格式閱讀 / 編輯 / 搜尋 / 匯出摘要 / Sheets 匯出 / Python 風險掃描 / TsukiSynth Score 儀表板 | .md .txt .py .json .score.json |
+| PDF 閱讀器 | Lectorium | 翻頁閱讀 / 頁面切割匯出 / AI 圖書館員（RAG 伴讀） | .pdf |
+| Table Forge | Tabularium | Canvas 表格編輯 / 公式引擎 / 多格式互通匯入匯出 | .csv .tsv（可從 Code & Data 接收 MD / JSON） |
+| 書籍排版器 | Bibliopegia | 視覺化書頁排版 / 封面設計 / 匯出 | .pdf .html |
+| AI 設定 | Aetherium | API Key 管理（BYOK）/ 模型選擇 / 月幣系統 | — |
+
+### Code & Data Reader 詳細功能
+
+- **多格式閱讀**：Markdown 預覽、Pretty JSON + 樹狀 JSON、Python 語法高亮 + 結構摘要、TsukiSynth Score 專用儀表板、純文字閱讀
+- **編輯模式**：md / txt / json 可直接編輯，JSON 下載前自動驗證格式
+- **搜尋**：全文關鍵字搜尋，高亮標示於所有視圖
+- **複製匯出**：複製原始內容 / 複製目前視圖 / 下載檔案 / 匯出結構化摘要 .md
+- **Sheets 匯出**：複製 HTML (WordPress) / 純表格 TSV / 格式化貼上 / 開新 Google Sheet
+- **跨模組**：一鍵送到 Table Forge
+- **安全檢查**：Python 風險掃描（刪檔 / 連網 / 系統指令 / 金鑰讀取）、JSON 格式驗證（錯誤定位到行列）
+
+### Table Forge 架構
+
+```
+modules/table-forge/
+  index.html        # 頁面骨架 + Canvas 渲染
+  table-model.js    # 80x50 grid + 公式引擎 (SUM/AVG/COUNT/MIN/MAX/IF)
+  parsers.js        # CSV / TSV 解析（逐字元 FSM，處理引號 / 換行 edge case）
+  table-ui.js       # DOM 渲染 + 滑鼠選取 / 拖曳 / 雙擊編輯
+  exporters.js      # CSV 匯出（RFC 4180 compliant）
+```
+
+### PDF 閱讀器 — AI 圖書館員
+
+- BM25 + Dense Embedding 雙層 RAG 檢索
+- 支援 OpenAI / Anthropic / Google / Custom API
+- PDF 文字自動擷取 + 分段索引
+- 角色：月上零韻（附角色立繪）
 
 ## 技術棧
 
-- **前端**：純 HTML/CSS/JS（全模組，無框架）
-- **PDF**：pdf.js（閱讀）+ pdf-lib（切割/匯出）
-- **AI**：BM25 + Dense Embedding 雙層 RAG，支援 OpenAI / Anthropic / Google / Custom
+- **前端**：純 HTML / CSS / JS（全模組，無框架）
+- **PDF**：pdf.js（閱讀）+ pdf-lib（切割 / 匯出）
+- **AI**：BM25 + Dense Embedding 雙層 RAG，支援多家 LLM API
 - **儲存**：IndexedDB（本地快取）+ Google Drive API（雲端同步）
-- **部署**：GitHub Pages + PWA
+- **部署**：GitHub Pages + PWA（Service Worker 離線）
 - **OAuth**：Google `drive.file` scope（僅存取 APP 建立的檔案）
 
 ## Google Drive 設計
