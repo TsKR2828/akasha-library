@@ -661,6 +661,72 @@ body { display: flex; }
 }
 .module-frame.active { display: block; }
 
+/* ===== TRANSLATION PREVIEW MODAL (Phase 7-E) ===== */
+.tp-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.7); display: none;
+  align-items: center; justify-content: center;
+}
+.tp-overlay.show { display: flex; }
+.tp-modal {
+  background: var(--navy, #1E2430); border: 1px solid var(--gold-line, #C9A86A33);
+  border-radius: 10px; width: min(640px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.tp-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--gold-line, #C9A86A22);
+}
+.tp-header h3 { margin: 0; font-size: 14px; color: var(--gold, #C9A86A); font-weight: 500; }
+.tp-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: var(--gold, #C9A86A); color: var(--navy, #1E2430); font-weight: 600;
+}
+.tp-close {
+  background: none; border: none; color: var(--cream, #F4F0E6); cursor: pointer;
+  padding: 4px; opacity: 0.6;
+}
+.tp-close:hover { opacity: 1; }
+.tp-body { padding: 16px 18px; overflow-y: auto; flex: 1; }
+.tp-section { margin-bottom: 14px; }
+.tp-section-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--gold, #C9A86A); margin-bottom: 6px; opacity: 0.7;
+}
+.tp-meta-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+}
+.tp-meta-item {
+  background: rgba(255,255,255,0.04); border-radius: 5px;
+  padding: 8px 10px; font-size: 12px;
+}
+.tp-meta-item .label { color: var(--cream, #F4F0E6); opacity: 0.5; font-size: 10px; }
+.tp-meta-item .value { color: var(--cream, #F4F0E6); margin-top: 2px; }
+.tp-blocks-list { max-height: 240px; overflow-y: auto; }
+.tp-block {
+  display: flex; gap: 8px; padding: 5px 8px; border-radius: 4px;
+  font-size: 12px; color: var(--cream, #F4F0E6); opacity: 0.85;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.tp-block:hover { background: rgba(255,255,255,0.03); }
+.tp-block-type {
+  min-width: 60px; font-size: 10px; font-weight: 600;
+  color: var(--gold, #C9A86A); padding-top: 1px; flex-shrink: 0;
+}
+.tp-block-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-footer {
+  display: flex; gap: 8px; justify-content: flex-end;
+  padding: 12px 18px; border-top: 1px solid var(--gold-line, #C9A86A22);
+}
+.tp-btn {
+  padding: 6px 14px; border-radius: 5px; border: 1px solid var(--gold-line, #C9A86A33);
+  background: transparent; color: var(--cream, #F4F0E6); cursor: pointer; font-size: 12px;
+}
+.tp-btn:hover { background: rgba(255,255,255,0.06); }
+.tp-btn--primary { background: var(--gold, #C9A86A); color: var(--navy, #1E2430); border-color: transparent; font-weight: 600; }
+.tp-btn--primary:hover { opacity: 0.9; }
+
 /* ===== AI PANEL (零韻) ===== */
 .ai-panel {
   width: 340px; min-width: 0;
@@ -1317,6 +1383,33 @@ body { display: flex; }
   </div>
 </aside>
 
+<!-- TRANSLATION PREVIEW MODAL (Phase 7-E) -->
+<div class="tp-overlay" id="tpOverlay" onclick="if(event.target===this)window.closeTranslationPreview()">
+  <div class="tp-modal">
+    <div class="tp-header">
+      <h3>Translation Preview</h3>
+      <span class="tp-badge" id="tpFormatBadge">—</span>
+      <button class="tp-close" onclick="window.closeTranslationPreview()" title="關閉">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="tp-body">
+      <div class="tp-section">
+        <div class="tp-section-title">Metadata</div>
+        <div class="tp-meta-grid" id="tpMetaGrid"></div>
+      </div>
+      <div class="tp-section">
+        <div class="tp-section-title">Blocks <span id="tpBlockCount"></span></div>
+        <div class="tp-blocks-list" id="tpBlocksList"></div>
+      </div>
+    </div>
+    <div class="tp-footer">
+      <button class="tp-btn" id="tpSendTable" style="display:none" onclick="window.tpSendToTable()">送到 Table Forge</button>
+      <button class="tp-btn tp-btn--primary" id="tpSaveBtn" onclick="window.tpSaveToLibrary()">存入書庫</button>
+    </div>
+  </div>
+</div>
+
 <!-- ====== Layer 1: Core UI — works on file:// and http:// ====== -->
 <script>
 (function() {
@@ -1768,7 +1861,8 @@ body { display: flex; }
 
 <!-- ====== Layer 2: Storage / Auth / Sync — requires HTTP server ====== -->
 <script type="module">
-import { getFileEntries, saveFileEntry, getFileBlob } from './core/storage.js';
+import { getFileEntries, saveFileEntry, saveFileBlob, getFileBlob } from './core/storage.js';
+import { translate } from './core/translation-core.js';
 import { initAuth, signIn, signOut } from './core/auth.js';
 import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
@@ -2142,6 +2236,112 @@ window._aiSendReal = async function() {
     if (sendBtn) sendBtn.disabled = false;
   }
 };
+
+// ===== Translation Preview (Phase 7-E) =====
+let currentTpJob = null;
+
+window.showTranslationPreview = function(content, filename) {
+  const job = translate(content, filename);
+  currentTpJob = job;
+
+  const overlay = document.getElementById('tpOverlay');
+  const badge = document.getElementById('tpFormatBadge');
+  const metaGrid = document.getElementById('tpMetaGrid');
+  const blockCount = document.getElementById('tpBlockCount');
+  const blocksList = document.getElementById('tpBlocksList');
+  const sendTableBtn = document.getElementById('tpSendTable');
+
+  const fmt = job.detected;
+  badge.textContent = fmt.format + (fmt.subtype ? ' · ' + fmt.subtype : '');
+
+  // Metadata
+  const meta = job.metadata;
+  let metaHtml = '';
+  const addMeta = (label, value) => { metaHtml += `<div class="tp-meta-item"><div class="label">${label}</div><div class="value">${value}</div></div>`; };
+
+  addMeta('Format', fmt.format);
+  addMeta('Size', (job.source.size / 1024).toFixed(1) + ' KB');
+  addMeta('Blocks', job.blocks.length);
+
+  if (meta.outline?.length) addMeta('Headings', meta.outline.length);
+  if (meta.tables?.length) addMeta('Tables', meta.tables.length);
+  if (meta.codeBlocks?.length) addMeta('Code Fences', meta.codeBlocks.length);
+  if (meta.taskSummary) addMeta('Tasks', meta.taskSummary.done + '/' + meta.taskSummary.total);
+  if (meta.speakers?.length) addMeta('Speakers', meta.speakers.map(s => s.name).join(', '));
+  if (meta.dialogueCount) addMeta('Dialogue', meta.dialogueCount);
+  if (meta.narrationCount) addMeta('Narration', meta.narrationCount);
+  if (meta.uncertainCount) addMeta('Uncertain', meta.uncertainCount);
+  if (meta.tableCandidate) addMeta('Table Candidate', meta.columnCount + ' cols × ' + meta.length + ' rows');
+
+  metaGrid.innerHTML = metaHtml;
+  blockCount.textContent = '(' + job.blocks.length + ')';
+
+  // Blocks preview (cap at 100)
+  const preview = job.blocks.slice(0, 100);
+  blocksList.innerHTML = preview.map(b => {
+    const typeLbl = b.type.toUpperCase();
+    let text = '';
+    if (b.type === 'dialogue') text = (b.speaker || '') + '：' + (b.text || '');
+    else if (b.type === 'narration') text = b.text || '';
+    else if (b.type === 'command') text = '#' + b.command + ': ' + b.value;
+    else if (b.type === 'heading') text = '#'.repeat(b.level || 1) + ' ' + (b.text || '');
+    else if (b.type === 'table') text = (b.head || []).join(' | ') + ' (' + (b.body?.length || 0) + ' rows)';
+    else if (b.type === 'code') text = (b.lang || '') + ' (' + ((b.text || '').split('\n').length) + ' lines)';
+    else if (b.type === 'task') text = (b.checked ? '☑ ' : '☐ ') + (b.text || '');
+    else if (b.type === 'list-item') text = '• ' + (b.text || '');
+    else text = (b.text || '').slice(0, 120);
+    return `<div class="tp-block"><span class="tp-block-type">${typeLbl}</span><span class="tp-block-text">${escapeHtml(text)}</span></div>`;
+  }).join('') + (job.blocks.length > 100 ? '<div class="tp-block" style="opacity:0.4">… and ' + (job.blocks.length - 100) + ' more</div>' : '');
+
+  // Show "send to Table Forge" if table candidate
+  const hasTable = job.blocks.some(b => b.type === 'table' && b.tableCandidate);
+  sendTableBtn.style.display = hasTable ? '' : 'none';
+
+  overlay.classList.add('show');
+};
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+window.closeTranslationPreview = function() {
+  document.getElementById('tpOverlay').classList.remove('show');
+  currentTpJob = null;
+};
+
+window.tpSaveToLibrary = async function() {
+  if (!currentTpJob) return;
+  const job = currentTpJob;
+  const id = 'tp-' + Date.now();
+  const outName = job.source.filename.replace(/\.[^.]+$/, '') + '.blocks.json';
+  const payload = { source: job.source.filename, detected: job.detected, blocks: job.blocks, metadata: job.metadata };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+
+  await saveFileEntry({ id, name: outName, type: 'json', size: blob.size, lastOpened: Date.now(), updatedAt: Date.now() });
+  await saveFileBlob(id, blob);
+  renderRecent();
+  window.closeTranslationPreview();
+  if (window.showToast) window.showToast('已存入書庫：' + outName);
+};
+
+window.tpSendToTable = function() {
+  if (!currentTpJob) return;
+  const tables = currentTpJob.blocks.filter(b => b.type === 'table');
+  if (!tables.length) return;
+  const t = tables[0];
+  const payload = { filename: currentTpJob.source.filename, mode: 'json', blocks: [{ type: 'heading', level: 2, text: currentTpJob.source.filename }, { type: 'table', head: t.head, body: t.body }] };
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  window.closeTranslationPreview();
+  openModule('table-forge');
+};
+
+// Listen for translation preview requests from modules
+window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin) return;
+  if (event.data?.type === 'akasha-translation-preview') {
+    window.showTranslationPreview(event.data.content, event.data.filename);
+  }
+});
 
 // Service worker
 if ('serviceWorker' in navigator) {

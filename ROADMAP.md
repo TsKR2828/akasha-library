@@ -60,17 +60,17 @@
 
 ---
 
-## Phase 7：Translation Core（追加 spec §2.1, Batch A）
+## Phase 7：Translation Core（追加 spec §2.1, Batch A） ✅ 完成
 
 格式翻譯核心 — 外部輸入 → 阿卡夏中介格式。
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 7-A | `core/translation-core.js` 基礎架構 + `TransformJob` 格式 | ⬜ |
-| 7-B | Markdown outline / table / code fence / task list 抽取 | ⬜ |
-| 7-C | Plain Script parser —「角色：台詞」→ dialogue blocks | ⬜ |
-| 7-D | JSON array → table candidate 偵測 | ⬜ |
-| 7-E | 轉換結果預覽 UI + 存入書庫 | ⬜ |
+| 7-A | `core/translation-core.js` 基礎架構 + `TransformJob` 格式 | ✅ |
+| 7-B | Markdown outline / table / code fence / task list 抽取 | ✅ |
+| 7-C | Plain Script parser —「角色：台詞」→ dialogue blocks | ✅ |
+| 7-D | JSON array → table candidate 偵測 | ✅ |
+| 7-E | 轉換結果預覽 UI + 存入書庫 | ✅ |
 
 ## Phase 8：Script Editor MVP（追加 spec §3, Batch B）
 
@@ -182,9 +182,13 @@
 ├─ Phase 5 (Table Forge 整合) ✅
 └─ Phase 6 (版權邊界) ✅
 
+已完成
+├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor)
+│                                 ──→ Phase 9 (Table Forge 抽取強化)
+
 目前可做（無新相依）
-├─ Phase 7 (Translation Core) ──→ Phase 8 (Script Editor)
-│                               ──→ Phase 9 (Table Forge 抽取強化)
+├─ Phase 8 (Script Editor) ──→ 依賴 Phase 7 ✅
+├─ Phase 9 (Table Forge 抽取強化) ──→ 依賴 Phase 7 ✅
 ├─ Phase 10 (Memory) ──→ Phase 15 (談心 + 館報)
 ├─ Phase 11 (Notion Connector)
 ├─ Phase 12 (Security Layer)

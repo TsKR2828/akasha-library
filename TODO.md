@@ -98,10 +98,18 @@
 
 ---
 
-## 待做（追加規格 · Phase 7–16）
+### Phase 7 Translation Core ✅
+- [x] 7-A: `core/translation-core.js` 基礎架構 + TransformJob 格式
+- [x] 7-B: Markdown outline / table / code fence / task list 抽取
+- [x] 7-C: Plain Script parser —「角色：台詞」→ dialogue blocks
+- [x] 7-D: JSON array → table candidate 偵測
+- [x] 7-E: 轉換結果預覽 UI + 存入書庫（App Shell modal）
 
-- Phase 7：Translation Core（格式翻譯核心）
-- Phase 8：Script Editor MVP（Plain Script → blocks → .ks / AVG JSON / PDF）— 依賴 Phase 7
+---
+
+## 待做（追加規格 · Phase 8–16）
+
+- Phase 8：Script Editor MVP（Plain Script → blocks → .ks / AVG JSON / PDF）— 依賴 Phase 7 ✅
 - Phase 9：Table Forge 文字抽取強化（Markdown 章節表 / 大綱 / 回寫 diff）— 依賴 Phase 7
 - Phase 10：Memory System（session / room summary / 零韻手札）
 - Phase 11：Notion Connector（雲端索引 + 可讀備份）
