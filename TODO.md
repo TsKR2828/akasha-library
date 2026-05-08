@@ -55,12 +55,37 @@
 - [x] 手機版底部上拉面板
 - [x] 暫用 placeholder 回應（Phase 3-B 接 LLM）
 
+## 已完成（Phase 3-B）
+
+### 3-B Context 切換 ✅
+- [x] MODULE_CONTEXTS 配置表（角色名 / 英文名 / badge / engine / 招呼語 / placeholder / emotion）
+- [x] updateAIContextBadge() 升級 — 切換模組時同步更新 badge / nameplate / speaker / placeholder / emotion
+- [x] 切換模組時顯示角色招呼語
+- [x] core/ai.js 新增 buildCodeSystemPrompt / buildTableSystemPrompt / buildGeneralSystemPrompt
+- [x] PostMessage 協議：App Shell 向 iframe 請求 akasha-ai-get-context → 模組回應 akasha-ai-context-response
+- [x] Code & Data / Table Forge / PDF Reader 三模組加入 context response handler
+- [x] App Shell Layer 2 實作 _aiSendReal()：模組偵測 → 請求內容 → 建構 system prompt → callLLM → 打字機回應
+- [x] file:// fallback 提示需要 HTTP server
+
 ---
 
-## 待做
+## 待做（原始規格）
 
 - Phase 2-D：OCR 文字摘錄
-- Phase 3-B~F：零韻面板（Context 切換 / 人設 / 對話紀錄 / 計費 / 預寫回應）
-- Phase 4：Code & Data 整合（零韻接入 / 自動偵測表格）
-- Phase 5：Table Forge 整合（零韻接入 / Script Editor 橋）
-- Phase 6：Script Editor 接口 + 版權邊界
+- Phase 3-C~F：零韻面板（人設 / 對話紀錄 / 預寫回應 / 計費）
+- Phase 4-B：自動偵測表格（4-A 已在 3-B 完成）
+- Phase 5-B：Script Editor 資料橋預留（5-A 已在 3-B 完成）
+- Phase 6：版權邊界
+
+## 待做（追加規格 · akasha-feature-additions-spec）
+
+- Phase 7：Translation Core（格式翻譯核心）
+- Phase 8：Script Editor MVP（Plain Script → blocks → .ks / AVG JSON / PDF）
+- Phase 9：Table Forge 文字抽取強化（Markdown 章節表 / 大綱 / 回寫 diff）
+- Phase 10：Memory System（session / room summary / 零韻手札）
+- Phase 11：Notion Connector（雲端索引 + 可讀備份）
+- Phase 12：Security Layer（資料分級 / IndexedDB 加密 / 版本標記）
+- Phase 13：Document Bridge（DOCX 匯入匯出）
+- Phase 14：Voice / BGM Prototype（Rein-Voice + TsukiSynth）
+- Phase 15：Private Reading Room + 每日館報
+- Phase 16：Export Core + 部署切分

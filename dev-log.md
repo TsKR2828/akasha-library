@@ -1,5 +1,69 @@
 # Akasha Library — Dev Log
 
+## 2026-05-08 (g)：ROADMAP 整合 — 追加規格書併入
+
+將 `akasha-feature-additions-spec.md`（20 章 / 8 Batch）整合進 `ROADMAP.md`。
+
+### 變更摘要
+
+| 項目 | 說明 |
+|------|------|
+| ROADMAP.md | 從 6 Phase 擴充為 16 Phase，保留已完成項目，合併重疊項 |
+| Phase 4-A / 5-A | 標為已完成（在 3-B 中實作） |
+| Phase 7–16 | 新增：Translation Core / Script Editor / Table Forge 抽取 / Memory / Notion / Security / Doc Bridge / Voice-BGM / 談心+館報 / Export+部署 |
+| 相依關係圖 | 重新繪製，標示「目前可做」與「追加功能鏈」 |
+| 規格文件索引 | 新增三份 spec 對照表 |
+| TODO.md | 更新待做清單，反映新 Phase 編號 |
+
+### 追加 spec 對應表
+
+| 追加 spec 章節 | 對應 Phase |
+|------|------|
+| §2.1 Translation Core | Phase 7 |
+| §3 Script Editor | Phase 8 |
+| §4 Table Forge 抽取 | Phase 9 |
+| §6 Memory System | Phase 10 |
+| §5 Notion Connector | Phase 11 |
+| §14 Security Layer | Phase 12 |
+| §9 Document Bridge | Phase 13 |
+| §10–11 Voice / BGM | Phase 14 |
+| §8 談心 + §12 館報 | Phase 15 |
+| §2.2 Export Core + §15 部署 | Phase 16 |
+
+---
+
+## 2026-05-08 (f)：Phase 3-B — 零韻 Context 切換
+
+零韻面板根據當前模組自動切換角色、system prompt、與 UI 元素，並接入真正的 LLM 呼叫。
+
+### 變更摘要
+
+| 項目 | 說明 |
+|------|------|
+| MODULE_CONTEXTS | 每模組定義 role / roleEn / badge / engine / greeting / placeholder / emotion |
+| UI 切換 | `updateAIContextBadge()` 升級：badge + nameplate + speaker + placeholder + emotion 一同更新 |
+| 招呼語 | 切換模組時面板內自動播放該角色的招呼語（打字機效果） |
+| System Prompts | `core/ai.js` 新增 `buildCodeSystemPrompt()` / `buildTableSystemPrompt()` / `buildGeneralSystemPrompt()`，共用 `PERSONA_CORE` |
+| PostMessage 協議 | `akasha-ai-get-context` → 模組回應 `akasha-ai-context-response`（含 content / fileName / fileType） |
+| 模組 handler | Code & Data：回傳 `state.content`（截斷 12K）+ filename + extension |
+| | Table Forge：回傳 `exportMarkdown(currentDoc)`（截斷 12K）+ title |
+| | PDF Reader：回傳 `extractContextPages()` + RAG `queryRelevant()`（若 index 就緒） |
+| App Shell Layer 2 | `_aiSendReal()`：偵測模組 → 請求內容 → 建構 prompt → `callLLM()` → 打字機回應 |
+| Token 計 | 呼叫前更新 token 預估；coin 模式自動扣款 |
+| Fallback | file:// 下顯示「需要 HTTP 伺服器」提示 |
+
+### 功能驗證
+
+- [x] 總覽頁 badge「※ 總覽」、role Librarian
+- [x] Code & Data badge「※ Code & Data」、role Manuscript Interpreter、placeholder「…向手稿解讀員提問」
+- [x] Table Forge badge「※ Table Forge」、role Data Inspector、placeholder「…向資料檢查員提問」
+- [x] PDF 閱讀器 badge「※ PDF 閱讀器」、role Librarian
+- [x] 切換回總覽時 reset 為預設 context
+- [x] `_aiSendReal` 函式已掛載
+- [x] 零 console error
+
+---
+
 ## 2026-05-08 (e)：Phase 3-A — 零韻面板 UI 抽出
 
 將 AI 圖書館員面板從 `modules/pdf-reader/index.html` 抽出，掛到 App Shell `index.html` 作為獨立元件。
