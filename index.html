@@ -1257,7 +1257,7 @@ body { display: flex; }
     <img class="ai-character" src="assets/images/librian.png" alt="月上零韻" id="aiCharacter">
     <div class="ai-nameplate">
       <div class="ai-nameplate-name">月上零韻</div>
-      <div class="ai-nameplate-role">Tsukiue Rein · Librarian</div>
+      <div class="ai-nameplate-role" id="aiNameplateRole">Tsukiue Rein · Librarian</div>
     </div>
     <div class="ai-emotion" id="aiEmotion">Serena</div>
     <div class="ai-page-badge" id="aiPageBadge">※ 總覽</div>
@@ -1318,6 +1318,47 @@ body { display: flex; }
     'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
     'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
   };
+
+  // Per-module AI context definitions (spec §3.4)
+  var MODULE_CONTEXTS = {
+    'pdf-reader': {
+      role: '圖書館員',
+      roleEn: 'Librarian',
+      badge: '※ PDF 閱讀器',
+      engine: 'rag',
+      greeting: '我已切換到閱讀模式。開啟 PDF 後，可以向我詢問書中的任何問題。',
+      placeholder: '…向圖書館員提問',
+      emotion: 'Serena',
+    },
+    'markdown': {
+      role: '手稿解讀員',
+      roleEn: 'Manuscript Interpreter',
+      badge: '※ Code & Data',
+      engine: 'llm',
+      greeting: '手稿解讀模式已就緒。開啟檔案後，我可以幫你分析程式碼、解讀 JSON 結構，或解釋文件內容。',
+      placeholder: '…向手稿解讀員提問',
+      emotion: 'Cogitans',
+    },
+    'table-forge': {
+      role: '資料檢查員',
+      roleEn: 'Data Inspector',
+      badge: '※ Table Forge',
+      engine: 'llm',
+      greeting: '資料檢查模式已就緒。匯入資料後，我可以幫你檢查空欄位、掃描一致性，或分析資料分佈。',
+      placeholder: '…向資料檢查員提問',
+      emotion: 'Cogitans',
+    },
+    '_default': {
+      role: '圖書館員',
+      roleEn: 'Librarian',
+      badge: '※ 總覽',
+      engine: 'none',
+      greeting: '歡迎來到阿卡夏圖書館。我是零韻，你的專屬圖書館員。有什麼我能幫你的嗎？',
+      placeholder: '…向圖書館員提問',
+      emotion: 'Serena',
+    },
+  };
+  window.MODULE_CONTEXTS = MODULE_CONTEXTS;
 
   var viewTitles = {
     'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'AKASHA LIBRARY' },
@@ -1382,19 +1423,18 @@ body { display: flex; }
   }
 
   function sendAIMessage() {
+    // Delegate to Layer 2 async handler if loaded
+    if (window._aiSendReal) {
+      window._aiSendReal();
+      return;
+    }
+    // Fallback for file:// (no module imports)
     var input = document.getElementById('aiInput');
     var text = input.value.trim();
     if (!text) return;
     input.value = '';
-
-    // Contextual placeholder responses
-    var responses = [
-      '目前零韻的跨模組 AI 功能正在整合中（Phase 3-B）。\n\n你可以在 PDF 閱讀器中使用內建的圖書館員功能，進行書籍問答。',
-      '感謝你的提問。零韻的完整對話功能即將上線。\n\n現階段，PDF 閱讀器已支援 RAG 問答，歡迎先行體驗。',
-      '我已記下你的問題。跨模組的 Context 切換系統正在建置中。\n\n完成後，無論你在哪個工具中，我都能根據當前內容為你提供協助。',
-    ];
-    var idx = Math.floor(Math.random() * responses.length);
-    startTypewriter(responses[idx], '圖書館員 · 月上零韻', 'thinking', []);
+    var ctx = getAIContext();
+    startTypewriter('AI 功能需要在 HTTP 伺服器下運行。請使用 http-server 或 npm run dev 啟動。', ctx.role + ' · 月上零韻', 'thinking', []);
   }
 
   function startTypewriter(text, speaker, emotion, choices) {
@@ -1438,14 +1478,31 @@ body { display: flex; }
     document.getElementById('aiChoices').innerHTML = '';
   }
 
-  function updateAIContextBadge() {
+  function getAIContext() {
+    return MODULE_CONTEXTS[aiCurrentModule] || MODULE_CONTEXTS['_default'];
+  }
+  window.getAIContext = getAIContext;
+
+  function updateAIContextBadge(showGreeting) {
+    var ctx = getAIContext();
+    // Badge
     var badge = document.getElementById('aiPageBadge');
-    if (!badge) return;
-    if (aiCurrentModule) {
-      var mod = modules[aiCurrentModule];
-      badge.textContent = '※ ' + (mod ? mod.title : aiCurrentModule);
-    } else {
-      badge.textContent = '※ 總覽';
+    if (badge) badge.textContent = ctx.badge;
+    // Nameplate role
+    var roleEl = document.getElementById('aiNameplateRole');
+    if (roleEl) roleEl.textContent = 'Tsukiue Rein · ' + ctx.roleEn;
+    // Speaker label
+    var speakerEl = document.getElementById('aiDialogueSpeaker');
+    if (speakerEl) speakerEl.textContent = ctx.role + ' · 月上零韻';
+    // Input placeholder
+    var inputEl = document.getElementById('aiInput');
+    if (inputEl) inputEl.placeholder = ctx.placeholder;
+    // Emotion
+    var emotionEl = document.getElementById('aiEmotion');
+    if (emotionEl) emotionEl.textContent = ctx.emotion;
+    // Show context greeting on module switch
+    if (showGreeting && aiPanelOpen) {
+      startTypewriter(ctx.greeting, ctx.role + ' · 月上零韻', ctx.emotion, []);
     }
   }
 
@@ -1455,6 +1512,8 @@ body { display: flex; }
   window.setAIMode = setAIMode;
   window.aiAdvance = aiAdvance;
   window.handleAIKeydown = handleAIKeydown;
+  window.getActiveModule = function() { return aiCurrentModule; };
+  window.startTypewriter = startTypewriter;
   window.sendAIMessage = sendAIMessage;
   window.handleAIChoice = handleAIChoice;
 
@@ -1494,8 +1553,9 @@ body { display: flex; }
       frame.src = 'public-library/index.html';
       frame.classList.add('active');
     }
+    var prevModule = aiCurrentModule;
     aiCurrentModule = null;
-    updateAIContextBadge();
+    updateAIContextBadge(prevModule !== null);
   }
 
   function openModule(name) {
@@ -1512,8 +1572,9 @@ body { display: flex; }
     titleEl.textContent = mod.title;
     subtitleEl.textContent = mod.subtitle ? '· ' + mod.subtitle : '';
     breadcrumbEl.textContent = 'AKASHA LIBRARY \xBB TOOLS \xBB ' + mod.title;
+    var prevModule = aiCurrentModule;
     aiCurrentModule = name;
-    updateAIContextBadge();
+    updateAIContextBadge(prevModule !== name);
   }
 
   // File import (basic — no storage dependency)
@@ -1764,6 +1825,132 @@ window.addEventListener('message', async (event) => {
     openModule('table-forge');
   }
 });
+
+// ===== AI Context Switch (Phase 3-B) =====
+import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt, estimateTokens, coinCost, deductCoins } from './core/ai.js';
+
+let aiLoading = false;
+let pendingContextResolve = null;
+
+// Listen for context responses from module iframes
+window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin) return;
+  if (event.data?.type === 'akasha-ai-context-response' && pendingContextResolve) {
+    pendingContextResolve(event.data);
+    pendingContextResolve = null;
+  }
+});
+
+function requestModuleContext(timeoutMs = 3000) {
+  const frame = document.getElementById('module-frame');
+  if (!frame || !frame.classList.contains('active') || !frame.contentWindow) {
+    return Promise.resolve(null);
+  }
+  return new Promise((resolve) => {
+    pendingContextResolve = resolve;
+    frame.contentWindow.postMessage({ type: 'akasha-ai-get-context' }, '*');
+    setTimeout(() => {
+      if (pendingContextResolve === resolve) {
+        pendingContextResolve = null;
+        resolve(null);
+      }
+    }, timeoutMs);
+  });
+}
+
+window._aiSendReal = async function() {
+  if (aiLoading) return;
+
+  const input = document.getElementById('aiInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const ctx = window.getAIContext();
+  const moduleName = window.getActiveModule();
+  const speakerLabel = ctx.role + ' · 月上零韻';
+
+  // Check settings
+  const settings = getAISettings();
+  if (settings.error === 'no-api-key') {
+    window.startTypewriter('尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。', speakerLabel, 'thinking', []);
+    return;
+  }
+  if (settings.error === 'no-proxy') {
+    window.startTypewriter('月幣模式尚未啟用。請先切換至 BYOK 模式並設定 API Key。', speakerLabel, 'thinking', []);
+    return;
+  }
+
+  // No module active — general mode
+  if (!moduleName || !MODULE_CONTEXTS[moduleName]) {
+    aiLoading = true;
+    const sendBtn = document.getElementById('aiSend');
+    if (sendBtn) sendBtn.disabled = true;
+    window.startTypewriter('思考中…', speakerLabel, 'thinking', []);
+    try {
+      const systemPrompt = buildGeneralSystemPrompt();
+      const response = await callLLM(settings, systemPrompt, text);
+      window.startTypewriter(response, speakerLabel, 'calm', []);
+    } catch (err) {
+      window.startTypewriter('連線時發生了問題：' + err.message, speakerLabel, 'thinking', []);
+    } finally {
+      aiLoading = false;
+      if (sendBtn) sendBtn.disabled = false;
+    }
+    return;
+  }
+
+  // Module active — request context from iframe
+  aiLoading = true;
+  const sendBtn = document.getElementById('aiSend');
+  if (sendBtn) sendBtn.disabled = true;
+  window.startTypewriter('正在讀取內容…', speakerLabel, 'thinking', []);
+
+  try {
+    const moduleData = await requestModuleContext();
+
+    if (!moduleData || !moduleData.content) {
+      window.startTypewriter('目前尚未開啟檔案。請先開啟一個檔案，我才能根據內容回答。', speakerLabel, 'thinking', []);
+      return;
+    }
+
+    // Build module-specific system prompt
+    let systemPrompt;
+    if (moduleName === 'pdf-reader') {
+      systemPrompt = buildSystemPrompt(moduleData.content, moduleData.currentPage || 1, moduleData.fileName || 'PDF');
+    } else if (moduleName === 'markdown') {
+      systemPrompt = buildCodeSystemPrompt(moduleData.content, moduleData.fileName || '未命名', moduleData.fileType || 'text');
+    } else if (moduleName === 'table-forge') {
+      systemPrompt = buildTableSystemPrompt(moduleData.content, moduleData.fileName || '未命名表格');
+    } else {
+      systemPrompt = buildGeneralSystemPrompt();
+    }
+
+    // Token estimate
+    const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
+    const tokenEl = document.getElementById('aiTokenEstimate');
+    if (tokenEl) tokenEl.textContent = totalTokens;
+
+    // Call LLM
+    const response = await callLLM(settings, systemPrompt, text);
+
+    // Coin deduction
+    if (settings.mode === 'coin') {
+      const cost = coinCost(totalTokens);
+      const remaining = deductCoins(cost, moduleName + ' · ' + text.slice(0, 20));
+      const coinsEl = document.getElementById('aiCoins');
+      if (coinsEl) coinsEl.textContent = remaining;
+    }
+
+    window.startTypewriter(response, speakerLabel, 'calm', []);
+  } catch (err) {
+    console.error('AI call failed:', err);
+    window.startTypewriter('連線時發生了問題：' + err.message + '\n\n請確認 API Key 是否正確，以及網路連線是否正常。', speakerLabel, 'thinking', []);
+  } finally {
+    aiLoading = false;
+    if (sendBtn) sendBtn.disabled = false;
+  }
+};
 
 // Service worker
 if ('serviceWorker' in navigator) {

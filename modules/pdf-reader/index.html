@@ -1414,7 +1414,7 @@
   })();
 
   // ===== PostMessage API for parent shell =====
-  window.addEventListener('message', (event) => {
+  window.addEventListener('message', async (event) => {
     if (event.origin !== location.origin) return;
     if (event.data?.type === 'akasha-open-pdf' && event.data.data) {
       const blob = new Blob([event.data.data], { type: 'application/pdf' });
@@ -1424,6 +1424,31 @@
     if (event.data?.type === 'akasha-open-pdf-url' && event.data.url) {
       currentBookId = event.data.bookId || null;
       loadFromUrl(event.data.url, event.data.bookTitle || 'PDF');
+    }
+    // AI context request from App Shell
+    if (event.data?.type === 'akasha-ai-get-context') {
+      let content = '';
+      if (pdfDoc) {
+        try {
+          content = await extractContextPages(pdfDoc, currentPage, 2);
+          if (indexReady && currentFileId) {
+            try {
+              const relevant = await queryRelevant(currentFileId, '(context)', {}, 3);
+              if (relevant.length > 0) {
+                content = formatRetrievalContext(relevant, content);
+              }
+            } catch { /* fallback to local pages */ }
+          }
+        } catch { /* empty */ }
+      }
+      window.parent.postMessage({
+        type: 'akasha-ai-context-response',
+        module: 'pdf-reader',
+        fileName: currentFileName || null,
+        fileType: 'pdf',
+        currentPage,
+        content,
+      }, location.origin);
     }
   });
 

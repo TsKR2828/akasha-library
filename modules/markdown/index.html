@@ -2167,6 +2167,18 @@
         if (!confirmDiscardEdits()) return;
         setFile(event.data.filename || "file.md", event.data.content, event.data.size);
       }
+      // AI context request from App Shell
+      if (event.data?.type === "akasha-ai-get-context") {
+        const content = state.content || "";
+        const truncated = content.length > 12000 ? content.slice(0, 12000) + "\n…（內容已截斷）" : content;
+        window.parent.postMessage({
+          type: "akasha-ai-context-response",
+          module: "markdown",
+          fileName: state.filename || null,
+          fileType: state.extension || "text",
+          content: truncated,
+        }, location.origin);
+      }
     });
 
     // --- Dark/Light mode inheritance ---

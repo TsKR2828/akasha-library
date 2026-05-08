@@ -420,6 +420,23 @@ window.addEventListener('message', (e) => {
     result.title = e.data.title || 'Reader Import';
     loadDocument(result);
   }
+  // AI context request from App Shell
+  if (e.data.type === 'akasha-ai-get-context') {
+    let content = '';
+    let fileName = '';
+    if (currentDoc) {
+      content = exportMarkdown(currentDoc);
+      if (content.length > 12000) content = content.slice(0, 12000) + '\n…（內容已截斷）';
+      fileName = currentDoc.title || '';
+    }
+    window.parent.postMessage({
+      type: 'akasha-ai-context-response',
+      module: 'table-forge',
+      fileName,
+      fileType: 'table',
+      content,
+    }, location.origin);
+  }
 });
 
 // --- Init ---
