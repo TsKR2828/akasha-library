@@ -292,6 +292,64 @@
   }
   .split-preview .gold { color: var(--gold); }
 
+  /* Custom page grid */
+  .custom-page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 4px;
+    margin-top: 8px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+  .custom-page-chip {
+    text-align: center;
+    padding: 4px 0;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    border: 1px solid var(--navy-hover);
+    border-radius: var(--r-soft);
+    cursor: pointer;
+    transition: all 140ms;
+    user-select: none;
+  }
+  .custom-page-chip:hover {
+    border-color: var(--gold-dim);
+    color: var(--text-primary);
+  }
+  .custom-page-chip.selected {
+    background: rgba(201,168,106,0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  /* Screenshot crop overlay */
+  .crop-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    cursor: crosshair;
+    z-index: 50;
+  }
+  .crop-rect {
+    position: absolute;
+    border: 2px dashed var(--gold);
+    background: rgba(201,168,106,0.08);
+    pointer-events: none;
+  }
+  .crop-toolbar {
+    position: absolute;
+    bottom: -36px;
+    right: 0;
+    display: flex;
+    gap: 6px;
+    z-index: 51;
+  }
+  .crop-toolbar .btn {
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
   /* ===== CENTER CANVAS ===== */
   .reader-area {
     flex: 1;
@@ -853,6 +911,53 @@
     text-align: center; color: var(--text-secondary);
     font-size: 12px; padding: 32px 16px; line-height: 1.8;
   }
+
+  /* ===== Bookmark panel ===== */
+  .bookmark-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 10px; border-radius: var(--r-soft);
+    cursor: pointer; transition: background 0.15s;
+    margin-bottom: 3px;
+  }
+  .bookmark-item:hover { background: var(--navy-hover); }
+  .bookmark-item-page {
+    font-family: var(--font-serif-en);
+    font-size: 12px; color: var(--gold);
+    min-width: 36px; letter-spacing: 0.04em;
+  }
+  .bookmark-item-note {
+    font-size: 12.5px; color: var(--text-primary);
+    flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    margin-left: 8px;
+  }
+  .bookmark-item-remove {
+    color: var(--text-secondary); cursor: pointer;
+    font-size: 14px; padding: 3px 4px;
+    border-radius: var(--r-soft); background: none; border: none;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .bookmark-item:hover .bookmark-item-remove { opacity: 1; }
+  .bookmark-item-remove:hover { color: var(--danger); background: rgba(196,96,79,0.1); }
+  .bookmark-add-form {
+    display: flex; gap: 6px; padding: 8px 6px;
+    border-bottom: 1px solid var(--navy-line); margin-bottom: 6px;
+  }
+  .bookmark-add-form input {
+    flex: 1; background: var(--navy); border: 1px solid var(--navy-line);
+    border-radius: var(--r-soft); color: var(--text-primary);
+    font-family: var(--font-serif-tc); font-size: 12px;
+    padding: 5px 8px; outline: none;
+  }
+  .bookmark-add-form input::placeholder { color: var(--text-tertiary); }
+  .bookmark-add-form input:focus { border-color: var(--gold-dim); }
+  .bookmark-add-form button {
+    background: rgba(201,168,106,0.12); border: 1px solid var(--gold-dim);
+    border-radius: var(--r-soft); color: var(--gold);
+    font-family: var(--font-serif-tc); font-size: 11px;
+    padding: 4px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .bookmark-add-form button:hover { border-color: var(--gold); color: var(--gold-bright); }
+  .btn-bookmark-active svg { fill: var(--gold); stroke: var(--gold); }
 </style>
 </head>
 <body>
@@ -887,6 +992,12 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
       匯出
     </button>
+    <button class="btn" id="btnBookmark" onclick="window.toggleBookmark()" style="display:none" title="書籤">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+    </button>
+    <button class="btn" id="btnCrop" onclick="window.startCrop()" style="display:none" title="截圖框選：在頁面上拖拉選取區域存為筆記">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4H2M18 2v4h4M6 22v-4H2M18 22v-4h4M6 6h12v12H6z"/></svg>
+    </button>
     <div class="topbar-sep"></div>
     <button class="btn btn-gold" id="btnAI" onclick="toggleAIPanel()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c0-2 2-4 5-4h8c3 0 5 2 5 4v3a9 9 0 01-18 0z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
@@ -906,6 +1017,7 @@
     <div class="sidebar-tabs">
       <button class="sidebar-tab active" data-tab="pages" onclick="switchTab('pages')">Pages · 頁</button>
       <button class="sidebar-tab" data-tab="split" onclick="switchTab('split')">Cut · 切割</button>
+      <button class="sidebar-tab" data-tab="bookmarks" onclick="switchTab('bookmarks')">Mark · 書籤</button>
       <button class="sidebar-tab" data-tab="library" onclick="switchTab('library')">Lib · 書庫</button>
     </div>
 
@@ -961,10 +1073,15 @@
           </button>
         </div>
 
-        <!-- Custom mode placeholder -->
+        <!-- Custom mode -->
         <div id="split-custom" style="display:none;">
           <div class="split-label">Custom Selection</div>
-          <div class="split-preview">在頁面縮圖中點選要匯出的頁面</div>
+          <div class="split-preview" id="customPreview">點擊下方頁碼勾選要切出的頁面</div>
+          <div class="custom-page-grid" id="customPageGrid"></div>
+          <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="splitCustom()" id="btnSplitCustom" disabled>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 11M9 16l11-11"/></svg>
+            切割選取頁面
+          </button>
         </div>
 
         <label class="sync-checkbox">
@@ -977,6 +1094,18 @@
           開啟 PDF 後即可使用切割功能
         </div>
       </div>
+    </div>
+
+    <!-- Bookmarks Tab -->
+    <div class="sidebar-content" id="tab-bookmarks" style="display:none;">
+      <div class="bookmark-add-form" id="bookmarkAddForm" style="display:none;">
+        <input type="text" id="bookmarkNoteInput" placeholder="備註（可留空）" maxlength="100">
+        <button onclick="window.confirmAddBookmark()">加入</button>
+      </div>
+      <div class="library-empty" id="bookmarks-empty">
+        開啟 PDF 後可加入書籤<br>點擊頂部 ★ 按鈕標記當前頁
+      </div>
+      <div id="bookmark-list"></div>
     </div>
 
     <!-- Library Tab -->
@@ -1343,12 +1472,17 @@
       document.getElementById('splitTo').max = totalPages;
       document.getElementById('splitFrom').max = totalPages;
       document.getElementById('btnDownload').style.display = '';
+      document.getElementById('btnBookmark').style.display = '';
+      document.getElementById('btnCrop').style.display = '';
 
       // Update AI panel page badge
       updateAIPageBadge();
 
       // Save to library
       await saveToLibrary(file.name, totalPages, pdfBytes);
+
+      // Load bookmarks for this file
+      loadBookmarks(currentFileId);
 
       // Render
       await renderPage();
@@ -1398,6 +1532,9 @@
 
     // Update AI page badge
     updateAIPageBadge();
+
+    // Update bookmark button state
+    updateBookmarkButton();
 
     // Update split range preview
     updateRangePreview();
@@ -1466,8 +1603,10 @@
     document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     document.getElementById('tab-pages').style.display = tab === 'pages' ? '' : 'none';
     document.getElementById('tab-split').style.display = tab === 'split' ? '' : 'none';
+    document.getElementById('tab-bookmarks').style.display = tab === 'bookmarks' ? '' : 'none';
     document.getElementById('tab-library').style.display = tab === 'library' ? '' : 'none';
     if (tab === 'library') renderLibrary();
+    if (tab === 'bookmarks') renderBookmarks();
     if (tab === 'split') loadPDFLib().catch(() => {}); // preload pdf-lib
   }
 
@@ -1487,6 +1626,7 @@
     document.getElementById('split-every').style.display = mode === 'every' ? '' : 'none';
     document.getElementById('split-custom').style.display = mode === 'custom' ? '' : 'none';
     if (mode === 'every') updateSplitPreview();
+    if (mode === 'custom') renderCustomPageGrid();
   }
 
   function updateSplitPreview() {
@@ -1594,6 +1734,198 @@
       showToast('切割失敗：' + err.message, 'error');
     }
   }
+
+  // ===== Custom Page Selection Split =====
+  const customSelectedPages = new Set();
+
+  function renderCustomPageGrid() {
+    const grid = document.getElementById('customPageGrid');
+    grid.innerHTML = '';
+    if (!totalPages) return;
+    for (let i = 1; i <= totalPages; i++) {
+      const chip = document.createElement('div');
+      chip.className = 'custom-page-chip' + (customSelectedPages.has(i) ? ' selected' : '');
+      chip.textContent = i;
+      chip.onclick = () => {
+        if (customSelectedPages.has(i)) customSelectedPages.delete(i);
+        else customSelectedPages.add(i);
+        chip.classList.toggle('selected');
+        updateCustomPreview();
+      };
+      grid.appendChild(chip);
+    }
+    updateCustomPreview();
+  }
+
+  function updateCustomPreview() {
+    const n = customSelectedPages.size;
+    document.getElementById('customPreview').innerHTML = n
+      ? `已選取 <span class="gold">${n} 頁</span>，將合併為一份新文件`
+      : '點擊下方頁碼勾選要切出的頁面';
+    document.getElementById('btnSplitCustom').disabled = n === 0;
+  }
+
+  async function splitCustom() {
+    if (!pdfBytes || customSelectedPages.size === 0) return;
+    const pages = Array.from(customSelectedPages).sort((a, b) => a - b);
+    const label = pages.length <= 5 ? pages.join(',') : `${pages[0]}-etc(${pages.length}p)`;
+
+    showLoading(`擷取 ${pages.length} 頁…`);
+    try {
+      const lib = await loadPDFLib();
+      const srcDoc = await lib.PDFDocument.load(pdfBytes);
+      const newDoc = await lib.PDFDocument.create();
+      const copied = await newDoc.copyPages(srcDoc, pages.map(p => p - 1));
+      copied.forEach(p => newDoc.addPage(p));
+      const bytes = await newDoc.save();
+      const outName = `${stripExt(currentFileName)}_custom_${label}.pdf`;
+      downloadBlob(bytes, outName);
+      if (document.getElementById('syncToLibrary').checked) {
+        await saveToLibrary(outName, pages.length, bytes);
+      }
+      hideLoading();
+      showToast(`已下載 ${pages.length} 頁` + (document.getElementById('syncToLibrary').checked ? '（已加入書庫）' : ''), 'success');
+    } catch (err) {
+      hideLoading();
+      showToast('切割失敗：' + err.message, 'error');
+    }
+  }
+  window.splitCustom = splitCustom;
+
+  // ===== Screenshot Crop =====
+  let cropActive = false;
+  let cropStart = null;
+  let cropOverlay = null;
+  let cropRect = null;
+
+  window.startCrop = function() {
+    if (!pdfDoc || cropActive) return;
+    cropActive = true;
+    const canvasWrap = document.getElementById('canvas-wrapper') || document.querySelector('.reader-area');
+    const pageCanvas = document.getElementById('pdf-canvas');
+    if (!pageCanvas) return;
+
+    // Create overlay on top of the canvas
+    cropOverlay = document.createElement('div');
+    cropOverlay.className = 'crop-overlay';
+    pageCanvas.parentElement.style.position = 'relative';
+    pageCanvas.parentElement.appendChild(cropOverlay);
+
+    cropRect = document.createElement('div');
+    cropRect.className = 'crop-rect';
+    cropOverlay.appendChild(cropRect);
+    cropRect.style.display = 'none';
+
+    showToast('拖拉選取截圖區域', 'info');
+
+    cropOverlay.onmousedown = function(e) {
+      const rect = cropOverlay.getBoundingClientRect();
+      cropStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      cropRect.style.display = 'block';
+      cropRect.style.left = cropStart.x + 'px';
+      cropRect.style.top = cropStart.y + 'px';
+      cropRect.style.width = '0px';
+      cropRect.style.height = '0px';
+    };
+
+    cropOverlay.onmousemove = function(e) {
+      if (!cropStart) return;
+      const rect = cropOverlay.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const left = Math.min(cropStart.x, x);
+      const top = Math.min(cropStart.y, y);
+      const w = Math.abs(x - cropStart.x);
+      const h = Math.abs(y - cropStart.y);
+      cropRect.style.left = left + 'px';
+      cropRect.style.top = top + 'px';
+      cropRect.style.width = w + 'px';
+      cropRect.style.height = h + 'px';
+    };
+
+    cropOverlay.onmouseup = function(e) {
+      if (!cropStart) return;
+      const rect = cropOverlay.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const left = Math.min(cropStart.x, x);
+      const top = Math.min(cropStart.y, y);
+      const w = Math.abs(x - cropStart.x);
+      const h = Math.abs(y - cropStart.y);
+      cropStart = null;
+
+      if (w < 10 || h < 10) {
+        cancelCrop();
+        return;
+      }
+
+      // Show confirm toolbar
+      const toolbar = document.createElement('div');
+      toolbar.className = 'crop-toolbar';
+      toolbar.innerHTML = `
+        <button class="btn btn-gold" onclick="window.confirmCrop(${left},${top},${w},${h})">存入書庫</button>
+        <button class="btn" onclick="window.cancelCrop()">取消</button>
+      `;
+      cropRect.style.pointerEvents = 'auto';
+      cropRect.appendChild(toolbar);
+      cropOverlay.onmousedown = null;
+      cropOverlay.onmousemove = null;
+      cropOverlay.onmouseup = null;
+    };
+  };
+
+  window.confirmCrop = async function(left, top, w, h) {
+    const pageCanvas = document.getElementById('pdf-canvas');
+    if (!pageCanvas) { cancelCrop(); return; }
+
+    // Map overlay coords to canvas coords
+    const overlayRect = cropOverlay.getBoundingClientRect();
+    const canvasRect = pageCanvas.getBoundingClientRect();
+    const scaleX = pageCanvas.width / canvasRect.width;
+    const scaleY = pageCanvas.height / canvasRect.height;
+    const offX = canvasRect.left - overlayRect.left;
+    const offY = canvasRect.top - overlayRect.top;
+
+    const cx = (left - offX) * scaleX;
+    const cy = (top - offY) * scaleY;
+    const cw = w * scaleX;
+    const ch = h * scaleY;
+
+    // Crop from canvas
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = cw;
+    cropCanvas.height = ch;
+    const ctx = cropCanvas.getContext('2d');
+    ctx.drawImage(pageCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+
+    try {
+      const blob = await new Promise(resolve => cropCanvas.toBlob(resolve, 'image/png'));
+      const noteName = `${stripExt(currentFileName)}_p${currentPage}_crop_${Date.now()}.png`;
+      const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
+      const entry = await saveFileEntry({
+        name: noteName,
+        type: 'png',
+        size: blob.size,
+        pages: 1,
+      });
+      await saveFileBlob(entry.id, blob);
+      showToast('截圖已存入書庫', 'success');
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+      }
+    } catch (err) {
+      showToast('儲存失敗：' + err.message, 'error');
+    }
+    cancelCrop();
+  };
+
+  window.cancelCrop = function() {
+    cropActive = false;
+    cropStart = null;
+    if (cropOverlay) { cropOverlay.remove(); cropOverlay = null; }
+    cropRect = null;
+  };
+  function cancelCrop() { window.cancelCrop(); }
 
   function downloadCurrent() {
     if (!pdfBytes) return;
@@ -1775,6 +2107,144 @@
   function formatDate(ts) {
     const d = new Date(ts);
     return `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
+  }
+
+  // ===== Bookmarks (localStorage) =====
+  let bookmarks = [];
+
+  function getBookmarkKey(fileId) {
+    return 'akasha-bookmarks-' + (fileId || 'unknown');
+  }
+
+  function loadBookmarks(fileId) {
+    try {
+      bookmarks = JSON.parse(localStorage.getItem(getBookmarkKey(fileId)) || '[]');
+    } catch {
+      bookmarks = [];
+    }
+    renderBookmarks();
+    updateBookmarkButton();
+  }
+
+  function saveBookmarks() {
+    if (!currentFileId) return;
+    localStorage.setItem(getBookmarkKey(currentFileId), JSON.stringify(bookmarks));
+  }
+
+  function isPageBookmarked(page) {
+    return bookmarks.some(b => b.page === page);
+  }
+
+  function addBookmark(page, note) {
+    if (isPageBookmarked(page)) return;
+    const bm = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      fileId: currentFileId,
+      page: page,
+      note: note || '',
+      createdAt: Date.now(),
+    };
+    bookmarks.push(bm);
+    bookmarks.sort((a, b) => a.page - b.page);
+    saveBookmarks();
+    renderBookmarks();
+    updateBookmarkButton();
+  }
+
+  function removeBookmark(id) {
+    bookmarks = bookmarks.filter(b => b.id !== id);
+    saveBookmarks();
+    renderBookmarks();
+    updateBookmarkButton();
+  }
+
+  function updateBookmarkButton() {
+    const btn = document.getElementById('btnBookmark');
+    if (!btn) return;
+    const active = isPageBookmarked(currentPage);
+    btn.classList.toggle('btn-bookmark-active', active);
+    btn.title = active ? '移除書籤' : '加入書籤';
+  }
+
+  window.toggleBookmark = function() {
+    if (!pdfDoc || !currentFileId) return;
+    if (isPageBookmarked(currentPage)) {
+      const bm = bookmarks.find(b => b.page === currentPage);
+      if (bm) removeBookmark(bm.id);
+    } else {
+      // Show the add form in the bookmarks tab
+      switchTab('bookmarks');
+      const form = document.getElementById('bookmarkAddForm');
+      const noteInput = document.getElementById('bookmarkNoteInput');
+      form.style.display = '';
+      noteInput.value = '';
+      noteInput.placeholder = `p. ${currentPage} 備註（可留空）`;
+      noteInput.focus();
+    }
+  };
+
+  window.confirmAddBookmark = function() {
+    if (!pdfDoc || !currentFileId) return;
+    const noteInput = document.getElementById('bookmarkNoteInput');
+    const note = (noteInput.value || '').trim();
+    addBookmark(currentPage, note);
+    document.getElementById('bookmarkAddForm').style.display = 'none';
+    noteInput.value = '';
+    showToast(`已標記 p. ${currentPage}`, 'success');
+  };
+
+  // Allow Enter key to confirm bookmark
+  document.getElementById('bookmarkNoteInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      window.confirmAddBookmark();
+    }
+  });
+
+  function renderBookmarks() {
+    const list = document.getElementById('bookmark-list');
+    const empty = document.getElementById('bookmarks-empty');
+    const form = document.getElementById('bookmarkAddForm');
+
+    if (!currentFileId || !pdfDoc) {
+      empty.style.display = '';
+      empty.textContent = '開啟 PDF 後可加入書籤';
+      list.innerHTML = '';
+      if (form) form.style.display = 'none';
+      return;
+    }
+
+    if (bookmarks.length === 0) {
+      empty.style.display = '';
+      empty.innerHTML = '尚無書籤<br>點擊頂部 ★ 按鈕標記當前頁';
+      list.innerHTML = '';
+      return;
+    }
+
+    empty.style.display = 'none';
+    list.innerHTML = bookmarks.map(bm => `
+      <div class="bookmark-item" data-id="${escapeHtml(bm.id)}" data-page="${bm.page}" title="跳至 p. ${bm.page}">
+        <span class="bookmark-item-page">p. ${bm.page}</span>
+        <span class="bookmark-item-note">${escapeHtml(bm.note) || '<span style="color:var(--text-tertiary);font-style:italic">無備註</span>'}</span>
+        <button class="bookmark-item-remove" title="刪除書籤">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.bookmark-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const p = parseInt(el.dataset.page);
+        if (p >= 1 && p <= totalPages) {
+          currentPage = p;
+          renderPage();
+        }
+      });
+      el.querySelector('.bookmark-item-remove').addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeBookmark(el.dataset.id);
+      });
+    });
   }
 
   // Initial library render

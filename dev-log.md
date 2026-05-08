@@ -1,5 +1,53 @@
 # Akasha Library — Dev Log
 
+## 2026-05-08 (d)：Phase 2 — PDF Reader 補強（書籤 / 切割 / 截圖）
+
+### 2-A 書籤功能
+
+`modules/pdf-reader/index.html` 新增書籤系統：
+
+| 項目 | 說明 |
+|------|------|
+| 側欄 Tab | 新增「Mark · 書籤」為第 4 個 tab |
+| Topbar 按鈕 | 書籤旗幟圖標，PDF 載入後顯示，已標記時金色填充 |
+| 新增書籤 | 點按鈕 → 切換到書籤 tab → 備註輸入框 → 加入 |
+| 書籤列表 | 按頁碼排序，顯示頁碼 + 備註，點擊跳頁 |
+| 刪除 | 每筆書籤右側 × 按鈕，hover 顯示 |
+| 持久化 | localStorage `akasha-bookmarks-{fileId}` |
+
+新增函式：`loadBookmarks()` / `saveBookmarks()` / `addBookmark()` / `removeBookmark()` / `renderBookmarks()` / `updateBookmarkButton()` / `toggleBookmark()` / `confirmAddBookmark()`
+
+### 2-B 自訂選擇切割
+
+補完 Custom 模式 placeholder：
+
+| 項目 | 說明 |
+|------|------|
+| 頁碼網格 | `custom-page-grid`，`auto-fill` 排列，每頁一個 chip |
+| 選取 | 點擊 chip 切換選取狀態，金色高亮 |
+| 預覽 | 動態顯示已選頁數 |
+| 執行 | pdf-lib 合併選取頁面，下載並可選同步書庫 |
+
+新增函式：`renderCustomPageGrid()` / `updateCustomPreview()` / `splitCustom()`
+
+新增 CSS：`.custom-page-grid` / `.custom-page-chip` / `.custom-page-chip.selected`
+
+### 2-C 截圖框選
+
+| 項目 | 說明 |
+|------|------|
+| Topbar 按鈕 | 框選圖標，PDF 載入後顯示 |
+| 操作流程 | 點按鈕 → crosshair 游標 → 拖拉選區 → 確認/取消 toolbar |
+| 截圖 | Canvas `drawImage` 裁切 → `toBlob('image/png')` |
+| 存入書庫 | `saveFileEntry` + `saveFileBlob`，檔名含頁碼和時間戳 |
+| 座標映射 | overlay → canvas 座標轉換（考慮縮放比例） |
+
+新增函式：`startCrop()` / `confirmCrop()` / `cancelCrop()`
+
+新增 CSS：`.crop-overlay` / `.crop-rect` / `.crop-toolbar`
+
+---
+
 ## 2026-05-08 (c)：Phase 1 — App Shell 基礎重構完成
 
 ### 1-A Header 雙層化
