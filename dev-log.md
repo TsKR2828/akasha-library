@@ -1,5 +1,36 @@
 # Akasha Library — Dev Log
 
+## 2026-05-08 (e)：Phase 3-A — 零韻面板 UI 抽出
+
+將 AI 圖書館員面板從 `modules/pdf-reader/index.html` 抽出，掛到 App Shell `index.html` 作為獨立元件。
+
+### 變更摘要
+
+| 項目 | 說明 |
+|------|------|
+| CSS | ~150 行 AI 面板樣式（`.ai-panel` 全家族）加入 App Shell `<style>` |
+| HTML | `<aside class="ai-panel">` 整組（立繪 / 對話框 / Token 計 / 輸入列）加到 `</main>` 之後 |
+| JS | `toggleAIPanel()` / `togglePortrait()` / `setAIMode()` / `aiAdvance()` / `sendAIMessage()` / `startTypewriter()` / `updateAIContextBadge()` |
+| 按鈕 | 「召喚圖書館員」從 `alert()` placeholder 改為實際開關面板 |
+| Context | 切換模組時 `aiPageBadge` 自動更新（`※ PDF 閱讀器` / `※ 總覽` 等） |
+| 回應 | 暫以隨機提示回應（Phase 3-B 接入 LLM） |
+| 手機 | `@media ≤768px` 底部上拉面板（`position: fixed; height: 60vh`） |
+| SVG ID | 避免與 PDF Reader 衝突，gradient ID 改為 `aiBg` / `aiCandle` |
+| 圖片 | `assets/images/librian.png`（根目錄相對路徑） |
+
+### 功能驗證
+
+- [x] 面板開關動畫（340px 滑入/滑出）
+- [x] 按鈕文字同步（「召喚圖書館員」↔「圖書館員 ●」）
+- [x] 立繪收合/展開
+- [x] 模式 tab 切換（文字/語音/人設）
+- [x] 對話打字機效果 + 點擊跳過
+- [x] 送訊息 → 隨機 placeholder 回應
+- [x] 模組切換 badge 更新
+- [x] 零 console error
+
+---
+
 ## 2026-05-08 (d)：Phase 2 — PDF Reader 補強（書籤 / 切割 / 截圖）
 
 ### 2-A 書籤功能

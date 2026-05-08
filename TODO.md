@@ -39,10 +39,28 @@
 
 ---
 
+## 已完成（Phase 2）
+
+### 2-A 書籤功能 ✅
+### 2-B 自訂選擇切割 ✅
+### 2-C 截圖框選 ✅
+
+## 已完成（Phase 3-A）
+
+### 3-A 零韻面板 UI 抽出 ✅
+- [x] AI 面板 CSS / HTML 從 PDF Reader 抽到 App Shell index.html
+- [x] 召喚圖書館員按鈕改為實際開關面板
+- [x] 立繪 / 對話框 / 打字機 / Token 計 / 輸入列
+- [x] 模組切換時 context badge 自動更新
+- [x] 手機版底部上拉面板
+- [x] 暫用 placeholder 回應（Phase 3-B 接 LLM）
+
+---
+
 ## 待做
 
-- Phase 2：PDF Reader 補強（書籤 / 切割 / 截圖框選 / OCR）
-- Phase 3：零韻面板（UI 抽出 / Context 切換 / 人設 / 對話 / 計費）
+- Phase 2-D：OCR 文字摘錄
+- Phase 3-B~F：零韻面板（Context 切換 / 人設 / 對話紀錄 / 計費 / 預寫回應）
 - Phase 4：Code & Data 整合（零韻接入 / 自動偵測表格）
 - Phase 5：Table Forge 整合（零韻接入 / Script Editor 橋）
 - Phase 6：Script Editor 接口 + 版權邊界
