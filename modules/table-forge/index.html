@@ -306,24 +306,49 @@
 
     #export-preview:empty { display: none; }
 
-    .toast {
+    .toast-container {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--navy-light);
-      border: 1px solid var(--gold-dim);
-      color: var(--gold);
-      padding: 8px 18px;
-      border-radius: var(--r-card);
-      font-size: 13px;
-      z-index: 100;
-      opacity: 0;
-      transition: opacity 0.2s;
+      top: 12px;
+      right: 12px;
+      z-index: 9999;
       pointer-events: none;
     }
+    .toast {
+      background: var(--navy-light);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--r-card);
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--gold);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 300ms, transform 300ms;
+      margin-bottom: 6px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast .toast-check { color: #6fcf97; margin-right: 4px; }
 
-    .toast.show { opacity: 1; }
+    /* Mobile popover */
+    .mobile-popover {
+      position: fixed;
+      z-index: 9999;
+      background: var(--navy-light);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--r-card);
+      padding: 8px 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 220px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 150ms, transform 150ms;
+    }
+    .mobile-popover.show { opacity: 1; transform: translateY(0); }
+    .mobile-popover .pop-label { color: var(--gold); font-weight: 600; display: block; margin-bottom: 2px; }
   </style>
 </head>
 <body>
@@ -331,9 +356,9 @@
   <header>
     <h1>Table Forge</h1>
     <div class="header-actions">
-      <button class="btn btn--gold" id="btn-toggle-import">匯入</button>
-      <button class="btn btn--gold" id="btn-toggle-export" disabled>匯出</button>
-      <button class="btn btn--danger" id="btn-clear" disabled>清除</button>
+      <button class="btn btn--gold" id="btn-toggle-import" title="貼上或開啟檔案匯入表格資料">匯入</button>
+      <button class="btn btn--gold" id="btn-toggle-export" disabled title="將表格匯出為 Markdown、JSON 或 CSV">匯出</button>
+      <button class="btn btn--danger" id="btn-clear" disabled title="清除目前表格所有資料">清除</button>
     </div>
   </header>
 
@@ -371,9 +396,67 @@
   </div>
 
   <!-- Toast -->
-  <div class="toast" id="toast"></div>
+  <div class="toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
+  <script>
+    // Toast system (shared pattern with Code & Data)
+    function showToast(text, duration) {
+      duration = duration || 2500;
+      var container = document.getElementById('toastContainer');
+      var el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = '<span class="toast-check">✓</span> ' + text;
+      container.appendChild(el);
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { el.classList.add('show'); });
+      });
+      setTimeout(function() {
+        el.classList.remove('show');
+        setTimeout(function() { el.remove(); }, 350);
+      }, duration);
+    }
+    window.showToast = showToast;
+
+    // Mobile popover (long press)
+    var popoverEl = null;
+    var longPressTimer = null;
+    function showPopover(btn) {
+      var title = btn.getAttribute('title');
+      if (!title) return;
+      if (!popoverEl) {
+        popoverEl = document.createElement('div');
+        popoverEl.className = 'mobile-popover';
+        document.body.appendChild(popoverEl);
+      }
+      var label = btn.textContent.trim();
+      popoverEl.innerHTML = '<span class="pop-label">' + label + '</span>' + title;
+      var rect = btn.getBoundingClientRect();
+      popoverEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 240)) + 'px';
+      popoverEl.style.top = (rect.bottom + 6) + 'px';
+      requestAnimationFrame(function() { popoverEl.classList.add('show'); });
+    }
+    function hidePopover() {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      if (popoverEl) popoverEl.classList.remove('show');
+    }
+    // Wire long-press to header buttons with titles
+    document.addEventListener('DOMContentLoaded', function() {
+      var buttons = document.querySelectorAll('header .btn, header .btn--gold, header .btn--danger');
+      buttons.forEach(function(btn) {
+        if (!btn.getAttribute('title')) return;
+        btn.addEventListener('touchstart', function(e) {
+          longPressTimer = setTimeout(function() {
+            e.preventDefault();
+            showPopover(btn);
+          }, 500);
+        }, { passive: false });
+        btn.addEventListener('touchend', hidePopover);
+        btn.addEventListener('touchcancel', hidePopover);
+        btn.addEventListener('touchmove', hidePopover);
+      });
+    });
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
   <script type="module">
     import './table-ui.js';

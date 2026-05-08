@@ -308,6 +308,29 @@ body { display: flex; }
   display: flex; align-items: center; gap: 8px;
 }
 
+/* Summon Librarian button */
+.btn-summon {
+  font-family: var(--font-serif-tc);
+  font-size: 12.5px;
+  letter-spacing: 0.12em;
+  padding: 7px 16px;
+  border-radius: var(--r-soft);
+  border: 1px solid var(--gold-line);
+  background: linear-gradient(180deg, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.05) 100%);
+  color: var(--gold);
+  cursor: pointer;
+  display: flex; align-items: center; gap: 7px;
+  transition: all 200ms;
+  white-space: nowrap;
+}
+.btn-summon:hover {
+  background: linear-gradient(180deg, rgba(212,175,55,0.28) 0%, rgba(212,175,55,0.12) 100%);
+  border-color: var(--gold);
+  color: var(--cream);
+  box-shadow: 0 0 12px rgba(212,175,55,0.15);
+}
+.btn-summon svg { flex-shrink: 0; }
+
 /* Buttons */
 .btn {
   font-family: var(--font-serif-tc);
@@ -653,6 +676,9 @@ body { display: flex; }
   .ledger-header > :nth-child(5),
   .ledger-row > :nth-child(4),
   .ledger-row > :nth-child(5) { display: none; }
+  .btn-summon span { display: none; }
+  .btn-summon { padding: 7px 10px; }
+  .topbar { padding: 0 16px; }
 }
 </style>
 </head>
@@ -790,20 +816,16 @@ body { display: flex; }
   <div class="topbar" id="topbar">
     <div class="topbar-brass"></div>
     <div class="topbar-info">
-      <div class="topbar-breadcrumb" id="topbar-breadcrumb">Akasha Library</div>
+      <div class="topbar-breadcrumb" id="topbar-breadcrumb">AKASHA LIBRARY</div>
       <div class="topbar-title">
         <span id="topbar-title">總覽</span>
         <span class="topbar-subtitle" id="topbar-subtitle">&middot; Overview</span>
       </div>
     </div>
     <div class="topbar-actions">
-      <button class="btn" id="btn-import" onclick="importFile()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
-        匯入
-      </button>
-      <button class="btn btn-gold" id="btn-new" onclick="newFile()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        新建
+      <button class="btn-summon" id="btn-summon" onclick="summonLibrarian()" title="召喚 AI 圖書館員「零韻」">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
+        <span>召喚圖書館員</span>
       </button>
     </div>
   </div>
@@ -967,12 +989,16 @@ body { display: flex; }
   };
 
   var viewTitles = {
-    'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'Akasha Library' },
-    'personal': { title: '個人書庫', subtitle: 'My Library', breadcrumb: 'Akasha Library' },
-    'public': { title: '公共書庫', subtitle: 'Public Stacks', breadcrumb: 'Akasha Library' },
+    'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'AKASHA LIBRARY' },
+    'personal': { title: '個人書庫', subtitle: 'My Library', breadcrumb: 'AKASHA LIBRARY \xBB LIBRARY' },
+    'public': { title: '公共書庫', subtitle: 'Public Stacks', breadcrumb: 'AKASHA LIBRARY \xBB LIBRARY' },
   };
 
-  var MODULES_WITH_OWN_ACTIONS = { 'table-forge': 1, 'pdf-reader': 1, 'ai-settings': 1 };
+  // Phase 1-A: 召喚圖書館員 placeholder (Phase 3 接入)
+  function summonLibrarian() {
+    alert('圖書館員功能將在 Phase 3 上線。敬請期待！');
+  }
+  window.summonLibrarian = summonLibrarian;
 
   // Clock & greeting
   function updateClock() {
@@ -1002,8 +1028,6 @@ body { display: flex; }
     titleEl.textContent = info.title;
     subtitleEl.textContent = info.subtitle ? '· ' + info.subtitle : '';
     breadcrumbEl.textContent = info.breadcrumb;
-    var actions = document.querySelector('.topbar-actions');
-    if (actions) actions.style.display = '';
     if (view === 'dashboard' || view === 'personal') {
       dashboard.style.display = '';
       frame.classList.remove('active');
@@ -1027,9 +1051,7 @@ body { display: flex; }
     frame.classList.add('active');
     titleEl.textContent = mod.title;
     subtitleEl.textContent = mod.subtitle ? '· ' + mod.subtitle : '';
-    breadcrumbEl.textContent = 'Akasha Library · Tools';
-    var actions = document.querySelector('.topbar-actions');
-    if (actions) actions.style.display = MODULES_WITH_OWN_ACTIONS[name] ? 'none' : '';
+    breadcrumbEl.textContent = 'AKASHA LIBRARY \xBB TOOLS \xBB ' + mod.title;
   }
 
   // File import (basic — no storage dependency)

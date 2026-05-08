@@ -1,5 +1,115 @@
 # Akasha Library — Dev Log
 
+## 2026-05-08 (c)：Phase 1 — App Shell 基礎重構完成
+
+### 1-A Header 雙層化
+
+`index.html` topbar 重構：
+
+| 項目 | 說明 |
+|------|------|
+| 麵包屑更新 | `AKASHA LIBRARY » TOOLS » 模組名`，隨模組切換動態更新 |
+| 召喚圖書館員按鈕 | 金色星形圖標 + 文字，所有模組中始終顯示（Phase 3 接入） |
+| 移除匯入/新建 | 從 App Shell topbar 移除，各模組已有自己的匯入功能 |
+| 移除 MODULES_WITH_OWN_ACTIONS | 不再隱藏/顯示 topbar-actions，召喚按鈕永遠可見 |
+| 手機 RWD | `.btn-summon span` 隱藏文字只留圖標 |
+
+新增 CSS：`.btn-summon` + `.btn-summon:hover`
+
+### 1-C HINTS 聯動系統（Code & Data Reader）
+
+`modules/markdown/index.html` 新增 HINTS 分區：
+
+| 區塊 | 說明 |
+|------|------|
+| 上半段 | 固定格式說明（`.fileHint`），不受操作影響 |
+| 分隔線 | `<hr class="hints-divider">`，有操作紀錄時顯示 |
+| 下半段第一層 | 操作紀錄：✓ 標記 + 相對時間戳（每 10 秒更新） |
+| 下半段第二層 | hover 按鈕說明：滑鼠移到按鈕時即時顯示，移開消失 |
+
+所有 14 個按鈕 click handler 加入 `recordOperation()` 呼叫。
+
+新增函式：`relativeTime()` / `recordOperation()` / `updateOpRecord()` / `showHoverHint()` / `hideHoverHint()` / `initHoverHints()`
+
+新增 CSS：`.hints-divider` / `.hints-lower` / `.hints-op-record` / `.hints-hover-desc`
+
+### 1-D Toast 提示統一
+
+跨模組統一 toast 系統：
+
+| 模組 | 說明 |
+|------|------|
+| Code & Data | `showToast()` — 右上角浮出，300ms 淡入 + 2.5s 顯示 + 淡出移除 |
+| Table Forge | 同一套 `showToast()` 函式，統一樣式 |
+
+新增 CSS（兩模組同步）：`.toast-container` / `.toast` / `.toast.show` / `.toast-check`
+
+### 1-E 手機版 popover
+
+兩模組新增 long press popover：
+
+| 項目 | 說明 |
+|------|------|
+| 觸發 | `touchstart` 500ms 長按 → 顯示 popover 氣泡 |
+| 消失 | `touchend` / `touchcancel` / `touchmove` → 隱藏 |
+| 內容 | 按鈕名稱（金色）+ title 說明文字 |
+| 定位 | 按鈕下方 6px，寬度上限 220px，左右不超出螢幕 |
+
+Table Forge 按鈕新增 `title` 屬性：匯入 / 匯出 / 清除。
+
+新增 CSS（兩模組同步）：`.mobile-popover` / `.mobile-popover.show` / `.pop-label`
+
+---
+
+## 2026-05-08 (b)：Code & Data MVP + index.html 重構 + Enhancement Roadmap
+
+### Code & Data Reader MVP 更新（`0cb742c`）
+
+`modules/markdown/index.html`（+334 行）新增 9 項功能：
+
+| 功能 | 說明 |
+|------|------|
+| 全按鈕 tooltip | 所有 18 個按鈕加上中文 `title`，hover 可看白話說明 |
+| HINTS 文字更新 | .py / .score.json / .json / .md / .txt 五種格式用「說人話」描述 |
+| .txt 停用摘要 | `updateSummaryButton()` 在 `.txt` 模式 disable 匯出摘要 + 隱藏摘要存檔鈕 |
+| 存檔至書庫 | `saveEditedToLibrary()` — 編輯模式下存 blob + entry 到 IndexedDB |
+| 摘要存入書庫 | `saveSummaryToLibrary()` — 產生 `_summary.md` 存入 |
+| Undo / Redo | `editorUndo()` / `editorRedo()` — `document.execCommand` |
+| 變更標示 (Diff) | `showDiff()` — 逐行比對原始 vs 編輯，綠底新增 / 紅底刪除 |
+| 清除標示 | `hideDiff()` — 回到原始碼視圖 |
+| 編輯歷程 | `getHistory()` / `pushHistory()` / `renderHistory()` — localStorage，最多 10 筆 |
+
+新增 CSS：`.btn[disabled]` / `.edit-group` / `.diff-bar` / `.diff-line-added` / `.diff-line-removed` / `.history-panel` / `.history-item`
+
+新增 HTML：`btnSaveToLibrary` / `btnSaveSummaryToLibrary` / `editGroup`（含 btnUndo / btnRedo / btnShowDiff / btnClearDiff）/ `historyPanel`
+
+### index.html 雙層腳本重構（`0cb742c`）
+
+**問題：** `<script type="module">` 在 `file:///` 協議被 CORS 攔截 → 整個 JS 死掉 → 按鈕全部沒反應。
+
+**修法：** 拆成兩層：
+- Layer 1 `<script>`：導航 / 開模組 / 匯入 / 明暗切換（file:// 可用）
+- Layer 2 `<script type="module">`：Auth / Sync / 近日卷帙 / 跨模組訊息（需 HTTP）
+- Auth 在 file:// 下點會提示「需要 HTTP 伺服器」，不會死掉
+
+### README 更新（`0cb742c`）
+
+反映當前五大模組功能，新增 Code & Data Reader 詳細功能清單、Table Forge 架構、PDF AI 圖書館員說明。
+
+### Enhancement Roadmap
+
+讀取 `akasha-enhancement-spec.md`，展開為 6 Phase 執行計畫：
+- Phase 1：App Shell 基礎重構（Header 雙層化 / HINTS 聯動 / Toast / 手機 popover）
+- Phase 2：PDF Reader 補強（書籤 / 切割 / 截圖框選 / OCR）
+- Phase 3：零韻面板（跨模組 AI 圖書館員）
+- Phase 4：Code & Data 整合
+- Phase 5：Table Forge 整合
+- Phase 6：Script Editor 接口 + 版權邊界
+
+建立 `ROADMAP.md` / `TODO.md`，開始 Phase 1 on `feature/cool-stuff` branch。
+
+---
+
 ## 2026-05-08：Table Forge MVP + Edit Mode + 舊試算表移除
 
 ### Table Forge MVP（`767fb3c`, `c0f4884`）

@@ -231,6 +231,104 @@
     .hint-box ul { margin: 6px 0 0; padding-left: 1.25em; }
     .hint-box li { margin: 3px 0; }
 
+    /* HINTS 聯動系統 — upper/lower split */
+    .hints-divider {
+      border: none;
+      border-top: 1px dashed var(--navy-line);
+      margin: 8px 0;
+    }
+    .hints-lower {
+      min-height: 0;
+      transition: opacity 200ms;
+    }
+    .hints-op-record {
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--gold);
+    }
+    .hints-op-record .op-check {
+      color: #6fcf97;
+      margin-right: 2px;
+    }
+    .hints-op-record .op-time {
+      color: var(--text-tertiary);
+      font-size: 10.5px;
+      margin-left: 4px;
+    }
+    .hints-hover-desc {
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .hints-hover-desc .hover-label {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .hints-hover-desc .hover-label::before {
+      content: '▸ ';
+      color: var(--gold);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 9999;
+      pointer-events: none;
+    }
+    .toast {
+      background: var(--navy-light);
+      border: 1px solid var(--gold-line);
+      border-radius: var(--r-card);
+      padding: 8px 16px;
+      font-size: 12px;
+      color: var(--gold);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 300ms, transform 300ms;
+      margin-bottom: 6px;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .toast .toast-check {
+      color: #6fcf97;
+      margin-right: 4px;
+    }
+
+    /* Mobile popover (long press) */
+    .mobile-popover {
+      position: fixed;
+      z-index: 9999;
+      background: var(--navy-light);
+      border: 1px solid var(--gold-line);
+      border-radius: var(--r-card);
+      padding: 8px 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 220px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 150ms, transform 150ms;
+    }
+    .mobile-popover.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .mobile-popover .pop-label {
+      color: var(--gold);
+      font-weight: 600;
+      display: block;
+      margin-bottom: 2px;
+    }
+
     .badge-row {
       display: flex;
       flex-wrap: wrap;
@@ -650,7 +748,14 @@
 
       <section class="card">
         <div class="card-title">Hints</div>
-        <div class="card-body hint-box" id="fileHint"></div>
+        <div class="card-body hint-box">
+          <div id="fileHint"></div>
+          <hr class="hints-divider" id="hintsDivider" style="display:none">
+          <div class="hints-lower" id="hintsLower">
+            <div class="hints-op-record" id="hintsOpRecord"></div>
+            <div class="hints-hover-desc" id="hintsHoverDesc"></div>
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -685,6 +790,7 @@
       </section>
     </main>
   </div>
+  <div class="toast-container" id="toastContainer"></div>
 
   <script>
     // ═══════════════════════════════════════════
@@ -712,6 +818,15 @@
     const tabsEl = document.getElementById("tabs");
     const rawEditor = document.getElementById("rawEditor");
     const sheetsGroup = document.getElementById("sheetsGroup");
+
+    // HINTS 聯動
+    const hintsDivider = document.getElementById("hintsDivider");
+    const hintsOpRecord = document.getElementById("hintsOpRecord");
+    const hintsHoverDesc = document.getElementById("hintsHoverDesc");
+    const toastContainer = document.getElementById("toastContainer");
+    let lastOpTime = null;
+    let lastOpText = "";
+    let opTimerInterval = null;
 
     const views = {
       empty: document.getElementById("emptyView"),
@@ -770,6 +885,107 @@
         s = s.replace(`@@RAWHTML${i}@@`, sanitizeAnchor(html));
       });
       return s;
+    }
+
+    // ═══════════════════════════════════════════
+    //  HINTS 聯動 + TOAST
+    // ═══════════════════════════════════════════
+    function relativeTime(ts) {
+      const diff = Math.floor((Date.now() - ts) / 1000);
+      if (diff < 5) return '剛剛';
+      if (diff < 60) return diff + ' 秒前';
+      if (diff < 3600) return Math.floor(diff / 60) + ' 分鐘前';
+      return Math.floor(diff / 3600) + ' 小時前';
+    }
+
+    function recordOperation(text) {
+      lastOpText = text;
+      lastOpTime = Date.now();
+      updateOpRecord();
+      hintsDivider.style.display = '';
+      if (opTimerInterval) clearInterval(opTimerInterval);
+      opTimerInterval = setInterval(updateOpRecord, 10000);
+      showToast(text);
+    }
+
+    function updateOpRecord() {
+      if (!lastOpTime) { hintsOpRecord.innerHTML = ''; return; }
+      hintsOpRecord.innerHTML =
+        '<span class="op-check">✓</span> ' +
+        escapeHtml(lastOpText) +
+        '<span class="op-time">（' + relativeTime(lastOpTime) + '）</span>';
+    }
+
+    function showHoverHint(label, desc) {
+      if (!label) { hintsHoverDesc.innerHTML = ''; return; }
+      if (lastOpTime || label) hintsDivider.style.display = '';
+      hintsHoverDesc.innerHTML =
+        '<span class="hover-label">' + escapeHtml(label) + '</span><br>' +
+        escapeHtml(desc);
+    }
+
+    function hideHoverHint() {
+      hintsHoverDesc.innerHTML = '';
+    }
+
+    function showToast(text, duration) {
+      duration = duration || 2500;
+      const el = document.createElement('div');
+      el.className = 'toast';
+      el.innerHTML = '<span class="toast-check">✓</span> ' + escapeHtml(text);
+      toastContainer.appendChild(el);
+      requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+      setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 350);
+      }, duration);
+    }
+
+    // Mobile popover
+    let popoverEl = null;
+    let longPressTimer = null;
+
+    function showPopover(btn) {
+      const title = btn.getAttribute('title');
+      if (!title) return;
+      if (!popoverEl) {
+        popoverEl = document.createElement('div');
+        popoverEl.className = 'mobile-popover';
+        document.body.appendChild(popoverEl);
+      }
+      const label = btn.textContent.trim();
+      popoverEl.innerHTML = '<span class="pop-label">' + escapeHtml(label) + '</span>' + escapeHtml(title);
+      const rect = btn.getBoundingClientRect();
+      popoverEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 240)) + 'px';
+      popoverEl.style.top = (rect.bottom + 6) + 'px';
+      requestAnimationFrame(() => popoverEl.classList.add('show'));
+    }
+
+    function hidePopover() {
+      if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+      if (popoverEl) popoverEl.classList.remove('show');
+    }
+
+    function initHoverHints() {
+      const buttons = document.querySelectorAll('header .btn, header .btn--gold, header .btn--sheets, header .file-label');
+      buttons.forEach(btn => {
+        const title = btn.getAttribute('title');
+        if (!title) return;
+        const label = btn.textContent.trim();
+        // Desktop hover → HINTS lower section
+        btn.addEventListener('mouseenter', () => showHoverHint(label, title));
+        btn.addEventListener('mouseleave', hideHoverHint);
+        // Mobile long press → popover
+        btn.addEventListener('touchstart', (e) => {
+          longPressTimer = setTimeout(() => {
+            e.preventDefault();
+            showPopover(btn);
+          }, 500);
+        }, { passive: false });
+        btn.addEventListener('touchend', hidePopover);
+        btn.addEventListener('touchcancel', hidePopover);
+        btn.addEventListener('touchmove', hidePopover);
+      });
     }
 
     // ═══════════════════════════════════════════
@@ -1360,6 +1576,7 @@
       pushHistory(content, "下載新檔");
       state.dirty = false;
       statusEl.textContent = "已下載新檔：" + state.filename;
+      recordOperation("已下載新檔：" + state.filename);
     }
 
     // --- Save to library ---
@@ -1388,6 +1605,7 @@
         state.dirty = false;
         state.content = content;
         statusEl.textContent = "已存入書庫：" + state.filename;
+        recordOperation("已存入書庫：" + state.filename);
         if (window.parent !== window) {
           window.parent.postMessage({ type: "akasha-file-opened", entry }, location.origin);
         }
@@ -1412,6 +1630,7 @@
         });
         await saveFileBlob(entry.id, blob);
         statusEl.textContent = "摘要已存入書庫：" + summaryName;
+        recordOperation("摘要已存入書庫");
         if (window.parent !== window) {
           window.parent.postMessage({ type: "akasha-file-opened", entry }, location.origin);
         }
@@ -1458,6 +1677,7 @@
       showActiveView();
       renderTabs();
       statusEl.textContent = `變更標示：${changed} 行有差異`;
+      recordOperation(`變更標示：${changed} 行有差異`);
     }
 
     function hideDiff() {
@@ -1786,11 +2006,13 @@
     document.getElementById("copyRaw").addEventListener("click", () => {
       copyPlain(state.content);
       statusEl.textContent = "已複製原始內容";
+      recordOperation("已複製原始內容");
     });
 
     document.getElementById("copyView").addEventListener("click", () => {
       copyPlain(getCurrentViewText());
       statusEl.textContent = "已複製目前視圖文字";
+      recordOperation("已複製目前視圖文字");
     });
 
     document.getElementById("downloadText").addEventListener("click", () => {
@@ -1802,12 +2024,14 @@
       }
       download(name, text);
       statusEl.textContent = `已下載：${name}`;
+      recordOperation(`已下載 ${name}`);
     });
 
     document.getElementById("exportSummary").addEventListener("click", () => {
       const base = (state.filename || "summary").replace(/\.[^.]+$/g, "").replace(/[^\w一-龥-]+/g, "_");
       download(`${base}_summary.md`, makeSummary(), "text/markdown");
       statusEl.textContent = "已匯出摘要 .md";
+      recordOperation("已匯出摘要 .md");
     });
 
     // --- Edit mode ---
@@ -1826,6 +2050,7 @@
         renderTabs();
       }
       statusEl.textContent = "已清除變更標示";
+      recordOperation("已清除變更標示");
     });
 
     // --- Sheets export buttons ---
@@ -1834,6 +2059,7 @@
         const html = markdownToHtml(state.content);
         copyPlain(html);
         statusEl.textContent = "已複製 HTML（可貼到 WordPress）";
+        recordOperation("已複製 HTML");
       } catch (e) {
         statusEl.textContent = "複製失敗";
       }
@@ -1847,6 +2073,7 @@
       }
       copyPlain(toTSV(rows));
       statusEl.textContent = "已複製純表格，貼到 Sheets A1";
+      recordOperation("已複製純表格");
     });
 
     document.getElementById("copyRichSheets").addEventListener("click", async () => {
@@ -1854,9 +2081,11 @@
       try {
         await copyRichHtml(richHtml);
         statusEl.textContent = "已複製格式化內容，貼到 Sheets A1";
+        recordOperation("已複製格式化內容");
       } catch (e) {
         copyPlain(htmlToPlainTextTable(richHtml));
         statusEl.textContent = "格式化複製失敗，已改複製純文字表格";
+        recordOperation("已複製純文字表格（fallback）");
       }
     });
 
@@ -1866,10 +2095,12 @@
         await copyRichHtml(richHtml);
         window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
         statusEl.textContent = "已開新 Sheet；到 A1 按 Ctrl+V";
+        recordOperation("已開新 Sheet 並複製內容");
       } catch (e) {
         copyPlain(htmlToPlainTextTable(richHtml));
         window.open("https://sheets.google.com/create", "_blank", "noopener,noreferrer");
         statusEl.textContent = "已改複製純文字；到 A1 貼上";
+        recordOperation("已開新 Sheet（純文字 fallback）");
       }
     });
 
@@ -1888,6 +2119,7 @@
           payload,
         }, "*");
         statusEl.textContent = "已送出至 Table Forge";
+        recordOperation("已送出至 Table Forge");
       } catch (e) {
         console.error("Export failed:", e);
         statusEl.textContent = "匯出失敗：" + e.message;
@@ -1961,6 +2193,9 @@
       renderTabs();
       updateSheetsVisibility();
     }
+
+    // HINTS 聯動 — init hover listeners
+    initHoverHints();
   </script>
 </body>
 </html>
