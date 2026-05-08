@@ -350,6 +350,83 @@
     padding: 4px 10px;
   }
 
+  /* OCR panel */
+  .ocr-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .ocr-panel {
+    background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
+    border: 1px solid var(--gold-dim);
+    border-radius: var(--r-soft);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .ocr-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--navy-line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .ocr-header-title {
+    font-family: var(--font-serif-tc);
+    font-size: 14px;
+    color: var(--gold-bright);
+    flex: 1;
+  }
+  .ocr-header-meta {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+  }
+  .ocr-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    font-family: var(--font-serif-tc);
+    font-size: 13.5px;
+    line-height: 1.85;
+    color: var(--text-primary);
+    letter-spacing: 0.03em;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .ocr-body::selection { background: transparent; }
+  .ocr-body *::selection { background: transparent; }
+  .ocr-empty {
+    color: var(--text-tertiary);
+    font-style: italic;
+    text-align: center;
+    padding: 32px 0;
+  }
+  .ocr-footer {
+    padding: 12px 18px;
+    border-top: 1px solid var(--navy-line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .ocr-footer .ocr-copyright {
+    flex: 1;
+    font-family: var(--font-serif-tc);
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.04em;
+  }
+
   /* ===== CENTER CANVAS ===== */
   .reader-area {
     flex: 1;
@@ -998,6 +1075,10 @@
     <button class="btn" id="btnCrop" onclick="window.startCrop()" style="display:none" title="截圖框選：在頁面上拖拉選取區域存為筆記">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4H2M18 2v4h4M6 22v-4H2M18 22v-4h4M6 6h12v12H6z"/></svg>
     </button>
+    <button class="btn" id="btnOCR" onclick="window.startOCR()" style="display:none" title="文字摘錄：擷取當前頁面文字">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/><path d="M7 10h2M11 10h6M7 14h10"/></svg>
+      摘錄
+    </button>
     <div class="topbar-sep"></div>
     <button class="btn btn-gold" id="btnAI" onclick="toggleAIPanel()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c0-2 2-4 5-4h8c3 0 5 2 5 4v3a9 9 0 01-18 0z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
@@ -1331,7 +1412,8 @@
 
 <script type="module">
   import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry } from '../../core/storage.js';
-  import { extractContextPages, getAISettings, callLLM, buildSystemPrompt, estimateTokens, coinCost, deductCoins } from '../../core/ai.js';
+  import { extractContextPages, extractPageText, getAISettings, callLLM, buildSystemPrompt } from '../../core/ai.js';
+  import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
 
   // ===== PDF.js Setup =====
@@ -1499,6 +1581,7 @@
       document.getElementById('btnDownload').style.display = '';
       document.getElementById('btnBookmark').style.display = '';
       document.getElementById('btnCrop').style.display = '';
+      document.getElementById('btnOCR').style.display = '';
 
       // Update AI panel page badge
       updateAIPageBadge();
@@ -1929,9 +2012,12 @@
       const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
       const entry = await saveFileEntry({
         name: noteName,
-        type: 'png',
+        type: 'crop-screenshot',
         size: blob.size,
         pages: 1,
+        copyrightProtected: true,
+        sourceFile: currentFileName,
+        sourcePage: currentPage,
       });
       await saveFileBlob(entry.id, blob);
       showToast('截圖已存入書庫', 'success');
@@ -1951,6 +2037,121 @@
     cropRect = null;
   };
   function cancelCrop() { window.cancelCrop(); }
+
+  // ===== OCR Text Extraction (Phase 2-D) =====
+  window.startOCR = async function() {
+    if (!pdfDoc) return;
+
+    const settings = getAISettings();
+    const isCoin = settings.mode === 'coin';
+
+    if (isCoin && !hasSufficientBalance(500)) {
+      showToast('月幣不足，無法執行文字摘錄', 'error');
+      return;
+    }
+
+    showToast('正在擷取第 ' + currentPage + ' 頁文字…', 'info');
+
+    try {
+      const text = await extractPageText(pdfDoc, currentPage);
+
+      if (!text || !text.trim()) {
+        showToast('此頁面無可辨識的文字內容（可能為掃描圖片）', 'error');
+        return;
+      }
+
+      const tokens = estimateTokens(text);
+      if (isCoin) {
+        const cost = coinCost(tokens);
+        deductCoins(cost, '文字摘錄 · p' + currentPage);
+      }
+
+      showOCRPanel(text, currentPage, tokens);
+    } catch (err) {
+      showToast('文字擷取失敗：' + err.message, 'error');
+    }
+  };
+
+  function showOCRPanel(text, page, tokens) {
+    closeOCRPanel();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'ocr-overlay';
+    overlay.id = 'ocrOverlay';
+
+    const lines = text.split('\n').map(l => `<p style="margin:0 0 4px">${escapeHtml(l) || '&nbsp;'}</p>`).join('');
+    const settings = getAISettings();
+    const costLabel = settings.mode === 'coin' ? ` · ${coinCost(tokens)} 月幣` : ' · BYOK';
+
+    overlay.innerHTML = `
+      <div class="ocr-panel">
+        <div class="ocr-header">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/><path d="M7 10h2M11 10h6M7 14h10"/></svg>
+          <span class="ocr-header-title">文字摘錄 — 第 ${page} 頁</span>
+          <span class="ocr-header-meta">${tokens} tok${costLabel}</span>
+        </div>
+        <div class="ocr-body" id="ocrBody">${lines}</div>
+        <div class="ocr-footer">
+          <span class="ocr-copyright">為保護智慧財產權，摘錄文字僅供館內閱覽</span>
+          <button class="btn btn-gold" onclick="window.saveOCRToLibrary()">存入書庫</button>
+          <button class="btn" onclick="window.closeOCRPanel()">關閉</button>
+        </div>
+      </div>
+    `;
+
+    const readerArea = document.querySelector('.reader-area');
+    readerArea.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeOCRPanel();
+    });
+
+    const body = overlay.querySelector('#ocrBody');
+    body.addEventListener('copy', blockCopy);
+    body.addEventListener('cut', blockCopy);
+    body.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    overlay.dataset.text = text;
+    overlay.dataset.page = page;
+  }
+
+  function blockCopy(e) {
+    e.preventDefault();
+    showToast('可以做筆記，為保護智慧財產權，不可以帶出館藏喔', 'info');
+  }
+
+  window.closeOCRPanel = function() {
+    const el = document.getElementById('ocrOverlay');
+    if (el) el.remove();
+  };
+  function closeOCRPanel() { window.closeOCRPanel(); }
+
+  window.saveOCRToLibrary = async function() {
+    const overlay = document.getElementById('ocrOverlay');
+    if (!overlay) return;
+
+    const text = overlay.dataset.text;
+    const page = overlay.dataset.page;
+    const noteName = `${stripExt(currentFileName)}_p${page}_ocr.txt`;
+
+    try {
+      const blob = new Blob([text], { type: 'text/plain' });
+      const entry = await saveFileEntry({
+        name: noteName,
+        type: 'ocr-note',
+        size: blob.size,
+        pages: 1,
+        copyrightProtected: true,
+        sourceFile: currentFileName,
+        sourcePage: parseInt(page),
+      });
+      await saveFileBlob(entry.id, blob);
+      showToast('摘錄文字已存入書庫', 'success');
+      closeOCRPanel();
+    } catch (err) {
+      showToast('儲存失敗：' + err.message, 'error');
+    }
+  };
 
   function downloadCurrent() {
     if (!pdfBytes) return;

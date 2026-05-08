@@ -66,7 +66,7 @@ export async function saveFileEntry(entry) {
   const record = {
     id,
     name: entry.name,
-    type: entry.type, // 'md' | 'pdf' | 'xlsx' | 'book'
+    type: entry.type, // 'md' | 'pdf' | 'xlsx' | 'book' | 'ocr-note'
     size: entry.size || 0,
     pages: entry.pages || null,
     lastOpened: entry.lastOpened || now,
@@ -74,6 +74,9 @@ export async function saveFileEntry(entry) {
     createdAt: entry.createdAt || now,
     driveId: entry.driveId || null,
     syncStatus: entry.syncStatus || 'local', // 'local' | 'synced' | 'pending'
+    copyrightProtected: entry.copyrightProtected || false,
+    sourceFile: entry.sourceFile || null,
+    sourcePage: entry.sourcePage || null,
   };
 
   return new Promise((resolve, reject) => {
@@ -238,6 +241,17 @@ export async function deleteEmbeddings(fileId) {
     tx.onerror = (e) => reject(e.target.error);
   });
 }
+
+// ===== Copyright Boundary (Phase 6-A) =====
+
+const PROTECTED_TYPES = new Set(['ocr-note', 'crop-screenshot']);
+
+export function isCopyrightProtected(entry) {
+  if (!entry) return false;
+  return entry.copyrightProtected === true || PROTECTED_TYPES.has(entry.type);
+}
+
+export const COPYRIGHT_WARNING = '可以做筆記，為保護智慧財產權，不可以帶出館藏喔';
 
 /**
  * Export index as JSON (for Drive sync backup)

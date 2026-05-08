@@ -8,11 +8,9 @@
  * and optional proxy mode for coin-based or Anthropic fallback.
  */
 
-// ===== Storage Keys (shared with modules/ai-settings) =====
+// ===== Storage Keys =====
 const SETTINGS_KEY = 'akasha-ai-settings';
 const APIKEY_KEY = 'akasha-ai-apikey';
-const COIN_KEY = 'akasha-coin-balance';
-const USAGE_KEY = 'akasha-coin-usage';
 
 import { buildPersonaCore, getModulePersona } from './persona.js';
 
@@ -347,46 +345,5 @@ async function callViaProxy(settings, systemPrompt, userMessage) {
   return json.content;
 }
 
-// ===== Coin System =====
-
-/**
- * Estimate token count from text (rough heuristic).
- */
-export function estimateTokens(text) {
-  if (!text) return 0;
-  // CJK characters ≈ 0.6 tokens each, English words ≈ 1.3 tokens each
-  const cjk = (text.match(/[一-鿿぀-ゟ゠-ヿ]/g) || []).length;
-  const nonCjk = text.length - cjk;
-  return Math.ceil(cjk * 0.6 + nonCjk * 0.25);
-}
-
-/**
- * Calculate coin cost by token tier.
- */
-export function coinCost(tokens) {
-  if (tokens <= 500) return 1;
-  if (tokens <= 2000) return 3;
-  return 5;
-}
-
-/**
- * Deduct coins and log usage. Returns remaining balance.
- */
-export function deductCoins(amount, description) {
-  let data;
-  try { data = JSON.parse(localStorage.getItem(COIN_KEY) || '{}'); }
-  catch { data = {}; }
-
-  const balance = Math.max(0, (data.balance ?? 100) - amount);
-  data.balance = balance;
-  localStorage.setItem(COIN_KEY, JSON.stringify(data));
-
-  // Log usage
-  let log;
-  try { log = JSON.parse(localStorage.getItem(USAGE_KEY) || '[]'); }
-  catch { log = []; }
-  log.unshift({ amount, description, time: Date.now(), balance });
-  localStorage.setItem(USAGE_KEY, JSON.stringify(log.slice(0, 50)));
-
-  return balance;
-}
+// ===== Coin System (delegated to billing.js) =====
+export { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog, FREE_ALLOWANCE } from './billing.js';

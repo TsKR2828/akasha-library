@@ -1362,6 +1362,9 @@
       updateEditUI();
       updateSummaryButton();
       statusEl.textContent = `已載入：${state.filename}（${state.extension || "文字"}）`;
+      if (hasTableContent()) {
+        showToast("偵測到表格資料，可送到 Table Forge 操作", 4000);
+      }
     }
 
     function updateSheetsVisibility() {
@@ -1426,6 +1429,22 @@
       fileHint.innerHTML = `<h3>${hint.title}</h3><p>${hint.body}</p>`;
     }
 
+    function hasTableContent() {
+      if (!state.content) return false;
+      if (state.mode === "md") {
+        const lines = state.content.replace(/\r\n/g, "\n").split("\n");
+        for (let i = 0; i < lines.length - 1; i++) {
+          if (isTableRow(lines[i]) && isSeparatorRow(lines[i + 1])) return true;
+        }
+        return false;
+      }
+      if (state.mode === "json" && state.parsedJson && !state.jsonError) {
+        const d = state.parsedJson;
+        if (Array.isArray(d) && d.length > 0 && typeof d[0] === "object" && d[0] !== null) return true;
+      }
+      return false;
+    }
+
     function renderChecks() {
       const badges = [];
       if (!state.content) {
@@ -1444,7 +1463,20 @@
       }
       if (state.mode === "md") badges.push(`<span class="badge ok">Markdown 預覽</span>`, `<span class="badge ok">Sheets 匯出可用</span>`);
       if (state.mode === "txt") badges.push(`<span class="badge">純文字閱讀</span>`);
+
+      if (hasTableContent()) {
+        badges.push(`<span class="badge ok table-detect-badge" style="cursor:pointer" title="點擊送到 Table Forge">⚙ 偵測到表格</span>`);
+      }
+
       checkPanel.innerHTML = `<div class="badge-row">${badges.join("")}</div>`;
+
+      const tableBtn = checkPanel.querySelector(".table-detect-badge");
+      if (tableBtn) {
+        tableBtn.addEventListener("click", () => {
+          document.getElementById("exportToSpreadsheet").click();
+        });
+      }
+
       if (state.jsonError) {
         const lineText = state.jsonError.line ? `第 ${state.jsonError.line} 行，第 ${state.jsonError.col} 欄` : "瀏覽器未回傳位置";
         checkPanel.innerHTML += `<div class="error-box" style="margin-top:8px;"><strong>錯誤：</strong>${escapeHtml(state.jsonError.message)}<br>${lineText}</div>`;

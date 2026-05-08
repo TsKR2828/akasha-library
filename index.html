@@ -1302,9 +1302,10 @@ body { display: flex; }
   <!-- Token/Coin Bar -->
   <div class="ai-token-bar">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 7v10M9 9l6 6M9 15l6-6"/></svg>
-    <span>預估 ~ <span id="aiTokenEstimate">0</span> tokens</span>
-    <span class="coins">1 月幣</span>
-    <span class="remain">· 餘 <span id="aiCoins">99</span></span>
+    <span id="aiModeLabel">BYOK</span>
+    <span>~ <span id="aiTokenEstimate">0</span> tok</span>
+    <span class="coins" id="aiCoinCost" style="display:none">0 月幣</span>
+    <span class="remain" id="aiCoinRemain" style="display:none">· 餘 <span id="aiCoins">0</span></span>
   </div>
 
   <!-- Input Row -->
@@ -1771,7 +1772,7 @@ import { getFileEntries, saveFileEntry, getFileBlob } from './core/storage.js';
 import { initAuth, signIn, signOut } from './core/auth.js';
 import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
-import { MSG_TYPES, STORAGE_KEY } from './core/export/bridge.js';
+import { MSG_TYPES, STORAGE_KEY, blocksToTablePayload } from './core/export/bridge.js';
 
 let isAuthed = false;
 
@@ -1824,8 +1825,9 @@ const TYPE_ICONS = {
   xlsx: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>',
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
-const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown' };
+const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT', 'ocr-note': 'OCR', 'crop-screenshot': 'CROP' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'pdf-reader' };
+const COPYRIGHT_TYPES = new Set(['ocr-note', 'crop-screenshot']);
 
 async function renderRecent() {
   const entries = await getFileEntries();
@@ -1843,7 +1845,9 @@ async function renderRecent() {
     const dateStr = `${date.getFullYear()}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}`;
     const sizeStr = f.size ? `${(f.size / 1024).toFixed(1)} KB` : '—';
     const pageStr = f.pages ? `${f.pages} 頁` : '—';
-    return `<div class="ledger-row" onclick="openRecentFile('${f.id}','${mod}')"><div class="ledger-num">${String(i+1).padStart(2,'0')}</div><div class="ledger-title"><span class="ledger-title-icon">${icon}</span>${escapeHtml(f.name)}</div><div class="ledger-format">${label} · ${sizeStr}</div><div class="ledger-time">${dateStr}</div><div class="ledger-mark">${pageStr}</div><div class="ledger-action">—</div></div>`;
+    const isProtected = f.copyrightProtected || COPYRIGHT_TYPES.has(f.type);
+    const lockIcon = isProtected ? '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--gold-dim)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;vertical-align:-1px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>' : '';
+    return `<div class="ledger-row" onclick="openRecentFile('${f.id}','${mod}')"><div class="ledger-num">${String(i+1).padStart(2,'0')}</div><div class="ledger-title"><span class="ledger-title-icon">${icon}</span>${escapeHtml(f.name)}${lockIcon}</div><div class="ledger-format">${label} · ${sizeStr}</div><div class="ledger-time">${dateStr}</div><div class="ledger-mark">${pageStr}</div><div class="ledger-action">${isProtected ? '館內' : '—'}</div></div>`;
   }).join('');
   container.innerHTML = `<div class="recent-ledger"><div class="ledger-header"><div>№</div><div>Title</div><div>Format</div><div>Last Touched</div><div>Mark</div><div></div></div>${rows}</div>`;
 }
@@ -1853,6 +1857,10 @@ window.openRecentFile = async function(fileId, moduleName) {
   const blob = await getFileBlob(fileId);
   const entries = await getFileEntries();
   const entry = entries.find(e => e.id === fileId);
+  if (entry && (entry.copyrightProtected || COPYRIGHT_TYPES.has(entry.type))) {
+    alert('可以做筆記，為保護智慧財產權，不可以帶出館藏喔');
+    return;
+  }
   const filename = entry?.name || 'file';
   openModule(moduleName);
   if (!blob) return;
@@ -1887,10 +1895,22 @@ window.addEventListener('message', async (event) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
     openModule('table-forge');
   }
+  // Phase 5-B: Script Editor → Table Forge bridge
+  if (event.data?.type === MSG_TYPES.SCRIPT_EDITOR_EXPORT_TO_TABLE) {
+    const payload = blocksToTablePayload(event.data.blocks, event.data.filename);
+    if (!payload) return;
+    const frame = document.getElementById('module-frame');
+    if (frame.classList.contains('active') && frame.src.includes('table-forge')) {
+      if (!confirm('Table Forge 中的資料將被取代，是否繼續？')) return;
+    }
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    openModule('table-forge');
+  }
 });
 
 // ===== AI Context Switch (Phase 3-B) + Chat History (Phase 3-D) =====
-import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt, estimateTokens, coinCost, deductCoins } from './core/ai.js';
+import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt } from './core/ai.js';
+import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog } from './core/billing.js';
 import { loadPersona, exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride } from './core/persona.js';
 import { getHistory, addMessage, clearHistory, clearAllHistory } from './core/chat-history.js';
 import { matchPrewritten } from './core/prewritten.js';
@@ -1905,6 +1925,29 @@ window.akashaPersona = { exportPersonaMd, savePersonaOverride, resetPersona, has
 window._getChatHistory = getHistory;
 window.akashaChat = { getHistory, clearHistory, clearAllHistory };
 
+// ===== Token bar UI sync =====
+function syncTokenBar(tokens) {
+  const settings = getAISettings();
+  const modeEl = document.getElementById('aiModeLabel');
+  const costEl = document.getElementById('aiCoinCost');
+  const remainEl = document.getElementById('aiCoinRemain');
+  const coinsEl = document.getElementById('aiCoins');
+  const tokenEl = document.getElementById('aiTokenEstimate');
+
+  if (tokenEl && tokens !== undefined) tokenEl.textContent = tokens;
+
+  const isCoin = settings.mode === 'coin';
+  if (modeEl) modeEl.textContent = isCoin ? '月幣' : 'BYOK';
+  if (costEl) costEl.style.display = isCoin ? '' : 'none';
+  if (remainEl) remainEl.style.display = isCoin ? '' : 'none';
+
+  if (isCoin) {
+    const cost = tokens ? coinCost(tokens) : 0;
+    if (costEl) costEl.textContent = cost + ' 月幣';
+    if (coinsEl) coinsEl.textContent = getBalance();
+  }
+}
+
 // Render initial history on load
 {
   const mod = window.getActiveModule();
@@ -1914,6 +1957,7 @@ window.akashaChat = { getHistory, clearHistory, clearAllHistory };
     const ctx = window.getAIContext();
     window.startTypewriter(ctx.greeting, ctx.role + ' · 月上零韻', ctx.emotion, []);
   }
+  syncTokenBar(0);
 }
 
 let aiLoading = false;
@@ -2005,7 +2049,25 @@ window._aiSendReal = async function() {
     showThinking();
     try {
       const systemPrompt = buildGeneralSystemPrompt();
+      const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
+      syncTokenBar(totalTokens);
+
+      if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
+        removeThinking();
+        window.startTypewriter('月幣不足，無法送出。請至「AI 設定」查看餘額或切換至 BYOK 模式。', speakerLabel, 'thinking', []);
+        aiLoading = false;
+        if (sendBtn) sendBtn.disabled = false;
+        return;
+      }
+
       const response = await callLLM(settings, systemPrompt, text);
+
+      if (settings.mode === 'coin') {
+        const cost = coinCost(totalTokens);
+        deductCoins(cost, '一般 · ' + text.slice(0, 20));
+        syncTokenBar(totalTokens);
+      }
+
       removeThinking();
       window.startTypewriter(response, speakerLabel, 'calm', []);
       addMessage(moduleName, 'assistant', response);
@@ -2046,10 +2108,17 @@ window._aiSendReal = async function() {
       systemPrompt = buildGeneralSystemPrompt();
     }
 
-    // Token estimate
+    // Token estimate + balance check
     const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
-    const tokenEl = document.getElementById('aiTokenEstimate');
-    if (tokenEl) tokenEl.textContent = totalTokens;
+    syncTokenBar(totalTokens);
+
+    if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
+      removeThinking();
+      window.startTypewriter('月幣不足，無法送出。請至「AI 設定」查看餘額或切換至 BYOK 模式。', speakerLabel, 'thinking', []);
+      aiLoading = false;
+      if (sendBtn) sendBtn.disabled = false;
+      return;
+    }
 
     // Call LLM
     const response = await callLLM(settings, systemPrompt, text);
@@ -2057,9 +2126,8 @@ window._aiSendReal = async function() {
     // Coin deduction
     if (settings.mode === 'coin') {
       const cost = coinCost(totalTokens);
-      const remaining = deductCoins(cost, moduleName + ' · ' + text.slice(0, 20));
-      const coinsEl = document.getElementById('aiCoins');
-      if (coinsEl) coinsEl.textContent = remaining;
+      deductCoins(cost, moduleName + ' · ' + text.slice(0, 20));
+      syncTokenBar(totalTokens);
     }
 
     removeThinking();
