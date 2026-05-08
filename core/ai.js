@@ -14,6 +14,8 @@ const APIKEY_KEY = 'akasha-ai-apikey';
 const COIN_KEY = 'akasha-coin-balance';
 const USAGE_KEY = 'akasha-coin-usage';
 
+import { buildPersonaCore, getModulePersona } from './persona.js';
+
 // Proxy URL — set when Workers proxy is deployed (null = direct mode only)
 const PROXY_URL = null;
 
@@ -129,17 +131,14 @@ export function getAISettings() {
 
 /**
  * Build the system prompt for the AI Librarian persona.
+ * All prompt builders read from persona.md via core/persona.js.
  */
 export function buildSystemPrompt(pageContext, currentPage, fileName) {
-  return `${PERSONA_CORE}
+  const moduleDirectives = getModulePersona('pdf-reader');
+  return `${buildPersonaCore()}
 
-## 目前身份
-圖書館員 — 專責 PDF 伴讀與內容問答。
-
-## 核心規則
-- 根據以下提供的 PDF 頁面內容回答使用者的問題。
-- 如果頁面內容中沒有答案，誠實告知「在目前閱覽的頁面範圍中未找到相關資訊」，並建議翻到其他頁面後再詢問。
-- 優先引用原文。
+## 目前身份與職責
+${moduleDirectives}
 
 ## 目前閱讀狀態
 - 書籍：「${fileName}」
@@ -149,23 +148,12 @@ export function buildSystemPrompt(pageContext, currentPage, fileName) {
 ${pageContext}`;
 }
 
-const PERSONA_CORE = `你是「月上零韻」（Tsukiue Rein），阿卡夏圖書館的司書。
-- 以使用者使用的語言回應。
-- 保持圖書館員的知性語氣，但不要過度角色扮演而影響回答品質。
-- 回答要準確、簡潔。`;
-
 export function buildCodeSystemPrompt(fileContent, fileName, fileType) {
-  return `${PERSONA_CORE}
+  const moduleDirectives = getModulePersona('markdown');
+  return `${buildPersonaCore()}
 
-## 目前身份
-手稿解讀員 — 專責分析程式碼、資料檔與文件。
-
-## 核心規則
-- 根據以下提供的檔案內容回答使用者的問題。
-- 若是程式碼（.py .js 等），解釋邏輯、指出潛在問題、提供改進建議。
-- 若是 JSON，分析結構、說明欄位意義、檢查格式正確性。
-- 若是 Markdown，解釋內容結構與重點。
-- 若檔案內容不足以回答，誠實告知。
+## 目前身份與職責
+${moduleDirectives}
 
 ## 目前檔案
 - 檔名：「${fileName}」
@@ -176,16 +164,11 @@ ${fileContent}`;
 }
 
 export function buildTableSystemPrompt(tableData, fileName) {
-  return `${PERSONA_CORE}
+  const moduleDirectives = getModulePersona('table-forge');
+  return `${buildPersonaCore()}
 
-## 目前身份
-資料檢查員 — 專責分析表格資料的完整性與一致性。
-
-## 核心規則
-- 根據以下提供的表格資料回答使用者的問題。
-- 可以檢查空欄位、資料一致性、分佈異常。
-- 可以建議資料清理或補全方式。
-- 若資料不足以回答，誠實告知。
+## 目前身份與職責
+${moduleDirectives}
 
 ## 目前資料
 - 來源：「${fileName || '未命名表格'}」
@@ -195,16 +178,11 @@ ${tableData}`;
 }
 
 export function buildGeneralSystemPrompt() {
-  return `${PERSONA_CORE}
+  const moduleDirectives = getModulePersona('_default');
+  return `${buildPersonaCore()}
 
-## 目前身份
-圖書館員 — 阿卡夏圖書館的總導覽員。
-
-## 核心規則
-- 你目前沒有開啟任何特定檔案。
-- 可以回答關於阿卡夏圖書館功能的問題。
-- 可以引導使用者開啟模組（PDF 閱讀器、Code & Data、Table Forge）。
-- 若使用者詢問特定內容，建議先開啟對應的模組和檔案。`;
+## 目前身份與職責
+${moduleDirectives}`;
 }
 
 // ===== LLM Calls =====

@@ -754,7 +754,8 @@ body { display: flex; }
 
 .ai-dialogue {
   position: relative; margin: 8px 12px 0; padding: 20px 18px 16px;
-  background: rgba(15,18,25,0.92); border: 1px solid var(--gold-line); min-height: 110px;
+  background: rgba(15,18,25,0.92); border: 1px solid var(--gold-line);
+  flex: 1; display: flex; flex-direction: column; min-height: 110px; overflow: hidden;
 }
 .ai-dialogue-ornament {
   position: absolute; top: -1px; left: -1px; right: -1px; height: 4px;
@@ -771,10 +772,31 @@ body { display: flex; }
   font-family: var(--font-serif-tc); font-size: 13px;
   color: var(--gold-bright); letter-spacing: 0.18em;
 }
-.ai-dialogue-text {
-  font-family: var(--font-serif-tc); font-size: 14px; line-height: 1.85;
-  color: var(--cream); letter-spacing: 0.04em; min-height: 60px;
+.ai-chat-scroll {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+  scrollbar-width: thin; scrollbar-color: var(--gold-deep) transparent;
+  padding-right: 4px;
 }
+.ai-chat-scroll::-webkit-scrollbar { width: 4px; }
+.ai-chat-scroll::-webkit-scrollbar-track { background: transparent; }
+.ai-chat-scroll::-webkit-scrollbar-thumb { background: var(--gold-deep); border-radius: 2px; }
+.ai-msg { max-width: 100%; animation: msgFadeIn 0.25s ease; }
+.ai-msg--user {
+  align-self: flex-end; max-width: 88%;
+  background: rgba(201,168,106,0.08); border: 1px solid rgba(201,168,106,0.15);
+  border-radius: 6px 6px 2px 6px; padding: 6px 10px;
+}
+.ai-msg--user .ai-msg-text {
+  font-family: var(--font-serif-tc); font-size: 13px; line-height: 1.6;
+  color: var(--gold-bright); letter-spacing: 0.04em;
+}
+.ai-msg--assistant .ai-msg-text {
+  font-family: var(--font-serif-tc); font-size: 14px; line-height: 1.85;
+  color: var(--cream); letter-spacing: 0.04em;
+}
+@keyframes msgFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ai-msg--thinking .ai-msg-text { color: var(--text-tertiary); }
+.ai-msg--thinking .ai-cursor { animation: blink 0.6s steps(2) infinite; }
 .ai-cursor {
   display: inline-block; width: 6px; height: 14px;
   background: var(--gold); margin-left: 2px; vertical-align: middle;
@@ -1271,15 +1293,11 @@ body { display: flex; }
     <div class="ai-dialogue-corner ai-dialogue-corner--bl"></div>
     <div class="ai-dialogue-corner ai-dialogue-corner--br"></div>
     <div class="ai-dialogue-speaker" id="aiDialogueSpeaker">圖書館員 · 月上零韻</div>
-    <div class="ai-dialogue-text" id="aiDialogueText">
-      歡迎來到阿卡夏圖書館。我是零韻，你的專屬圖書館員。有什麼我能幫你的嗎？<span class="ai-cursor ai-cursor--continue"></span>
-    </div>
+    <div class="ai-chat-scroll" id="aiChatScroll"></div>
   </div>
 
   <!-- Choices -->
   <div class="ai-choices" id="aiChoices"></div>
-
-  <div style="flex:1"></div>
 
   <!-- Token/Coin Bar -->
   <div class="ai-token-bar">
@@ -1373,6 +1391,7 @@ body { display: flex; }
   var aiTypeDone = true;
   var aiCurrentText = '';
   var aiShownLength = 0;
+  var aiActiveTextEl = null;
   var aiPortraitVisible = true;
   var aiCurrentModule = null;
 
@@ -1407,11 +1426,11 @@ body { display: flex; }
 
   function aiAdvance() {
     if (!aiTypeDone) {
-      // Skip typewriter — show full text immediately
       if (aiTypewriterTimer) clearInterval(aiTypewriterTimer);
       aiTypeDone = true;
-      var textEl = document.getElementById('aiDialogueText');
-      textEl.innerHTML = escapeHtml(aiCurrentText) + '<span class="ai-cursor ai-cursor--continue">▾</span>';
+      if (aiActiveTextEl) {
+        aiActiveTextEl.innerHTML = escapeHtml(aiCurrentText) + '<span class="ai-cursor ai-cursor--continue">▾</span>';
+      }
     }
   }
 
@@ -1422,17 +1441,44 @@ body { display: flex; }
     }
   }
 
+  function appendUserMessage(text) {
+    var scroll = document.getElementById('aiChatScroll');
+    var msgDiv = document.createElement('div');
+    msgDiv.className = 'ai-msg ai-msg--user';
+    var textEl = document.createElement('div');
+    textEl.className = 'ai-msg-text';
+    textEl.textContent = text;
+    msgDiv.appendChild(textEl);
+    scroll.appendChild(msgDiv);
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  function renderChatHistory(messages) {
+    var scroll = document.getElementById('aiChatScroll');
+    scroll.innerHTML = '';
+    for (var i = 0; i < messages.length; i++) {
+      var msg = messages[i];
+      var msgDiv = document.createElement('div');
+      msgDiv.className = 'ai-msg ai-msg--' + (msg.role === 'user' ? 'user' : 'assistant');
+      var textEl = document.createElement('div');
+      textEl.className = 'ai-msg-text';
+      textEl.textContent = msg.text;
+      msgDiv.appendChild(textEl);
+      scroll.appendChild(msgDiv);
+    }
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
   function sendAIMessage() {
-    // Delegate to Layer 2 async handler if loaded
     if (window._aiSendReal) {
       window._aiSendReal();
       return;
     }
-    // Fallback for file:// (no module imports)
     var input = document.getElementById('aiInput');
     var text = input.value.trim();
     if (!text) return;
     input.value = '';
+    appendUserMessage(text);
     var ctx = getAIContext();
     startTypewriter('AI 功能需要在 HTTP 伺服器下運行。請使用 http-server 或 npm run dev 啟動。', ctx.role + ' · 月上零韻', 'thinking', []);
   }
@@ -1446,8 +1492,16 @@ body { display: flex; }
     aiCurrentText = text;
     aiShownLength = 0;
     aiTypeDone = false;
-    var textEl = document.getElementById('aiDialogueText');
     choices = choices || [];
+
+    var scroll = document.getElementById('aiChatScroll');
+    var msgDiv = document.createElement('div');
+    msgDiv.className = 'ai-msg ai-msg--assistant';
+    var textEl = document.createElement('div');
+    textEl.className = 'ai-msg-text';
+    msgDiv.appendChild(textEl);
+    scroll.appendChild(msgDiv);
+    aiActiveTextEl = textEl;
 
     aiTypewriterTimer = setInterval(function() {
       aiShownLength++;
@@ -1459,7 +1513,10 @@ body { display: flex; }
       } else {
         textEl.innerHTML = escapeHtml(aiCurrentText.slice(0, aiShownLength)) + '<span class="ai-cursor"></span>';
       }
+      scroll.scrollTop = scroll.scrollHeight;
     }, 22);
+
+    scroll.scrollTop = scroll.scrollHeight;
   }
 
   function renderAIChoices(choices) {
@@ -1500,9 +1557,13 @@ body { display: flex; }
     // Emotion
     var emotionEl = document.getElementById('aiEmotion');
     if (emotionEl) emotionEl.textContent = ctx.emotion;
-    // Show context greeting on module switch
-    if (showGreeting && aiPanelOpen) {
-      startTypewriter(ctx.greeting, ctx.role + ' · 月上零韻', ctx.emotion, []);
+    // Render stored history for this module, then show greeting if needed
+    if (showGreeting) {
+      var history = window._getChatHistory ? window._getChatHistory(aiCurrentModule) : [];
+      renderChatHistory(history);
+      if (aiPanelOpen) {
+        startTypewriter(ctx.greeting, ctx.role + ' · 月上零韻', ctx.emotion, []);
+      }
     }
   }
 
@@ -1516,6 +1577,8 @@ body { display: flex; }
   window.startTypewriter = startTypewriter;
   window.sendAIMessage = sendAIMessage;
   window.handleAIChoice = handleAIChoice;
+  window.appendUserMessage = appendUserMessage;
+  window.renderChatHistory = renderChatHistory;
 
   // Clock & greeting
   function updateClock() {
@@ -1826,11 +1889,52 @@ window.addEventListener('message', async (event) => {
   }
 });
 
-// ===== AI Context Switch (Phase 3-B) =====
+// ===== AI Context Switch (Phase 3-B) + Chat History (Phase 3-D) =====
 import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt, estimateTokens, coinCost, deductCoins } from './core/ai.js';
+import { loadPersona, exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride } from './core/persona.js';
+import { getHistory, addMessage, clearHistory, clearAllHistory } from './core/chat-history.js';
+import { matchPrewritten } from './core/prewritten.js';
+
+// Load persona.md (async, caches for prompt builders)
+loadPersona().then(() => console.log('[Akasha] Persona loaded'));
+
+// Expose persona API for settings UI / devtools
+window.akashaPersona = { exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride };
+
+// Expose chat history getter for Layer 1 (module switch)
+window._getChatHistory = getHistory;
+window.akashaChat = { getHistory, clearHistory, clearAllHistory };
+
+// Render initial history on load
+{
+  const mod = window.getActiveModule();
+  const history = getHistory(mod);
+  window.renderChatHistory(history);
+  if (history.length === 0) {
+    const ctx = window.getAIContext();
+    window.startTypewriter(ctx.greeting, ctx.role + ' · 月上零韻', ctx.emotion, []);
+  }
+}
 
 let aiLoading = false;
 let pendingContextResolve = null;
+
+function showThinking() {
+  const scroll = document.getElementById('aiChatScroll');
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'ai-msg ai-msg--assistant ai-msg--thinking';
+  const textEl = document.createElement('div');
+  textEl.className = 'ai-msg-text';
+  textEl.innerHTML = '<span class="ai-cursor"></span>';
+  msgDiv.appendChild(textEl);
+  scroll.appendChild(msgDiv);
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+function removeThinking() {
+  const el = document.getElementById('aiChatScroll')?.querySelector('.ai-msg--thinking');
+  if (el) el.remove();
+}
 
 // Listen for context responses from module iframes
 window.addEventListener('message', (event) => {
@@ -1870,6 +1974,18 @@ window._aiSendReal = async function() {
   const moduleName = window.getActiveModule();
   const speakerLabel = ctx.role + ' · 月上零韻';
 
+  // Show user message in chat + persist
+  window.appendUserMessage(text);
+  addMessage(moduleName, 'user', text);
+
+  // Check prewritten responses first (no API call needed)
+  const prewritten = matchPrewritten(text, moduleName);
+  if (prewritten) {
+    window.startTypewriter(prewritten, speakerLabel, 'calm', []);
+    addMessage(moduleName, 'assistant', prewritten);
+    return;
+  }
+
   // Check settings
   const settings = getAISettings();
   if (settings.error === 'no-api-key') {
@@ -1886,12 +2002,15 @@ window._aiSendReal = async function() {
     aiLoading = true;
     const sendBtn = document.getElementById('aiSend');
     if (sendBtn) sendBtn.disabled = true;
-    window.startTypewriter('思考中…', speakerLabel, 'thinking', []);
+    showThinking();
     try {
       const systemPrompt = buildGeneralSystemPrompt();
       const response = await callLLM(settings, systemPrompt, text);
+      removeThinking();
       window.startTypewriter(response, speakerLabel, 'calm', []);
+      addMessage(moduleName, 'assistant', response);
     } catch (err) {
+      removeThinking();
       window.startTypewriter('連線時發生了問題：' + err.message, speakerLabel, 'thinking', []);
     } finally {
       aiLoading = false;
@@ -1904,12 +2023,13 @@ window._aiSendReal = async function() {
   aiLoading = true;
   const sendBtn = document.getElementById('aiSend');
   if (sendBtn) sendBtn.disabled = true;
-  window.startTypewriter('正在讀取內容…', speakerLabel, 'thinking', []);
+  showThinking();
 
   try {
     const moduleData = await requestModuleContext();
 
     if (!moduleData || !moduleData.content) {
+      removeThinking();
       window.startTypewriter('目前尚未開啟檔案。請先開啟一個檔案，我才能根據內容回答。', speakerLabel, 'thinking', []);
       return;
     }
@@ -1942,9 +2062,12 @@ window._aiSendReal = async function() {
       if (coinsEl) coinsEl.textContent = remaining;
     }
 
+    removeThinking();
     window.startTypewriter(response, speakerLabel, 'calm', []);
+    addMessage(moduleName, 'assistant', response);
   } catch (err) {
     console.error('AI call failed:', err);
+    removeThinking();
     window.startTypewriter('連線時發生了問題：' + err.message + '\n\n請確認 API Key 是否正確，以及網路連線是否正常。', speakerLabel, 'thinking', []);
   } finally {
     aiLoading = false;
