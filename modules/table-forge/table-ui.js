@@ -9,6 +9,11 @@ import {
 import { parseMarkdownTable, parseJSON, parseCSV, autoDetectAndParse, parseReaderPayload } from './parsers.js';
 import { exportMarkdown, exportJSON, exportCSV } from './exporters.js';
 import { STORAGE_KEY as READER_STORAGE_KEY } from '../../core/export/bridge.js';
+import {
+  extractChapterTable, extractTableInventory, extractOutline,
+  extractCodeFences, extractTasks, detectAvailableExtractions,
+  addMetadataColumns, generateWritebackDiff,
+} from './md-extract.js';
 
 // --- State ---
 
@@ -40,6 +45,12 @@ const $btnCopy       = document.getElementById('btn-copy');
 const $btnDownload   = document.getElementById('btn-download');
 
 const $toast = document.getElementById('toast');
+
+const $btnExtract     = document.getElementById('btn-extract');
+const $extractPanel   = document.getElementById('extract-panel');
+const $extractButtons = document.getElementById('extract-buttons');
+const $btnMeta        = document.getElementById('btn-meta');
+const $btnDiff        = document.getElementById('btn-diff');
 
 // --- Import ---
 
@@ -84,9 +95,11 @@ $btnClear.addEventListener('click', () => {
   $emptyState.style.display = '';
   $exportPanel.classList.add('hidden');
   $importPanel.classList.remove('hidden');
+  $extractPanel.classList.add('hidden');
   $exportPreview.textContent = '';
   $importTextarea.value = '';
   showError('');
+  currentExportFormat = 'markdown';
   updateHeaderButtons();
 });
 
@@ -96,8 +109,10 @@ function showError(msg) {
 
 function loadDocument(doc) {
   currentDoc = doc;
+  if (!doc._originalMd) doc._originalMd = exportMarkdown(doc);
   showError('');
   $importPanel.classList.add('hidden');
+  $extractPanel.classList.add('hidden');
   $emptyState.style.display = 'none';
   renderTable();
   updateHeaderButtons();
@@ -107,6 +122,7 @@ function updateHeaderButtons() {
   const hasDoc = currentDoc !== null;
   $btnToggleExport.disabled = !hasDoc;
   $btnClear.disabled = !hasDoc;
+  $btnMeta.disabled = !hasDoc;
 }
 
 // --- Table Rendering ---
@@ -318,13 +334,14 @@ $btnExportJson.addEventListener('click', () => { currentExportFormat = 'json'; r
 $btnExportCsv.addEventListener('click', () => { currentExportFormat = 'csv'; refreshExportPreview(); highlightExportBtn(); });
 
 function highlightExportBtn() {
-  [$btnExportMd, $btnExportJson, $btnExportCsv].forEach(b => b.classList.remove('btn--gold'));
-  const map = { markdown: $btnExportMd, json: $btnExportJson, csv: $btnExportCsv };
+  [$btnExportMd, $btnExportJson, $btnExportCsv, $btnDiff].forEach(b => b.classList.remove('btn--gold'));
+  const map = { markdown: $btnExportMd, json: $btnExportJson, csv: $btnExportCsv, diff: $btnDiff };
   map[currentExportFormat]?.classList.add('btn--gold');
 }
 
 function refreshExportPreview() {
   if (!currentDoc || $exportPanel.classList.contains('hidden')) return;
+  if (currentExportFormat === 'diff') { showDiffPreview(); return; }
   const text = generateExport();
   $exportPreview.textContent = text;
 }
@@ -379,6 +396,88 @@ function showToast(msg) {
   $toast.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => $toast.classList.remove('show'), 1800);
+}
+
+// --- Extract (Phase 9) ---
+
+const EXTRACTORS = {
+  chapter: extractChapterTable,
+  outline: extractOutline,
+  tables: extractTableInventory,
+  codefence: extractCodeFences,
+  tasks: extractTasks,
+};
+
+$btnExtract.addEventListener('click', () => {
+  const text = $importTextarea.value.trim();
+  if (!text) { showError('請先貼上 Markdown 內容'); return; }
+  const available = detectAvailableExtractions(text);
+  if (available.length === 0) {
+    showError('內容中沒有可抽取的結構（需要標題、表格、code fence 或 task list）');
+    return;
+  }
+  showError('');
+  renderExtractButtons(available, text);
+  $extractPanel.classList.remove('hidden');
+});
+
+function renderExtractButtons(available, content) {
+  $extractButtons.innerHTML = '';
+  for (const item of available) {
+    const btn = document.createElement('button');
+    btn.className = 'extract-btn';
+    const extra = item.extra ? ' · ' + item.extra : '';
+    btn.innerHTML = item.label + ' <span class="count">(' + item.count + extra + ')</span>';
+    btn.addEventListener('click', () => {
+      const fn = EXTRACTORS[item.id];
+      if (!fn) return;
+      const result = fn(content);
+      if (result.error) { showError(result.error); return; }
+      result._originalSource = content;
+      loadDocument(result);
+      showToast(item.label + ' 已抽取');
+    });
+    $extractButtons.appendChild(btn);
+  }
+}
+
+// --- Metadata (Phase 9) ---
+
+$btnMeta.addEventListener('click', () => {
+  if (!currentDoc) return;
+  addMetadataColumns(currentDoc);
+  renderTable();
+  refreshExportPreview();
+  showToast('已加入 metadata 欄位');
+});
+
+// --- Diff Preview (Phase 9) ---
+
+$btnDiff.addEventListener('click', () => {
+  currentExportFormat = 'diff';
+  highlightExportBtn();
+  showDiffPreview();
+  $exportPanel.classList.remove('hidden');
+});
+
+function showDiffPreview() {
+  if (!currentDoc || !currentDoc._originalMd) {
+    $exportPreview.textContent = '（無原始資料可比對）';
+    return;
+  }
+  const currentMd = exportMarkdown(currentDoc);
+  const { diff, hasChanges } = generateWritebackDiff(currentDoc._originalMd, currentMd);
+  if (!hasChanges) {
+    $exportPreview.textContent = '（無變更）';
+    return;
+  }
+  $exportPreview.innerHTML = '';
+  for (const d of diff) {
+    const div = document.createElement('div');
+    div.className = 'diff-line' + (d.type === 'del' ? ' diff-del' : d.type === 'add' ? ' diff-add' : ' diff-same');
+    div.textContent = (d.type === 'del' ? '- ' : d.type === 'add' ? '+ ' : '  ') + d.text;
+    $exportPreview.appendChild(div);
+  }
 }
 
 // --- Reader Bridge ---

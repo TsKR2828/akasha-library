@@ -1,6 +1,6 @@
 # 阿卡夏圖書館 — TODO
 
-> Enhancement Phase 1–6 已全部完成，下一步：Phase 7+
+> Enhancement Phase 1–6, 7, 9 已完成，下一步：Phase 10+
 > Branch: `feature/cool-stuff`
 
 ---
@@ -105,12 +105,19 @@
 - [x] 7-D: JSON array → table candidate 偵測
 - [x] 7-E: 轉換結果預覽 UI + 存入書庫（App Shell modal）
 
+### Phase 9 Table Forge 文字抽取強化 ✅
+- [x] 9-A: `md-extract.js` — extractChapterTable（sectionNo / level / title / parent / lineStart / lineEnd / summary）
+- [x] 9-B: extractTableInventory（tableId / parentSection / columns / rowCount / lineStart / lineEnd）
+- [x] 9-C: extractOutline / extractCodeFences / extractTasks
+- [x] 9-D: generateWritebackDiff — 回寫 diff 預覽（原始 MD vs 當前表格）
+- [x] 9-E: addMetadataColumns — source / editedBy 欄位
+- [x] Table Forge UI — 抽取按鈕、extract panel、Meta 按鈕、Diff 格式選項
+
 ---
 
-## 待做（追加規格 · Phase 8–16）
+## 待做（追加規格 · Phase 10–16）
 
-- Phase 8：Script Editor MVP（Plain Script → blocks → .ks / AVG JSON / PDF）— 依賴 Phase 7 ✅
-- Phase 9：Table Forge 文字抽取強化（Markdown 章節表 / 大綱 / 回寫 diff）— 依賴 Phase 7
+- Phase 8：Script Editor MVP（另立專案開發，不在此 repo）
 - Phase 10：Memory System（session / room summary / 零韻手札）
 - Phase 11：Notion Connector（雲端索引 + 可讀備份）
 - Phase 12：Security Layer（資料分級 / IndexedDB 加密 / 版本標記）

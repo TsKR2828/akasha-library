@@ -87,17 +87,17 @@
 | 8-G | 回流匯入 — `.blocks.jsonl` / AVG JSON / Markdown / `.ks` | ⬜ |
 | 8-H | 側欄入口 + App Shell 整合 | ⬜ |
 
-## Phase 9：Table Forge 文字抽取強化（追加 spec §4, Batch C）
+## Phase 9：Table Forge 文字抽取強化（追加 spec §4, Batch C）✅ 完成
 
 依賴 Phase 7（共用抽取邏輯）。
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 9-A | Markdown 章節表抽取（sectionNo / level / title / lineStart） | ⬜ |
-| 9-B | Markdown table inventory（tableId / columns / rowCount） | ⬜ |
-| 9-C | H2/H3 大綱表 + code fence 清單 | ⬜ |
-| 9-D | 表格回寫 diff 預覽 | ⬜ |
-| 9-E | AI/人類共用欄位 metadata | ⬜ |
+| 9-A | Markdown 章節表抽取（sectionNo / level / title / lineStart） | ✅ |
+| 9-B | Markdown table inventory（tableId / columns / rowCount） | ✅ |
+| 9-C | H2/H3 大綱表 + code fence 清單 | ✅ |
+| 9-D | 表格回寫 diff 預覽 | ✅ |
+| 9-E | AI/人類共用欄位 metadata | ✅ |
 
 ## Phase 10：Memory System（追加 spec §6, Batch D）
 
@@ -184,11 +184,10 @@
 
 已完成
 ├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor)
-│                                 ──→ Phase 9 (Table Forge 抽取強化)
+│                                 ──→ Phase 9 (Table Forge 抽取強化) ✅
 
 目前可做（無新相依）
-├─ Phase 8 (Script Editor) ──→ 依賴 Phase 7 ✅
-├─ Phase 9 (Table Forge 抽取強化) ──→ 依賴 Phase 7 ✅
+├─ Phase 8 (Script Editor) ──→ 依賴 Phase 7 ✅（另立專案開發）
 ├─ Phase 10 (Memory) ──→ Phase 15 (談心 + 館報)
 ├─ Phase 11 (Notion Connector)
 ├─ Phase 12 (Security Layer)
