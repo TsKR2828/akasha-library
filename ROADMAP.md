@@ -105,21 +105,21 @@
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 10-A | 短期 session memory（runtime state） | ⬜ |
-| 10-B | 中期 room summary（每模組摘要，IndexedDB） | ⬜ |
-| 10-C | 長期 approved memory — 零韻手札儲存 + 使用者確認 | ⬜ |
-| 10-D | Memory Record viewer（查看/編輯/刪除） | ⬜ |
-| 10-E | Memory search — 受控搜尋，只回傳命中片段 | ⬜ |
+| 10-A | 短期 session memory（runtime state） | ✅ |
+| 10-B | 中期 room summary（每模組摘要，IndexedDB） | ✅ |
+| 10-C | 長期 approved memory — 零韻手札儲存 + 使用者確認 | ✅ |
+| 10-D | Memory Record viewer（查看/編輯/刪除） | ✅ |
+| 10-E | Memory search — 受控搜尋，只回傳命中片段 | ✅ |
 
 ## Phase 11：Notion Connector（追加 spec §5, Batch E）
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 11-A | Notion database mapping（Library Index / Script Blocks） | ⬜ |
-| 11-B | 書庫 metadata 同步 | ⬜ |
-| 11-C | persona.md + Script blocks 同步 | ⬜ |
-| 11-D | Sync queue + 背景同步流程 | ⬜ |
-| 11-E | 衝突處理 UI（diff 顯示 + 使用者選擇） | ⬜ |
+| 11-A | Notion database mapping（Library Index / Script Blocks） | ✅ |
+| 11-B | 書庫 metadata 同步 | ✅ |
+| 11-C | persona.md + Script blocks 同步 | ✅ |
+| 11-D | Sync queue + 背景同步流程 | ✅ |
+| 11-E | 衝突處理 UI（diff 顯示 + 使用者選擇） | ✅ |
 
 ## Phase 12：Security Layer（追加 spec §14, Batch F）
 

@@ -6,7 +6,7 @@
  */
 
 const DB_NAME = 'akasha-library';
-const DB_VERSION = 2;
+const DB_VERSION = 5;
 
 let dbInstance = null;
 
@@ -38,6 +38,26 @@ function openDB() {
       if (!db.objectStoreNames.contains('embeddings')) {
         const embStore = db.createObjectStore('embeddings', { keyPath: 'id' });
         embStore.createIndex('fileId', 'fileId', { unique: false });
+      }
+
+      // v3: room summaries for Memory System (Phase 10-B)
+      if (!db.objectStoreNames.contains('room-summaries')) {
+        db.createObjectStore('room-summaries', { keyPath: 'module' });
+      }
+
+      // v4: approved memories / 零韻手札 (Phase 10-C)
+      if (!db.objectStoreNames.contains('approved-memories')) {
+        const memStore = db.createObjectStore('approved-memories', { keyPath: 'id' });
+        memStore.createIndex('module', 'module', { unique: false });
+        memStore.createIndex('scope', 'scope', { unique: false });
+        memStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+
+      // v5: sync queue for Notion Connector (Phase 11-D)
+      if (!db.objectStoreNames.contains('sync-queue')) {
+        const sqStore = db.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
+        sqStore.createIndex('status', 'status', { unique: false });
+        sqStore.createIndex('target', 'target', { unique: false });
       }
     };
 

@@ -870,6 +870,275 @@ body { display: flex; }
 }
 .ai-cursor--continue { animation: blink 1.4s steps(2) infinite; }
 
+/* 零韻手札 save button on assistant messages */
+.ai-note-btn {
+  background: none; border: 1px solid var(--navy-line); color: var(--gold-dim);
+  font-family: var(--font-serif-tc); font-size: 11px; padding: 2px 8px;
+  border-radius: 4px; cursor: pointer; margin-top: 4px; opacity: 0;
+  transition: opacity 0.3s, color 0.15s, border-color 0.15s;
+}
+.ai-msg:hover .ai-note-btn, .ai-note-btn:focus { opacity: 1; }
+.ai-note-btn:hover { color: var(--gold); border-color: var(--gold-line); }
+
+/* 零韻手札 save dialog */
+.note-overlay {
+  position: fixed; inset: 0; z-index: 9500;
+  background: rgba(0,0,0,0.7); display: none;
+  align-items: center; justify-content: center;
+}
+.note-overlay.show { display: flex; }
+.note-dialog {
+  background: var(--navy, #1E2430); border: 1px solid var(--gold-line);
+  border-radius: 10px; width: min(420px, 90vw);
+  display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.note-dialog-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--gold-line);
+}
+.note-dialog-header h3 {
+  margin: 0; font-size: 14px; color: var(--gold); font-weight: 500;
+  font-family: var(--font-serif-tc);
+}
+.note-dialog-close {
+  background: none; border: none; color: var(--cream); cursor: pointer;
+  padding: 4px; opacity: 0.6; font-size: 16px;
+}
+.note-dialog-close:hover { opacity: 1; }
+.note-dialog-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.note-field label {
+  display: block; font-size: 11px; color: var(--text-secondary);
+  font-family: var(--font-serif-tc); margin-bottom: 4px;
+}
+.note-field input, .note-field textarea {
+  width: 100%; box-sizing: border-box;
+  background: var(--navy-deep); border: 1px solid var(--navy-line);
+  color: var(--cream); font-family: var(--font-serif-tc); font-size: 13px;
+  padding: 8px 10px; border-radius: 4px; outline: none;
+}
+.note-field input:focus, .note-field textarea:focus { border-color: var(--gold-dim); }
+.note-field textarea { resize: vertical; min-height: 60px; line-height: 1.6; }
+.note-actions {
+  display: flex; flex-direction: column; gap: 6px; padding: 0 18px 16px;
+}
+.note-action {
+  background: rgba(255,255,255,0.02); border: 1px solid var(--navy-line);
+  color: var(--cream); padding: 9px 14px;
+  font-family: var(--font-serif-tc); font-size: 12.5px;
+  text-align: left; cursor: pointer; border-radius: 4px;
+  display: flex; align-items: center; gap: 10px; transition: all 140ms;
+}
+.note-action:hover {
+  background: var(--gold-glow); border-color: var(--gold);
+  color: var(--gold-bright); transform: translateX(3px);
+}
+.note-action--disabled {
+  opacity: 0.35; pointer-events: none;
+}
+.note-action-mark {
+  font-size: 14px; min-width: 20px; text-align: center;
+}
+.note-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--navy-light); border: 1px solid var(--gold-line);
+  color: var(--gold-bright); padding: 8px 20px; border-radius: 6px;
+  font-family: var(--font-serif-tc); font-size: 13px;
+  z-index: 9600; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none;
+}
+.note-toast.show { opacity: 1; }
+
+/* Memory Record Viewer (Phase 10-D) */
+.mv-overlay {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.7); display: none;
+  align-items: center; justify-content: center;
+}
+.mv-overlay.show { display: flex; }
+.mv-panel {
+  background: var(--navy); border: 1px solid var(--gold-line);
+  border-radius: 10px; width: min(680px, 94vw); max-height: 85vh;
+  display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.mv-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--gold-line);
+  flex-shrink: 0;
+}
+.mv-header h3 {
+  margin: 0; font-size: 15px; color: var(--gold); font-weight: 500;
+  font-family: var(--font-serif-tc);
+}
+.mv-header-count {
+  font-size: 11px; color: var(--text-secondary); margin-left: 8px;
+  font-family: var(--font-serif-en);
+}
+.mv-close {
+  background: none; border: none; color: var(--cream); cursor: pointer;
+  padding: 4px; opacity: 0.6; font-size: 18px;
+}
+.mv-close:hover { opacity: 1; }
+.mv-tabs {
+  display: flex; border-bottom: 1px solid var(--navy-line);
+  padding: 0 18px; flex-shrink: 0;
+}
+.mv-tab {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text-secondary); font-family: var(--font-serif-tc); font-size: 12px;
+  padding: 8px 14px; cursor: pointer; transition: color 0.15s;
+}
+.mv-tab:hover { color: var(--cream); }
+.mv-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.mv-body {
+  flex: 1; overflow-y: auto; padding: 12px 18px;
+  scrollbar-width: thin; scrollbar-color: var(--gold-deep) transparent;
+}
+.mv-empty {
+  text-align: center; color: var(--text-tertiary); padding: 40px 0;
+  font-family: var(--font-serif-tc); font-size: 13px;
+}
+.mv-card {
+  border: 1px solid var(--navy-line); border-radius: 6px;
+  margin-bottom: 8px; transition: border-color 0.15s;
+}
+.mv-card:hover { border-color: var(--gold-line); }
+.mv-card-header {
+  display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+  cursor: pointer;
+}
+.mv-card-title {
+  flex: 1; font-family: var(--font-serif-tc); font-size: 13px;
+  color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mv-card-module {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px;
+  background: var(--gold-glow); color: var(--gold-dim);
+  font-family: var(--font-serif-en); flex-shrink: 0;
+}
+.mv-card-date {
+  font-size: 10px; color: var(--text-tertiary);
+  font-family: var(--font-serif-en); flex-shrink: 0;
+}
+.mv-card-body {
+  display: none; padding: 0 14px 12px; border-top: 1px solid var(--navy-line);
+}
+.mv-card.open .mv-card-body { display: block; padding-top: 10px; }
+.mv-card-content {
+  font-family: var(--font-serif-tc); font-size: 12.5px; line-height: 1.7;
+  color: var(--cream-dim); white-space: pre-wrap; word-break: break-word;
+  max-height: 120px; overflow-y: auto;
+}
+.mv-card-tags {
+  margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px;
+}
+.mv-card-tag {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px;
+  border: 1px solid var(--navy-line); color: var(--text-secondary);
+  font-family: var(--font-serif-en);
+}
+.mv-card-actions {
+  display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end;
+}
+.mv-btn {
+  background: none; border: 1px solid var(--navy-line); color: var(--cream-dim);
+  font-family: var(--font-serif-tc); font-size: 11px; padding: 4px 12px;
+  border-radius: 4px; cursor: pointer; transition: all 0.15s;
+}
+.mv-btn:hover { border-color: var(--gold-line); color: var(--gold); }
+.mv-btn--danger:hover { border-color: var(--danger); color: var(--danger); }
+/* edit mode within card */
+.mv-edit-field { margin-bottom: 8px; }
+.mv-edit-field label {
+  display: block; font-size: 10px; color: var(--text-tertiary);
+  font-family: var(--font-serif-tc); margin-bottom: 3px;
+}
+.mv-edit-field input, .mv-edit-field textarea {
+  width: 100%; box-sizing: border-box;
+  background: var(--navy-deep); border: 1px solid var(--navy-line);
+  color: var(--cream); font-family: var(--font-serif-tc); font-size: 12px;
+  padding: 6px 8px; border-radius: 4px; outline: none;
+}
+.mv-edit-field input:focus, .mv-edit-field textarea:focus { border-color: var(--gold-dim); }
+.mv-edit-field textarea { resize: vertical; min-height: 50px; line-height: 1.6; }
+/* room summary cards */
+.mv-summary-stats {
+  font-size: 11px; color: var(--text-secondary); line-height: 1.6;
+  font-family: var(--font-serif-tc);
+}
+
+/* Notion Sync / Conflict UI (Phase 11-E) */
+.sync-bar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 18px;
+  border-bottom: 1px solid var(--navy-line); flex-shrink: 0;
+  font-family: var(--font-serif-tc); font-size: 11px; color: var(--text-secondary);
+}
+.sync-bar-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.sync-bar-dot.idle { background: var(--text-tertiary); }
+.sync-bar-dot.syncing { background: var(--gold); animation: pulse 1.4s ease-in-out infinite; }
+.sync-bar-dot.error { background: var(--danger); }
+.sync-bar-dot.ok { background: var(--success); }
+.sync-bar-btn {
+  margin-left: auto; background: none; border: 1px solid var(--navy-line);
+  color: var(--cream-dim); font-family: var(--font-serif-tc); font-size: 10px;
+  padding: 2px 10px; border-radius: 3px; cursor: pointer;
+}
+.sync-bar-btn:hover { border-color: var(--gold-line); color: var(--gold); }
+/* conflict dialog */
+.cf-overlay {
+  position: fixed; inset: 0; z-index: 9200;
+  background: rgba(0,0,0,0.75); display: none;
+  align-items: center; justify-content: center;
+}
+.cf-overlay.show { display: flex; }
+.cf-panel {
+  background: var(--navy); border: 1px solid var(--gold-line);
+  border-radius: 10px; width: min(560px, 92vw); max-height: 80vh;
+  display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.cf-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--gold-line);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cf-header h3 {
+  margin: 0; font-size: 14px; color: var(--danger); font-weight: 500;
+  font-family: var(--font-serif-tc);
+}
+.cf-body {
+  flex: 1; overflow-y: auto; padding: 14px 18px;
+}
+.cf-item-title {
+  font-family: var(--font-serif-tc); font-size: 13px; color: var(--cream);
+  margin-bottom: 8px;
+}
+.cf-diff-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+  font-family: var(--font-serif-tc); margin-bottom: 12px;
+}
+.cf-diff-table th {
+  text-align: left; padding: 4px 8px; color: var(--text-secondary);
+  border-bottom: 1px solid var(--navy-line);
+}
+.cf-diff-table td {
+  padding: 4px 8px; color: var(--cream-dim); border-bottom: 1px solid var(--navy-line);
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cf-diff-table .cf-local { color: var(--gold); }
+.cf-diff-table .cf-remote { color: var(--info); }
+.cf-actions {
+  padding: 0 18px 14px; display: flex; gap: 8px; justify-content: flex-end;
+}
+.cf-btn {
+  background: none; border: 1px solid var(--navy-line); color: var(--cream-dim);
+  font-family: var(--font-serif-tc); font-size: 12px; padding: 6px 16px;
+  border-radius: 4px; cursor: pointer; transition: all 0.15s;
+}
+.cf-btn:hover { border-color: var(--gold-line); color: var(--gold); }
+.cf-btn--primary {
+  background: var(--gold-glow); border-color: var(--gold-line); color: var(--gold);
+}
+
 .ai-choices { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 6px; }
 .ai-choice {
   background: rgba(255,255,255,0.02); border: 1px solid var(--navy-line);
@@ -1056,6 +1325,14 @@ body { display: flex; }
       <span class="nav-item-text">
         <span class="nav-item-title">書籍排版器</span>
         <span class="nav-item-sub">Bindery</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" onclick="window.openMemoryViewer()" data-view="memory-viewer">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">零韻手札</span>
+        <span class="nav-item-sub">Memory</span>
       </span>
       <span class="nav-active-dot"></span>
     </button>
@@ -1383,6 +1660,89 @@ body { display: flex; }
   </div>
 </aside>
 
+<!-- MEMORY RECORD VIEWER (Phase 10-D) -->
+<div class="mv-overlay" id="mvOverlay" onclick="if(event.target===this)window.closeMemoryViewer()">
+  <div class="mv-panel">
+    <div class="mv-header">
+      <div style="display:flex;align-items:center">
+        <h3>零韻手札</h3>
+        <span class="mv-header-count" id="mvCount"></span>
+      </div>
+      <button class="mv-close" onclick="window.closeMemoryViewer()">&times;</button>
+    </div>
+    <div class="mv-tabs">
+      <button class="mv-tab active" data-mv-tab="approved" onclick="window.switchMvTab('approved')">長期手札</button>
+      <button class="mv-tab" data-mv-tab="session" onclick="window.switchMvTab('session')">今日限定</button>
+      <button class="mv-tab" data-mv-tab="rooms" onclick="window.switchMvTab('rooms')">房間摘要</button>
+      <button class="mv-tab" data-mv-tab="notion" onclick="window.switchMvTab('notion')">Notion</button>
+    </div>
+    <div class="sync-bar" id="mvSyncBar" style="display:none">
+      <span class="sync-bar-dot idle" id="syncDotMv"></span>
+      <span id="syncStatusLabel">尚未連線</span>
+      <button class="sync-bar-btn" id="syncNowBtn" onclick="window.syncNow()">立即同步</button>
+    </div>
+    <div style="padding:8px 18px 0;flex-shrink:0">
+      <input type="text" id="mvSearch" placeholder="搜尋手札…" style="width:100%;box-sizing:border-box;background:var(--navy-deep);border:1px solid var(--navy-line);color:var(--cream);font-family:var(--font-serif-tc);font-size:12px;padding:6px 10px;border-radius:4px;outline:none" oninput="window.handleMvSearch(this.value)" onfocus="this.style.borderColor='var(--gold-dim)'" onblur="this.style.borderColor='var(--navy-line)'">
+    </div>
+    <div class="mv-body" id="mvBody"></div>
+  </div>
+</div>
+
+<!-- NOTION CONFLICT DIALOG (Phase 11-E) -->
+<div class="cf-overlay" id="cfOverlay" onclick="if(event.target===this)window.closeConflictDialog()">
+  <div class="cf-panel">
+    <div class="cf-header">
+      <h3>同步衝突</h3>
+      <button class="mv-close" onclick="window.closeConflictDialog()">&times;</button>
+    </div>
+    <div class="cf-body" id="cfBody"></div>
+    <div class="cf-actions" id="cfActions"></div>
+  </div>
+</div>
+
+<!-- 零韻手札 SAVE DIALOG (Phase 10-C) -->
+<div class="note-overlay" id="noteOverlay" onclick="if(event.target===this)window.closeNoteDialog()">
+  <div class="note-dialog">
+    <div class="note-dialog-header">
+      <h3>存為零韻手札</h3>
+      <button class="note-dialog-close" onclick="window.closeNoteDialog()">&times;</button>
+    </div>
+    <div class="note-dialog-body">
+      <div class="note-field">
+        <label>標題</label>
+        <input type="text" id="noteTitle" placeholder="手札標題">
+      </div>
+      <div class="note-field">
+        <label>內容</label>
+        <textarea id="noteContent" rows="3" readonly></textarea>
+      </div>
+      <div class="note-field">
+        <label>標籤（以逗號分隔）</label>
+        <input type="text" id="noteTags" placeholder="reading, pdf">
+      </div>
+    </div>
+    <div class="note-actions">
+      <button class="note-action" onclick="window.saveNote('session-only')">
+        <span class="note-action-mark">&#9788;</span>
+        <span>只留在今天</span>
+      </button>
+      <button class="note-action" onclick="window.saveNote('local')">
+        <span class="note-action-mark">&#9733;</span>
+        <span>存到本機書庫</span>
+      </button>
+      <button class="note-action" id="noteSaveNotion" onclick="window.saveNote('notion')">
+        <span class="note-action-mark">&#9741;</span>
+        <span>同步到 Notion</span>
+      </button>
+      <button class="note-action" onclick="window.closeNoteDialog()">
+        <span class="note-action-mark">&#10005;</span>
+        <span>不保存</span>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="note-toast" id="noteToast"></div>
+
 <!-- TRANSLATION PREVIEW MODAL (Phase 7-E) -->
 <div class="tp-overlay" id="tpOverlay" onclick="if(event.target===this)window.closeTranslationPreview()">
   <div class="tp-modal">
@@ -1558,6 +1918,9 @@ body { display: flex; }
       textEl.className = 'ai-msg-text';
       textEl.textContent = msg.text;
       msgDiv.appendChild(textEl);
+      if (msg.role === 'assistant' && window.appendNoteButton) {
+        window.appendNoteButton(msgDiv, msg.text);
+      }
       scroll.appendChild(msgDiv);
     }
     scroll.scrollTop = scroll.scrollHeight;
@@ -1604,6 +1967,7 @@ body { display: flex; }
         aiTypeDone = true;
         textEl.innerHTML = escapeHtml(aiCurrentText) + (choices.length === 0 ? '<span class="ai-cursor ai-cursor--continue">▾</span>' : '');
         if (choices.length > 0) renderAIChoices(choices);
+        if (window.appendNoteButton) window.appendNoteButton(msgDiv, aiCurrentText);
       } else {
         textEl.innerHTML = escapeHtml(aiCurrentText.slice(0, aiShownLength)) + '<span class="ai-cursor"></span>';
       }
@@ -2008,6 +2372,10 @@ import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance
 import { loadPersona, exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride } from './core/persona.js';
 import { getHistory, addMessage, clearHistory, clearAllHistory } from './core/chat-history.js';
 import { matchPrewritten } from './core/prewritten.js';
+import { addTurn, setFact, getSession, clearSession, clearAllSessions, getSessionModules, buildMessages, buildFactsBlock } from './core/session-memory.js';
+import { flushSession, buildSummaryBlock, isEnabled as isRoomSummaryEnabled, setEnabled as setRoomSummaryEnabled, getRoomSummary, deleteRoomSummary, getAllRoomSummaries } from './core/room-summary.js';
+import { saveMemory, getMemory, deleteMemory, getAllMemories, getMemoryCount, saveSessionOnly, getSessionNotes, autoTitle, autoTags, searchMemories, buildMemoryContext } from './core/approved-memory.js';
+import { getNotionSettings, saveNotionSettings, isConfigured as isNotionConfigured, processQueue, pendingCount, enqueue, pullLibraryEntries, pullMemories, pullPersona, detectConflict, buildConflictDiff } from './core/notion-connector.js';
 
 // Load persona.md (async, caches for prompt builders)
 loadPersona().then(() => console.log('[Akasha] Persona loaded'));
@@ -2018,6 +2386,461 @@ window.akashaPersona = { exportPersonaMd, savePersonaOverride, resetPersona, has
 // Expose chat history getter for Layer 1 (module switch)
 window._getChatHistory = getHistory;
 window.akashaChat = { getHistory, clearHistory, clearAllHistory };
+window.akashaSession = { setFact, clearSession, clearAllSessions };
+window.akashaRoomSummary = { getRoomSummary, deleteRoomSummary, getAllRoomSummaries, isEnabled: isRoomSummaryEnabled, setEnabled: setRoomSummaryEnabled };
+window.akashaMemory = { saveMemory, getMemory, deleteMemory, getAllMemories, getMemoryCount, getSessionNotes, searchMemories };
+
+// ===== 零韻手札 dialog logic (Phase 10-C) =====
+let _pendingNoteModule = null;
+
+window.appendNoteButton = function appendNoteButton(msgDiv, text, module) {
+  const btn = document.createElement('button');
+  btn.className = 'ai-note-btn';
+  btn.textContent = '存為手札';
+  btn.onclick = (e) => { e.stopPropagation(); openNoteDialog(text, module); };
+  msgDiv.appendChild(btn);
+}
+
+function openNoteDialog(content, module) {
+  _pendingNoteModule = module || window.getActiveModule() || '_default';
+  document.getElementById('noteTitle').value = autoTitle(content);
+  document.getElementById('noteContent').value = content;
+  document.getElementById('noteTags').value = autoTags(_pendingNoteModule, content).join(', ');
+  document.getElementById('noteOverlay').classList.add('show');
+}
+
+window.closeNoteDialog = function() {
+  document.getElementById('noteOverlay').classList.remove('show');
+  _pendingNoteModule = null;
+};
+
+window.saveNote = async function(target) {
+  const title = document.getElementById('noteTitle').value.trim();
+  const content = document.getElementById('noteContent').value.trim();
+  const tagsRaw = document.getElementById('noteTags').value;
+  const tags = tagsRaw.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+  const module = _pendingNoteModule || '_default';
+
+  if (!content) { window.closeNoteDialog(); return; }
+
+  const record = { module, title, content, tags, source: 'chat' };
+
+  if (target === 'session-only') {
+    saveSessionOnly(record);
+  } else {
+    record.syncTarget = target;
+    const saved = await saveMemory(record);
+    if (target === 'notion' && isNotionConfigured()) {
+      await enqueue({ target: 'memory', action: 'upsert', localId: saved.id, payload: saved });
+      updateSyncDot('syncing');
+      processQueue().then(() => updateSyncDot('ok')).catch(() => updateSyncDot('error'));
+    }
+  }
+
+  window.closeNoteDialog();
+  const toastMsg = target === 'session-only' ? '已保留在今天的會話中'
+    : target === 'notion' ? '已存入本機書庫＋排入 Notion 同步' : '已存入本機書庫';
+  showNoteToast(toastMsg);
+};
+
+function showNoteToast(msg) {
+  const el = document.getElementById('noteToast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+// ===== Memory Record Viewer (Phase 10-D) =====
+let _mvTab = 'approved';
+
+window.openMemoryViewer = async function() {
+  _mvTab = 'approved';
+  document.querySelectorAll('.mv-tab').forEach(t => t.classList.toggle('active', t.dataset.mvTab === _mvTab));
+  document.getElementById('mvOverlay').classList.add('show');
+  await renderMvList();
+};
+
+window.closeMemoryViewer = function() {
+  document.getElementById('mvOverlay').classList.remove('show');
+};
+
+window.switchMvTab = async function(tab) {
+  _mvTab = tab;
+  document.querySelectorAll('.mv-tab').forEach(t => t.classList.toggle('active', t.dataset.mvTab === tab));
+  const syncBar = document.getElementById('mvSyncBar');
+  if (syncBar) syncBar.style.display = tab === 'notion' ? '' : 'none';
+  await renderMvList();
+};
+
+function escapeAttr(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+}
+
+async function renderMvList() {
+  const body = document.getElementById('mvBody');
+  const countEl = document.getElementById('mvCount');
+
+  if (_mvTab === 'approved') {
+    const list = await getAllMemories();
+    countEl.textContent = list.length + ' 筆';
+    if (list.length === 0) {
+      body.innerHTML = '<div class="mv-empty">尚未儲存任何手札</div>';
+      return;
+    }
+    body.innerHTML = list.map(m => renderMvCard(m)).join('');
+  } else if (_mvTab === 'session') {
+    const list = getSessionNotes();
+    countEl.textContent = list.length + ' 筆';
+    if (list.length === 0) {
+      body.innerHTML = '<div class="mv-empty">今天沒有限定手札</div>';
+      return;
+    }
+    body.innerHTML = list.map(m => renderMvCard(m, true)).join('');
+  } else if (_mvTab === 'rooms') {
+    const list = await getAllRoomSummaries();
+    countEl.textContent = list.length + ' 個房間';
+    if (list.length === 0) {
+      body.innerHTML = '<div class="mv-empty">尚未產生房間摘要</div>';
+      return;
+    }
+    body.innerHTML = list.map(r => renderRoomCard(r)).join('');
+  } else if (_mvTab === 'notion') {
+    countEl.textContent = '';
+    const s = getNotionSettings();
+    body.innerHTML = `
+      <div class="mv-card open">
+        <div class="mv-card-header"><span class="mv-card-title">Notion 同步設定</span></div>
+        <div class="mv-card-body">
+          <div class="mv-edit-field">
+            <label><input type="checkbox" id="nsCfgEnabled" ${s.enabled ? 'checked' : ''}> 啟用 Notion 同步</label>
+          </div>
+          <div class="mv-edit-field"><label>Proxy URL</label>
+            <input type="text" id="nsCfgProxy" value="${escapeAttr(s.proxyUrl || '')}" placeholder="https://your-proxy.example.com">
+          </div>
+          <div class="mv-edit-field"><label>Notion Token（僅存於 sessionStorage）</label>
+            <input type="password" id="nsCfgToken" value="${escapeAttr(s.token || '')}" placeholder="ntn_...">
+          </div>
+          <div class="mv-edit-field"><label>Library Index DB ID</label>
+            <input type="text" id="nsCfgLibDb" value="${escapeAttr(s.libraryDbId || '')}" placeholder="database id">
+          </div>
+          <div class="mv-edit-field"><label>Script Blocks DB ID</label>
+            <input type="text" id="nsCfgScriptDb" value="${escapeAttr(s.scriptDbId || '')}" placeholder="database id">
+          </div>
+          <div class="mv-edit-field"><label>Memory DB ID</label>
+            <input type="text" id="nsCfgMemDb" value="${escapeAttr(s.memoryDbId || '')}" placeholder="database id">
+          </div>
+          <div class="mv-edit-field"><label>Persona Page ID</label>
+            <input type="text" id="nsCfgPersonaPage" value="${escapeAttr(s.personaPageId || '')}" placeholder="page id">
+          </div>
+          <div class="mv-card-actions">
+            <button class="mv-btn" onclick="window.saveNotionConfig()">儲存設定</button>
+            <button class="mv-btn" onclick="window.testNotionConnection()">測試連線</button>
+          </div>
+        </div>
+      </div>
+      <div class="mv-card">
+        <div class="mv-card-header" onclick="this.parentElement.classList.toggle('open')">
+          <span class="mv-card-title">同步佇列</span>
+          <span class="mv-card-module" id="nsQueueCount">載入中…</span>
+        </div>
+        <div class="mv-card-body" id="nsQueueBody"></div>
+      </div>`;
+    pendingCount().then(c => {
+      const el = document.getElementById('nsQueueCount');
+      if (el) el.textContent = c + ' 筆待處理';
+    });
+  }
+}
+
+function renderMvCard(m, sessionOnly) {
+  const tags = (m.tags || []).map(t => `<span class="mv-card-tag">${escapeAttr(t)}</span>`).join('');
+  const actions = sessionOnly
+    ? ''
+    : `<div class="mv-card-actions">
+        <button class="mv-btn" onclick="window.editMemory('${escapeAttr(m.id)}',event)">編輯</button>
+        <button class="mv-btn mv-btn--danger" onclick="window.confirmDeleteMemory('${escapeAttr(m.id)}',event)">刪除</button>
+      </div>`;
+  return `<div class="mv-card" data-mv-id="${escapeAttr(m.id)}">
+    <div class="mv-card-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="mv-card-title">${escapeAttr(m.title || '(無標題)')}</span>
+      <span class="mv-card-module">${escapeAttr(m.module || '')}</span>
+      <span class="mv-card-date">${formatDate(m.updatedAt || m.createdAt)}</span>
+    </div>
+    <div class="mv-card-body">
+      <div class="mv-card-content">${escapeAttr(m.content || '')}</div>
+      ${tags ? '<div class="mv-card-tags">' + tags + '</div>' : ''}
+      ${actions}
+    </div>
+  </div>`;
+}
+
+function renderRoomCard(r) {
+  const topics = (r.topics || []).map(t => escapeAttr(t)).join('、');
+  const files = (r.files || []).map(f => escapeAttr(f)).join('、');
+  return `<div class="mv-card" data-mv-module="${escapeAttr(r.module)}">
+    <div class="mv-card-header" onclick="this.parentElement.classList.toggle('open')">
+      <span class="mv-card-title">${escapeAttr(r.module)}</span>
+      <span class="mv-card-module">${r.turnCount || 0} 輪</span>
+      <span class="mv-card-date">${formatDate(new Date(r.updatedAt).toISOString())}</span>
+    </div>
+    <div class="mv-card-body">
+      <div class="mv-summary-stats">
+        ${topics ? '討論過：' + topics + '<br>' : ''}
+        ${files ? '使用檔案：' + files : ''}
+      </div>
+      <div class="mv-card-actions">
+        <button class="mv-btn mv-btn--danger" onclick="window.confirmDeleteRoom('${escapeAttr(r.module)}',event)">刪除摘要</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+window.editMemory = async function(id, e) {
+  if (e) e.stopPropagation();
+  const m = await getMemory(id);
+  if (!m) return;
+  const card = document.querySelector(`.mv-card[data-mv-id="${id}"]`);
+  if (!card) return;
+  const bodyEl = card.querySelector('.mv-card-body');
+  bodyEl.innerHTML = `
+    <div class="mv-edit-field"><label>標題</label><input type="text" id="mvEditTitle" value="${escapeAttr(m.title)}"></div>
+    <div class="mv-edit-field"><label>內容</label><textarea id="mvEditContent" rows="3">${escapeAttr(m.content)}</textarea></div>
+    <div class="mv-edit-field"><label>標籤</label><input type="text" id="mvEditTags" value="${escapeAttr((m.tags||[]).join(', '))}"></div>
+    <div class="mv-card-actions">
+      <button class="mv-btn" onclick="window.saveEditedMemory('${escapeAttr(m.id)}')">儲存</button>
+      <button class="mv-btn" onclick="renderMvList()">取消</button>
+    </div>`;
+  card.classList.add('open');
+};
+
+window.saveEditedMemory = async function(id) {
+  const m = await getMemory(id);
+  if (!m) return;
+  m.title = document.getElementById('mvEditTitle').value.trim();
+  m.content = document.getElementById('mvEditContent').value.trim();
+  m.tags = document.getElementById('mvEditTags').value.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+  await saveMemory(m);
+  showNoteToast('手札已更新');
+  await renderMvList();
+};
+
+window.confirmDeleteMemory = async function(id, e) {
+  if (e) e.stopPropagation();
+  const card = document.querySelector(`.mv-card[data-mv-id="${id}"]`);
+  if (!card) return;
+  const actions = card.querySelector('.mv-card-actions');
+  actions.innerHTML = `
+    <span style="font-size:11px;color:var(--danger);font-family:var(--font-serif-tc)">確定刪除？</span>
+    <button class="mv-btn mv-btn--danger" onclick="window.doDeleteMemory('${escapeAttr(id)}')">確定</button>
+    <button class="mv-btn" onclick="renderMvList()">取消</button>`;
+};
+
+window.doDeleteMemory = async function(id) {
+  await deleteMemory(id);
+  showNoteToast('手札已刪除');
+  await renderMvList();
+};
+
+window.confirmDeleteRoom = async function(module, e) {
+  if (e) e.stopPropagation();
+  const card = document.querySelector(`.mv-card[data-mv-module="${module}"]`);
+  if (!card) return;
+  const actions = card.querySelector('.mv-card-actions');
+  actions.innerHTML = `
+    <span style="font-size:11px;color:var(--danger);font-family:var(--font-serif-tc)">確定刪除？</span>
+    <button class="mv-btn mv-btn--danger" onclick="window.doDeleteRoom('${escapeAttr(module)}')">確定</button>
+    <button class="mv-btn" onclick="renderMvList()">取消</button>`;
+};
+
+window.doDeleteRoom = async function(module) {
+  await deleteRoomSummary(module);
+  showNoteToast('房間摘要已刪除');
+  await renderMvList();
+};
+
+// ===== Memory Search in Viewer (Phase 10-E) =====
+let _mvSearchTimer = null;
+window.handleMvSearch = function(query) {
+  clearTimeout(_mvSearchTimer);
+  _mvSearchTimer = setTimeout(async () => {
+    const q = query.trim();
+    if (!q) { await renderMvList(); return; }
+
+    const body = document.getElementById('mvBody');
+    const countEl = document.getElementById('mvCount');
+
+    if (_mvTab === 'approved') {
+      const results = await searchMemories(q);
+      countEl.textContent = results.length + ' 筆命中';
+      if (results.length === 0) {
+        body.innerHTML = '<div class="mv-empty">找不到符合的手札</div>';
+        return;
+      }
+      body.innerHTML = results.map(r => {
+        const tags = (r.tags || []).map(t => `<span class="mv-card-tag">${escapeAttr(t)}</span>`).join('');
+        return `<div class="mv-card open" data-mv-id="${escapeAttr(r.id)}">
+          <div class="mv-card-header" onclick="this.parentElement.classList.toggle('open')">
+            <span class="mv-card-title">${escapeAttr(r.title || '(無標題)')}</span>
+            <span class="mv-card-module">${escapeAttr(r.module || '')}</span>
+          </div>
+          <div class="mv-card-body">
+            <div class="mv-card-content">${escapeAttr(r.snippet)}</div>
+            ${tags ? '<div class="mv-card-tags">' + tags + '</div>' : ''}
+            <div class="mv-card-actions">
+              <button class="mv-btn" onclick="window.editMemory('${escapeAttr(r.id)}',event)">編輯</button>
+              <button class="mv-btn mv-btn--danger" onclick="window.confirmDeleteMemory('${escapeAttr(r.id)}',event)">刪除</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    } else if (_mvTab === 'session') {
+      const all = getSessionNotes();
+      const terms = q.toLowerCase().split(/\s+/);
+      const filtered = all.filter(m => {
+        const hay = [m.title, m.content, ...(m.tags || [])].join(' ').toLowerCase();
+        return terms.some(t => hay.includes(t));
+      });
+      countEl.textContent = filtered.length + ' 筆命中';
+      body.innerHTML = filtered.length === 0
+        ? '<div class="mv-empty">找不到符合的手札</div>'
+        : filtered.map(m => renderMvCard(m, true)).join('');
+    } else {
+      await renderMvList();
+    }
+  }, 250);
+};
+
+// ===== Notion Sync UI (Phase 11-E) =====
+
+function updateSyncDot(state) {
+  const dot = document.getElementById('syncDotMv');
+  if (!dot) return;
+  dot.className = 'sync-bar-dot ' + state;
+  const label = dot.nextElementSibling;
+  if (label) {
+    const labels = { idle: '待機', syncing: '同步中…', ok: '已同步', error: '同步失敗' };
+    label.textContent = labels[state] || state;
+  }
+}
+
+window.syncNow = async function() {
+  if (!isNotionConfigured()) {
+    showNoteToast('請先設定 Notion 連線');
+    return;
+  }
+  updateSyncDot('syncing');
+  try {
+    const result = await processQueue();
+    updateSyncDot('ok');
+    showNoteToast('同步完成，處理 ' + result.processed + ' 筆');
+  } catch (err) {
+    updateSyncDot('error');
+    showNoteToast('同步失敗：' + err.message);
+  }
+};
+
+window.saveNotionConfig = function() {
+  const settings = {
+    enabled: document.getElementById('nsCfgEnabled').checked,
+    proxyUrl: document.getElementById('nsCfgProxy').value.trim(),
+    token: document.getElementById('nsCfgToken').value.trim(),
+    libraryDbId: document.getElementById('nsCfgLibDb').value.trim(),
+    scriptDbId: document.getElementById('nsCfgScriptDb').value.trim(),
+    memoryDbId: document.getElementById('nsCfgMemDb').value.trim(),
+    personaPageId: document.getElementById('nsCfgPersonaPage').value.trim(),
+  };
+  saveNotionSettings(settings);
+  const notionBtn = document.getElementById('noteSaveNotion');
+  if (notionBtn) notionBtn.disabled = !isNotionConfigured();
+  showNoteToast('Notion 設定已儲存');
+};
+
+window.testNotionConnection = async function() {
+  if (!isNotionConfigured()) {
+    showNoteToast('請先啟用並填寫 Proxy URL 與 Token');
+    return;
+  }
+  updateSyncDot('syncing');
+  try {
+    await pullLibraryEntries();
+    updateSyncDot('ok');
+    showNoteToast('連線成功！');
+  } catch (err) {
+    updateSyncDot('error');
+    showNoteToast('連線失敗：' + err.message);
+  }
+};
+
+window.openConflictDialog = function(local, remote, onResolve) {
+  const diff = buildConflictDiff(local, remote);
+  const body = document.getElementById('cfBody');
+  const actions = document.getElementById('cfActions');
+
+  body.innerHTML = `
+    <div class="cf-item-title">${escapeAttr(local.title || local.name || local.id)}</div>
+    <table class="cf-diff-table">
+      <tr><th>欄位</th><th class="cf-local">本機</th><th class="cf-remote">Notion</th></tr>
+      ${diff.map(d => `<tr>
+        <td>${escapeAttr(d.field)}</td>
+        <td class="cf-local">${escapeAttr(JSON.stringify(d.local ?? ''))}</td>
+        <td class="cf-remote">${escapeAttr(JSON.stringify(d.remote ?? ''))}</td>
+      </tr>`).join('')}
+    </table>`;
+
+  actions.innerHTML = `
+    <button class="cf-btn cf-btn--primary" id="cfUseLocal">使用本機版本</button>
+    <button class="cf-btn" id="cfUseRemote">使用 Notion 版本</button>
+    <button class="cf-btn" id="cfSkip">跳過</button>`;
+
+  document.getElementById('cfUseLocal').onclick = () => { window.closeConflictDialog(); onResolve('local'); };
+  document.getElementById('cfUseRemote').onclick = () => { window.closeConflictDialog(); onResolve('remote'); };
+  document.getElementById('cfSkip').onclick = () => { window.closeConflictDialog(); onResolve('skip'); };
+
+  document.getElementById('cfOverlay').classList.add('show');
+};
+
+window.closeConflictDialog = function() {
+  document.getElementById('cfOverlay').classList.remove('show');
+};
+
+// Disable Notion save button if not configured
+{
+  const notionBtn = document.getElementById('noteSaveNotion');
+  if (notionBtn) notionBtn.disabled = !isNotionConfigured();
+}
+
+// Background sync: process queue every 5 minutes if configured
+let _bgSyncTimer = null;
+function startBgSync() {
+  if (_bgSyncTimer) return;
+  _bgSyncTimer = setInterval(async () => {
+    if (!isNotionConfigured()) return;
+    const count = await pendingCount();
+    if (count > 0) {
+      updateSyncDot('syncing');
+      try {
+        await processQueue();
+        updateSyncDot('ok');
+      } catch { updateSyncDot('error'); }
+    }
+  }, 5 * 60 * 1000);
+}
+startBgSync();
+
+// ===== Room Summary: flush session on page unload (Phase 10-B) =====
+window.addEventListener('beforeunload', () => {
+  const modules = getSessionModules();
+  for (const mod of modules) {
+    const session = getSession(mod);
+    if (session && session.turns.length > 0) {
+      flushSession(mod, session).catch(() => {});
+    }
+  }
+});
 
 // ===== Token bar UI sync =====
 function syncTokenBar(tokens) {
@@ -2115,12 +2938,14 @@ window._aiSendReal = async function() {
   // Show user message in chat + persist
   window.appendUserMessage(text);
   addMessage(moduleName, 'user', text);
+  addTurn(moduleName, 'user', text);
 
   // Check prewritten responses first (no API call needed)
   const prewritten = matchPrewritten(text, moduleName);
   if (prewritten) {
     window.startTypewriter(prewritten, speakerLabel, 'calm', []);
     addMessage(moduleName, 'assistant', prewritten);
+    addTurn(moduleName, 'assistant', prewritten);
     return;
   }
 
@@ -2142,7 +2967,10 @@ window._aiSendReal = async function() {
     if (sendBtn) sendBtn.disabled = true;
     showThinking();
     try {
-      const systemPrompt = buildGeneralSystemPrompt();
+      const roomBlock = await buildSummaryBlock(moduleName);
+      const memBlock = await buildMemoryContext(text, moduleName);
+      const systemPrompt = buildGeneralSystemPrompt() + roomBlock + memBlock + buildFactsBlock(moduleName);
+      const msgs = buildMessages(moduleName, text);
       const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
       syncTokenBar(totalTokens);
 
@@ -2154,7 +2982,7 @@ window._aiSendReal = async function() {
         return;
       }
 
-      const response = await callLLM(settings, systemPrompt, text);
+      const response = await callLLM(settings, systemPrompt, msgs);
 
       if (settings.mode === 'coin') {
         const cost = coinCost(totalTokens);
@@ -2165,6 +2993,7 @@ window._aiSendReal = async function() {
       removeThinking();
       window.startTypewriter(response, speakerLabel, 'calm', []);
       addMessage(moduleName, 'assistant', response);
+      addTurn(moduleName, 'assistant', response);
     } catch (err) {
       removeThinking();
       window.startTypewriter('連線時發生了問題：' + err.message, speakerLabel, 'thinking', []);
@@ -2190,7 +3019,12 @@ window._aiSendReal = async function() {
       return;
     }
 
-    // Build module-specific system prompt
+    // Record module context as session facts
+    if (moduleData.fileName) setFact(moduleName, '檔案', moduleData.fileName);
+    if (moduleData.currentPage) setFact(moduleName, '頁碼', '第 ' + moduleData.currentPage + ' 頁');
+    if (moduleData.fileType) setFact(moduleName, '類型', moduleData.fileType);
+
+    // Build module-specific system prompt + session facts
     let systemPrompt;
     if (moduleName === 'pdf-reader') {
       systemPrompt = buildSystemPrompt(moduleData.content, moduleData.currentPage || 1, moduleData.fileName || 'PDF');
@@ -2201,6 +3035,12 @@ window._aiSendReal = async function() {
     } else {
       systemPrompt = buildGeneralSystemPrompt();
     }
+    const roomBlock = await buildSummaryBlock(moduleName);
+    const memBlock = await buildMemoryContext(text, moduleName);
+    systemPrompt += roomBlock + memBlock + buildFactsBlock(moduleName);
+
+    // Build multi-turn messages from session memory
+    const msgs = buildMessages(moduleName, text);
 
     // Token estimate + balance check
     const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
@@ -2215,7 +3055,7 @@ window._aiSendReal = async function() {
     }
 
     // Call LLM
-    const response = await callLLM(settings, systemPrompt, text);
+    const response = await callLLM(settings, systemPrompt, msgs);
 
     // Coin deduction
     if (settings.mode === 'coin') {
@@ -2227,6 +3067,7 @@ window._aiSendReal = async function() {
     removeThinking();
     window.startTypewriter(response, speakerLabel, 'calm', []);
     addMessage(moduleName, 'assistant', response);
+    addTurn(moduleName, 'assistant', response);
   } catch (err) {
     console.error('AI call failed:', err);
     removeThinking();

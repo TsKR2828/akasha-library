@@ -189,27 +189,36 @@ ${moduleDirectives}`;
  * Call LLM with provider routing.
  * BYOK mode: direct browser API calls.
  * Coin mode: routes through Workers proxy.
+ *
+ * @param {object} settings
+ * @param {string} systemPrompt
+ * @param {string|Array<{role:string,content:string}>} messages
+ *   String (single user message) or array of {role, content} turns.
  */
-export async function callLLM(settings, systemPrompt, userMessage) {
+export async function callLLM(settings, systemPrompt, messages) {
+  const msgs = typeof messages === 'string'
+    ? [{ role: 'user', content: messages }]
+    : messages;
+
   if (settings.mode === 'coin') {
-    return callViaProxy(settings, systemPrompt, userMessage);
+    return callViaProxy(settings, systemPrompt, msgs);
   }
 
   switch (settings.provider) {
     case 'openai':
-      return callOpenAI(settings, systemPrompt, userMessage);
+      return callOpenAI(settings, systemPrompt, msgs);
     case 'anthropic':
-      return callAnthropic(settings, systemPrompt, userMessage);
+      return callAnthropic(settings, systemPrompt, msgs);
     case 'google':
-      return callGoogle(settings, systemPrompt, userMessage);
+      return callGoogle(settings, systemPrompt, msgs);
     case 'custom':
-      return callCustom(settings, systemPrompt, userMessage);
+      return callCustom(settings, systemPrompt, msgs);
     default:
       throw new Error(`不支援的 AI 供應商：${settings.provider}`);
   }
 }
 
-async function callOpenAI(settings, systemPrompt, userMessage) {
+async function callOpenAI(settings, systemPrompt, msgs) {
   const endpoint = 'https://api.openai.com/v1/chat/completions';
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -221,7 +230,7 @@ async function callOpenAI(settings, systemPrompt, userMessage) {
       model: settings.model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        ...msgs,
       ],
       max_tokens: 2048,
       temperature: 0.7,
@@ -237,7 +246,7 @@ async function callOpenAI(settings, systemPrompt, userMessage) {
   return json.choices[0].message.content;
 }
 
-async function callAnthropic(settings, systemPrompt, userMessage) {
+async function callAnthropic(settings, systemPrompt, msgs) {
   const endpoint = 'https://api.anthropic.com/v1/messages';
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -250,9 +259,7 @@ async function callAnthropic(settings, systemPrompt, userMessage) {
     body: JSON.stringify({
       model: settings.model,
       system: systemPrompt,
-      messages: [
-        { role: 'user', content: userMessage },
-      ],
+      messages: msgs,
       max_tokens: 2048,
     }),
   });
@@ -266,15 +273,19 @@ async function callAnthropic(settings, systemPrompt, userMessage) {
   return json.content[0].text;
 }
 
-async function callGoogle(settings, systemPrompt, userMessage) {
+async function callGoogle(settings, systemPrompt, msgs) {
   const model = settings.model || 'gemini-2.0-flash';
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.apiKey}`;
+  const contents = msgs.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       system_instruction: { parts: [{ text: systemPrompt }] },
-      contents: [{ parts: [{ text: userMessage }] }],
+      contents,
       generationConfig: {
         maxOutputTokens: 2048,
         temperature: 0.7,
@@ -291,7 +302,7 @@ async function callGoogle(settings, systemPrompt, userMessage) {
   return json.candidates[0].content.parts[0].text;
 }
 
-async function callCustom(settings, systemPrompt, userMessage) {
+async function callCustom(settings, systemPrompt, msgs) {
   if (!settings.endpoint) throw new Error('自訂端點未設定');
 
   // OpenAI-compatible format (works with Ollama, LM Studio, vLLM, etc.)
@@ -305,7 +316,7 @@ async function callCustom(settings, systemPrompt, userMessage) {
       model: settings.model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userMessage },
+        ...msgs,
       ],
       max_tokens: 2048,
       temperature: 0.7,
@@ -321,7 +332,7 @@ async function callCustom(settings, systemPrompt, userMessage) {
   return json.choices?.[0]?.message?.content || json.content?.[0]?.text || JSON.stringify(json);
 }
 
-async function callViaProxy(settings, systemPrompt, userMessage) {
+async function callViaProxy(settings, systemPrompt, msgs) {
   if (!PROXY_URL) throw new Error('月幣模式尚未啟用（代理伺服器未設定）');
 
   const res = await fetch(`${PROXY_URL}/v1/chat`, {
@@ -331,7 +342,7 @@ async function callViaProxy(settings, systemPrompt, userMessage) {
       provider: settings.provider,
       model: settings.model,
       system: systemPrompt,
-      messages: [{ role: 'user', content: userMessage }],
+      messages: msgs,
       mode: 'coin',
     }),
   });
