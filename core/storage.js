@@ -6,7 +6,7 @@
  */
 
 const DB_NAME = 'akasha-library';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 let dbInstance = null;
 
@@ -58,6 +58,12 @@ function openDB() {
         const sqStore = db.createObjectStore('sync-queue', { keyPath: 'id', autoIncrement: true });
         sqStore.createIndex('status', 'status', { unique: false });
         sqStore.createIndex('target', 'target', { unique: false });
+      }
+
+      // v6: bookmarks (PDF Reader Phase 4.4 — migrate from localStorage to IndexedDB)
+      if (!db.objectStoreNames.contains('bookmarks')) {
+        const bmStore = db.createObjectStore('bookmarks', { keyPath: 'id' });
+        bmStore.createIndex('fileId', 'fileId', { unique: false });
       }
     };
 
@@ -292,6 +298,69 @@ export async function importIndex(json) {
     const store = tx.objectStore('files');
     entries.forEach(entry => store.put(entry));
     tx.oncomplete = () => resolve(entries.length);
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+// ===== Bookmarks Store (Phase 4.4) =====
+
+/**
+ * Save a single bookmark. Replaces existing if same id.
+ */
+export async function saveBookmark(bm) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('bookmarks', 'readwrite');
+    tx.objectStore('bookmarks').put(bm);
+    tx.oncomplete = () => resolve(bm);
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+/**
+ * Get all bookmarks for a given fileId, sorted by page.
+ */
+export async function getBookmarksByFile(fileId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('bookmarks', 'readonly');
+    const idx = tx.objectStore('bookmarks').index('fileId');
+    const req = idx.getAll(fileId);
+    req.onsuccess = () => {
+      const results = (req.result || []).sort((a, b) => a.page - b.page);
+      resolve(results);
+    };
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+/**
+ * Delete a single bookmark by id.
+ */
+export async function deleteBookmark(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('bookmarks', 'readwrite');
+    tx.objectStore('bookmarks').delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = (e) => reject(e.target.error);
+  });
+}
+
+/**
+ * Delete all bookmarks for a given fileId.
+ */
+export async function deleteBookmarksByFile(fileId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('bookmarks', 'readwrite');
+    const store = tx.objectStore('bookmarks');
+    const idx = store.index('fileId');
+    idx.openCursor(IDBKeyRange.only(fileId)).onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { cursor.delete(); cursor.continue(); }
+    };
+    tx.oncomplete = () => resolve();
     tx.onerror = (e) => reject(e.target.error);
   });
 }

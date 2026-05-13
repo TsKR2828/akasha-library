@@ -699,7 +699,7 @@
     <h1>Code & Data Reader</h1>
     <label class="file-label" title="從電腦選一個檔案打開">
       開啟檔案
-      <input id="fileInput" type="file" accept=".py,.json,.md,.markdown,.txt,.score.json,text/plain,application/json,text/markdown">
+      <input id="fileInput" type="file" accept=".py,.json,.jsonl,.md,.markdown,.txt,.score.json,.docx,.doc,text/plain,application/json,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
     </label>
     <button class="btn" id="btnEditToggle" style="display:none" title="直接修改檔案內容（支援 md / txt / json）">編輯模式</button>
     <button class="btn--gold btn" id="btnDownloadEdited" style="display:none" title="把編輯後的檔案存到你的電腦">下載新檔</button>
@@ -718,6 +718,9 @@
     <button class="btn" id="copyRaw" title="複製你實際打的文字，包含 ### 這些符號">複製原始內容</button>
     <button class="btn--gold btn" id="copyView" title="複製畫面上看到的樣子，符號會變成標題粗體等">複製目前視圖</button>
     <button class="btn" id="downloadText" title="把檔案存到你的電腦">下載目前內容</button>
+    <button class="btn--gold btn" id="exportDocx" style="display:none" title="把 Markdown 內容轉成 Word 文件(.docx)下載">匯出 DOCX</button>
+    <button class="btn--gold btn" id="exportScriptDocx" style="display:none" title="把劇本內容轉成 Word 文件(.docx)下載">劇本 DOCX</button>
+    <button class="btn--gold btn" id="exportScriptPdf" style="display:none" title="開啟劇本排版頁面，可直接列印或存成 PDF">劇本 PDF 預覽</button>
     <button class="btn--gold btn" id="exportSummary" title="自動幫你整理這個檔案的重點大綱">匯出摘要 .md</button>
     <button class="btn" id="btnSaveSummaryToLibrary" style="display:none" title="把摘要存進圖書館，與原始檔案建立關聯">摘要存入書庫</button>
 
@@ -736,7 +739,7 @@
 
     <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼..." title="在檔案中搜尋關鍵字">
     <button class="btn" id="searchBtn" title="在檔案中搜尋關鍵字">搜尋</button>
-    <span id="status">拖曳 .py / .json / .score.json / .md / .txt 到視窗</span>
+    <span id="status">拖曳 .py / .json / .jsonl / .score.json / .md / .txt / .docx 到視窗</span>
   </header>
 
   <div class="app" id="appRoot">
@@ -806,7 +809,9 @@
       activeTab: "pretty",
       searchTerm: "",
       editMode: false,
-      dirty: false
+      dirty: false,
+      _scriptBlocks: null,
+      _isPlainScript: false
     };
 
     const appRoot = document.getElementById("appRoot");
@@ -1284,6 +1289,7 @@
     // ═══════════════════════════════════════════
     function getExtension(filename) {
       const lower = filename.toLowerCase();
+      if (lower.endsWith(".blocks.jsonl")) return ".blocks.jsonl";
       if (lower.endsWith(".score.json")) return ".score.json";
       const match = lower.match(/\.[^.]+$/);
       return match ? match[0] : ".txt";
@@ -1292,9 +1298,34 @@
     function detectMode(filename) {
       const ext = getExtension(filename);
       if (ext === ".md" || ext === ".markdown") return "md";
+      if (ext === ".docx" || ext === ".doc") return "md";
       if (ext === ".py") return "py";
       if (ext === ".json" || ext === ".score.json") return "json";
+      if (ext === ".jsonl" || ext === ".blocks.jsonl") return "jsonl";
       return "txt";
+    }
+
+    function isPlainScriptContent(content) {
+      const lines = content.trim().split('\n').filter(l => l.trim() && !l.trim().startsWith('//'));
+      if (lines.length < 2) return false;
+      const dlg = /^[^\s#].{0,20}[：:].+/;
+      const cmd = /^#\w+:\s/;
+      let hits = 0;
+      for (const l of lines.slice(0, 20)) { if (dlg.test(l.trim()) || cmd.test(l.trim())) hits++; }
+      return hits / Math.min(lines.length, 20) >= 0.5;
+    }
+
+    function parseBlocksJsonl(content) {
+      const blocks = [];
+      for (const line of content.trim().split('\n')) {
+        const tr = line.trim();
+        if (!tr) continue;
+        try {
+          const obj = JSON.parse(tr);
+          if (obj.type === 'dialogue' || obj.type === 'narration' || obj.type === 'command') blocks.push(obj);
+        } catch {}
+      }
+      return blocks.length > 0 ? blocks : null;
     }
 
     function parseJsonWithInfo(text) {
@@ -1338,12 +1369,21 @@
       state.parsedJson = null;
       state.jsonError = null;
       state.editMode = false;
+      state._scriptBlocks = null;
       state.mode = detectMode(state.filename);
 
       if (state.mode === "json") {
         const parsed = parseJsonWithInfo(state.content);
         state.parsedJson = parsed.data;
         state.jsonError = parsed.error;
+      }
+
+      if (state.mode === "jsonl") {
+        state._scriptBlocks = parseBlocksJsonl(state.content);
+      } else if (state.mode === "txt" && isPlainScriptContent(state.content)) {
+        state._isPlainScript = true;
+      } else {
+        state._isPlainScript = false;
       }
 
       rawEditor.value = state.content;
@@ -1369,6 +1409,10 @@
 
     function updateSheetsVisibility() {
       sheetsGroup.classList.toggle("visible", state.mode === "md");
+      document.getElementById("exportDocx").style.display = state.mode === "md" ? "" : "none";
+      const hasScript = !!(state._scriptBlocks || state._isPlainScript);
+      document.getElementById("exportScriptDocx").style.display = hasScript ? "" : "none";
+      document.getElementById("exportScriptPdf").style.display = hasScript ? "" : "none";
     }
 
     function updateSummaryButton() {
@@ -1418,6 +1462,14 @@
         title: ".md — Markdown 文件",
         body: `Markdown 格式，支援標題、粗體、表格等語法。切換「Markdown 預覽」可看到渲染後的效果，「原始碼」可看到原始語法。支援匯出至 Google Sheets。`
       };
+      if (state.extension === ".jsonl" || state.extension === ".blocks.jsonl") return {
+        title: ".jsonl — 劇本 Blocks",
+        body: `JSONL 格式的劇本段落資料。每行一個 block（dialogue / narration / command）。可匯出為劇本 DOCX 或 PDF 預覽。`
+      };
+      if (state._isPlainScript) return {
+        title: ".txt — Plain Script 劇本",
+        body: `偵測到「角色：台詞」格式的劇本內容。可直接匯出為劇本 DOCX 或 PDF 預覽，系統會自動解析角色與台詞。`
+      };
       return {
         title: ".txt — 純文字",
         body: `簡單筆記、log、暫存文字。直接閱讀即可，「文字閱讀」和「原始碼」顯示的內容會完全一樣，這是正常的！匯出摘要不適用這個格式。`
@@ -1461,8 +1513,25 @@
         badges.push(`<span class="badge ok">Python 閱讀模式</span>`);
         if (risks.length) risks.forEach(r => badges.push(`<span class="badge warn">${escapeHtml(r.label)}</span>`));
       }
-      if (state.mode === "md") badges.push(`<span class="badge ok">Markdown 預覽</span>`, `<span class="badge ok">Sheets 匯出可用</span>`);
-      if (state.mode === "txt") badges.push(`<span class="badge">純文字閱讀</span>`);
+      if (state.mode === "md") {
+        badges.push(`<span class="badge ok">Markdown 預覽</span>`, `<span class="badge ok">Sheets 匯出可用</span>`);
+        if (state._docxSourceName) badges.push(`<span class="badge ok">DOCX 匯入</span>`);
+        badges.push(`<span class="badge ok">DOCX 匯出可用</span>`);
+      }
+      if (state.mode === "txt" && state._isPlainScript) {
+        badges.push(`<span class="badge ok">Plain Script 偵測</span>`);
+        badges.push(`<span class="badge ok">劇本 DOCX 匯出可用</span>`);
+        badges.push(`<span class="badge ok">劇本 PDF 預覽可用</span>`);
+      } else if (state.mode === "txt") {
+        badges.push(`<span class="badge">純文字閱讀</span>`);
+      }
+      if (state.mode === "jsonl" && state._scriptBlocks) {
+        badges.push(`<span class="badge ok">blocks.jsonl（${state._scriptBlocks.length} blocks）</span>`);
+        badges.push(`<span class="badge ok">劇本 DOCX 匯出可用</span>`);
+        badges.push(`<span class="badge ok">劇本 PDF 預覽可用</span>`);
+      } else if (state.mode === "jsonl") {
+        badges.push(`<span class="badge">JSONL 閱讀</span>`);
+      }
 
       if (hasTableContent()) {
         badges.push(`<span class="badge ok table-detect-badge" style="cursor:pointer" title="點擊送到 Table Forge">⚙ 偵測到表格</span>`);
@@ -2008,22 +2077,68 @@
       const file = event.target.files[0];
       if (!file) return;
       if (!confirmDiscardEdits()) { fileInput.value = ""; return; }
-      const reader = new FileReader();
-      reader.onload = async () => {
-        setFile(file.name, reader.result, file.size);
-        try {
-          const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
-          const ext = getExtension(file.name) || 'txt';
-          const entry = await saveFileEntry({ name: file.name, type: ext, size: file.size });
-          await saveFileBlob(entry.id, new Blob([reader.result], { type: file.type || 'text/plain' }));
-          if (window.parent !== window) {
-            window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+      const ext = getExtension(file.name);
+      const isDocx = ext === '.docx' || ext === '.doc';
+
+      if (isDocx) {
+        // DOCX: read as ArrayBuffer → convert to Markdown via document-bridge
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            statusEl.textContent = '正在轉換 DOCX…';
+            const { importDocx, extractDocText } = await import('../../core/document-bridge.js');
+            let markdown, outName;
+            if (ext === '.docx') {
+              const result = await importDocx(reader.result, file.name);
+              markdown = result.markdown;
+              outName = result.outName;
+              if (result.warnings.length > 0) {
+                console.warn('DOCX import warnings:', result.warnings);
+              }
+            } else {
+              // Legacy .doc — rough text extraction only
+              markdown = extractDocText(reader.result);
+              outName = file.name.replace(/\.doc$/i, '.md');
+            }
+            setFile(outName, markdown, file.size);
+            state._docxSourceName = file.name;
+            statusEl.textContent = `已匯入：${file.name} → ${outName}`;
+          } catch (e) {
+            console.error('DOCX import failed:', e);
+            statusEl.textContent = `DOCX 匯入失敗：${e.message}`;
           }
-        } catch (e) {
-          console.warn('Failed to persist file to library:', e);
-        }
-      };
-      reader.readAsText(file, "utf-8");
+          // Persist to library
+          try {
+            const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
+            const entry = await saveFileEntry({ name: file.name, type: ext.slice(1), size: file.size, sourceFile: file.name });
+            await saveFileBlob(entry.id, new Blob([reader.result]));
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+            }
+          } catch (e) {
+            console.warn('Failed to persist file to library:', e);
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        // Text-based files: existing path
+        const reader = new FileReader();
+        reader.onload = async () => {
+          setFile(file.name, reader.result, file.size);
+          try {
+            const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
+            const fileExt = getExtension(file.name) || 'txt';
+            const entry = await saveFileEntry({ name: file.name, type: fileExt, size: file.size });
+            await saveFileBlob(entry.id, new Blob([reader.result], { type: file.type || 'text/plain' }));
+            if (window.parent !== window) {
+              window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+            }
+          } catch (e) {
+            console.warn('Failed to persist file to library:', e);
+          }
+        };
+        reader.readAsText(file, "utf-8");
+      }
     });
 
     rawEditor.addEventListener("input", () => {
@@ -2064,6 +2179,84 @@
       download(`${base}_summary.md`, makeSummary(), "text/markdown");
       statusEl.textContent = "已匯出摘要 .md";
       recordOperation("已匯出摘要 .md");
+    });
+
+    // --- DOCX export ---
+    document.getElementById("exportDocx").addEventListener("click", async () => {
+      if (!state.content || state.mode !== "md") return;
+      try {
+        statusEl.textContent = "正在產生 DOCX…";
+        const { exportDocx } = await import('../../core/document-bridge.js');
+        const title = (state.filename || "document").replace(/\.[^.]+$/, "");
+        const blob = await exportDocx(state.content, title);
+        const outName = title + ".docx";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = outName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 300);
+        statusEl.textContent = `已匯出：${outName}`;
+        recordOperation(`已匯出 DOCX ${outName}`);
+      } catch (e) {
+        console.error("DOCX export failed:", e);
+        statusEl.textContent = `DOCX 匯出失敗：${e.message}`;
+      }
+    });
+
+    // --- Script DOCX export (13-C) ---
+    async function getScriptBlocks() {
+      if (state._scriptBlocks) return state._scriptBlocks;
+      if (state._isPlainScript) {
+        const { translate } = await import('../../core/translation-core.js');
+        const job = translate(state.content, state.filename || 'script.txt');
+        return job.blocks;
+      }
+      return null;
+    }
+
+    document.getElementById("exportScriptDocx").addEventListener("click", async () => {
+      const blocks = await getScriptBlocks();
+      if (!blocks || blocks.length === 0) return;
+      try {
+        statusEl.textContent = "正在產生劇本 DOCX…";
+        const { exportScriptDocx } = await import('../../core/document-bridge.js');
+        const title = (state.filename || "script").replace(/\.[^.]+$/, "");
+        const blob = await exportScriptDocx(blocks, title);
+        const outName = title + "_script.docx";
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = outName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 300);
+        statusEl.textContent = `已匯出：${outName}`;
+        recordOperation(`已匯出劇本 DOCX ${outName}`);
+      } catch (e) {
+        console.error("Script DOCX export failed:", e);
+        statusEl.textContent = `劇本 DOCX 匯出失敗：${e.message}`;
+      }
+    });
+
+    document.getElementById("exportScriptPdf").addEventListener("click", async () => {
+      const blocks = await getScriptBlocks();
+      if (!blocks || blocks.length === 0) return;
+      try {
+        statusEl.textContent = "正在產生劇本 PDF 預覽…";
+        const { exportScriptHtml } = await import('../../core/document-bridge.js');
+        const title = (state.filename || "script").replace(/\.[^.]+$/, "");
+        const html = exportScriptHtml(blocks, title);
+        const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        window.open(url, "_blank");
+        statusEl.textContent = "已開啟劇本 PDF 預覽（請在新頁面按列印）";
+        recordOperation("已開啟劇本 PDF 預覽");
+      } catch (e) {
+        console.error("Script PDF preview failed:", e);
+        statusEl.textContent = `劇本 PDF 預覽失敗：${e.message}`;
+      }
     });
 
     // --- Edit mode ---
@@ -2187,17 +2380,71 @@
       const file = event.dataTransfer.files[0];
       if (!file) return;
       if (!confirmDiscardEdits()) return;
-      const reader = new FileReader();
-      reader.onload = () => setFile(file.name, reader.result, file.size);
-      reader.readAsText(file, "utf-8");
+      const ext = getExtension(file.name);
+      const isDocx = ext === '.docx' || ext === '.doc';
+
+      if (isDocx) {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            statusEl.textContent = '正在轉換 DOCX…';
+            const { importDocx, extractDocText } = await import('../../core/document-bridge.js');
+            let markdown, outName;
+            if (ext === '.docx') {
+              const result = await importDocx(reader.result, file.name);
+              markdown = result.markdown;
+              outName = result.outName;
+            } else {
+              markdown = extractDocText(reader.result);
+              outName = file.name.replace(/\.doc$/i, '.md');
+            }
+            setFile(outName, markdown, file.size);
+            state._docxSourceName = file.name;
+            statusEl.textContent = `已匯入：${file.name} → ${outName}`;
+          } catch (e) {
+            console.error('DOCX import failed:', e);
+            statusEl.textContent = `DOCX 匯入失敗：${e.message}`;
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => setFile(file.name, reader.result, file.size);
+        reader.readAsText(file, "utf-8");
+      }
     });
 
     // --- PostMessage API for parent shell ---
-    window.addEventListener("message", (event) => {
+    window.addEventListener("message", async (event) => {
       if (event.origin !== location.origin) return;
       if (event.data?.type === "akasha-open-file") {
         if (!confirmDiscardEdits()) return;
-        setFile(event.data.filename || "file.md", event.data.content, event.data.size);
+        const fname = event.data.filename || "file.md";
+        const ext = getExtension(fname);
+        // Handle DOCX/DOC ArrayBuffer from parent shell
+        if ((ext === '.docx' || ext === '.doc') && event.data.content instanceof ArrayBuffer) {
+          try {
+            statusEl.textContent = '正在轉換 DOCX…';
+            const { importDocx, extractDocText } = await import('../../core/document-bridge.js');
+            let markdown, outName;
+            if (ext === '.docx') {
+              const result = await importDocx(event.data.content, fname);
+              markdown = result.markdown;
+              outName = result.outName;
+            } else {
+              markdown = extractDocText(event.data.content);
+              outName = fname.replace(/\.doc$/i, '.md');
+            }
+            setFile(outName, markdown, event.data.size);
+            state._docxSourceName = fname;
+            statusEl.textContent = `已匯入：${fname} → ${outName}`;
+          } catch (e) {
+            console.error('DOCX import failed:', e);
+            statusEl.textContent = `DOCX 匯入失敗：${e.message}`;
+          }
+          return;
+        }
+        setFile(fname, event.data.content, event.data.size);
       }
       // AI context request from App Shell
       if (event.data?.type === "akasha-ai-get-context") {

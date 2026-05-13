@@ -1411,7 +1411,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry } from '../../core/storage.js';
+  import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
   import { extractContextPages, extractPageText, getAISettings, callLLM, buildSystemPrompt } from '../../core/ai.js';
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
@@ -1589,8 +1589,9 @@
       // Save to library
       await saveToLibrary(file.name, totalPages, pdfBytes);
 
-      // Load bookmarks for this file
-      loadBookmarks(currentFileId);
+      // Load bookmarks for this file (migrate localStorage → IndexedDB if needed)
+      await migrateBookmarks(currentFileId);
+      await loadBookmarks(currentFileId);
 
       // Render
       await renderPage();
@@ -2335,16 +2336,28 @@
     return `${d.getFullYear()}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getDate().toString().padStart(2,'0')}`;
   }
 
-  // ===== Bookmarks (localStorage) =====
-  let bookmarks = [];
-
-  function getBookmarkKey(fileId) {
-    return 'akasha-bookmarks-' + (fileId || 'unknown');
+  // ===== Bookmarks: localStorage → IndexedDB migration =====
+  async function migrateBookmarks(fileId) {
+    const lsKey = 'akasha-bookmarks-' + (fileId || 'unknown');
+    const raw = localStorage.getItem(lsKey);
+    if (!raw) return;
+    try {
+      const old = JSON.parse(raw);
+      if (!Array.isArray(old) || old.length === 0) { localStorage.removeItem(lsKey); return; }
+      for (const bm of old) {
+        bm.fileId = bm.fileId || fileId;
+        await saveBookmark(bm);
+      }
+      localStorage.removeItem(lsKey);
+    } catch { /* ignore bad data */ }
   }
 
-  function loadBookmarks(fileId) {
+  // ===== Bookmarks (IndexedDB) =====
+  let bookmarks = [];
+
+  async function loadBookmarks(fileId) {
     try {
-      bookmarks = JSON.parse(localStorage.getItem(getBookmarkKey(fileId)) || '[]');
+      bookmarks = await getBookmarksByFile(fileId);
     } catch {
       bookmarks = [];
     }
@@ -2352,16 +2365,11 @@
     updateBookmarkButton();
   }
 
-  function saveBookmarks() {
-    if (!currentFileId) return;
-    localStorage.setItem(getBookmarkKey(currentFileId), JSON.stringify(bookmarks));
-  }
-
   function isPageBookmarked(page) {
     return bookmarks.some(b => b.page === page);
   }
 
-  function addBookmark(page, note) {
+  async function addBookmark(page, note) {
     if (isPageBookmarked(page)) return;
     const bm = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -2372,14 +2380,14 @@
     };
     bookmarks.push(bm);
     bookmarks.sort((a, b) => a.page - b.page);
-    saveBookmarks();
+    await saveBookmark(bm);
     renderBookmarks();
     updateBookmarkButton();
   }
 
-  function removeBookmark(id) {
+  async function removeBookmark(id) {
     bookmarks = bookmarks.filter(b => b.id !== id);
-    saveBookmarks();
+    await deleteBookmark(id);
     renderBookmarks();
     updateBookmarkButton();
   }
@@ -2392,11 +2400,11 @@
     btn.title = active ? '移除書籤' : '加入書籤';
   }
 
-  window.toggleBookmark = function() {
+  window.toggleBookmark = async function() {
     if (!pdfDoc || !currentFileId) return;
     if (isPageBookmarked(currentPage)) {
       const bm = bookmarks.find(b => b.page === currentPage);
-      if (bm) removeBookmark(bm.id);
+      if (bm) await removeBookmark(bm.id);
     } else {
       // Show the add form in the bookmarks tab
       switchTab('bookmarks');
@@ -2409,11 +2417,11 @@
     }
   };
 
-  window.confirmAddBookmark = function() {
+  window.confirmAddBookmark = async function() {
     if (!pdfDoc || !currentFileId) return;
     const noteInput = document.getElementById('bookmarkNoteInput');
     const note = (noteInput.value || '').trim();
-    addBookmark(currentPage, note);
+    await addBookmark(currentPage, note);
     document.getElementById('bookmarkAddForm').style.display = 'none';
     noteInput.value = '';
     showToast(`已標記 p. ${currentPage}`, 'success');

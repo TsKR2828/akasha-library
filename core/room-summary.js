@@ -7,7 +7,7 @@
  */
 
 const DB_NAME = 'akasha-library';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 const STORE = 'room-summaries';
 const ENABLED_KEY = 'akasha-room-summary-enabled';
 const MAX_TOPICS = 8;

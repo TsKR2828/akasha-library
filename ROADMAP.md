@@ -135,10 +135,10 @@
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 13-A | DOCX 匯入 → Markdown（段落 / 標題 / 表格 / 粗斜體） | ⬜ |
-| 13-B | Markdown → DOCX 匯出（交付文件用） | ⬜ |
-| 13-C | Script blocks → PDF / DOCX（劇本交付） | ⬜ |
-| 13-D | DOC 舊格式 — 只抽文字 | ⬜ |
+| 13-A | DOCX 匯入 → Markdown（段落 / 標題 / 表格 / 粗斜體） | ✅ |
+| 13-B | Markdown → DOCX 匯出（交付文件用） | ✅ |
+| 13-C | Script blocks → PDF / DOCX（劇本交付） | ✅ |
+| 13-D | DOC 舊格式 — 只抽文字 | ✅ |
 
 ## Phase 14：Voice / BGM Prototype（追加 spec §10–11, Batch H）
 
@@ -164,7 +164,7 @@
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 16-A | `core/export-core.js` — 統一匯出引擎（MD / HTML / PDF / CSV / JSON / .ks） | ⬜ |
+| 16-A | `core/export-core.js` — 統一匯出引擎（MD / HTML / PDF / CSV / JSON / .ks） | ✅ |
 | 16-B | 公開 Demo 版 build（GitHub Pages，不含私有資料） | ⬜ |
 | 16-C | 私有完整版 build（完整 persona / 聲音庫 / connector） | ⬜ |
 | 16-D | 後端服務骨架（API proxy / sync queue / RAG） | ⬜ |
@@ -191,7 +191,7 @@
 ├─ Phase 10 (Memory) ──→ Phase 15 (談心 + 館報)
 ├─ Phase 11 (Notion Connector)
 ├─ Phase 12 (Security Layer)
-├─ Phase 13 (Document Bridge)
+├─ Phase 13 (Document Bridge) — 13-A/B/C/D ✅ 全部完成
 ├─ Phase 14 (Voice/BGM) ──→ Phase 15-D (館報朗讀)
 └─ Phase 16 (Export Core + 部署)
 ```
