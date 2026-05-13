@@ -20,7 +20,7 @@
 
 | 模組 | 別名 | 功能 | 支援格式 |
 |------|------|------|----------|
-| Code & Data Reader | Manuscripta | 多格式閱讀 / 編輯 / 搜尋 / 匯出摘要 / Sheets 匯出 / Python 風險掃描 / TsukiSynth Score 儀表板 | .md .txt .py .json .score.json |
+| Code & Data Reader | Manuscripta | 多格式閱讀 / 編輯 / 搜尋 / 匯出摘要 / Sheets 匯出 / DOCX 匯入匯出 / 劇本偵測匯出 / Python 風險掃描 / TsukiSynth Score 儀表板 | .md .txt .py .json .score.json .docx .doc .blocks.jsonl |
 | PDF 閱讀器 | Lectorium | 翻頁閱讀 / 書籤 / 自訂切割 / 截圖框選 / AI 圖書館員（RAG 伴讀） | .pdf |
 | Table Forge | Tabularium | Canvas 表格編輯 / 公式引擎 / 多格式互通匯入匯出 | .csv .tsv（可從 Code & Data 接收 MD / JSON） |
 | 書籍排版器 | Bibliopegia | 視覺化書頁排版 / 封面設計 / 匯出 | .pdf .html |
@@ -49,7 +49,7 @@ modules/table-forge/
 
 ### PDF 閱讀器功能
 
-- **書籤**：新增 / 列表 / 跳頁 / 刪除，localStorage 持久化
+- **書籤**：新增 / 列表 / 跳頁 / 刪除，IndexedDB 持久化
 - **自訂切割**：頁碼網格勾選 → pdf-lib 合併 → 下載或存書庫
 - **截圖框選**：Canvas 拖拉選取 → PNG 存書庫
 - **OCR 文字摘錄**：單頁 OCR + 版權鎖定面板 + 月幣計費
@@ -142,7 +142,9 @@ npm test
 | 基礎書庫 + Drive 同步 + 公共書庫 | ✅ |
 | AI 圖書館員（RAG / BYOK / 人設 / 計費） | ✅ 90% |
 | Enhancement Phase 1–6（App Shell / PDF / 零韻 / 版權） | ✅ |
-| Enhancement Phase 7–16（Translation / Script Editor / Memory / Security …） | ⬜ |
+| Enhancement Phase 7, 9–11, 13（Translation / Memory / Notion / Document Bridge） | ✅ |
+| Enhancement Phase 16-A（Export Core 統一匯出引擎） | ✅ |
+| Enhancement Phase 8, 12, 14–15, 16-B~D（Script Editor / Security / Voice / 部署） | ⬜ |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 

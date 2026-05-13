@@ -137,26 +137,34 @@
 | 階段 | 內容 | 狀態 |
 |------|------|:----:|
 | Phase 1–6 | App Shell 重構 / PDF 補強 / 零韻面板 / Code&Data / Table Forge / 版權邊界 | ✅ 全部完成 |
-| Phase 7 | Translation Core（格式翻譯核心） | ⬜ |
-| Phase 8 | Script Editor MVP | ⬜ |
-| Phase 9 | Table Forge 文字抽取強化 | ⬜ |
-| Phase 10 | Memory System（零韻記憶） | ⬜ |
-| Phase 11 | Notion Connector | ⬜ |
-| Phase 12 | Security Layer | ⬜ |
-| Phase 13 | Document Bridge（DOCX 匯入匯出） | ⬜ |
-| Phase 14 | Voice / BGM Prototype | ⬜ |
-| Phase 15 | Private Reading Room + 每日館報 | ⬜ |
-| Phase 16 | Export Core + 部署 | ⬜ |
+| Phase 7 | Translation Core（格式翻譯核心） | ✅ 完成 |
+| Phase 8 | Script Editor MVP | ⬜ 待做 |
+| Phase 9 | Table Forge 文字抽取強化 | ✅ 完成 |
+| Phase 10 | Memory System（零韻記憶） | ✅ 完成 |
+| Phase 11 | Notion Connector | ✅ 完成 |
+| Phase 12 | Security Layer | ⬜ 待做 |
+| Phase 13 | Document Bridge（DOCX 匯入匯出 + 劇本匯出） | ✅ 全部完成 |
+| Phase 14 | Voice / BGM Prototype | ⬜ 待做 |
+| Phase 15 | Private Reading Room + 每日館報 | ⬜ 待做 |
+| Phase 16 | Export Core + 部署 | 🔶 16-A 完成 |
 
-Enhancement Phase 1–6 新增的核心模組：
+Enhancement Phase 新增的核心模組：
 
-| 檔案 | 功能 |
-|------|------|
-| `core/persona.js` | 人設解析器 + 載入器 |
-| `core/chat-history.js` | 每模組獨立對話紀錄 |
-| `core/prewritten.js` | 預寫回應 DB（免 API 匹配） |
-| `core/billing.js` | 月幣統一計費系統 |
-| `persona.md` | 外部化人設檔 |
+| 檔案 | Phase | 功能 |
+|------|:-----:|------|
+| `core/persona.js` | 3-C | 人設解析器 + 載入器 |
+| `core/chat-history.js` | 3-D | 每模組獨立對話紀錄 |
+| `core/prewritten.js` | 3-E | 預寫回應 DB（免 API 匹配） |
+| `core/billing.js` | 3-F | 月幣統一計費系統 |
+| `persona.md` | 3-C | 外部化人設檔 |
+| `core/translation-core.js` | 7 | 格式翻譯核心（Plain Script / MD 抽取 / JSON 偵測） |
+| `core/md-extract.js` | 9 | Markdown 章節表 / table inventory / outline / code fences |
+| `core/approved-memory.js` | 10-C | 長期記憶（零韻手札）+ IndexedDB |
+| `core/room-summary.js` | 10-B | 中期記憶（每模組摘要）+ IndexedDB |
+| `core/sync-queue.js` | 11-D | Notion 同步佇列 + 背景同步 |
+| `core/document-bridge.js` | 13 | DOCX/DOC 雙向轉換 + 劇本 DOCX/HTML 匯出 |
+| `core/export-core.js` | 16-A | 統一匯出引擎（17 converter + exportAs API） |
+| `core/export/bridge.js` | 5-B | 跨模組匯出橋接（blocks → table payload） |
 
 ---
 
@@ -205,6 +213,15 @@ Phase 4 █████████████░░░  90% (4.1-4.8 完成，
 Phase 5 █████████░░░░░░░  40% (5.2-5.3 完成)
 
 Enhancement ROADMAP
-Phase 1–6 ████████████████ 100% (App Shell / PDF / 零韻 / Code&Data / Table Forge / 版權)
-Phase 7–16 ░░░░░░░░░░░░░░░░   0% (Translation Core → 部署，見 ROADMAP.md)
+Phase 1–6  ████████████████ 100% (App Shell / PDF / 零韻 / Code&Data / Table Forge / 版權)
+Phase 7    ████████████████ 100% (Translation Core)
+Phase 8    ░░░░░░░░░░░░░░░░   0% (Script Editor MVP)
+Phase 9    ████████████████ 100% (Table Forge 抽取強化)
+Phase 10   ████████████████ 100% (Memory System)
+Phase 11   ████████████████ 100% (Notion Connector)
+Phase 12   ░░░░░░░░░░░░░░░░   0% (Security Layer)
+Phase 13   ████████████████ 100% (Document Bridge — 13-A/B/C/D 全部完成)
+Phase 14   ░░░░░░░░░░░░░░░░   0% (Voice / BGM)
+Phase 15   ░░░░░░░░░░░░░░░░   0% (談心 + 館報)
+Phase 16   ████░░░░░░░░░░░░  25% (16-A Export Core ✅ / 16-B~D 待做)
 ```

@@ -1,5 +1,116 @@
 # Akasha Library — Dev Log
 
+## 2026-05-14：§4.4 + Phase 13 完成 + Phase 16-A Export Core
+
+跨三個階段的實作，一次 commit 推送。
+
+### §4.4 PDF 書籤 IndexedDB 遷移
+
+| 項目 | 說明 |
+|------|------|
+| `core/storage.js` | DB_VERSION 5→6，新增 `bookmarks` object store + 4 個 CRUD export |
+| 四檔同步 | `approved-memory.js` / `room-summary.js` / `sync-queue.js` 同步升至 v6 |
+| `modules/pdf-reader/index.html` | 書籤全面改寫為 async IndexedDB 操作，含 `migrateBookmarks()` 一次性遷移 |
+
+### Phase 13 Document Bridge（全部完成 ✅）
+
+| 步驟 | 內容 |
+|------|------|
+| 13-A | DOCX 匯入 → Markdown（mammoth.js CDN，段落/標題/表格/粗斜體） |
+| 13-B | Markdown → DOCX 匯出（docx CDN，buildDocxDoc + mdInlineRuns） |
+| 13-C | Script blocks → DOCX/PDF（劇本交付）— 解除 Phase 8 依賴 |
+| 13-D | DOC 舊格式純文字抽取 |
+
+新增 `core/document-bridge.js`：
+- `importDocx(arrayBuffer, filename)` — mammoth.js → HTML → Markdown
+- `exportDocx(mdText, title)` — Markdown → docx Blob
+- `exportScriptDocx(blocks, title)` — Script blocks → 劇本版面 DOCX
+- `exportScriptHtml(blocks, title)` — Script blocks → 可列印 HTML
+- `extractDocText(buffer)` — 舊 .doc 二進位文字抽取
+
+`modules/markdown/index.html` 整合：
+- file input accept 加 `.docx/.doc/.jsonl`
+- 工具列加「匯出 DOCX」「劇本 DOCX」「劇本 PDF 預覽」
+- `isPlainScriptContent()` 偵測 Plain Script 格式
+- `parseBlocksJsonl()` 解析 `.blocks.jsonl`
+- 三個進入點（file input / drag-drop / PostMessage）全部支援 DOCX
+
+### Phase 16-A Export Core
+
+新增 `core/export-core.js` — 統一匯出引擎：
+
+| 資料類型 | 可匯出格式 |
+|---------|-----------|
+| markdown | md, html, pdf, docx |
+| table | csv, tsv, json, md |
+| dialogue | ks, avg-json, md, jsonl, docx, pdf |
+| score | json |
+| memory | md |
+
+API：`exportAs(dataType, format, data, opts)` → `{ blob, filename, mimeType }`
+
+新增格式轉換器：
+- `blocksToTyranoScript()` — dialogue blocks → `.ks`
+- `blocksToMarkdown()` — dialogue blocks → Markdown（**角色**：台詞 格式）
+- `tableToDelimited()` — table → CSV/TSV（含引號逃脫）
+- `tableToMarkdown()` — table → Markdown table
+- `memoryToMarkdown()` — memory record → `.md`
+- `markdownToHtml()` — Markdown → 完整 HTML（含 inline 格式化）
+
+### Commit
+
+```
+72a3555 feat(§4.4/13/16-A): IDB v6 書籤遷移 + Document Bridge 完成 + Export Core
+9 files changed, +1253 / -58
+```
+
+---
+
+## 2026-05-10：Phase 10 + 11 — Memory System + Notion Connector
+
+### Phase 10 Memory System
+
+| 步驟 | 內容 |
+|------|------|
+| 10-A | `core/session-memory.js` — 短期 session memory（runtime state） |
+| 10-B | `core/room-summary.js` — 中期 room summary（每模組摘要，IndexedDB） |
+| 10-C | `core/approved-memory.js` — 長期 approved memory + 使用者確認 |
+| 10-D | Memory Record viewer（查看/編輯/刪除） |
+| 10-E | Memory search — 受控搜尋，只回傳命中片段 |
+
+### Phase 11 Notion Connector
+
+| 步驟 | 內容 |
+|------|------|
+| 11-A | `core/notion-mapping.js` — Notion database mapping |
+| 11-B | `core/notion-connector.js` — 書庫 metadata 同步 |
+| 11-C | persona.md + Script blocks 同步 |
+| 11-D | `core/sync-queue.js` — 背景同步流程 |
+| 11-E | 衝突處理 UI（diff 顯示 + 使用者選擇） |
+
+---
+
+## 2026-05-09：Phase 7 + 9 — Translation Core + Table Forge 抽取強化
+
+### Phase 7 Translation Core
+
+新增 `core/translation-core.js`：
+- 7-A: TransformJob 工廠 + detectFormat（副檔名 + 內容推測）
+- 7-B: Markdown 抽取（heading / table / code / list / task）
+- 7-C: Plain Script parser（角色：台詞 → dialogue blocks）
+- 7-D: JSON array → table candidate
+- 7-E: App Shell 轉換結果預覽 modal
+
+### Phase 9 Table Forge 抽取強化
+
+- 9-A: extractChapterTable
+- 9-B: extractTableInventory
+- 9-C: extractOutline / extractCodeFences
+- 9-D: generateWritebackDiff
+- 9-E: addMetadataColumns
+
+---
+
 ## 2026-05-08 (g)：ROADMAP 整合 — 追加規格書併入
 
 將 `akasha-feature-additions-spec.md`（20 章 / 8 Batch）整合進 `ROADMAP.md`。

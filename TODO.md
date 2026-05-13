@@ -1,6 +1,6 @@
 # 阿卡夏圖書館 — TODO
 
-> Enhancement Phase 1–6, 7, 9 已完成，下一步：Phase 10+
+> Enhancement Phase 1–6, 7, 9, 10, 11, 13, 16-A 已完成
 > Branch: `feature/cool-stuff`
 
 ---
@@ -115,13 +115,87 @@
 
 ---
 
-## 待做（追加規格 · Phase 10–16）
+## 已完成（Phase 10 Memory System）
 
-- Phase 8：Script Editor MVP（另立專案開發，不在此 repo）
-- Phase 10：Memory System（session / room summary / 零韻手札）
-- Phase 11：Notion Connector（雲端索引 + 可讀備份）
+### 10-A 短期 session memory ✅
+- [x] runtime state — 當前對話 context 暫存
+
+### 10-B 中期 room summary ✅
+- [x] `core/room-summary.js` — 每模組摘要，IndexedDB `roomSummaries` store
+
+### 10-C 長期 approved memory ✅
+- [x] `core/approved-memory.js` — 零韻手札儲存 + 使用者確認流程
+
+### 10-D Memory Record viewer ✅
+- [x] 查看 / 編輯 / 刪除 memory records UI
+
+### 10-E Memory search ✅
+- [x] 受控搜尋，只回傳命中片段
+
+---
+
+## 已完成（Phase 11 Notion Connector）
+
+### 11-A Notion database mapping ✅
+- [x] Library Index / Script Blocks 資料庫對應
+
+### 11-B 書庫 metadata 同步 ✅
+- [x] IndexedDB ↔ Notion 書庫索引同步
+
+### 11-C persona.md + Script blocks 同步 ✅
+- [x] 人設檔與劇本區塊 Notion 同步
+
+### 11-D Sync queue + 背景同步流程 ✅
+- [x] `core/sync-queue.js` — 背景排隊同步機制
+
+### 11-E 衝突處理 UI ✅
+- [x] diff 顯示 + 使用者選擇
+
+---
+
+## 已完成（Phase 13 Document Bridge）
+
+### 13-A DOCX 匯入 → Markdown ✅
+- [x] `core/document-bridge.js` — mammoth.js CDN 載入，段落/標題/表格/粗斜體轉換
+
+### 13-B Markdown → DOCX 匯出 ✅
+- [x] docx library CDN 載入，交付文件用 DOCX 匯出
+
+### 13-C Script blocks → PDF / DOCX ✅
+- [x] `exportScriptDocx()` — speaker bold / dialogue indented / narration italic / command right-aligned
+- [x] `exportScriptHtml()` — 可列印 HTML 排版 + @media print CSS
+- [x] Code & Data Reader 整合 — Plain Script 偵測 + .blocks.jsonl 支援 + 劇本匯出按鈕
+
+### 13-D DOC 舊格式文字抽取 ✅
+- [x] 純文字抽取（DOC 二進位格式）
+
+---
+
+## 已完成（Phase 16-A Export Core）
+
+### 16-A 統一匯出引擎 ✅
+- [x] `core/export-core.js` — 17 converter 登錄式架構
+- [x] 5 種 dataType：markdown / table / dialogue / score / memory
+- [x] 格式矩陣：markdown(md,html,pdf,docx) / table(csv,tsv,json,md) / dialogue(ks,avg-json,md,jsonl,docx,pdf) / score(json) / memory(md)
+- [x] 公開 API：`exportAs()` / `listFormats()` / `listAllFormats()` / `exportAndDownload()`
+
+---
+
+## 已完成（§4.4 PDF 書籤 IndexedDB 遷移）
+
+- [x] `core/storage.js` — 新增 `bookmarks` object store + 4 CRUD exports
+- [x] DB_VERSION = 6 四檔同步（storage / approved-memory / room-summary / sync-queue）
+- [x] `modules/pdf-reader/index.html` — 書籤操作改寫為 async IndexedDB
+- [x] `migrateBookmarks()` 一次性遷移（localStorage → IndexedDB）
+
+---
+
+## 待做（追加規格 · 剩餘 Phase）
+
+- Phase 8：Script Editor MVP（依賴 Phase 7 ✅，另立專案開發）
 - Phase 12：Security Layer（資料分級 / IndexedDB 加密 / 版本標記）
-- Phase 13：Document Bridge（DOCX 匯入匯出）
 - Phase 14：Voice / BGM Prototype（Rein-Voice + TsukiSynth）
-- Phase 15：Private Reading Room + 每日館報 — 依賴 Phase 10 + 14
-- Phase 16：Export Core + 部署切分
+- Phase 15：Private Reading Room + 每日館報 — 依賴 Phase 10 ✅ + Phase 14
+- Phase 16-B：公開 Demo 版 build（GitHub Pages）
+- Phase 16-C：私有完整版 build
+- Phase 16-D：後端服務骨架（API proxy / sync queue / RAG）
