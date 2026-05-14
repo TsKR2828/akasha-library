@@ -72,20 +72,20 @@
 | 7-D | JSON array → table candidate 偵測 | ✅ |
 | 7-E | 轉換結果預覽 UI + 存入書庫 | ✅ |
 
-## Phase 8：Script Editor MVP（追加 spec §3, Batch B）
+## Phase 8：Script Editor MVP（追加 spec §3, Batch B）✅ 完成
 
 獨立模組，依賴 Phase 7（Translation Core）。
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 8-A | 模組空殼 + 三欄 UI（角色卡 / 編輯器 / 預覽） | ⬜ |
-| 8-B | Plain Script 編輯器 + 即時 blocks 預覽 | ⬜ |
-| 8-C | 角色資料庫（Character Database）— alias → speakerId 比對 | ⬜ |
-| 8-D | blocks.jsonl → TyranoScript `.ks` 輸出 | ⬜ |
-| 8-E | blocks → Markdown / AVG JSON 輸出 | ⬜ |
-| 8-F | blocks → PDF 預覽（HTML 排版層） | ⬜ |
-| 8-G | 回流匯入 — `.blocks.jsonl` / AVG JSON / Markdown / `.ks` | ⬜ |
-| 8-H | 側欄入口 + App Shell 整合 | ⬜ |
+| 8-A | 模組空殼 + 三欄 UI（角色卡 / 編輯器 / 預覽） | ✅ |
+| 8-B | Plain Script 編輯器 + 即時 blocks 預覽 | ✅ |
+| 8-C | 角色資料庫（Character Database）— alias → speakerId 比對 | ✅ |
+| 8-D | blocks.jsonl → TyranoScript `.ks` 輸出 | ✅ |
+| 8-E | blocks → Markdown / AVG JSON 輸出 | ✅ |
+| 8-F | blocks → PDF 預覽（HTML 排版層） | ✅ |
+| 8-G | 回流匯入 — `.blocks.jsonl` / AVG JSON / Markdown / `.ks` | ✅ |
+| 8-H | 側欄入口 + App Shell 整合 | ✅ |
 
 ## Phase 9：Table Forge 文字抽取強化（追加 spec §4, Batch C）✅ 完成
 
@@ -121,15 +121,15 @@
 | 11-D | Sync queue + 背景同步流程 | ✅ |
 | 11-E | 衝突處理 UI（diff 顯示 + 使用者選擇） | ✅ |
 
-## Phase 12：Security Layer（追加 spec §14, Batch F）
+## Phase 12：Security Layer（追加 spec §14, Batch F）✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 12-A | 資料分級常數（Public / Personal / Sensitive / Secret / Large Assets） | ⬜ |
-| 12-B | IndexedDB 敏感欄位加密（passphrase → 派生 key） | ⬜ |
-| 12-C | BYOK session-only + encrypted local key 模式 | ⬜ |
-| 12-D | checksum / version / updatedAt 標記 | ⬜ |
-| 12-E | 公開版 / 私有版 build 差異化 | ⬜ |
+| 12-A | 資料分級常數（Public / Personal / Sensitive / Secret / Large Assets） | ✅ |
+| 12-B | IndexedDB 敏感欄位加密（passphrase → PBKDF2 → AES-GCM） | ✅ |
+| 12-C | BYOK session-only + encrypted local key 模式 | ✅ |
+| 12-D | checksum / version / updatedAt 標記 | ✅ |
+| 12-E | 公開版 / 私有版 build 差異化 | ✅ |
 
 ## Phase 13：Document Bridge（追加 spec §9, Batch G）
 
@@ -183,17 +183,21 @@
 └─ Phase 6 (版權邊界) ✅
 
 已完成
-├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor)
+├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor) 🔶
 │                                 ──→ Phase 9 (Table Forge 抽取強化) ✅
+├─ Phase 10 (Memory) ✅ ──→ Phase 15 (談心 + 館報)
+├─ Phase 11 (Notion Connector) ✅
+├─ Phase 13 (Document Bridge) ✅ — 13-A/B/C/D 全部完成
+└─ Phase 16-A (Export Core) ✅
 
-目前可做（無新相依）
-├─ Phase 8 (Script Editor) ──→ 依賴 Phase 7 ✅（另立專案開發）
-├─ Phase 10 (Memory) ──→ Phase 15 (談心 + 館報)
-├─ Phase 11 (Notion Connector)
-├─ Phase 12 (Security Layer)
-├─ Phase 13 (Document Bridge) — 13-A/B/C/D ✅ 全部完成
+進行中
+├─ Phase 8 (Script Editor) ✅ — 8-A~H 全部完成
+
+├─ Phase 12 (Security Layer) ✅
+
+待做
 ├─ Phase 14 (Voice/BGM) ──→ Phase 15-D (館報朗讀)
-└─ Phase 16 (Export Core + 部署)
+└─ Phase 16-B/C/D (部署)
 ```
 
 ---

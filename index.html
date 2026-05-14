@@ -1320,6 +1320,14 @@ body { display: flex; }
       </span>
       <span class="nav-active-dot"></span>
     </button>
+    <button class="nav-item" data-module="script-editor">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">Script Editor</span>
+        <span class="nav-item-sub">Scriptorium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
     <button class="nav-item" data-module="book-editor">
       <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg></span>
       <span class="nav-item-text">
@@ -1398,8 +1406,8 @@ body { display: flex; }
     <!-- Shelf I: Modules -->
     <div class="shelf-header">
       <span class="shelf-num">I.</span>
-      <span class="shelf-label">四廳</span>
-      <span class="shelf-en">Quattuor Aulae &middot; Four Halls</span>
+      <span class="shelf-label">五廳</span>
+      <span class="shelf-en">Quinque Aulae &middot; Five Halls</span>
       <span class="shelf-rule"></span>
     </div>
     <div class="module-shelf">
@@ -1466,10 +1474,31 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
+        <!-- Script Editor -->
+        <a class="module-card" data-module="script-editor">
+          <div class="card-spine" style="background:linear-gradient(180deg,#2a3a4a,#2a3a4acc,#2a3a4a88)"></div>
+          <div class="card-roman">IV</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg>
+            </div>
+            <div class="card-title">Script Editor</div>
+            <div class="card-en">— Scriptorium</div>
+            <div class="card-desc">劇本編輯器。Plain Script 即時預覽，多格式匯出。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">.txt</span>
+              <span class="format-tag">.jsonl</span>
+              <span class="format-tag">.ks</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
         <!-- Book editor -->
         <a class="module-card" data-module="book-editor">
           <div class="card-spine" style="background:linear-gradient(180deg,#4a2828,#4a2828cc,#4a282888)"></div>
-          <div class="card-roman">IV</div>
+          <div class="card-roman">V</div>
           <div>
             <div class="card-icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>
@@ -1787,6 +1816,7 @@ body { display: flex; }
     'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
     'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
     'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
+    'script-editor': { title: 'Script Editor', subtitle: 'Scriptorium', src: 'modules/script-editor/index.html' },
     'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
     'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
   };
@@ -1818,6 +1848,15 @@ body { display: flex; }
       engine: 'llm',
       greeting: '資料檢查模式已就緒。匯入資料後，我可以幫你檢查空欄位、掃描一致性，或分析資料分佈。',
       placeholder: '…向資料檢查員提問',
+      emotion: 'Cogitans',
+    },
+    'script-editor': {
+      role: '劇本顧問',
+      roleEn: 'Script Consultant',
+      badge: '※ Script Editor',
+      engine: 'llm',
+      greeting: '劇本編輯模式已就緒。我可以幫你檢查角色對白一致性、場景結構，或建議台詞修潤。',
+      placeholder: '…向劇本顧問提問',
       emotion: 'Cogitans',
     },
     '_default': {
@@ -2284,7 +2323,7 @@ const TYPE_ICONS = {
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
 const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT', 'ocr-note': 'OCR', 'crop-screenshot': 'CROP' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'pdf-reader' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'pdf-reader', jsonl: 'script-editor', ks: 'script-editor' };
 const COPYRIGHT_TYPES = new Set(['ocr-note', 'crop-screenshot']);
 
 async function renderRecent() {
