@@ -1,22 +1,86 @@
-const CACHE_NAME = 'akasha-library-v3';
+const CACHE_NAME = 'akasha-library-v4';
 const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './privacy.html',
+  './sw.js',
+
+  // Icons (may not exist yet — addAll with ignoreErrors)
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
   './icons/apple-touch-icon.png',
+
+  // Shared styles & assets
   './assets/styles/shared.css',
+  './assets/icons.js',
+
+  // Core modules
+  './core/ai.js',
+  './core/auth.js',
+  './core/billing.js',
+  './core/chat-history.js',
+  './core/config.js',
+  './core/document-bridge.js',
+  './core/drive.js',
+  './core/embedding.js',
+  './core/export.js',
+  './core/export-core.js',
+  './core/export/bridge.js',
+  './core/export/clipboard.js',
+  './core/export/fromPayload.js',
+  './core/export/toPayload.js',
+  './core/notion-connector.js',
+  './core/notion-mapping.js',
+  './core/persona.js',
+  './core/prewritten.js',
+  './core/room-summary.js',
+  './core/security.js',
+  './core/session-memory.js',
+  './core/storage.js',
+  './core/sync.js',
+  './core/sync-queue.js',
+  './core/translation-core.js',
+  './core/bgm.js',
+  './core/report-voice.js',
+  './core/voice.js',
+  './core/approved-memory.js',
+
+  // Modules
+  './modules/ai-settings/index.html',
+  './modules/book-editor/index.html',
   './modules/markdown/index.html',
   './modules/pdf-reader/index.html',
-  './modules/book-editor/index.html',
+  './modules/script-editor/index.html',
+  './modules/table-forge/index.html',
+  './modules/table-forge/exporters.js',
+  './modules/table-forge/md-extract.js',
+  './modules/table-forge/parsers.js',
+  './modules/table-forge/table-model.js',
+  './modules/table-forge/table-ui.js',
+
+  // Built spreadsheet module
+  './dist/spreadsheet/index.html',
+
+  // Public library
+  './public-library/index.html',
+  './public-library/catalog.json',
 ];
 
-// Install: cache local assets only (third-party cached opportunistically during fetch)
+// Install: cache local assets (skip missing files gracefully)
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(LOCAL_ASSETS);
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // Cache files individually so missing icons don't break install
+      const results = await Promise.allSettled(
+        LOCAL_ASSETS.map(url => cache.add(url).catch(() => {
+          // Silently skip files that don't exist yet (e.g. icons)
+        }))
+      );
+      const failed = results.filter(r => r.status === 'rejected').length;
+      if (failed > 0) {
+        console.log(`[SW] ${failed} assets skipped (not found)`);
+      }
     })
   );
   self.skipWaiting();
@@ -34,13 +98,17 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: cache-first for assets, network-first for everything else
+// Fetch: cache-first for static assets, network-first for navigation
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Cache-first for static assets (CDN, fonts, icons)
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
+  // Cache-first for CDN / fonts / icons
   if (
     url.hostname === 'cdnjs.cloudflare.com' ||
+    url.hostname === 'cdn.jsdelivr.net' ||
     url.hostname === 'fonts.googleapis.com' ||
     url.hostname === 'fonts.gstatic.com' ||
     url.pathname.startsWith('/icons/')
@@ -48,8 +116,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(event.request).then((cached) => {
         return cached || fetch(event.request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
           return response;
         });
       })
@@ -57,13 +127,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for HTML (so updates are picked up)
+  // Network-first for navigation (so updates are picked up)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
           return response;
         })
         .catch(() => caches.match(event.request))
@@ -71,7 +143,24 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Default: try network, fallback to cache
+  // Stale-while-revalidate for local JS/CSS/HTML
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const networkFetch = fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+        return cached || networkFetch;
+      })
+    );
+    return;
+  }
+
+  // Default: network only, fallback to cache
   event.respondWith(
     fetch(event.request).catch(() => caches.match(event.request))
   );

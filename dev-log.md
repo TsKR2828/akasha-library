@@ -1,5 +1,135 @@
 # Akasha Library — Dev Log
 
+## 2026-05-16：Phase 14 Voice / BGM Prototype 完成（14-A/B/C/D）
+
+### 14-A：Rein-Voice task format + voice preview UI
+
+新增 `core/voice.js`：
+- `VoiceTask` JSON 格式（voiceId / text / emotion / speed / pitch / output）
+- Web Speech API TTS 引擎：`speak()` / `stop()` / `pause()` / `resume()`
+- Task queue：`enqueue()` / `playQueue()` / `stopQueue()` / `clearQueue()`
+- `blocksToVoiceTasks()` — Script blocks → voice task 序列
+- `setStateListener()` — 狀態監聽（speaking / idle / error / queue-progress）
+
+修改 `modules/script-editor/index.html`：
+- 新增「試聽」preview tab
+- Voice settings panel：語音選擇（系統 TTS voices）、速度 slider、音調 slider、包含旁白 checkbox
+- 全部播放 / 停止按鈕 + queue 進度顯示
+- Per-block play buttons（每個 dialogue card 右上角 ▶ 按鈕）
+- Queue list：顯示 speaker + text，點擊可從該處開始播放
+
+### 14-B：score.json + TsukiSynth preset selector
+
+新增 `core/bgm.js`：
+- Score JSON 格式（scoreId / instrument / tempo / scale / mood / notes / effects）
+- 4 樂器定義：Piano、揚琴（Yangqin）、空靈鼓（Tongue Drum）、水鐘（Water Chime）
+- Web Audio API 合成引擎：多諧波 oscillator + ADSR envelope + reverb（convolver）+ delay
+- 4 presets：靜謐書庫（piano）、柔風揚琴、冥想空靈鼓、流水水鐘
+- API：`playScore()` / `playPreset()` / `stopScore()` / `setVolume()` / `getPresets()`
+
+### 14-C：館報朗讀稿輸出
+
+新增 `core/report-voice.js`：
+- `reportToVoiceTasks(report, opts)` — Daily Archive Report JSON → voice task 序列
+  - 結構：開場問候 → 主題數 → 逐 section（標題 + items + summaries）→ 結語
+  - 可配置：voiceId / speed / greeting / closing / readSummary / readSource
+- `reportToReadingScript(report, opts)` — → Markdown 朗讀稿
+- `estimateReadTime(tasks)` — 預估朗讀秒數（CJK ~4 chars/sec）
+
+修改 `core/export-core.js`：
+- 新增 `report:voice-tasks` converter → `.voice-tasks.json`
+- 新增 `report:reading-script` converter → `_reading.md`
+
+### 14-D：伴讀時指定背景樂
+
+修改 `index.html`（App Shell）：
+- BGM Companion Bar：固定底部橫條（CSS `.bgm-bar`）
+- UI：preset 下拉（4 presets）、播放/停止鈕、preset 名稱顯示、音量 slider、關閉鈕
+- Loop playback：score 播完自動重播（setTimeout chain）
+- `window.akashaBgm` 全域 API：`show()` / `hide()` / `play(presetId)` / `stop()` / `toggle()`
+- PostMessage 協議：`akasha-bgm-play` / `akasha-bgm-stop` / `akasha-bgm-toggle`
+- Feature gate：`isFeatureEnabled('voice')` 檢查，public build 不顯示
+
+### 共通
+
+修改 `sw.js`：v4 快取清單新增 `core/voice.js`、`core/bgm.js`、`core/report-voice.js`
+
+---
+
+## 2026-05-15：Phase 8 + 12 + 16-B/C/D 完成
+
+三大 Phase 一次到位：Script Editor MVP、Security Layer、部署系統。
+
+### Phase 8 Script Editor MVP（8-A~H 全部完成）
+
+新增 `modules/script-editor/index.html`：
+
+| 步驟 | 內容 |
+|------|------|
+| 8-A | 三欄 UI（角色卡 / Plain Script 編輯器 / 預覽面板） |
+| 8-B | `parseBlocks()` Plain Script 解析 + 即時 blocks 預覽 |
+| 8-C | 角色 DB（獨立 IndexedDB `script-editor-characters`，alias 比對 + CRUD modal） |
+| 8-D | blocks → TyranoScript `.ks`（委託 export-core） |
+| 8-E | blocks → Markdown / AVG JSON（委託 export-core） |
+| 8-F | Layout tab 版面預覽（場景分割線 / speaker 色標 / 列印 / DOCX） |
+| 8-G | 回流匯入（parseTyranoScript / parseAvgJson / parseMarkdownScript / blocksToPlainScript） |
+| 8-H | App Shell 整合（sidebar 按鈕 + 儀表板卡片 + MODULE_CONTEXTS） |
+
+`index.html` App Shell 變更：
+- modules 登錄 `script-editor` + sidebar pen icon + 儀表板 Roman IV 卡片
+- `MODULE_CONTEXTS['script-editor']` — 零韻角色：劇本顧問 Script Consultant
+- `TYPE_MODULES` 新增 jsonl / ks 自動路由
+
+### Phase 12 Security Layer（12-A~E 全部完成）
+
+新增 `core/security.js`：
+
+| 步驟 | 內容 |
+|------|------|
+| 12-A | `DATA_LEVEL` 五級分類 + `CLASSIFICATION` map + `classify()` |
+| 12-B | PBKDF2 310K → AES-256-GCM：`encrypt()`/`decrypt()`/`encryptFields()`/`decryptFields()` |
+| 12-C | BYOK 加密本地金鑰：`persistApiKey()`/`retrieveApiKey()`/`getByokMode()` |
+| 12-D | Record Stamping：`sha256()`/`stampRecord()`/`verifyChecksum()`/`markSynced()` |
+| 12-E | `BUILD_MODE` + `FEATURE_GATES`（public 5 on / private all 13 on）+ `isFeatureEnabled()` |
+
+### Phase 16-B 公開 Demo 版 build
+
+新增 `scripts/build.js`：
+- `--mode=public`：排除 spec / dev docs / workers / admin，注入 `BUILD_MODE='public'`
+- persona.md → 公開空白模板（13 行）
+- SW cache name → `akasha-library-v4-public`
+- 關鍵檔案驗證（12 個 critical path 檢查）
+
+### Phase 16-C 私有完整版 build
+
+- `--mode=private`：完整複製，不注入 BUILD_MODE（default='private'）
+- `npm run build:public` / `npm run build:private` package.json scripts
+
+### Phase 16-D 後端服務骨架
+
+更新 `workers/src/index.js`：
+
+| 端點 | 功能 |
+|------|------|
+| POST /v1/chat | LLM proxy — BYOK + Coin 雙模式 |
+| POST /v1/sync | Sync queue — push / pull / ack（KV 持久化） |
+| POST /v1/rag | RAG 檢索（stub，回傳空結果） |
+| POST /v1/coin/balance | 月幣餘額查詢 |
+| POST /v1/coin/deduct | 月幣扣款 |
+| GET /health | 健康檢查（含 feature 狀態） |
+
+Coin 系統：per-model 成本估算 + deduct/refund + KV history
+wrangler.toml 新增 COIN_KV / SYNC_KV binding 範本
+
+### 其他更新
+
+- `sw.js` v3→v4：完整快取列表（57 assets）+ stale-while-revalidate + 個別 add 容錯
+- `.github/workflows/deploy.yml`：改用 `_site/` 輸出（不再上傳整個 repo）
+- `core/config.js`：新增 API_BASE + BUILD_MODE 欄位
+- `.gitignore`：新增 `_site/`
+
+---
+
 ## 2026-05-14：§4.4 + Phase 13 完成 + Phase 16-A Export Core
 
 跨三個階段的實作，一次 commit 推送。

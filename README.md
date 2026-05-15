@@ -142,9 +142,10 @@ npm test
 | 基礎書庫 + Drive 同步 + 公共書庫 | ✅ |
 | AI 圖書館員（RAG / BYOK / 人設 / 計費） | ✅ 90% |
 | Enhancement Phase 1–6（App Shell / PDF / 零韻 / 版權） | ✅ |
-| Enhancement Phase 7, 9–11, 13（Translation / Memory / Notion / Document Bridge） | ✅ |
-| Enhancement Phase 16-A（Export Core 統一匯出引擎） | ✅ |
-| Enhancement Phase 8, 12, 14–15, 16-B~D（Script Editor / Security / Voice / 部署） | ⬜ |
+| Enhancement Phase 7–13（Translation / Script Editor / Memory / Notion / Security / Document Bridge） | ✅ |
+| Enhancement Phase 16（Export Core + 部署：build script / deploy / Worker 後端） | ✅ |
+| Enhancement Phase 14（Voice / BGM Prototype — Rein-Voice + TsukiSynth + 館報朗讀 + 伴讀 BGM） | ✅ |
+| Enhancement Phase 15（Private Reading Room + 每日館報） | ⬜ |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 

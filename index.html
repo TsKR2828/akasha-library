@@ -1218,6 +1218,67 @@ body { display: flex; }
     transform: translateY(100%);
   }
 }
+
+/* ===== BGM Companion Bar (Phase 14-D) ===== */
+.bgm-bar {
+  position: fixed;
+  bottom: 0; left: var(--sidebar-w, 260px); right: 0;
+  z-index: 800;
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 8px 16px;
+  background: var(--navy-deep, #151A24);
+  border-top: 1px solid var(--gold-line, #C9A86A33);
+  font-size: 12px;
+  transition: transform .3s ease, opacity .3s ease;
+}
+.bgm-bar.show { display: flex; }
+.bgm-bar .bgm-label {
+  font: 600 11px/1 var(--font-display);
+  color: var(--gold-dim, #C9A86A99);
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+.bgm-bar .bgm-preset-name {
+  color: var(--gold, #C9A86A);
+  font-weight: 600;
+  min-width: 80px;
+}
+.bgm-bar select {
+  background: var(--navy, #1E2430);
+  color: var(--text-primary, #E8E0D0);
+  border: 1px solid var(--navy-line, #2A3140);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  max-width: 160px;
+}
+.bgm-bar input[type=range] {
+  width: 80px; height: 16px;
+  cursor: pointer;
+}
+.bgm-bar button {
+  padding: 4px 10px;
+  border: 1px solid var(--navy-line, #2A3140);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-secondary, #A0A8B8);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.bgm-bar button:hover { color: var(--gold, #C9A86A); border-color: var(--gold-dim, #C9A86A99); }
+.bgm-bar button.bgm-active { color: var(--gold, #C9A86A); border-color: var(--gold, #C9A86A); }
+.bgm-bar .bgm-spacer { flex: 1; }
+.bgm-bar .bgm-vol-label { color: var(--text-tertiary); font-size: 11px; }
+.bgm-bar .bgm-close {
+  padding: 2px 6px; border: none; background: transparent;
+  color: var(--text-tertiary); font-size: 14px; cursor: pointer;
+}
+.bgm-bar .bgm-close:hover { color: var(--gold, #C9A86A); }
+@media (max-width: 768px) {
+  .bgm-bar { left: 0; }
+}
 </style>
 </head>
 <body>
@@ -1540,6 +1601,19 @@ body { display: flex; }
 
   <!-- Module iframe container -->
   <iframe class="module-frame" id="module-frame" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-clipboard-write allow-downloads"></iframe>
+
+  <!-- BGM Companion Bar (Phase 14-D) -->
+  <div class="bgm-bar" id="bgm-bar">
+    <span class="bgm-label">♪ BGM</span>
+    <select id="bgm-preset-select"></select>
+    <button id="bgm-play" title="播放">&#9654;</button>
+    <button id="bgm-stop" title="停止">&#9632;</button>
+    <span class="bgm-preset-name" id="bgm-now-playing"></span>
+    <div class="bgm-spacer"></div>
+    <span class="bgm-vol-label">音量</span>
+    <input type="range" id="bgm-volume" min="0" max="1" step="0.05" value="0.35">
+    <button class="bgm-close" id="bgm-close" title="關閉伴讀 BGM">✕</button>
+  </div>
 </main>
 
 <!-- AI PANEL (零韻 · Rein) -->
@@ -3222,6 +3296,95 @@ window.addEventListener('message', (event) => {
     window.showTranslationPreview(event.data.content, event.data.filename);
   }
 });
+
+// ===== BGM Companion Bar (Phase 14-D) =====
+(async function initBgmBar() {
+  try {
+    const { isFeatureEnabled } = await import('./core/security.js');
+    if (!isFeatureEnabled('voice')) return;
+  } catch { return; }
+
+  const { PRESETS, playPreset, stopScore, isPlaying, setVolume, setBgmStateListener } = await import('./core/bgm.js');
+
+  const bar       = document.getElementById('bgm-bar');
+  const select    = document.getElementById('bgm-preset-select');
+  const playBtn   = document.getElementById('bgm-play');
+  const stopBtn   = document.getElementById('bgm-stop');
+  const nowLabel  = document.getElementById('bgm-now-playing');
+  const volSlider = document.getElementById('bgm-volume');
+  const closeBtn  = document.getElementById('bgm-close');
+
+  // Populate presets
+  select.innerHTML = PRESETS.map(p =>
+    `<option value="${p.id}">${p.name}（${p.instrument}）</option>`
+  ).join('');
+
+  let loopHandle = null;
+  let currentPresetId = PRESETS[0]?.id || '';
+
+  function loopPlay() {
+    if (!bar.classList.contains('show')) return;
+    try {
+      const handle = playPreset(currentPresetId, { volume: parseFloat(volSlider.value) });
+      loopHandle = setTimeout(loopPlay, handle.duration * 1000 + 500);
+    } catch (e) {
+      console.warn('[BGM]', e.message);
+    }
+  }
+
+  function startBgm() {
+    currentPresetId = select.value;
+    clearTimeout(loopHandle);
+    loopPlay();
+    playBtn.classList.add('bgm-active');
+    const preset = PRESETS.find(p => p.id === currentPresetId);
+    nowLabel.textContent = preset ? preset.name : '';
+  }
+
+  function stopBgm() {
+    clearTimeout(loopHandle);
+    loopHandle = null;
+    stopScore();
+    playBtn.classList.remove('bgm-active');
+    nowLabel.textContent = '';
+  }
+
+  playBtn.addEventListener('click', startBgm);
+  stopBtn.addEventListener('click', stopBgm);
+  closeBtn.addEventListener('click', () => { stopBgm(); bar.classList.remove('show'); });
+  volSlider.addEventListener('input', () => setVolume(parseFloat(volSlider.value)));
+  select.addEventListener('change', () => { if (loopHandle) { stopBgm(); startBgm(); } });
+
+  // Global API for AI panel / modules to control BGM
+  window.akashaBgm = {
+    show()  { bar.classList.add('show'); },
+    hide()  { stopBgm(); bar.classList.remove('show'); },
+    play(presetId) {
+      if (presetId) { select.value = presetId; currentPresetId = presetId; }
+      bar.classList.add('show');
+      startBgm();
+    },
+    stop()  { stopBgm(); },
+    toggle() {
+      if (bar.classList.contains('show')) { stopBgm(); bar.classList.remove('show'); }
+      else { bar.classList.add('show'); }
+    },
+    isVisible() { return bar.classList.contains('show'); },
+  };
+
+  // Listen for module requests
+  window.addEventListener('message', (event) => {
+    if (event.data?.type === 'akasha-bgm-play') {
+      window.akashaBgm.play(event.data.presetId || null);
+    }
+    if (event.data?.type === 'akasha-bgm-stop') {
+      window.akashaBgm.stop();
+    }
+    if (event.data?.type === 'akasha-bgm-toggle') {
+      window.akashaBgm.toggle();
+    }
+  });
+})();
 
 // Service worker
 if ('serviceWorker' in navigator) {

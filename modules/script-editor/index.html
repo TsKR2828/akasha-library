@@ -236,6 +236,122 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 }
 .layout-toolbar .tb{font-size:11px;padding:3px 8px}
 
+/* ===== Voice Preview (14-A) ===== */
+.block-play{
+  float:right;margin:-2px -4px 0 0;
+  padding:2px 6px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  background:transparent;color:var(--text-tertiary);font-size:11px;cursor:pointer;
+  transition:color .15s,border-color .15s;
+}
+.block-play:hover{color:var(--gold);border-color:var(--gold-dim)}
+.block-play.speaking{color:var(--gold);border-color:var(--gold);animation:pulse-voice .8s infinite alternate}
+@keyframes pulse-voice{from{opacity:1}to{opacity:.5}}
+
+.voice-panel{display:flex;flex-direction:column;gap:10px}
+.voice-controls{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-light);
+}
+.voice-controls button{
+  padding:4px 10px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;
+  transition:color .15s,border-color .15s;
+}
+.voice-controls button:hover{color:var(--gold);border-color:var(--gold-dim)}
+.voice-controls button.active{color:var(--gold);border-color:var(--gold)}
+.voice-controls .spacer{flex:1}
+.voice-status{font-size:11px;color:var(--text-tertiary)}
+
+.voice-settings{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-light);
+}
+.voice-settings label{display:block;font-size:11px;color:var(--text-tertiary);margin-bottom:4px}
+.voice-settings select,.voice-settings input[type=range]{
+  width:100%;margin-bottom:8px;
+  background:var(--navy-deep);color:var(--text-primary);
+  border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  padding:4px 6px;font-size:12px;
+}
+.voice-settings input[type=range]{padding:0;height:20px;cursor:pointer}
+.voice-range-row{display:flex;align-items:center;gap:8px}
+.voice-range-row span{font-size:11px;color:var(--text-secondary);min-width:28px;text-align:right}
+
+.voice-queue-list{max-height:300px;overflow-y:auto}
+.voice-queue-item{
+  display:flex;align-items:flex-start;gap:6px;
+  padding:6px 8px;margin-bottom:3px;
+  border-radius:var(--r-soft);font-size:12px;
+  border:1px solid transparent;
+}
+.voice-queue-item.current{border-color:var(--gold-dim);background:var(--navy-light)}
+.voice-queue-item .vq-speaker{font-weight:600;white-space:nowrap;min-width:60px}
+.voice-queue-item .vq-text{color:var(--text-secondary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.voice-queue-item .vq-num{font-size:10px;color:var(--text-tertiary);min-width:20px}
+
+.voice-unavailable{padding:24px 16px;text-align:center;color:var(--text-tertiary);font-size:12px;line-height:1.6}
+
+/* ===== BGM Preview (14-B) ===== */
+.bgm-panel{display:flex;flex-direction:column;gap:10px}
+.bgm-controls{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-light);
+}
+.bgm-controls button{
+  padding:4px 10px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;
+  transition:color .15s,border-color .15s;
+}
+.bgm-controls button:hover{color:var(--gold);border-color:var(--gold-dim)}
+.bgm-controls button.active{color:var(--gold);border-color:var(--gold)}
+.bgm-controls .spacer{flex:1}
+.bgm-status{font-size:11px;color:var(--text-tertiary)}
+
+.bgm-settings{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-light);
+}
+.bgm-settings label{display:block;font-size:11px;color:var(--text-tertiary);margin-bottom:4px;margin-top:6px}
+.bgm-settings label:first-child{margin-top:0}
+.bgm-settings select{
+  width:100%;background:var(--navy-deep);color:var(--text-primary);
+  border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  padding:4px 6px;font-size:12px;
+}
+.bgm-settings input[type=range]{
+  width:100%;padding:0;height:20px;cursor:pointer;margin-bottom:2px;
+}
+.bgm-range-row{display:flex;align-items:center;gap:8px}
+.bgm-range-row span{font-size:11px;color:var(--text-secondary);min-width:28px;text-align:right}
+
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px}
+.preset-card{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-deep);cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.preset-card:hover{border-color:var(--gold-dim);background:var(--navy-light)}
+.preset-card.selected{border-color:var(--gold);background:var(--navy-light)}
+.preset-card .pc-name{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.preset-card .pc-inst{font-size:11px;color:var(--gold-dim)}
+.preset-card .pc-mood{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+
+.score-preview{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-deep);
+}
+.score-preview-title{font-size:11px;color:var(--text-tertiary);margin-bottom:6px}
+.score-timeline{position:relative;height:60px;overflow:hidden;border-radius:4px;background:rgba(0,0,0,.2)}
+.score-note{
+  position:absolute;border-radius:2px;min-width:4px;
+  background:var(--gold-dim);opacity:.7;
+  transition:opacity .15s;
+}
+.score-note.active{opacity:1;background:var(--gold)}
+.score-meta{display:flex;gap:12px;margin-top:6px;font-size:10px;color:var(--text-tertiary)}
+
 /* ===== Toast ===== */
 #toast-container{
   position:fixed;bottom:16px;right:16px;z-index:200;
@@ -361,6 +477,8 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
       <button class="preview-tab active" data-tab="blocks">Blocks</button>
       <button class="preview-tab" data-tab="layout">版面</button>
       <button class="preview-tab" data-tab="stats">統計</button>
+      <button class="preview-tab" data-tab="voice">試聽</button>
+      <button class="preview-tab" data-tab="bgm">BGM</button>
     </div>
     <div class="preview-body" id="preview-body">
       <div class="empty-preview">
@@ -411,6 +529,7 @@ const state = {
   undoStack: [],
   redoStack: [],
   previewTab: 'blocks',
+  voice: { speed: 1.0, pitch: 1.0, voiceId: '', includeNarration: false },
 };
 
 /* ──────────────────────────────────────────
@@ -801,7 +920,8 @@ function renderBlocksPreview() {
     }
     // dialogue
     const color = getCharColor(b.speaker);
-    return `<div class="block-card dialogue">${num}
+    const playBtn = _hasTTS ? `<button class="block-play" data-voice-idx="${i}" title="試聽此台詞">&#9654;</button>` : '';
+    return `<div class="block-card dialogue">${num}${playBtn}
       <div class="block-speaker"><span class="dot" style="background:${color}"></span><span style="color:${color}">${esc(b.speaker)}</span></div>
       <div class="block-text">${esc(b.text)}</div>
       ${b.emotion ? `<div class="block-meta">emotion: ${esc(b.emotion)}</div>` : ''}
@@ -902,6 +1022,410 @@ function renderPreview() {
   if (state.previewTab === 'blocks') renderBlocksPreview();
   else if (state.previewTab === 'layout') renderLayoutPreview();
   else if (state.previewTab === 'stats') renderStatsPreview();
+  else if (state.previewTab === 'voice') renderVoicePreview();
+  else if (state.previewTab === 'bgm') renderBgmPreview();
+}
+
+/* ──────────────────────────────────────────
+   Voice Preview Engine (Phase 14-A)
+   ────────────────────────────────────────── */
+const _hasTTS = typeof speechSynthesis !== 'undefined';
+let _voiceList = [];
+let _voiceSpeaking = false;
+let _voiceQueue = [];
+let _voiceQueueIdx = -1;
+let _voiceQueueActive = false;
+
+if (_hasTTS) {
+  const loadVoices = () => { _voiceList = speechSynthesis.getVoices(); };
+  loadVoices();
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
+
+function speakBlock(blockIdx) {
+  if (!_hasTTS) return;
+  const b = state.blocks[blockIdx];
+  if (!b || !b.text) return;
+  speechSynthesis.cancel();
+
+  const utt = new SpeechSynthesisUtterance(b.text);
+  utt.rate = state.voice.speed;
+  utt.pitch = state.voice.pitch;
+  if (state.voice.voiceId) {
+    const v = _voiceList.find(x => x.name === state.voice.voiceId);
+    if (v) utt.voice = v;
+  }
+
+  const btn = document.querySelector(`.block-play[data-voice-idx="${blockIdx}"]`);
+  utt.onstart = () => { _voiceSpeaking = true; btn?.classList.add('speaking'); updateVoiceStatus(); };
+  utt.onend = () => { _voiceSpeaking = false; btn?.classList.remove('speaking'); updateVoiceStatus(); };
+  utt.onerror = () => { _voiceSpeaking = false; btn?.classList.remove('speaking'); updateVoiceStatus(); };
+
+  speechSynthesis.speak(utt);
+}
+
+function buildVoiceQueue() {
+  _voiceQueue = [];
+  for (let i = 0; i < state.blocks.length; i++) {
+    const b = state.blocks[i];
+    if (b.type === 'dialogue') _voiceQueue.push({ idx: i, ...b });
+    else if (b.type === 'narration' && state.voice.includeNarration) _voiceQueue.push({ idx: i, ...b });
+  }
+  return _voiceQueue;
+}
+
+async function playVoiceQueue(startFrom = 0) {
+  if (!_hasTTS || _voiceQueueActive) return;
+  buildVoiceQueue();
+  if (!_voiceQueue.length) return;
+  _voiceQueueActive = true;
+  _voiceQueueIdx = startFrom;
+  renderVoicePreview();
+
+  for (let i = startFrom; i < _voiceQueue.length; i++) {
+    if (!_voiceQueueActive) break;
+    _voiceQueueIdx = i;
+    renderVoiceQueueList();
+
+    const item = _voiceQueue[i];
+    await new Promise((resolve, reject) => {
+      const utt = new SpeechSynthesisUtterance(item.text);
+      utt.rate = state.voice.speed;
+      utt.pitch = state.voice.pitch;
+      if (state.voice.voiceId) {
+        const v = _voiceList.find(x => x.name === state.voice.voiceId);
+        if (v) utt.voice = v;
+      }
+      utt.onend = resolve;
+      utt.onerror = (e) => { e.error === 'canceled' ? resolve() : resolve(); };
+      _voiceSpeaking = true;
+      updateVoiceStatus();
+      speechSynthesis.speak(utt);
+    });
+    _voiceSpeaking = false;
+  }
+
+  _voiceQueueActive = false;
+  _voiceSpeaking = false;
+  updateVoiceStatus();
+  renderVoiceQueueList();
+}
+
+function stopVoiceQueue() {
+  _voiceQueueActive = false;
+  if (_hasTTS) speechSynthesis.cancel();
+  _voiceSpeaking = false;
+  updateVoiceStatus();
+  renderVoiceQueueList();
+}
+
+function updateVoiceStatus() {
+  const el = document.getElementById('voice-status');
+  if (!el) return;
+  if (_voiceQueueActive) {
+    el.textContent = `播放中 ${_voiceQueueIdx + 1}/${_voiceQueue.length}`;
+  } else if (_voiceSpeaking) {
+    el.textContent = '播放中…';
+  } else {
+    el.textContent = '待命';
+  }
+}
+
+function renderVoicePreview() {
+  const body = document.getElementById('preview-body');
+  if (state.previewTab !== 'voice') return;
+
+  if (!_hasTTS) {
+    body.innerHTML = '<div class="voice-unavailable">此瀏覽器不支援語音合成（Web Speech API）。<br>請使用 Chrome 或 Edge。</div>';
+    return;
+  }
+
+  const dialogueCount = state.blocks.filter(b => b.type === 'dialogue').length;
+  if (!dialogueCount) {
+    body.innerHTML = '<div class="voice-unavailable">尚無對白可試聽。<br>在左側編輯器輸入劇本即可。</div>';
+    return;
+  }
+
+  const voiceOpts = _voiceList.map(v =>
+    `<option value="${esc(v.name)}" ${v.name === state.voice.voiceId ? 'selected' : ''}>${esc(v.name)} (${v.lang})</option>`
+  ).join('');
+
+  body.innerHTML = `
+    <div class="voice-panel">
+      <div class="voice-controls">
+        <button id="vc-play-all" title="全部播放">&#9654; 全部播放</button>
+        <button id="vc-stop" title="停止">&#9632; 停止</button>
+        <div class="spacer"></div>
+        <span class="voice-status" id="voice-status">待命</span>
+      </div>
+      <div class="voice-settings">
+        <label>語音</label>
+        <select id="vs-voice"><option value="">系統預設</option>${voiceOpts}</select>
+        <label>速度</label>
+        <div class="voice-range-row">
+          <input type="range" id="vs-speed" min="0.5" max="2" step="0.1" value="${state.voice.speed}">
+          <span id="vs-speed-val">${state.voice.speed.toFixed(1)}</span>
+        </div>
+        <label>音調</label>
+        <div class="voice-range-row">
+          <input type="range" id="vs-pitch" min="0" max="2" step="0.1" value="${state.voice.pitch}">
+          <span id="vs-pitch-val">${state.voice.pitch.toFixed(1)}</span>
+        </div>
+        <label style="margin-top:4px">
+          <input type="checkbox" id="vs-narration" ${state.voice.includeNarration ? 'checked' : ''}>
+          包含旁白
+        </label>
+      </div>
+      <div class="voice-queue-list" id="voice-queue-list"></div>
+    </div>`;
+
+  // Wire controls
+  document.getElementById('vc-play-all').addEventListener('click', () => playVoiceQueue());
+  document.getElementById('vc-stop').addEventListener('click', stopVoiceQueue);
+  document.getElementById('vs-voice').addEventListener('change', e => { state.voice.voiceId = e.target.value; });
+  document.getElementById('vs-speed').addEventListener('input', e => {
+    state.voice.speed = parseFloat(e.target.value);
+    document.getElementById('vs-speed-val').textContent = state.voice.speed.toFixed(1);
+  });
+  document.getElementById('vs-pitch').addEventListener('input', e => {
+    state.voice.pitch = parseFloat(e.target.value);
+    document.getElementById('vs-pitch-val').textContent = state.voice.pitch.toFixed(1);
+  });
+  document.getElementById('vs-narration').addEventListener('change', e => { state.voice.includeNarration = e.target.checked; renderVoiceQueueList(); });
+
+  renderVoiceQueueList();
+}
+
+function renderVoiceQueueList() {
+  const el = document.getElementById('voice-queue-list');
+  if (!el) return;
+  buildVoiceQueue();
+  if (!_voiceQueue.length) { el.innerHTML = ''; return; }
+  el.innerHTML = _voiceQueue.map((item, qi) => {
+    const cur = _voiceQueueActive && qi === _voiceQueueIdx ? ' current' : '';
+    const color = item.speaker ? getCharColor(item.speaker) : 'var(--text-tertiary)';
+    const label = item.speaker || '（旁白）';
+    return `<div class="voice-queue-item${cur}" data-vq="${qi}">
+      <span class="vq-num">${qi + 1}</span>
+      <span class="vq-speaker" style="color:${color}">${esc(label)}</span>
+      <span class="vq-text">${esc(item.text)}</span>
+    </div>`;
+  }).join('');
+
+  // Click to play from that point
+  el.querySelectorAll('.voice-queue-item').forEach(row => {
+    row.addEventListener('click', () => {
+      const qi = parseInt(row.dataset.vq, 10);
+      stopVoiceQueue();
+      setTimeout(() => playVoiceQueue(qi), 100);
+    });
+  });
+}
+
+/* ──────────────────────────────────────────
+   BGM Preview Engine (Phase 14-B)
+   ────────────────────────────────────────── */
+const _hasAudio = typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined';
+let _bgmCtx = null, _bgmMaster = null, _bgmReverb = null, _bgmDelay = null;
+let _bgmNodes = [], _bgmPlaying = false, _bgmTimeout = null;
+let _bgmSelectedPreset = null;
+
+const _BGM_INSTRUMENTS = {
+  piano:       { nameZh: '鋼琴',   wave: 'triangle', a: 0.01, d: 0.3, s: 0.4, r: 0.8, h: [1, 0.5, 0.25, 0.12] },
+  yangqin:     { nameZh: '揚琴',   wave: 'sine',     a: 0.005,d: 0.15,s: 0.2, r: 1.2, h: [1, 0.7, 0.3, 0.15, 0.08] },
+  tongue_drum: { nameZh: '空靈鼓', wave: 'sine',     a: 0.02, d: 0.5, s: 0.6, r: 2.0, h: [1, 0.3, 0.1] },
+  water_chime: { nameZh: '水鐘',   wave: 'sine',     a: 0.001,d: 0.1, s: 0.05,r: 3.0, h: [1, 0.6, 0.4, 0.3, 0.2] },
+};
+
+const _BGM_PRESETS = [
+  { id: 'quiet_archive_piano', name: '靜謐書庫', inst: 'piano', tempo: 60, mood: 'quiet_archive',
+    notes: [{t:0,p:'D4',d:1.5,v:.35},{t:2,p:'A4',d:1,v:.3},{t:3.5,p:'E4',d:2,v:.28},{t:6,p:'G4',d:1.5,v:.32},{t:8,p:'D5',d:2,v:.25},{t:10.5,p:'A4',d:1.5,v:.3},{t:12.5,p:'E4',d:2.5,v:.22}],
+    fx: { rev: 0.4, del: 0.15 } },
+  { id: 'gentle_yangqin', name: '柔風揚琴', inst: 'yangqin', tempo: 72, mood: 'gentle',
+    notes: [{t:0,p:'G4',d:.5,v:.4},{t:.5,p:'A4',d:.5,v:.38},{t:1,p:'B4',d:1,v:.42},{t:2.5,p:'D5',d:.75,v:.36},{t:3.5,p:'E5',d:1.5,v:.34},{t:5.5,p:'B4',d:1,v:.38},{t:7,p:'G4',d:2,v:.3},{t:9.5,p:'A4',d:1,v:.35},{t:11,p:'D5',d:1.5,v:.32}],
+    fx: { rev: 0.35, del: 0.2 } },
+  { id: 'meditative_drum', name: '冥想空靈鼓', inst: 'tongue_drum', tempo: 54, mood: 'meditative',
+    notes: [{t:0,p:'C4',d:2,v:.45},{t:3,p:'Eb4',d:2,v:.4},{t:6,p:'G4',d:2.5,v:.38},{t:9,p:'Bb4',d:2,v:.35},{t:12,p:'C5',d:3,v:.32},{t:16,p:'G4',d:2.5,v:.38},{t:19,p:'Eb4',d:3,v:.3}],
+    fx: { rev: 0.55, del: 0.1 } },
+  { id: 'flowing_chime', name: '流水水鐘', inst: 'water_chime', tempo: 80, mood: 'flowing',
+    notes: [{t:0,p:'E5',d:.3,v:.5},{t:.4,p:'G5',d:.3,v:.45},{t:.8,p:'A5',d:.3,v:.4},{t:1.5,p:'E6',d:.5,v:.35},{t:2.5,p:'B5',d:.4,v:.42},{t:3.2,p:'G5',d:.3,v:.38},{t:4,p:'A5',d:.5,v:.4},{t:5,p:'E5',d:.3,v:.45},{t:5.5,p:'B5',d:.4,v:.36},{t:6.2,p:'E6',d:.6,v:.3},{t:7.5,p:'G5',d:.5,v:.42}],
+    fx: { rev: 0.6, del: 0.25 } },
+];
+
+const _NOTE_MAP = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+function _p2f(p) {
+  const m = p.match(/^([A-G])(b|#)?(\d)$/);
+  if (!m) return 440;
+  let s = _NOTE_MAP[m[1]]; if (m[2]==='#') s++; if (m[2]==='b') s--;
+  return 440 * Math.pow(2, ((parseInt(m[3],10)+1)*12+s-69)/12);
+}
+
+function _ensureBgmCtx() {
+  if (_bgmCtx && _bgmCtx.state !== 'closed') return _bgmCtx;
+  _bgmCtx = new (window.AudioContext || window.webkitAudioContext)();
+  _bgmMaster = _bgmCtx.createGain();
+  _bgmMaster.gain.value = 0.45;
+  // Reverb impulse
+  const sr = _bgmCtx.sampleRate, len = sr * 2;
+  const imp = _bgmCtx.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = imp.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/len, 2.5);
+  }
+  _bgmReverb = _bgmCtx.createConvolver();
+  _bgmReverb.buffer = imp;
+  // Delay
+  _bgmDelay = _bgmCtx.createDelay(1.0);
+  _bgmDelay.delayTime.value = 0.25;
+  const fb = _bgmCtx.createGain(); fb.gain.value = 0.2;
+  _bgmDelay.connect(fb); fb.connect(_bgmDelay);
+  _bgmMaster.connect(_bgmCtx.destination);
+  return _bgmCtx;
+}
+
+function _bgmPlayNote(ctx, instKey, note, startTime, fx) {
+  const inst = _BGM_INSTRUMENTS[instKey] || _BGM_INSTRUMENTS.piano;
+  const freq = _p2f(note.p), vel = note.v || 0.4;
+  const ng = ctx.createGain();
+  const dry = ctx.createGain(); dry.gain.value = 1 - (fx.rev||0)*0.6;
+  const wet = ctx.createGain(); wet.gain.value = (fx.rev||0)*0.6;
+  ng.connect(dry); ng.connect(wet);
+  dry.connect(_bgmMaster); wet.connect(_bgmReverb); _bgmReverb.connect(_bgmMaster);
+  if ((fx.del||0) > 0.05) {
+    const dw = ctx.createGain(); dw.gain.value = fx.del*0.4;
+    ng.connect(dw); dw.connect(_bgmDelay); _bgmDelay.connect(_bgmMaster);
+  }
+  for (let h = 0; h < inst.h.length; h++) {
+    const osc = ctx.createOscillator(); osc.type = inst.wave; osc.frequency.value = freq*(h+1);
+    const hg = ctx.createGain(); hg.gain.value = inst.h[h]*vel;
+    osc.connect(hg); hg.connect(ng); _bgmNodes.push(osc);
+    const dur = note.d * (60/(note._bpm||72));
+    const pk = startTime+inst.a, de = pk+inst.d, se = startTime+dur, re = se+inst.r;
+    ng.gain.setValueAtTime(0, startTime);
+    ng.gain.linearRampToValueAtTime(vel, pk);
+    ng.gain.linearRampToValueAtTime(vel*inst.s, de);
+    ng.gain.setValueAtTime(vel*inst.s, se);
+    ng.gain.linearRampToValueAtTime(0, re);
+    osc.start(startTime); osc.stop(re+0.1);
+  }
+  _bgmNodes.push(ng, dry, wet);
+}
+
+function bgmPlay(preset, volume) {
+  bgmStop();
+  const ctx = _ensureBgmCtx();
+  if (ctx.state === 'suspended') ctx.resume();
+  _bgmMaster.gain.value = Math.min(1, Math.max(0, volume ?? 0.45));
+  const bpm = preset.tempo || 72, beatDur = 60/bpm, base = ctx.currentTime + 0.1;
+  for (const n of preset.notes) {
+    _bgmPlayNote(ctx, preset.inst, { ...n, _bpm: bpm }, base + n.t*beatDur, preset.fx || {});
+  }
+  const last = preset.notes.reduce((m, n) => Math.max(m, n.t+n.d), 0);
+  const dur = last*beatDur + (_BGM_INSTRUMENTS[preset.inst]?.r || 1);
+  _bgmPlaying = true;
+  updateBgmStatus();
+  _bgmTimeout = setTimeout(() => { _bgmPlaying = false; updateBgmStatus(); }, (dur+0.5)*1000);
+  return dur;
+}
+
+function bgmStop() {
+  _bgmPlaying = false;
+  if (_bgmTimeout) { clearTimeout(_bgmTimeout); _bgmTimeout = null; }
+  for (const n of _bgmNodes) { try { n.stop?.(); } catch {} try { n.disconnect?.(); } catch {} }
+  _bgmNodes = [];
+  updateBgmStatus();
+}
+
+function updateBgmStatus() {
+  const el = document.getElementById('bgm-status');
+  if (el) el.textContent = _bgmPlaying ? '♪ 播放中…' : '待命';
+}
+
+function renderBgmPreview() {
+  const body = document.getElementById('preview-body');
+  if (state.previewTab !== 'bgm') return;
+
+  if (!_hasAudio) {
+    body.innerHTML = '<div class="voice-unavailable">此瀏覽器不支援 Web Audio API。</div>';
+    return;
+  }
+
+  const presetCards = _BGM_PRESETS.map(p => {
+    const inst = _BGM_INSTRUMENTS[p.inst];
+    const sel = _bgmSelectedPreset === p.id ? ' selected' : '';
+    return `<div class="preset-card${sel}" data-preset="${p.id}">
+      <div class="pc-name">${esc(p.name)}</div>
+      <div class="pc-inst">${esc(inst?.nameZh || p.inst)}</div>
+      <div class="pc-mood">${esc(p.mood)} · ${p.tempo} BPM</div>
+    </div>`;
+  }).join('');
+
+  const sel = _bgmSelectedPreset ? _BGM_PRESETS.find(p => p.id === _bgmSelectedPreset) : null;
+  let scoreViz = '';
+  if (sel) {
+    const maxT = sel.notes.reduce((m, n) => Math.max(m, n.t + n.d), 0);
+    const bars = sel.notes.map(n => {
+      const left = (n.t / maxT * 100).toFixed(1);
+      const width = Math.max(3, (n.d / maxT * 100)).toFixed(1);
+      const pitchNum = _p2f(n.p);
+      const bottom = Math.max(2, Math.min(90, ((Math.log2(pitchNum) - 7) / 4) * 100)).toFixed(0);
+      const h = Math.max(4, (n.v * 14)).toFixed(0);
+      return `<div class="score-note" style="left:${left}%;width:${width}%;bottom:${bottom}%;height:${h}px" title="${n.p}"></div>`;
+    }).join('');
+    const inst = _BGM_INSTRUMENTS[sel.inst];
+    scoreViz = `<div class="score-preview">
+      <div class="score-preview-title">Score 預覽</div>
+      <div class="score-timeline">${bars}</div>
+      <div class="score-meta">
+        <span>${esc(inst?.nameZh || sel.inst)}</span>
+        <span>${sel.tempo} BPM</span>
+        <span>Rev ${(sel.fx?.rev||0).toFixed(1)}</span>
+        <span>Del ${(sel.fx?.del||0).toFixed(1)}</span>
+        <span>${sel.notes.length} notes</span>
+      </div>
+    </div>`;
+  }
+
+  body.innerHTML = `
+    <div class="bgm-panel">
+      <div class="bgm-controls">
+        <button id="bgm-play" ${!sel ? 'disabled style="opacity:.4"' : ''}>&#9654; 播放</button>
+        <button id="bgm-stop">&#9632; 停止</button>
+        <div class="spacer"></div>
+        <span class="bgm-status" id="bgm-status">${_bgmPlaying ? '♪ 播放中…' : '待命'}</span>
+      </div>
+      <div class="bgm-settings">
+        <label>音量</label>
+        <div class="bgm-range-row">
+          <input type="range" id="bgm-volume" min="0" max="1" step="0.05" value="0.45">
+          <span id="bgm-vol-val">0.45</span>
+        </div>
+      </div>
+      <div class="bgm-settings">
+        <label>選擇 Preset</label>
+        <div class="preset-grid">${presetCards}</div>
+      </div>
+      ${scoreViz}
+    </div>`;
+
+  // Wire
+  document.getElementById('bgm-play')?.addEventListener('click', () => {
+    if (!_bgmSelectedPreset) return;
+    const p = _BGM_PRESETS.find(x => x.id === _bgmSelectedPreset);
+    if (p) bgmPlay(p, parseFloat(document.getElementById('bgm-volume')?.value || 0.45));
+  });
+  document.getElementById('bgm-stop')?.addEventListener('click', bgmStop);
+  document.getElementById('bgm-volume')?.addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    document.getElementById('bgm-vol-val').textContent = v.toFixed(2);
+    if (_bgmMaster) _bgmMaster.gain.value = v;
+  });
+  body.querySelectorAll('.preset-card').forEach(card => {
+    card.addEventListener('click', () => {
+      _bgmSelectedPreset = card.dataset.preset;
+      renderBgmPreview();
+    });
+  });
 }
 
 /* ──────────────────────────────────────────
@@ -1271,6 +1795,14 @@ document.querySelectorAll('.preview-tab').forEach(tab => {
     state.previewTab = tab.dataset.tab;
     renderPreview();
   });
+});
+
+// Delegated click for per-block play buttons
+document.getElementById('preview-body').addEventListener('click', e => {
+  const btn = e.target.closest('.block-play');
+  if (!btn) return;
+  const idx = parseInt(btn.dataset.voiceIdx, 10);
+  if (!isNaN(idx)) speakBlock(idx);
 });
 
 // Character modal

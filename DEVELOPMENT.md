@@ -76,7 +76,7 @@
 | 4.6 | 月幣系統（餘額、扣款、報價預估） | ✅ 完成（billing.js 統一計費 + token bar） |
 | 4.7 | BYOK 模式（使用者自帶 API Key） | ✅ 完成（可直接使用） |
 | 4.8 | Persona.md 人設載入 | ✅ 完成（persona.md 外部化 + 動態注入） |
-| 4.9 | TTS 語音回覆（接語音資料庫） | ⬜ 待做 |
+| 4.9 | TTS 語音回覆（接語音資料庫） | ✅ Phase 14-A（Web Speech TTS） |
 | 4.10 | AI 形象顯示（立繪/動態） | ✅ 立繪完成（動態待做） |
 
 交付物：讀書時可問 AI、AI 用設定好的人設和聲音回答
@@ -124,7 +124,7 @@
 |----------|-----------|--------|:----:|
 | `akasha-library`（本專案） | Phase 1-3, 5 + Enhancement 1-6 | — | 進行中 |
 | AI 圖書館員 | Phase 4 | 已整合到 App Shell + core/ | ✅ 已整合 |
-| 語音資料庫 | Phase 4.9 / Enhancement 14 | 完成後 AI 模組引用音檔 | ⬜ |
+| 語音資料庫 | Phase 4.9 / Enhancement 14 | Web Speech TTS 整合 + core/voice.js + core/bgm.js | ✅ 已整合 |
 | Persona.md | Phase 4.8 | `persona.md` 已在專案根目錄 | ✅ 已整合 |
 
 ---
@@ -138,15 +138,15 @@
 |------|------|:----:|
 | Phase 1–6 | App Shell 重構 / PDF 補強 / 零韻面板 / Code&Data / Table Forge / 版權邊界 | ✅ 全部完成 |
 | Phase 7 | Translation Core（格式翻譯核心） | ✅ 完成 |
-| Phase 8 | Script Editor MVP | ⬜ 待做 |
+| Phase 8 | Script Editor MVP（三欄 UI / Plain Script / 角色 DB / 6 格式匯出 / 回流匯入） | ✅ 完成 |
 | Phase 9 | Table Forge 文字抽取強化 | ✅ 完成 |
 | Phase 10 | Memory System（零韻記憶） | ✅ 完成 |
 | Phase 11 | Notion Connector | ✅ 完成 |
-| Phase 12 | Security Layer | ⬜ 待做 |
+| Phase 12 | Security Layer（資料分級 / AES-GCM 加密 / BYOK 金鑰管理 / Record Stamping / Build Mode） | ✅ 完成 |
 | Phase 13 | Document Bridge（DOCX 匯入匯出 + 劇本匯出） | ✅ 全部完成 |
-| Phase 14 | Voice / BGM Prototype | ⬜ 待做 |
+| Phase 14 | Voice / BGM Prototype（Rein-Voice + TsukiSynth + 館報朗讀稿 + 伴讀 BGM） | ✅ 全部完成 |
 | Phase 15 | Private Reading Room + 每日館報 | ⬜ 待做 |
-| Phase 16 | Export Core + 部署 | 🔶 16-A 完成 |
+| Phase 16 | Export Core + 部署（build script / deploy workflow / Worker 後端 / SW v4） | ✅ 全部完成 |
 
 Enhancement Phase 新增的核心模組：
 
@@ -165,6 +165,12 @@ Enhancement Phase 新增的核心模組：
 | `core/document-bridge.js` | 13 | DOCX/DOC 雙向轉換 + 劇本 DOCX/HTML 匯出 |
 | `core/export-core.js` | 16-A | 統一匯出引擎（17 converter + exportAs API） |
 | `core/export/bridge.js` | 5-B | 跨模組匯出橋接（blocks → table payload） |
+| `core/security.js` | 12 | 資料分級 + AES-GCM 加密 + BYOK 金鑰管理 + Record Stamping + Build Mode |
+| `modules/script-editor/index.html` | 8 | 劇本編輯器 MVP（三欄 UI / 角色 DB / 6 格式匯出入） |
+| `core/voice.js` | 14-A | Rein-Voice 核心（voice task format / Web Speech TTS / queue） |
+| `core/bgm.js` | 14-B | TsukiSynth BGM 核心（score.json / Web Audio synth / 4 presets） |
+| `core/report-voice.js` | 14-C | 館報朗讀稿轉換器（report JSON → voice tasks / reading script） |
+| `scripts/build.js` | 16-B/C | 站台建置腳本（public / private 模式） |
 
 ---
 
@@ -215,13 +221,13 @@ Phase 5 █████████░░░░░░░  40% (5.2-5.3 完成)
 Enhancement ROADMAP
 Phase 1–6  ████████████████ 100% (App Shell / PDF / 零韻 / Code&Data / Table Forge / 版權)
 Phase 7    ████████████████ 100% (Translation Core)
-Phase 8    ░░░░░░░░░░░░░░░░   0% (Script Editor MVP)
+Phase 8    ████████████████ 100% (Script Editor MVP — 8-A~H 全部完成)
 Phase 9    ████████████████ 100% (Table Forge 抽取強化)
 Phase 10   ████████████████ 100% (Memory System)
 Phase 11   ████████████████ 100% (Notion Connector)
-Phase 12   ░░░░░░░░░░░░░░░░   0% (Security Layer)
+Phase 12   ████████████████ 100% (Security Layer — 12-A~E 全部完成)
 Phase 13   ████████████████ 100% (Document Bridge — 13-A/B/C/D 全部完成)
-Phase 14   ░░░░░░░░░░░░░░░░   0% (Voice / BGM)
+Phase 14   ████████████████ 100% (Voice / BGM — 14-A/B/C/D 全部完成)
 Phase 15   ░░░░░░░░░░░░░░░░   0% (談心 + 館報)
-Phase 16   ████░░░░░░░░░░░░  25% (16-A Export Core ✅ / 16-B~D 待做)
+Phase 16   ████████████████ 100% (Export Core + 部署 — 16-A/B/C/D 全部完成)
 ```

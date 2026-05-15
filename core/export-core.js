@@ -165,6 +165,21 @@ register('score:json', (data, opts) => {
   return { blob: textBlob(text, 'application/json'), filename: baseName(opts) + '.score.json', mimeType: 'application/json' };
 });
 
+// ─── Report (Daily Archive → voice tasks) ─────────────────
+
+register('report:voice-tasks', async (data, opts) => {
+  const { reportToVoiceTasks } = await import('./report-voice.js');
+  const tasks = reportToVoiceTasks(data.report, opts);
+  const text = JSON.stringify(tasks, null, 2);
+  return { blob: textBlob(text, 'application/json'), filename: baseName(opts) + '.voice-tasks.json', mimeType: 'application/json' };
+});
+
+register('report:reading-script', async (data, opts) => {
+  const { reportToReadingScript } = await import('./report-voice.js');
+  const md = reportToReadingScript(data.report, opts);
+  return { blob: textBlob(md, 'text/markdown'), filename: baseName(opts) + '_reading.md', mimeType: 'text/markdown' };
+});
+
 // ─── Memory ────────────────────────────────────────────────
 
 register('memory:md', (data, opts) => {

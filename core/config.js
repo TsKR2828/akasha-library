@@ -12,4 +12,12 @@ export const CONFIG = {
   GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
   APP_NAME: '阿卡夏圖書館',
   VERSION: '0.1.0',
+
+  /** API proxy base URL (Cloudflare Worker) */
+  API_BASE: (typeof window !== 'undefined' && window.__AKASHA_API_BASE)
+    || 'https://akasha-ai-proxy.your-subdomain.workers.dev',
+
+  /** Build mode — injected by build script (public/private) */
+  BUILD_MODE: (typeof window !== 'undefined' && window.__AKASHA_BUILD_MODE)
+    || 'private',
 };

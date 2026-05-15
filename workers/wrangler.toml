@@ -7,3 +7,16 @@ compatibility_date = "2024-12-01"
 #   OPENAI_API_KEY
 #   ANTHROPIC_API_KEY
 #   GOOGLE_API_KEY
+#   COIN_SECRET
+
+# KV Namespaces — create first, then fill in the IDs:
+#   wrangler kv namespace create COIN_KV
+#   wrangler kv namespace create SYNC_KV
+
+# [[kv_namespaces]]
+# binding = "COIN_KV"
+# id = "<your-coin-kv-namespace-id>"
+
+# [[kv_namespaces]]
+# binding = "SYNC_KV"
+# id = "<your-sync-kv-namespace-id>"

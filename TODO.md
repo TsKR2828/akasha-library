@@ -1,6 +1,6 @@
 # 阿卡夏圖書館 — TODO
 
-> Enhancement Phase 1–6, 7, 9, 10, 11, 13, 16-A 已完成
+> Enhancement Phase 1–13, 16 已完成（含 8 Script Editor / 12 Security / 16-B/C/D 部署）
 > Branch: `feature/cool-stuff`
 
 ---
@@ -190,12 +190,122 @@
 
 ---
 
+## 已完成（Phase 8 Script Editor MVP）
+
+### 8-A 模組空殼 + 三欄 UI ✅
+- [x] 角色卡 / Plain Script 編輯器 / 預覽面板 三欄佈局
+- [x] App Shell 側欄 + 儀表板卡片
+
+### 8-B Plain Script 編輯器 ✅
+- [x] `parseBlocks()` — 角色：台詞 / 旁白 / #key:value / // 註解
+- [x] 即時 blocks 預覽（dialogue / narration / command 分色標籤）
+
+### 8-C 角色資料庫 ✅
+- [x] 獨立 IndexedDB `script-editor-characters`（不衝 main DB）
+- [x] alias → speakerId 比對 + CRUD modal + 自動偵測
+
+### 8-D blocks.jsonl → TyranoScript .ks 輸出 ✅
+- [x] 委託 `core/export-core.js` dialogue:ks converter
+
+### 8-E blocks → Markdown / AVG JSON 輸出 ✅
+- [x] 委託 export-core dialogue:md / dialogue:avg-json converter
+
+### 8-F 版面預覽 ✅
+- [x] Layout tab — 場景分割線 / speaker 色標 / 列印 / DOCX 快捷
+
+### 8-G 回流匯入 ✅
+- [x] `parseTyranoScript()` / `parseAvgJson()` / `parseMarkdownScript()` / `parseBlocksJsonl()`
+- [x] `blocksToPlainScript()` round-trip + `importAsPlainScript()` format router
+- [x] PostMessage `akasha-open-file` handler 整合
+
+### 8-H 側欄入口 + App Shell 整合 ✅
+- [x] sidebar nav 按鈕（pen SVG icon）
+- [x] 儀表板卡片（Roman IV, .txt/.jsonl/.ks tags）
+- [x] MODULE_CONTEXTS['script-editor'] 零韻接入
+
+---
+
+## 已完成（Phase 12 Security Layer）
+
+### 12-A 資料分級常數 ✅
+- [x] `DATA_LEVEL`（Public/Personal/Sensitive/Secret/Large Asset 五級）
+- [x] `CLASSIFICATION` map + `classify()` + `requiresEncryption()`
+
+### 12-B IndexedDB 敏感欄位加密 ✅
+- [x] `deriveKey(passphrase, salt)` → PBKDF2 310K iterations → AES-256-GCM
+- [x] `encrypt()` / `decrypt()` — base64(iv‖ct) 格式
+- [x] `encryptFields()` / `decryptFields()` — 欄位級加解密
+
+### 12-C BYOK 加密本地金鑰 ✅
+- [x] `persistApiKey()` / `retrieveApiKey()` — 密碼保護本地金鑰
+- [x] `getByokMode()` — none / session / encrypted-local
+
+### 12-D Record Stamping ✅
+- [x] `sha256()` + `stampRecord()` — _version / _updatedAt / _checksum / _source
+- [x] `verifyChecksum()` + `markSynced()`
+
+### 12-E Build Mode ✅
+- [x] `BUILD_MODE` + `FEATURE_GATES`（public: 5 on / 8 off, private: all 13 on）
+- [x] `isFeatureEnabled()` / `getFeatureGates()`
+
+---
+
+## 已完成（Phase 16-B/C/D 部署）
+
+### 16-B 公開 Demo 版 build ✅
+- [x] `scripts/build.js --mode=public` — 過濾私有檔案 + 注入 `BUILD_MODE='public'`
+- [x] persona.md → 公開空白模板
+- [x] 排除 spec / dev docs / workers / admin
+- [x] GitHub Actions deploy.yml 改用 `_site/` 輸出
+
+### 16-C 私有完整版 build ✅
+- [x] `scripts/build.js --mode=private` — 完整檔案複製
+- [x] `npm run build:public` / `npm run build:private` scripts
+
+### 16-D 後端服務骨架 ✅
+- [x] Worker BYOK + Coin 雙模式（coin balance check → deduct → refund on error）
+- [x] Coin KV 系統（balance / history / estimateCoinCost per model）
+- [x] Sync queue API（push / pull / ack + KV 持久化）
+- [x] RAG stub endpoint（接口預留，回傳空結果）
+- [x] wrangler.toml KV bindings 範本
+
+---
+
+## 其他更新
+
+### SW 快取 v4 ✅
+- [x] 完整列舉所有 core/*.js + modules + dist + public-library
+- [x] 個別 cache.add 容錯（缺檔不影響安裝）
+- [x] Stale-while-revalidate 策略（本地 JS/CSS/HTML）
+- [x] CDN 域名擴充（cdn.jsdelivr.net）
+
+---
+
+## Phase 14：Voice / BGM Prototype ✅
+
+### 14-A：Rein-Voice task format + voice preview UI ✅
+- [x] `core/voice.js` — VoiceTask 格式、Web Speech TTS、speak/stop/pause/resume、task queue
+- [x] `blocksToVoiceTasks()` — Script blocks → voice task 序列
+- [x] Script Editor「試聽」tab — 語音設定（voice/speed/pitch）、全部播放、per-block play、queue list
+
+### 14-B：score.json + TsukiSynth preset selector ✅
+- [x] `core/bgm.js` — Score 格式、4 樂器（Piano/揚琴/空靈鼓/水鐘）、ADSR + reverb/delay
+- [x] 4 presets（靜謐書庫/柔風揚琴/冥想空靈鼓/流水水鐘）
+- [x] `playScore()` / `playPreset()` / `stopScore()` / `setVolume()` API
+
+### 14-C：館報朗讀稿輸出 ✅
+- [x] `core/report-voice.js` — `reportToVoiceTasks()`（report JSON → voice task 序列）
+- [x] `reportToReadingScript()`（→ Markdown 朗讀稿）+ `estimateReadTime()`
+- [x] `core/export-core.js` 新增 `report:voice-tasks` + `report:reading-script` converter
+
+### 14-D：伴讀時指定背景樂 ✅
+- [x] App Shell BGM Companion Bar — preset select / play / stop / volume / close
+- [x] Loop playback（score 播完自動重播）
+- [x] `window.akashaBgm` 全域 API（show/hide/play/stop/toggle）
+- [x] PostMessage 協議（akasha-bgm-play / akasha-bgm-stop / akasha-bgm-toggle）
+
+---
+
 ## 待做（追加規格 · 剩餘 Phase）
 
-- Phase 8：Script Editor MVP（依賴 Phase 7 ✅，另立專案開發）
-- Phase 12：Security Layer（資料分級 / IndexedDB 加密 / 版本標記）
-- Phase 14：Voice / BGM Prototype（Rein-Voice + TsukiSynth）
-- Phase 15：Private Reading Room + 每日館報 — 依賴 Phase 10 ✅ + Phase 14
-- Phase 16-B：公開 Demo 版 build（GitHub Pages）
-- Phase 16-C：私有完整版 build
-- Phase 16-D：後端服務骨架（API proxy / sync queue / RAG）
+- Phase 15：Private Reading Room + 每日館報 — 依賴 Phase 10 ✅ + Phase 14 ✅

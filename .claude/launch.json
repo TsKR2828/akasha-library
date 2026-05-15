@@ -4,8 +4,8 @@
     {
       "name": "akasha",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["http-server", ".", "-p", "8080", "-c-1"],
-      "port": 8080
+      "runtimeArgs": ["http-server", "C:\\Users\\admin\\Desktop\\Claude\\akasha-library", "-c-1", "-p", "3099"],
+      "port": 3099
     }
   ]
 }

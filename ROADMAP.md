@@ -144,10 +144,10 @@
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 14-A | Rein-Voice task format + voice preview UI | ⬜ |
-| 14-B | score.json 預覽 + TsukiSynth preset selector | ⬜ |
-| 14-C | 館報朗讀稿輸出 | ⬜ |
-| 14-D | 伴讀時指定背景樂 | ⬜ |
+| 14-A | Rein-Voice task format + voice preview UI | ✅ |
+| 14-B | score.json 預覽 + TsukiSynth preset selector | ✅ |
+| 14-C | 館報朗讀稿輸出 | ✅ |
+| 14-D | 伴讀時指定背景樂 | ✅ |
 
 ## Phase 15：Private Reading Room + 每日館報（追加 spec §8, §12）
 
@@ -160,14 +160,14 @@
 | 15-C | 每日館報 — RSS 擷取 → Charta 整理 → MD/JSON 輸出 | ⬜ |
 | 15-D | 館報朗讀 + BGM 搭配 | ⬜ |
 
-## Phase 16：Export Core + 部署（追加 spec §2.2, §15）
+## Phase 16：Export Core + 部署（追加 spec §2.2, §15）✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
 | 16-A | `core/export-core.js` — 統一匯出引擎（MD / HTML / PDF / CSV / JSON / .ks） | ✅ |
-| 16-B | 公開 Demo 版 build（GitHub Pages，不含私有資料） | ⬜ |
-| 16-C | 私有完整版 build（完整 persona / 聲音庫 / connector） | ⬜ |
-| 16-D | 後端服務骨架（API proxy / sync queue / RAG） | ⬜ |
+| 16-B | 公開 Demo 版 build（`scripts/build.js --mode=public`，排除私有資料 + 注入 BUILD_MODE） | ✅ |
+| 16-C | 私有完整版 build（`scripts/build.js --mode=private`，完整 persona / connector） | ✅ |
+| 16-D | 後端服務骨架（Worker：BYOK + Coin + sync queue + RAG stub + KV coin 系統） | ✅ |
 
 ---
 
@@ -183,21 +183,19 @@
 └─ Phase 6 (版權邊界) ✅
 
 已完成
-├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor) 🔶
+├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor) ✅
 │                                 ──→ Phase 9 (Table Forge 抽取強化) ✅
 ├─ Phase 10 (Memory) ✅ ──→ Phase 15 (談心 + 館報)
 ├─ Phase 11 (Notion Connector) ✅
-├─ Phase 13 (Document Bridge) ✅ — 13-A/B/C/D 全部完成
-└─ Phase 16-A (Export Core) ✅
-
-進行中
-├─ Phase 8 (Script Editor) ✅ — 8-A~H 全部完成
-
 ├─ Phase 12 (Security Layer) ✅
+├─ Phase 13 (Document Bridge) ✅ — 13-A/B/C/D 全部完成
+└─ Phase 16 (Export Core + 部署) ✅ — 16-A/B/C/D 全部完成
+
+已完成
+├─ Phase 14 (Voice/BGM) ✅ ──→ Phase 15-D (館報朗讀)
 
 待做
-├─ Phase 14 (Voice/BGM) ──→ Phase 15-D (館報朗讀)
-└─ Phase 16-B/C/D (部署)
+└─ Phase 15 (談心 + 館報)
 ```
 
 ---
