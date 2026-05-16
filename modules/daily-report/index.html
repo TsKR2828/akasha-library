@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>每日館報 — 阿卡夏圖書館</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/styles/shared.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--navy-deep);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== Header ===== */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--navy-line);
+      background: rgba(24,29,40,0.96);
+      backdrop-filter: blur(8px);
+      flex-shrink: 0;
+    }
+    :root[data-mode="light"] header {
+      background: rgba(245,239,225,0.96);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-display);
+      font-style: italic;
+    }
+    .header-spacer { flex: 1; }
+
+    /* Shared button */
+    .btn {
+      appearance: none;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      color: var(--text-secondary);
+      padding: 5px 10px;
+      border-radius: var(--r-card);
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      border-color: var(--gold-dim);
+      color: var(--text-primary);
+    }
+    .btn--primary {
+      background: var(--gold-glow);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+    .btn--primary:hover {
+      background: rgba(201,168,106,0.22);
+    }
+    .btn--primary:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+    .btn--danger:hover {
+      border-color: var(--oxblood);
+      color: var(--danger);
+    }
+    .btn--sm {
+      padding: 3px 8px;
+      font-size: 10px;
+      border-radius: var(--r-sharp);
+    }
+
+    /* ===== Main Layout ===== */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ===== Input Panel (Left) ===== */
+    .input-panel {
+      width: 380px;
+      border-right: 1px solid var(--navy-line);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .input-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--navy-line);
+      font-family: var(--font-display);
+      font-size: 13px;
+      color: var(--gold);
+    }
+    .input-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px;
+      gap: 10px;
+      overflow-y: auto;
+    }
+    .input-textarea {
+      flex: 1;
+      min-height: 200px;
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 12px;
+      resize: none;
+      outline: none;
+      line-height: 1.7;
+    }
+    .input-textarea:focus { border-color: var(--gold-dim); }
+    .input-textarea::placeholder { color: var(--text-tertiary); }
+    .input-hint {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+    }
+    .input-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .input-date {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 4px 8px;
+      outline: none;
+    }
+    .input-date:focus { border-color: var(--gold-dim); }
+
+    /* ===== Report Panel (Right) ===== */
+    .report-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .report-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--navy-line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .report-title {
+      font-family: var(--font-display);
+      font-size: 13px;
+      color: var(--gold);
+      flex: 1;
+    }
+    .report-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    /* Empty state */
+    .report-empty {
+      color: var(--text-tertiary);
+      font-size: 12px;
+      text-align: center;
+      padding: 48px 16px;
+      line-height: 1.8;
+    }
+
+    /* Loading */
+    .report-loading {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+    .report-loading::after {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      margin-left: 8px;
+      animation: pulse-dot 1s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* Report Rendered */
+    .report-date-line {
+      font-family: var(--font-display);
+      font-size: 18px;
+      color: var(--gold);
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+    .report-section {
+      margin-bottom: 20px;
+    }
+    .report-section-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--navy-line);
+      margin-bottom: 10px;
+    }
+    .report-item {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 10px 14px;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+    .report-item:hover { border-color: var(--gold-dim); }
+    .report-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .report-item-summary {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .report-item-source {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 4px;
+    }
+    .report-item-source a {
+      color: var(--gold-dim);
+      text-decoration: underline;
+    }
+    .report-actions {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--navy-line);
+      flex-shrink: 0;
+    }
+
+    /* ===== Voice Playback Bar ===== */
+    .voice-bar {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-bottom: 1px solid var(--navy-line);
+      background: rgba(201,168,106,0.06);
+      font-size: 11px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .voice-bar.active { display: flex; }
+    .voice-bar-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+    .voice-bar-progress {
+      color: var(--gold);
+      font-family: var(--font-display);
+      white-space: nowrap;
+    }
+    .bgm-select {
+      appearance: none;
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-sharp);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 10px;
+      padding: 2px 6px;
+      outline: none;
+      cursor: pointer;
+    }
+    .bgm-select:focus { border-color: var(--gold-dim); }
+
+    /* ===== History Panel (Bottom of input) ===== */
+    .history-section {
+      border-top: 1px solid var(--navy-line);
+      flex-shrink: 0;
+      max-height: 240px;
+      display: flex;
+      flex-direction: column;
+    }
+    .history-header {
+      padding: 8px 16px;
+      font-family: var(--font-display);
+      font-size: 11px;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--navy-line);
+    }
+    .history-scroll {
+      overflow-y: auto;
+      flex: 1;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .history-item:hover { background: var(--navy-light); }
+    .history-item-date {
+      font-size: 11px;
+      color: var(--gold-dim);
+      white-space: nowrap;
+      font-family: var(--font-display);
+    }
+    .history-item-title {
+      font-size: 12px;
+      color: var(--text-secondary);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .history-empty {
+      padding: 16px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy-light);
+      border: 1px solid var(--gold-dim);
+      color: var(--text-primary);
+      padding: 10px 20px;
+      border-radius: var(--r-card);
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .main { flex-direction: column; }
+      .input-panel {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--navy-line);
+        max-height: 45vh;
+      }
+      .input-textarea { min-height: 100px; }
+      .history-section { max-height: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <span class="header-title">每日館報</span>
+  <span class="header-sub">Diurnalis</span>
+  <div class="header-spacer"></div>
+</header>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Input Panel (Left) -->
+  <div class="input-panel">
+    <div class="input-header">素材輸入</div>
+    <div class="input-body">
+      <textarea class="input-textarea" id="sourceInput" placeholder="將文章、新聞片段或筆記貼在這裡，零韻會幫你整理成結構化的每日館報。&#10;&#10;可以一次貼入多段，會自動分類歸組。"></textarea>
+      <div class="input-actions">
+        <input type="date" class="input-date" id="reportDate">
+        <div style="flex:1"></div>
+        <button class="btn btn--primary" id="btnGenerate">整理成館報</button>
+      </div>
+      <div class="input-hint">貼上文字後點「整理成館報」，零韻會分類、摘要，產出 §12.3 格式的結構化報告。</div>
+    </div>
+
+    <!-- History -->
+    <div class="history-section">
+      <div class="history-header">過往館報</div>
+      <div class="history-scroll" id="historyScroll">
+        <div class="history-empty" id="historyEmpty">尚無歷史館報</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Panel (Right) -->
+  <div class="report-panel">
+    <div class="report-header">
+      <span class="report-title" id="reportHeaderTitle">報告預覽</span>
+      <select class="bgm-select" id="bgmSelect" style="display:none" title="伴讀 BGM">
+        <option value="">無 BGM</option>
+        <option value="quiet_archive_piano">靜謐書庫</option>
+        <option value="gentle_yangqin">柔風揚琴</option>
+        <option value="meditative_drum">冥想空靈鼓</option>
+        <option value="flowing_chime">流水水鐘</option>
+      </select>
+      <button class="btn btn--sm btn--primary" id="btnRead" style="display:none" title="朗讀館報">朗讀</button>
+      <button class="btn btn--sm" id="btnPause" style="display:none">暫停</button>
+      <button class="btn btn--sm btn--danger" id="btnVoiceStop" style="display:none">停止</button>
+      <button class="btn btn--sm" id="btnExportMd" style="display:none">匯出 MD</button>
+      <button class="btn btn--sm" id="btnExportJson" style="display:none">匯出 JSON</button>
+      <button class="btn btn--sm btn--primary" id="btnSave" style="display:none">儲存</button>
+    </div>
+    <div class="voice-bar" id="voiceBar">
+      <span class="voice-bar-progress" id="voiceProgress"></span>
+      <span class="voice-bar-text" id="voiceText"></span>
+    </div>
+    <div class="report-scroll" id="reportScroll">
+      <div class="report-empty" id="reportEmpty">
+        在左側貼上文字素材，點「整理成館報」即可生成報告。
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+const MODULE_NAME = 'daily-report';
+
+// ===== State =====
+const state = {
+  currentReport: null,
+  currentReportId: null,
+  history: [],
+  generating: false,
+};
+
+// ===== DOM refs =====
+const $ = id => document.getElementById(id);
+const sourceInput = $('sourceInput');
+const reportDate = $('reportDate');
+const btnGenerate = $('btnGenerate');
+const reportScroll = $('reportScroll');
+const historyScroll = $('historyScroll');
+const btnSave = $('btnSave');
+const btnExportMd = $('btnExportMd');
+const btnExportJson = $('btnExportJson');
+const btnRead = $('btnRead');
+const btnPause = $('btnPause');
+const btnVoiceStop = $('btnVoiceStop');
+const bgmSelect = $('bgmSelect');
+const voiceBar = $('voiceBar');
+const voiceProgress = $('voiceProgress');
+const voiceText = $('voiceText');
+const toastEl = $('toast');
+
+// Set default date to today
+reportDate.value = new Date().toISOString().slice(0, 10);
+
+// ===== Toast =====
+let toastTimer = null;
+function showToast(msg, ms = 2200) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+}
+
+// ===== Escape =====
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ===== Theme Sync =====
+(function syncMode() {
+  try {
+    const parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
+    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
+  } catch {}
+})();
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-mode-change') {
+    document.documentElement.setAttribute('data-mode', e.data.mode);
+  }
+});
+
+// ===== AI Bridge =====
+let pendingAIResolve = null;
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-report-response' && pendingAIResolve) {
+    pendingAIResolve(e.data);
+    pendingAIResolve = null;
+  }
+  if (e.data?.type === 'akasha-ai-get-context') {
+    const summary = state.currentReport
+      ? `館報 ${state.currentReport.date}：${state.currentReport.sections?.length || 0} 個主題`
+      : '(每日館報已開啟，尚無報告)';
+    window.parent.postMessage({
+      type: 'akasha-ai-context-response',
+      content: summary,
+      fileName: '每日館報',
+      fileType: 'report',
+    }, '*');
+  }
+});
+
+function generateReport(text, date) {
+  return new Promise((resolve, reject) => {
+    pendingAIResolve = (data) => {
+      if (data.error) reject(new Error(data.error));
+      else resolve(data.report);
+    };
+    window.parent.postMessage({
+      type: 'akasha-report-generate',
+      text,
+      date,
+    }, '*');
+    setTimeout(() => {
+      if (pendingAIResolve) {
+        pendingAIResolve = null;
+        reject(new Error('報告生成逾時'));
+      }
+    }, 90000);
+  });
+}
+
+// ===== Memory Bridge (reuse reading-room protocol) =====
+let memoryReqId = 0;
+const memoryCallbacks = new Map();
+
+function callParentMemory(action, ...args) {
+  return new Promise((resolve, reject) => {
+    const id = ++memoryReqId;
+    memoryCallbacks.set(id, { resolve, reject });
+    window.parent.postMessage({
+      type: 'akasha-reading-room-memory',
+      action,
+      args,
+      reqId: id,
+    }, '*');
+    setTimeout(() => {
+      if (memoryCallbacks.has(id)) {
+        memoryCallbacks.delete(id);
+        reject(new Error('Memory call timeout'));
+      }
+    }, 5000);
+  });
+}
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-reading-room-memory-response') {
+    const cb = memoryCallbacks.get(e.data.reqId);
+    if (cb) {
+      memoryCallbacks.delete(e.data.reqId);
+      if (e.data.error) cb.reject(new Error(e.data.error));
+      else cb.resolve(e.data.result);
+    }
+  }
+});
+
+// ===== Generate =====
+btnGenerate.addEventListener('click', async () => {
+  const text = sourceInput.value.trim();
+  if (!text) { showToast('請先貼上素材文字'); return; }
+  if (state.generating) return;
+
+  state.generating = true;
+  btnGenerate.disabled = true;
+  btnGenerate.textContent = '整理中…';
+
+  reportScroll.innerHTML = '<div class="report-loading">零韻正在整理素材</div>';
+  toggleReportActions(false);
+
+  try {
+    const date = reportDate.value || new Date().toISOString().slice(0, 10);
+    const report = await generateReport(text, date);
+    state.currentReport = report;
+    state.currentReportId = null;
+    renderReport(report);
+    toggleReportActions(true);
+    showToast('館報已整理完成');
+  } catch (err) {
+    reportScroll.innerHTML = `<div class="report-empty">整理失敗：${escapeHtml(err.message)}</div>`;
+  } finally {
+    state.generating = false;
+    btnGenerate.disabled = false;
+    btnGenerate.textContent = '整理成館報';
+  }
+});
+
+// ===== Render Report =====
+function renderReport(report) {
+  if (!report?.sections?.length) {
+    reportScroll.innerHTML = '<div class="report-empty">報告內容為空</div>';
+    return;
+  }
+
+  $('reportHeaderTitle').textContent = `館報 — ${report.date || ''}`;
+
+  let html = `<div class="report-date-line">${escapeHtml(report.date || '')}</div>`;
+
+  for (const section of report.sections) {
+    html += `<div class="report-section">`;
+    html += `<div class="report-section-title">${escapeHtml(section.title)}</div>`;
+
+    for (const item of (section.items || [])) {
+      html += `<div class="report-item">`;
+      html += `<div class="report-item-title">${escapeHtml(item.title)}</div>`;
+      if (item.summary) {
+        html += `<div class="report-item-summary">${escapeHtml(item.summary)}</div>`;
+      }
+      if (item.source || item.url) {
+        html += `<div class="report-item-source">`;
+        if (item.url) {
+          html += `來源：<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.source || item.url)}</a>`;
+        } else {
+          html += `來源：${escapeHtml(item.source)}`;
+        }
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+
+    html += `</div>`;
+  }
+
+  reportScroll.innerHTML = html;
+}
+
+function toggleReportActions(show) {
+  const d = show ? '' : 'none';
+  btnSave.style.display = d;
+  btnExportMd.style.display = d;
+  btnExportJson.style.display = d;
+  btnRead.style.display = show && !voicePlaying ? '' : 'none';
+  bgmSelect.style.display = d;
+}
+
+// ===== Save =====
+btnSave.addEventListener('click', async () => {
+  if (!state.currentReport) return;
+
+  const report = state.currentReport;
+  const sectionCount = report.sections?.length || 0;
+  const title = `館報 ${report.date}（${sectionCount} 主題）`;
+
+  try {
+    const saved = await callParentMemory('save', {
+      id: state.currentReportId || undefined,
+      module: MODULE_NAME,
+      scope: 'report',
+      title,
+      content: JSON.stringify(report),
+      tags: ['館報', report.date],
+      source: 'daily-report',
+    });
+    state.currentReportId = saved?.id || state.currentReportId;
+    showToast('館報已儲存');
+    await loadHistory();
+  } catch (err) {
+    showToast('儲存失敗：' + err.message);
+  }
+});
+
+// ===== Export =====
+function exportReport(fmt) {
+  if (!state.currentReport) return;
+  const report = state.currentReport;
+  const date = report.date || new Date().toISOString().slice(0, 10);
+  let blob, filename;
+
+  if (fmt === 'md') {
+    const lines = [`# 每日館報 — ${date}`, ''];
+    for (const section of (report.sections || [])) {
+      lines.push(`## ${section.title}`, '');
+      for (const item of (section.items || [])) {
+        let line = `- **${item.title}**`;
+        if (item.summary) line += ` — ${item.summary}`;
+        if (item.source) line += `（來源：${item.source}）`;
+        lines.push(line);
+      }
+      lines.push('');
+    }
+    blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+    filename = `館報_${date}.md`;
+  } else {
+    blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json;charset=utf-8' });
+    filename = `館報_${date}.json`;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('已匯出 ' + filename);
+}
+
+btnExportMd.addEventListener('click', () => exportReport('md'));
+btnExportJson.addEventListener('click', () => exportReport('json'));
+
+// ===== History =====
+async function loadHistory() {
+  try {
+    const all = await callParentMemory('getAll', MODULE_NAME);
+    state.history = (all || [])
+      .filter(r => r.scope === 'report')
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    renderHistory();
+  } catch {
+    state.history = [];
+    renderHistory();
+  }
+}
+
+function renderHistory() {
+  const empty = $('historyEmpty');
+  if (state.history.length === 0) {
+    historyScroll.innerHTML = '';
+    historyScroll.appendChild(empty);
+    empty.style.display = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+  historyScroll.innerHTML = state.history.map(h => {
+    const tags = (h.tags || []).filter(t => t !== '館報');
+    const dateLabel = tags[0] || formatDate(h.createdAt);
+    return `
+      <div class="history-item" data-id="${escapeHtml(h.id)}">
+        <span class="history-item-date">${escapeHtml(dateLabel)}</span>
+        <span class="history-item-title">${escapeHtml(h.title)}</span>
+        <button class="btn btn--sm btn--danger" data-delete="${escapeHtml(h.id)}">刪除</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+historyScroll.addEventListener('click', async (e) => {
+  // Delete
+  const delBtn = e.target.closest('[data-delete]');
+  if (delBtn) {
+    e.stopPropagation();
+    if (!confirm('確定要刪除這筆館報嗎？')) return;
+    try {
+      await callParentMemory('delete', delBtn.dataset.delete);
+      showToast('已刪除');
+      if (state.currentReportId === delBtn.dataset.delete) {
+        state.currentReport = null;
+        state.currentReportId = null;
+        reportScroll.innerHTML = '<div class="report-empty">在左側貼上文字素材，點「整理成館報」即可生成報告。</div>';
+        toggleReportActions(false);
+        $('reportHeaderTitle').textContent = '報告預覽';
+      }
+      await loadHistory();
+    } catch (err) {
+      showToast('刪除失敗：' + err.message);
+    }
+    return;
+  }
+
+  // Load
+  const item = e.target.closest('.history-item');
+  if (!item) return;
+  const id = item.dataset.id;
+  const record = state.history.find(h => h.id === id);
+  if (!record) return;
+
+  try {
+    const report = JSON.parse(record.content);
+    state.currentReport = report;
+    state.currentReportId = id;
+    renderReport(report);
+    toggleReportActions(true);
+  } catch {
+    showToast('無法解析該館報');
+  }
+});
+
+// ===== Voice Playback =====
+let voicePlaying = false;
+let voicePaused = false;
+
+function setVoiceUI(playing, paused) {
+  voicePlaying = playing;
+  voicePaused = paused;
+  btnRead.style.display = state.currentReport && !playing ? '' : 'none';
+  btnPause.style.display = playing ? '' : 'none';
+  btnPause.textContent = paused ? '繼續' : '暫停';
+  btnVoiceStop.style.display = playing || paused ? '' : 'none';
+  voiceBar.classList.toggle('active', playing || paused);
+  if (!playing && !paused) {
+    voiceProgress.textContent = '';
+    voiceText.textContent = '';
+  }
+}
+
+btnRead.addEventListener('click', () => {
+  if (!state.currentReport) return;
+  window.parent.postMessage({
+    type: 'akasha-voice-play-report',
+    report: state.currentReport,
+  }, '*');
+  const preset = bgmSelect.value;
+  if (preset) {
+    window.parent.postMessage({ type: 'akasha-bgm-play', presetId: preset }, '*');
+  }
+  setVoiceUI(true, false);
+  showToast('開始朗讀');
+});
+
+btnPause.addEventListener('click', () => {
+  if (voicePaused) {
+    window.parent.postMessage({ type: 'akasha-voice-resume' }, '*');
+    setVoiceUI(true, false);
+  } else {
+    window.parent.postMessage({ type: 'akasha-voice-pause' }, '*');
+    setVoiceUI(true, true);
+  }
+});
+
+btnVoiceStop.addEventListener('click', () => {
+  window.parent.postMessage({ type: 'akasha-voice-stop' }, '*');
+  window.parent.postMessage({ type: 'akasha-bgm-stop' }, '*');
+  setVoiceUI(false, false);
+});
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-voice-state-update') {
+    const d = e.data;
+    if (!d.speaking && !d.paused) {
+      setVoiceUI(false, false);
+      if (voicePlaying) {
+        window.parent.postMessage({ type: 'akasha-bgm-stop' }, '*');
+      }
+    } else {
+      setVoiceUI(d.speaking || d.paused, d.paused);
+      if (d.total > 0) {
+        voiceProgress.textContent = `${(d.index || 0) + 1}/${d.total}`;
+      }
+      if (d.text) {
+        voiceText.textContent = d.text.length > 60 ? d.text.slice(0, 60) + '…' : d.text;
+      }
+    }
+  }
+});
+
+// ===== Init =====
+loadHistory();
+</script>
+</body>
+</html>

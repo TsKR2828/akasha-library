@@ -1,6 +1,6 @@
 # 阿卡夏圖書館 — TODO
 
-> Enhancement Phase 1–13, 16 已完成（含 8 Script Editor / 12 Security / 16-B/C/D 部署）
+> Enhancement Phase 1–16 全部完成（含 15 談心+館報 / 8 Script Editor / 12 Security / 16 部署）
 > Branch: `feature/cool-stuff`
 
 ---
@@ -25,7 +25,7 @@
 - [x] 下半段第一層：操作紀錄（✓ 標記 + 相對時間戳，持久直到下次操作）
 - [x] 下半段第二層：hover 按鈕說明（即時顯示/消失）
 - [x] Code & Data Reader 實作
-- [ ] Table Forge 實作（無側欄，待新增 HINTS 面板）
+- [x] Table Forge 實作（可收合 HINTS bar + 操作紀錄 + hover 說明 + 18 個按鈕 title）
 
 ### 1-D Toast 提示統一 ✅
 - [x] 操作完成 → toast 提示 2~3 秒淡出
@@ -306,6 +306,39 @@
 
 ---
 
+## 已完成（Phase 15 Private Reading Room + 每日館報）
+
+### 15-A 談心專區模組 ✅
+- [x] `modules/reading-room/index.html` — 談心專區 MVP（今日談心 / 不留痕模式）
+- [x] 三種記憶保存選項（今日限定 / 本機手札 / 不保存）
+- [x] PostMessage Memory Bridge（getAll / save / saveSession / delete / deleteAll / enqueueSync）
+- [x] App Shell 整合（sidebar + dashboard + MODULE_CONTEXTS + AI bridge）
+- [x] `core/security.js` 新增 `reading_room` feature gate
+
+### 15-B 零韻手札 UI 強化 ✅
+- [x] 編輯 modal — 標題 / 內容 / 標籤可編輯，save 用 `put()` 更新既有記錄
+- [x] Tag 篩選列 — 收集所有標籤生成 pill buttons，篩選手札清單
+- [x] Notion 同步選項 — 第 5 種保存選項，save 後 `enqueueSync` 排入佇列
+- [x] MD / JSON 匯出 — Blob download，含所有手札（`零韻手札_YYYY-MM-DD.md/.json`）
+
+### 15-C 每日館報 MVP ✅
+- [x] `modules/daily-report/index.html` — 新模組，兩欄式 UI（輸入 / 報告顯示）
+- [x] AI Bridge — `akasha-report-generate` + system prompt 輸出 §12.3 JSON
+- [x] 報告渲染 — sections / items / source / url 結構化顯示
+- [x] 儲存 / 載入歷史 — 複用 Memory Bridge（`module:'daily-report'`, `scope:'report'`）
+- [x] MD / JSON 匯出 — `館報_YYYY-MM-DD.md/.json`
+- [x] App Shell 整合（sidebar + dashboard card VII + MODULE_CONTEXTS + AI bridge）
+
+### 15-D 館報朗讀 + BGM 搭配 ✅
+- [x] App Shell Voice Bridge — 動態 import voice.js + report-voice.js，PostMessage 協議
+- [x] 訊息處理：`akasha-voice-play-report` / `pause` / `resume` / `stop` / `state`
+- [x] 狀態廣播：`akasha-voice-state-update` 回傳 speaking / paused / index / total / text
+- [x] Daily-Report 播放 UI — 朗讀 / 暫停 / 停止按鈕 + BGM preset 下拉
+- [x] 語音進度條 — 顯示「第 N/M 段」+ 當前朗讀文字（60 字截取）
+- [x] BGM 連動 — 開始朗讀同時 `akasha-bgm-play`，停止時 `akasha-bgm-stop`
+
+---
+
 ## 待做（追加規格 · 剩餘 Phase）
 
-- Phase 15：Private Reading Room + 每日館報 — 依賴 Phase 10 ✅ + Phase 14 ✅
+（Enhancement Phase 1–16 全部完成）

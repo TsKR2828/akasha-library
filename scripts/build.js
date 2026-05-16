@@ -235,6 +235,8 @@ const critical = [
   join('modules', 'table-forge', 'index.html'),
   join('modules', 'script-editor', 'index.html'),
   join('modules', 'book-editor', 'index.html'),
+  join('modules', 'reading-room', 'index.html'),
+  join('modules', 'daily-report', 'index.html'),
   join('modules', 'ai-settings', 'index.html'),
 ];
 

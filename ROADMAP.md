@@ -149,16 +149,16 @@
 | 14-C | 館報朗讀稿輸出 | ✅ |
 | 14-D | 伴讀時指定背景樂 | ✅ |
 
-## Phase 15：Private Reading Room + 每日館報（追加 spec §8, §12）
+## Phase 15：Private Reading Room + 每日館報（追加 spec §8, §12）✅ 完成
 
 依賴 Phase 10（Memory System）+ Phase 14（Voice）。
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 15-A | 談心專區模組 — 今日談心 / 不留痕模式 / 記憶選項 | ⬜ |
-| 15-B | 零韻手札 UI — 保存選項（今日 / 本機 / Notion / 不保存） | ⬜ |
-| 15-C | 每日館報 — RSS 擷取 → Charta 整理 → MD/JSON 輸出 | ⬜ |
-| 15-D | 館報朗讀 + BGM 搭配 | ⬜ |
+| 15-A | 談心專區模組 — 今日談心 / 不留痕模式 / 記憶選項 | ✅ |
+| 15-B | 零韻手札 UI 強化 — 編輯 modal / tag 篩選 / Notion 同步 / MD+JSON 匯出 | ✅ |
+| 15-C | 每日館報 MVP — 手動文字 → LLM 整理 → §12.3 JSON → 顯示/儲存/匯出 | ✅ |
+| 15-D | 館報朗讀 + BGM 搭配 — Voice bridge / 播放控制 / BGM preset 連動 | ✅ |
 
 ## Phase 16：Export Core + 部署（追加 spec §2.2, §15）✅ 完成
 
@@ -185,17 +185,17 @@
 已完成
 ├─ Phase 7 (Translation Core) ✅ ──→ Phase 8 (Script Editor) ✅
 │                                 ──→ Phase 9 (Table Forge 抽取強化) ✅
-├─ Phase 10 (Memory) ✅ ──→ Phase 15 (談心 + 館報)
+├─ Phase 10 (Memory) ✅ ──→ Phase 15 (談心 + 館報) ✅
 ├─ Phase 11 (Notion Connector) ✅
 ├─ Phase 12 (Security Layer) ✅
 ├─ Phase 13 (Document Bridge) ✅ — 13-A/B/C/D 全部完成
 └─ Phase 16 (Export Core + 部署) ✅ — 16-A/B/C/D 全部完成
 
 已完成
-├─ Phase 14 (Voice/BGM) ✅ ──→ Phase 15-D (館報朗讀)
+├─ Phase 14 (Voice/BGM) ✅ ──→ Phase 15-D (館報朗讀) ✅
 
-待做
-└─ Phase 15 (談心 + 館報)
+已完成
+└─ Phase 15 (談心 + 館報) ✅ — 15-A/B/C/D 全部完成
 ```
 
 ---

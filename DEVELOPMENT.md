@@ -145,7 +145,7 @@
 | Phase 12 | Security Layer（資料分級 / AES-GCM 加密 / BYOK 金鑰管理 / Record Stamping / Build Mode） | ✅ 完成 |
 | Phase 13 | Document Bridge（DOCX 匯入匯出 + 劇本匯出） | ✅ 全部完成 |
 | Phase 14 | Voice / BGM Prototype（Rein-Voice + TsukiSynth + 館報朗讀稿 + 伴讀 BGM） | ✅ 全部完成 |
-| Phase 15 | Private Reading Room + 每日館報 | ⬜ 待做 |
+| Phase 15 | Private Reading Room + 每日館報（15-A 談心 / 15-B 手札強化 / 15-C 館報 MVP / 15-D 朗讀+BGM） | ✅ 全部完成 |
 | Phase 16 | Export Core + 部署（build script / deploy workflow / Worker 後端 / SW v4） | ✅ 全部完成 |
 
 Enhancement Phase 新增的核心模組：
@@ -170,6 +170,8 @@ Enhancement Phase 新增的核心模組：
 | `core/voice.js` | 14-A | Rein-Voice 核心（voice task format / Web Speech TTS / queue） |
 | `core/bgm.js` | 14-B | TsukiSynth BGM 核心（score.json / Web Audio synth / 4 presets） |
 | `core/report-voice.js` | 14-C | 館報朗讀稿轉換器（report JSON → voice tasks / reading script） |
+| `modules/reading-room/index.html` | 15-A/B | 談心專區（聊天 UI / 記憶選項 / 手札 CRUD / tag 篩選 / 匯出） |
+| `modules/daily-report/index.html` | 15-C/D | 每日館報（文字 → LLM 整理 → §12.3 JSON / 朗讀 + BGM 搭配） |
 | `scripts/build.js` | 16-B/C | 站台建置腳本（public / private 模式） |
 
 ---
@@ -228,6 +230,6 @@ Phase 11   ████████████████ 100% (Notion Connect
 Phase 12   ████████████████ 100% (Security Layer — 12-A~E 全部完成)
 Phase 13   ████████████████ 100% (Document Bridge — 13-A/B/C/D 全部完成)
 Phase 14   ████████████████ 100% (Voice / BGM — 14-A/B/C/D 全部完成)
-Phase 15   ░░░░░░░░░░░░░░░░   0% (談心 + 館報)
+Phase 15   ████████████████ 100% (談心 + 館報 — 15-A/B/C/D 全部完成)
 Phase 16   ████████████████ 100% (Export Core + 部署 — 16-A/B/C/D 全部完成)
 ```

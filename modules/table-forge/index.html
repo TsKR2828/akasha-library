@@ -374,6 +374,61 @@
     .diff-del { color: #e06c75; }
     .diff-add { color: #98c379; }
     .diff-same { color: var(--text-tertiary); }
+
+    /* HINTS 聯動系統 */
+    .hints-bar {
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--navy-line);
+      background: rgba(24,29,40,0.6);
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 120px;
+      overflow: hidden;
+      transition: max-height 200ms, opacity 200ms, padding 200ms;
+    }
+    .hints-bar.collapsed {
+      max-height: 0;
+      padding: 0 14px;
+      opacity: 0;
+      border-bottom-color: transparent;
+    }
+    :root[data-mode="light"] .hints-bar {
+      background: rgba(245,239,225,0.6);
+    }
+    .hints-info {
+      color: var(--text-secondary);
+      font-size: 11.5px;
+    }
+    .hints-info .info-label {
+      color: var(--gold);
+      font-weight: 500;
+    }
+    .hints-divider {
+      border: none;
+      border-top: 1px dashed var(--navy-line);
+      margin: 6px 0;
+    }
+    .hints-op-record {
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--gold);
+    }
+    .hints-op-record .op-check { color: #6fcf97; margin-right: 2px; }
+    .hints-op-record .op-time { color: var(--text-tertiary); font-size: 10.5px; margin-left: 4px; }
+    .hints-hover-desc {
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .hints-hover-desc .hover-label {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .hints-hover-desc .hover-label::before {
+      content: '▸ ';
+      color: var(--gold);
+    }
   </style>
 </head>
 <body>
@@ -385,15 +440,24 @@
       <button class="btn btn--gold" id="btn-toggle-export" disabled title="將表格匯出為 Markdown、JSON 或 CSV">匯出</button>
       <button class="btn btn--danger" id="btn-clear" disabled title="清除目前表格所有資料">清除</button>
       <button class="btn" id="btn-meta" disabled title="加入 source / editedBy 欄位標記資料來源與編輯者">Meta</button>
+      <button class="btn" id="btn-hints" title="顯示或隱藏操作提示面板">HINTS</button>
     </div>
   </header>
+
+  <!-- HINTS Bar -->
+  <div class="hints-bar collapsed" id="hintsBar">
+    <div class="hints-info" id="hintsInfo">尚未載入資料。貼上文字或開啟檔案開始。</div>
+    <hr class="hints-divider" id="hintsDivider" style="display:none">
+    <div class="hints-op-record" id="hintsOpRecord"></div>
+    <div class="hints-hover-desc" id="hintsHoverDesc"></div>
+  </div>
 
   <!-- Import Panel -->
   <div id="import-panel">
     <textarea id="import-textarea" placeholder="貼上 Markdown Table、JSON Array 或 CSV⋯⋯"></textarea>
     <div class="import-actions">
-      <button class="btn btn--gold" id="btn-parse">解析</button>
-      <label class="file-label" for="import-file">開啟檔案</label>
+      <button class="btn btn--gold" id="btn-parse" title="解析貼上的文字為表格">解析</button>
+      <label class="file-label" for="import-file" title="從本機開啟 CSV / JSON / Markdown 檔案">開啟檔案</label>
       <input type="file" id="import-file" accept=".md,.json,.csv,.txt,.tsv">
       <button class="btn" id="btn-extract" title="分析 Markdown 結構並抽取為表格（章節、大綱、表格清單等）">抽取</button>
       <span id="import-error"></span>
@@ -416,13 +480,13 @@
   <!-- Export Panel -->
   <div id="export-panel" class="hidden">
     <div class="export-actions">
-      <button class="btn" id="btn-export-md">Markdown</button>
-      <button class="btn" id="btn-export-json">JSON</button>
-      <button class="btn" id="btn-export-csv">CSV</button>
-      <button class="btn" id="btn-diff">Diff</button>
+      <button class="btn" id="btn-export-md" title="預覽 Markdown 表格格式">Markdown</button>
+      <button class="btn" id="btn-export-json" title="預覽 JSON 陣列格式">JSON</button>
+      <button class="btn" id="btn-export-csv" title="預覽 CSV 純文字格式">CSV</button>
+      <button class="btn" id="btn-diff" title="比對原始資料與目前表格的差異">Diff</button>
       <span style="margin-left:auto"></span>
-      <button class="btn btn--gold" id="btn-copy">複製</button>
-      <button class="btn btn--gold" id="btn-download">下載</button>
+      <button class="btn btn--gold" id="btn-copy" title="複製匯出內容到剪貼簿">複製</button>
+      <button class="btn btn--gold" id="btn-download" title="下載匯出檔案">下載</button>
     </div>
     <pre id="export-preview"></pre>
   </div>
@@ -450,6 +514,72 @@
     }
     window.showToast = showToast;
 
+    // ── HINTS 聯動系統 ────────────────────────────
+    var hintsInfo = null;
+    var hintsDivider = null;
+    var hintsOpRecord = null;
+    var hintsHoverDesc = null;
+    var lastOpText = '';
+    var lastOpTime = 0;
+    var opTimerInterval = null;
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function relativeTime(ts) {
+      var diff = Math.floor((Date.now() - ts) / 1000);
+      if (diff < 5) return '剛剛';
+      if (diff < 60) return diff + ' 秒前';
+      if (diff < 3600) return Math.floor(diff / 60) + ' 分鐘前';
+      return Math.floor(diff / 3600) + ' 小時前';
+    }
+
+    function recordOperation(text) {
+      lastOpText = text;
+      lastOpTime = Date.now();
+      updateOpRecord();
+      if (hintsDivider) hintsDivider.style.display = '';
+      if (opTimerInterval) clearInterval(opTimerInterval);
+      opTimerInterval = setInterval(updateOpRecord, 10000);
+      showToast(text);
+    }
+    window.recordOperation = recordOperation;
+
+    function updateOpRecord() {
+      if (!hintsOpRecord) return;
+      if (!lastOpTime) { hintsOpRecord.innerHTML = ''; return; }
+      hintsOpRecord.innerHTML =
+        '<span class="op-check">✓</span> ' +
+        escapeHtml(lastOpText) +
+        '<span class="op-time">（' + relativeTime(lastOpTime) + '）</span>';
+    }
+
+    function updateHintsInfo(label, detail) {
+      if (!hintsInfo) return;
+      if (!label) {
+        hintsInfo.textContent = '尚未載入資料。貼上文字或開啟檔案開始。';
+        return;
+      }
+      hintsInfo.innerHTML = '<span class="info-label">' + escapeHtml(label) + '</span>' + (detail ? ' · ' + escapeHtml(detail) : '');
+    }
+    window.updateHintsInfo = updateHintsInfo;
+
+    function showHoverHint(label, desc) {
+      if (!hintsHoverDesc) return;
+      if (!label) { hintsHoverDesc.innerHTML = ''; return; }
+      if (hintsDivider && (lastOpTime || label)) hintsDivider.style.display = '';
+      hintsHoverDesc.innerHTML =
+        '<span class="hover-label">' + escapeHtml(label) + '</span><br>' +
+        escapeHtml(desc);
+    }
+
+    function hideHoverHint() {
+      if (hintsHoverDesc) hintsHoverDesc.innerHTML = '';
+    }
+
     // Mobile popover (long press)
     var popoverEl = null;
     var longPressTimer = null;
@@ -472,11 +602,35 @@
       if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
       if (popoverEl) popoverEl.classList.remove('show');
     }
-    // Wire long-press to header buttons with titles
+
+    // ── Init ──────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
-      var buttons = document.querySelectorAll('header .btn, header .btn--gold, header .btn--danger');
+      // HINTS DOM refs
+      hintsInfo = document.getElementById('hintsInfo');
+      hintsDivider = document.getElementById('hintsDivider');
+      hintsOpRecord = document.getElementById('hintsOpRecord');
+      hintsHoverDesc = document.getElementById('hintsHoverDesc');
+
+      // HINTS toggle
+      var hintsBar = document.getElementById('hintsBar');
+      var btnHints = document.getElementById('btn-hints');
+      if (btnHints) {
+        btnHints.addEventListener('click', function() {
+          hintsBar.classList.toggle('collapsed');
+          btnHints.classList.toggle('btn--gold', !hintsBar.classList.contains('collapsed'));
+        });
+      }
+
+      // Wire hover hints + mobile popover on all buttons with titles
+      var buttons = document.querySelectorAll('.btn, .file-label');
       buttons.forEach(function(btn) {
-        if (!btn.getAttribute('title')) return;
+        var title = btn.getAttribute('title');
+        if (!title) return;
+        var label = btn.textContent.trim();
+        // Desktop hover → HINTS lower section
+        btn.addEventListener('mouseenter', function() { showHoverHint(label, title); });
+        btn.addEventListener('mouseleave', hideHoverHint);
+        // Mobile long press → popover
         btn.addEventListener('touchstart', function(e) {
           longPressTimer = setTimeout(function() {
             e.preventDefault();

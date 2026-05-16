@@ -51,6 +51,8 @@ const LOCAL_ASSETS = [
   './modules/book-editor/index.html',
   './modules/markdown/index.html',
   './modules/pdf-reader/index.html',
+  './modules/reading-room/index.html',
+  './modules/daily-report/index.html',
   './modules/script-editor/index.html',
   './modules/table-forge/index.html',
   './modules/table-forge/exporters.js',

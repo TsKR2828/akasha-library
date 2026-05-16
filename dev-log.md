@@ -1,5 +1,75 @@
 # Akasha Library — Dev Log
 
+## 2026-05-16：Phase 15 Private Reading Room + 每日館報 完成（15-A/B/C/D）
+
+### 15-A：談心專區模組（Reading Room）
+
+新增 `modules/reading-room/index.html`：
+- 聊天式 UI — 使用者輸入 → PostMessage `akasha-reading-room-send` → App Shell 呼叫 LLM → 打字機回應
+- 三種記憶模式：今日限定（session memory）、保存至手札（approved memory）、不保存（no-trace）
+- 零韻手札清單 — 顯示所有已保存記憶，可查看 / 刪除
+- PostMessage Memory Bridge — getAll / save / saveSession / delete / deleteAll / enqueueSync
+- 手機版 RWD 適配
+
+修改 `index.html`（App Shell）：
+- modules 登錄 `reading-room` + sidebar 入口（heart SVG icon）
+- 儀表板卡片（Roman VI，藍色書脊）
+- `MODULE_CONTEXTS['reading-room']` — 角色：心靈夥伴 Soul Companion
+- AI Bridge：`akasha-reading-room-send` handler + 記憶系統整合
+- Memory Bridge：8 個 action 的完整 PostMessage 處理（含 `enqueueSync`）
+
+修改 `core/security.js`：新增 `reading_room` feature gate
+
+### 15-B：零韻手札 UI 強化
+
+修改 `modules/reading-room/index.html`：
+- 編輯 modal（`#editOverlay`）— 標題 / 內容 / 標籤三欄可編輯，save 用 `put()` 更新既有記錄
+- Tag 篩選列 — 收集所有 notes 的 tags，生成 pill buttons，點擊篩選手札清單
+- Notion 同步選項 — 第 5 種保存選項（`value="notion"`），save 後 enqueueSync 排入 Notion 同步佇列
+- MD / JSON 匯出 — export dropdown，生成 `零韻手札_YYYY-MM-DD.md/.json`，Blob download
+
+修改 `index.html`（App Shell）：
+- Memory Bridge 新增 `enqueueSync` case，呼叫 `core/notion-connector.js` 的 `enqueue()`
+
+### 15-C：每日館報 MVP
+
+新增 `modules/daily-report/index.html`：
+- 兩欄式 UI — 左：文字輸入區（textarea + date picker）、右：報告顯示區
+- AI Bridge — `akasha-report-generate { text, date }` → LLM 結構化輸出 §12.3 JSON
+- 報告渲染 — `renderReport(report)` 遍歷 sections / items，顯示標題 / 摘要 / 來源 / URL
+- 儲存 — 複用 Memory Bridge（`module:'daily-report'`, `scope:'report'`）
+- 歷史 — `loadHistory()` 從 approved-memory 取回，顯示可點擊列表 + 刪除按鈕
+- MD / JSON 匯出 — `exportReport('md'|'json')`，`館報_YYYY-MM-DD.md/.json`
+
+修改 `index.html`（App Shell）：
+- modules 登錄 `daily-report` + sidebar 入口（newspaper SVG icon）
+- 儀表板卡片（Roman VII，暖橙色書脊 `#3a2a1a`）
+- `MODULE_CONTEXTS['daily-report']` — 角色：館報整理員 Archive Reporter
+- AI Bridge：`akasha-report-generate` handler + system prompt（指定 §12.3 JSON 格式）
+
+### 15-D：館報朗讀 + BGM 搭配
+
+修改 `index.html`（App Shell）：
+- `initVoiceBridge()` IIFE — 動態 import `core/voice.js` + `core/report-voice.js`
+- `broadcastState()` — 將語音狀態（speaking / paused / index / total / text）廣播到 iframe
+- 訊息處理：`akasha-voice-play-report`（clearQueue → reportToVoiceTasks → enqueue → playQueue）
+- 訊息處理：`akasha-voice-pause` / `akasha-voice-resume` / `akasha-voice-stop`
+- State listener：監聽 speaking / idle / paused / queue-progress / queue-done 事件
+
+修改 `modules/daily-report/index.html`：
+- Voice bar CSS — `.voice-bar` / `.voice-bar-progress` / `.voice-bar-text`
+- 朗讀 / 暫停 / 停止按鈕 + BGM preset 下拉（4 presets + 無BGM）
+- `setVoiceUI(playing, paused)` — 根據播放狀態切換按鈕顯示
+- 監聽 `akasha-voice-state-update` — 更新進度條（「第 N/M 段」+ 當前文字 60 字截取）
+- BGM 連動 — 開始朗讀時 `akasha-bgm-play`，停止時 `akasha-bgm-stop`
+
+### 共通
+
+- `sw.js`：v4 快取清單新增 `./modules/reading-room/index.html`、`./modules/daily-report/index.html`
+- `scripts/build.js`：critical path 新增 `modules/reading-room/index.html`、`modules/daily-report/index.html`
+
+---
+
 ## 2026-05-16：Phase 14 Voice / BGM Prototype 完成（14-A/B/C/D）
 
 ### 14-A：Rein-Voice task format + voice preview UI

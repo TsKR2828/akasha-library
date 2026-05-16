@@ -44,8 +44,6 @@ const $btnExportCsv  = document.getElementById('btn-export-csv');
 const $btnCopy       = document.getElementById('btn-copy');
 const $btnDownload   = document.getElementById('btn-download');
 
-const $toast = document.getElementById('toast');
-
 const $btnExtract     = document.getElementById('btn-extract');
 const $extractPanel   = document.getElementById('extract-panel');
 const $extractButtons = document.getElementById('extract-buttons');
@@ -60,6 +58,8 @@ $btnParse.addEventListener('click', () => {
   const result = autoDetectAndParse(text, window.Papa);
   if (result.error) { showError(result.error); return; }
   loadDocument(result);
+  const s = getSheet(result);
+  if (s && window.recordOperation) window.recordOperation('已解析文字資料：' + s.columns.length + ' 欄 × ' + s.rows.length + ' 列');
 });
 
 $importFile.addEventListener('change', (e) => {
@@ -80,6 +80,7 @@ $importFile.addEventListener('change', (e) => {
     if (result.error) { showError(result.error); return; }
     result.title = file.name;
     loadDocument(result);
+    if (window.recordOperation) window.recordOperation('已載入檔案：' + file.name);
   };
   reader.readAsText(file, 'UTF-8');
   $importFile.value = '';
@@ -101,6 +102,8 @@ $btnClear.addEventListener('click', () => {
   showError('');
   currentExportFormat = 'markdown';
   updateHeaderButtons();
+  if (window.updateHintsInfo) window.updateHintsInfo();
+  if (window.recordOperation) window.recordOperation('已清除表格');
 });
 
 function showError(msg) {
@@ -116,6 +119,11 @@ function loadDocument(doc) {
   $emptyState.style.display = 'none';
   renderTable();
   updateHeaderButtons();
+  // HINTS info
+  const sheet = getSheet(doc);
+  if (sheet && window.updateHintsInfo) {
+    window.updateHintsInfo(doc.title || 'Table', sheet.columns.length + ' 欄 × ' + sheet.rows.length + ' 列');
+  }
 }
 
 function updateHeaderButtons() {
@@ -167,9 +175,11 @@ function renderTable() {
     btn.textContent = '×';
     btn.title = '刪除欄';
     btn.addEventListener('click', () => {
+      const colName = col.name;
       removeColumn(sheet, col.id);
       renderTable();
       refreshExportPreview();
+      if (window.recordOperation) window.recordOperation('已刪除欄：' + colName);
     });
     td.appendChild(btn);
     delColRow.appendChild(td);
@@ -207,6 +217,7 @@ function renderTable() {
       removeRow(sheet, row.id);
       renderTable();
       refreshExportPreview();
+      if (window.recordOperation) window.recordOperation('已刪除列');
     });
     tdAction.appendChild(delBtn);
     tr.appendChild(tdAction);
@@ -227,6 +238,7 @@ function renderTable() {
     addRow(sheet);
     renderTable();
     refreshExportPreview();
+    if (window.recordOperation) window.recordOperation('已新增列');
   });
 
   const addColBtn = document.createElement('button');
@@ -238,6 +250,7 @@ function renderTable() {
     addColumn(sheet, name.trim());
     renderTable();
     refreshExportPreview();
+    if (window.recordOperation) window.recordOperation('已新增欄：' + name.trim());
   });
 
   actions.appendChild(addRowBtn);
@@ -300,6 +313,7 @@ function startEditHeader(th, colId) {
       const sheet = getSheet(currentDoc);
       renameColumn(sheet, colId, newName);
       refreshExportPreview();
+      if (window.recordOperation) window.recordOperation('已重命名欄位：' + original + ' → ' + newName);
     } else {
       th.textContent = original;
     }
@@ -361,7 +375,8 @@ $btnCopy.addEventListener('click', async () => {
   if (!text) return;
   try {
     await navigator.clipboard.writeText(text);
-    showToast('已複製到剪貼簿');
+    if (window.recordOperation) window.recordOperation('已複製 ' + currentExportFormat + ' 到剪貼簿');
+    else showToast('已複製到剪貼簿');
   } catch {
     showToast('複製失敗');
   }
@@ -375,7 +390,9 @@ $btnDownload.addEventListener('click', () => {
   const ext = extMap[currentExportFormat] || 'txt';
   const mime = mimeMap[currentExportFormat] || 'text/plain';
   const base = (currentDoc.title || 'table').replace(/\.[^.]+$/, '');
-  downloadBlob(new Blob([text], { type: mime + ';charset=utf-8' }), base + '.' + ext);
+  const filename = base + '.' + ext;
+  downloadBlob(new Blob([text], { type: mime + ';charset=utf-8' }), filename);
+  if (window.recordOperation) window.recordOperation('已下載 ' + filename);
 });
 
 function downloadBlob(blob, filename) {
@@ -388,14 +405,10 @@ function downloadBlob(blob, filename) {
   setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 300);
 }
 
-// --- Toast ---
+// --- Toast (delegates to inline script's window.showToast) ---
 
-let toastTimer = 0;
 function showToast(msg) {
-  $toast.textContent = msg;
-  $toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => $toast.classList.remove('show'), 1800);
+  if (window.showToast) window.showToast(msg);
 }
 
 // --- Extract (Phase 9) ---
@@ -435,7 +448,8 @@ function renderExtractButtons(available, content) {
       if (result.error) { showError(result.error); return; }
       result._originalSource = content;
       loadDocument(result);
-      showToast(item.label + ' 已抽取');
+      if (window.recordOperation) window.recordOperation(item.label + ' 已抽取');
+      else showToast(item.label + ' 已抽取');
     });
     $extractButtons.appendChild(btn);
   }
@@ -448,7 +462,8 @@ $btnMeta.addEventListener('click', () => {
   addMetadataColumns(currentDoc);
   renderTable();
   refreshExportPreview();
-  showToast('已加入 metadata 欄位');
+  if (window.recordOperation) window.recordOperation('已加入 metadata 欄位');
+  else showToast('已加入 metadata 欄位');
 });
 
 // --- Diff Preview (Phase 9) ---

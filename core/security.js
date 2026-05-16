@@ -336,6 +336,7 @@ const FEATURE_GATES = Object.freeze({
     memory_system:   false,  // no approved memories
     persona_full:    false,  // limited persona
     encryption:      false,  // no encryption UI
+    reading_room:    false,  // no private reading room
     script_editor:   true,   // basic script editor OK
     pdf_reader:      true,   // reading OK
     table_forge:     true,   // table tools OK
@@ -351,6 +352,7 @@ const FEATURE_GATES = Object.freeze({
     memory_system:   true,
     persona_full:    true,
     encryption:      true,
+    reading_room:    true,
     script_editor:   true,
     pdf_reader:      true,
     table_forge:     true,

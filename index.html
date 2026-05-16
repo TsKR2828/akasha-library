@@ -1397,6 +1397,22 @@ body { display: flex; }
       </span>
       <span class="nav-active-dot"></span>
     </button>
+    <button class="nav-item" data-module="private-reading-room">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">談心專區</span>
+        <span class="nav-item-sub">Intimarium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="daily-report">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">每日館報</span>
+        <span class="nav-item-sub">Diurnalis</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
     <button class="nav-item" onclick="window.openMemoryViewer()" data-view="memory-viewer">
       <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5"/></svg></span>
       <span class="nav-item-text">
@@ -1572,6 +1588,46 @@ body { display: flex; }
             <div class="card-formats">
               <span class="format-tag">.pdf</span>
               <span class="format-tag">.html</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
+        <!-- Reading Room -->
+        <a class="module-card" data-module="private-reading-room" id="card-reading-room">
+          <div class="card-spine" style="background:linear-gradient(180deg,#2a2a40,#2a2a40cc,#2a2a4088)"></div>
+          <div class="card-roman">VI</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg>
+            </div>
+            <div class="card-title">談心專區</div>
+            <div class="card-en">— Intimarium</div>
+            <div class="card-desc">私人閱覽室。陪伴對話、文字整理、手札保存。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">chat</span>
+              <span class="format-tag">notes</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
+        <!-- Daily Report -->
+        <a class="module-card" data-module="daily-report" id="card-daily-report">
+          <div class="card-spine" style="background:linear-gradient(180deg,#3a2a1a,#3a2a1acc,#3a2a1a88)"></div>
+          <div class="card-roman">VII</div>
+          <div>
+            <div class="card-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
+            </div>
+            <div class="card-title">每日館報</div>
+            <div class="card-en">— Diurnalis</div>
+            <div class="card-desc">資訊整理與結構化輸出。貼上素材，產出分類館報。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">report</span>
+              <span class="format-tag">news</span>
             </div>
             <div class="card-open-hint">Open &rarr;</div>
           </div>
@@ -1893,6 +1949,8 @@ body { display: flex; }
     'script-editor': { title: 'Script Editor', subtitle: 'Scriptorium', src: 'modules/script-editor/index.html' },
     'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
     'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
+    'private-reading-room': { title: '談心專區', subtitle: 'Intimarium', src: 'modules/reading-room/index.html' },
+    'daily-report': { title: '每日館報', subtitle: 'Diurnalis', src: 'modules/daily-report/index.html' },
   };
 
   // Per-module AI context definitions (spec §3.4)
@@ -1931,6 +1989,24 @@ body { display: flex; }
       engine: 'llm',
       greeting: '劇本編輯模式已就緒。我可以幫你檢查角色對白一致性、場景結構，或建議台詞修潤。',
       placeholder: '…向劇本顧問提問',
+      emotion: 'Cogitans',
+    },
+    'private-reading-room': {
+      role: '談心與手札整理員',
+      roleEn: 'Companion & Note Keeper',
+      badge: '※ 談心專區',
+      engine: 'llm',
+      greeting: '歡迎來到談心專區。我是零韻，你的談心與手札整理員。這裡是你的私人閱覽室。',
+      placeholder: '…和零韻聊聊',
+      emotion: 'Serena',
+    },
+    'daily-report': {
+      role: '館報整理員',
+      roleEn: 'Archive Reporter',
+      badge: '※ 每日館報',
+      engine: 'llm',
+      greeting: '館報模式已就緒。貼上文字素材，我會幫你整理成結構化的每日館報。',
+      placeholder: '…向館報整理員提問',
       emotion: 'Cogitans',
     },
     '_default': {
@@ -2302,6 +2378,16 @@ body { display: flex; }
       });
     });
   });
+
+  // Feature gate: hide Reading Room in public build (Phase 15-A)
+  import('./core/security.js').then(function(sec) {
+    if (!sec.isFeatureEnabled('reading_room')) {
+      var rrNav = document.querySelector('.nav-item[data-module="private-reading-room"]');
+      if (rrNav) rrNav.style.display = 'none';
+      var rrCard = document.getElementById('card-reading-room');
+      if (rrCard) rrCard.style.display = 'none';
+    }
+  }).catch(function() {});
 
   // Listen for reading progress (no import needed)
   window.addEventListener('message', function(event) {
@@ -3191,6 +3277,191 @@ window._aiSendReal = async function() {
   }
 };
 
+// ===== Reading Room AI Bridge (Phase 15-A) =====
+// Handles PostMessage communication from the Reading Room iframe.
+// The Reading Room sends user messages here; App Shell runs the LLM call
+// and returns the response, reusing all existing AI infrastructure.
+
+window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin) return;
+  const d = event.data;
+
+  // --- AI send request from Reading Room ---
+  if (d?.type === 'akasha-reading-room-send') {
+    (async () => {
+      const frame = document.getElementById('module-frame');
+      try {
+        const settings = getAISettings();
+        if (settings.error === 'no-api-key') {
+          frame.contentWindow.postMessage({
+            type: 'akasha-reading-room-response',
+            error: '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。',
+          }, '*');
+          return;
+        }
+
+        const moduleName = d.module || 'private-reading-room';
+        const roomBlock = await buildSummaryBlock(moduleName);
+        const memBlock = await buildMemoryContext(d.text, moduleName);
+        const systemPrompt = buildGeneralSystemPrompt() + roomBlock + memBlock + buildFactsBlock(moduleName);
+        const msgs = buildMessages(moduleName, d.text);
+        const totalTokens = estimateTokens(systemPrompt) + estimateTokens(d.text);
+
+        if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
+          frame.contentWindow.postMessage({
+            type: 'akasha-reading-room-response',
+            error: '月幣不足，無法送出。請至「AI 設定」查看餘額或切換至 BYOK 模式。',
+          }, '*');
+          return;
+        }
+
+        const response = await callLLM(settings, systemPrompt, msgs);
+
+        if (settings.mode === 'coin') {
+          const cost = coinCost(totalTokens);
+          deductCoins(cost, '談心 · ' + d.text.slice(0, 20));
+          syncTokenBar(totalTokens);
+        }
+
+        // Persist turns (unless no-trace)
+        if (!d.noTrace) {
+          addMessage(moduleName, 'user', d.text);
+          addTurn(moduleName, 'user', d.text);
+          addMessage(moduleName, 'assistant', response);
+          addTurn(moduleName, 'assistant', response);
+        }
+
+        frame.contentWindow.postMessage({
+          type: 'akasha-reading-room-response',
+          response,
+        }, '*');
+      } catch (err) {
+        frame.contentWindow.postMessage({
+          type: 'akasha-reading-room-response',
+          error: err.message || '未知錯誤',
+        }, '*');
+      }
+    })();
+  }
+
+  // --- Memory bridge for Reading Room ---
+  if (d?.type === 'akasha-reading-room-memory') {
+    (async () => {
+      const frame = document.getElementById('module-frame');
+      try {
+        let result;
+        switch (d.action) {
+          case 'getAll':
+            result = await getAllMemories(d.args?.[0]);
+            break;
+          case 'save':
+            result = await saveMemory(d.args?.[0]);
+            break;
+          case 'saveSession':
+            result = await saveSessionOnly(d.args?.[0]);
+            break;
+          case 'delete':
+            result = await deleteMemory(d.args?.[0]);
+            break;
+          case 'deleteAll': {
+            const all = await getAllMemories(d.args?.[0]);
+            for (const m of all) await deleteMemory(m.id);
+            result = { deleted: all.length };
+            break;
+          }
+          case 'enqueueSync': {
+            const rec = d.args?.[0];
+            result = await enqueue({ target: 'memory', action: 'upsert', localId: rec?.id, payload: rec });
+            break;
+          }
+          default:
+            throw new Error('Unknown memory action: ' + d.action);
+        }
+        frame.contentWindow.postMessage({
+          type: 'akasha-reading-room-memory-response',
+          reqId: d.reqId,
+          result,
+        }, '*');
+      } catch (err) {
+        frame.contentWindow.postMessage({
+          type: 'akasha-reading-room-memory-response',
+          reqId: d.reqId,
+          error: err.message,
+        }, '*');
+      }
+    })();
+  }
+
+  // --- Daily Report AI Bridge (Phase 15-C) ---
+  if (d?.type === 'akasha-report-generate') {
+    (async () => {
+      const frame = document.getElementById('module-frame');
+      try {
+        const settings = getAISettings();
+        if (settings.error === 'no-api-key') {
+          frame.contentWindow.postMessage({ type: 'akasha-report-response', error: '尚未設定 API Key。' }, '*');
+          return;
+        }
+
+        const reportDate = d.date || new Date().toISOString().slice(0, 10);
+        const reportSystemPrompt = `你是阿卡夏圖書館的館報整理員。使用者會貼上一段或多段文字素材（新聞、文章、筆記等），你的任務是將它們整理成結構化的每日館報。
+
+輸出規則：
+1. 嚴格輸出合法 JSON，不要加任何 markdown 標記或解釋文字
+2. 將素材分類為若干主題 section
+3. 每個 item 需要 title（標題）和 summary（一句話摘要）
+4. 如果能辨識來源，填入 source 和 url 欄位
+5. 日期使用：${reportDate}
+
+JSON 格式：
+{
+  "reportId": "daily_${reportDate.replace(/-/g, '')}",
+  "date": "${reportDate}",
+  "sections": [
+    {
+      "title": "主題分類名稱",
+      "items": [
+        { "source": "來源名", "title": "標題", "summary": "摘要", "url": "" }
+      ]
+    }
+  ],
+  "voiceTaskId": null,
+  "bgmScoreId": null
+}`;
+
+        const msgs = [{ role: 'user', content: d.text }];
+        const totalTokens = estimateTokens(reportSystemPrompt) + estimateTokens(d.text);
+
+        if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
+          frame.contentWindow.postMessage({ type: 'akasha-report-response', error: '月幣不足。' }, '*');
+          return;
+        }
+
+        const raw = await callLLM(settings, reportSystemPrompt, msgs);
+
+        if (settings.mode === 'coin') {
+          const cost = coinCost(totalTokens);
+          deductCoins(cost, '館報整理 · ' + reportDate);
+          syncTokenBar(totalTokens);
+        }
+
+        // Extract JSON from response
+        let report;
+        const jsonMatch = raw.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          report = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('LLM 未回傳有效 JSON');
+        }
+
+        frame.contentWindow.postMessage({ type: 'akasha-report-response', report }, '*');
+      } catch (err) {
+        frame.contentWindow.postMessage({ type: 'akasha-report-response', error: err.message || '未知錯誤' }, '*');
+      }
+    })();
+  }
+});
+
 // ===== Translation Preview (Phase 7-E) =====
 let currentTpJob = null;
 
@@ -3384,6 +3655,58 @@ window.addEventListener('message', (event) => {
       window.akashaBgm.toggle();
     }
   });
+})();
+
+// ===== Voice Bridge (Phase 15-D) =====
+(async function initVoiceBridge() {
+  try {
+    const { enqueue, playQueue, stopQueue, clearQueue, pause, resume, isSpeaking, getQueue, setStateListener } = await import('./core/voice.js');
+    const { reportToVoiceTasks } = await import('./core/report-voice.js');
+
+    function broadcastState(extra = {}) {
+      const q = getQueue();
+      const frame = document.getElementById('module-frame');
+      if (!frame) return;
+      frame.contentWindow.postMessage({
+        type: 'akasha-voice-state-update',
+        speaking: isSpeaking(),
+        paused: false,
+        index: q.index,
+        total: q.tasks.length,
+        text: q.tasks[q.index]?.text || '',
+        ...extra,
+      }, '*');
+    }
+
+    setStateListener((evt) => {
+      const q = getQueue();
+      const map = {
+        'speaking':       { speaking: true, paused: false },
+        'idle':           { speaking: false, paused: false },
+        'paused':         { speaking: false, paused: true },
+        'queue-progress': { speaking: true, paused: false, index: q.index, text: q.tasks[q.index]?.text || '' },
+        'queue-done':     { speaking: false, paused: false },
+      };
+      if (map[evt]) broadcastState(map[evt]);
+    });
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== location.origin) return;
+      const d = event.data;
+
+      if (d?.type === 'akasha-voice-play-report') {
+        clearQueue();
+        const tasks = reportToVoiceTasks(d.report, d.opts || {});
+        enqueue(tasks);
+        playQueue(0);
+        broadcastState({ speaking: true, index: 0, total: tasks.length, text: tasks[0]?.text || '' });
+      }
+      if (d?.type === 'akasha-voice-pause') { pause(); }
+      if (d?.type === 'akasha-voice-resume') { resume(); }
+      if (d?.type === 'akasha-voice-stop') { stopQueue(); clearQueue(); broadcastState({ speaking: false, paused: false, index: 0, total: 0 }); }
+      if (d?.type === 'akasha-voice-state') { broadcastState(); }
+    });
+  } catch {}
 })();
 
 // Service worker

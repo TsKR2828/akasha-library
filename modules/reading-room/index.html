@@ -1,0 +1,1372 @@
+<!doctype html>
+<html lang="zh-Hant" data-mode="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>談心專區 — 阿卡夏圖書館</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/styles/shared.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--text-primary);
+      background: var(--navy-deep);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== Header ===== */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--navy-line);
+      background: rgba(24,29,40,0.96);
+      backdrop-filter: blur(8px);
+      flex-shrink: 0;
+    }
+    :root[data-mode="light"] header {
+      background: rgba(245,239,225,0.96);
+    }
+    .header-title {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-display);
+      font-style: italic;
+    }
+    .header-spacer { flex: 1; }
+
+    /* Toggle buttons */
+    .toggle-btn {
+      appearance: none;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      color: var(--text-secondary);
+      padding: 5px 10px;
+      border-radius: var(--r-card);
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .toggle-btn:hover {
+      border-color: var(--gold-dim);
+      color: var(--text-primary);
+    }
+    .toggle-btn--active {
+      background: var(--gold-glow);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+    .toggle-btn--danger {
+      border-color: var(--oxblood);
+      color: var(--danger);
+    }
+    .toggle-btn--danger:hover {
+      background: rgba(196,96,79,0.12);
+    }
+
+    /* ===== Safety Banner ===== */
+    .safety-banner {
+      padding: 8px 16px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      border-bottom: 1px solid var(--navy-line);
+      background: var(--navy);
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+    .safety-banner a {
+      color: var(--gold-dim);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* ===== Main Layout ===== */
+    .main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ===== Chat Panel (Left) ===== */
+    .chat-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .chat-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      scroll-behavior: smooth;
+    }
+
+    .chat-msg {
+      margin-bottom: 14px;
+      max-width: 80%;
+      animation: msg-in 0.25s ease-out;
+    }
+    @keyframes msg-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .chat-msg--user {
+      margin-left: auto;
+      text-align: right;
+    }
+    .chat-msg--assistant {
+      margin-right: auto;
+    }
+
+    .chat-msg-label {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: 3px;
+      font-family: var(--font-display);
+    }
+
+    .chat-msg-bubble {
+      display: inline-block;
+      padding: 10px 14px;
+      border-radius: var(--r-card);
+      font-size: 14px;
+      line-height: 1.7;
+      text-align: left;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .chat-msg--user .chat-msg-bubble {
+      background: var(--gold-glow);
+      border: 1px solid var(--gold-line);
+      color: var(--text-primary);
+    }
+    .chat-msg--assistant .chat-msg-bubble {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      color: var(--text-primary);
+    }
+
+    /* Typewriter cursor */
+    .chat-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--gold);
+      margin-left: 2px;
+      animation: blink 0.7s step-end infinite;
+      vertical-align: text-bottom;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Thinking indicator */
+    .chat-thinking .chat-msg-bubble::after {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold-dim);
+      margin-left: 6px;
+      animation: pulse-dot 1s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    /* ===== Chat Input ===== */
+    .chat-input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--navy-line);
+      background: var(--navy);
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 10px 14px;
+      resize: none;
+      outline: none;
+      min-height: 42px;
+      max-height: 120px;
+      line-height: 1.5;
+    }
+    .chat-input:focus {
+      border-color: var(--gold-dim);
+    }
+    .chat-input::placeholder {
+      color: var(--text-tertiary);
+    }
+    .chat-send {
+      appearance: none;
+      background: var(--gold-glow);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      border-radius: var(--r-card);
+      padding: 0 16px;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .chat-send:hover {
+      background: rgba(201,168,106,0.22);
+    }
+    .chat-send:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* ===== Notes Panel (Right) ===== */
+    .notes-panel {
+      width: 320px;
+      border-left: 1px solid var(--navy-line);
+      display: flex;
+      flex-direction: column;
+      background: var(--navy);
+      flex-shrink: 0;
+    }
+    .notes-panel--hidden {
+      display: none;
+    }
+    .notes-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--navy-line);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .notes-title {
+      font-family: var(--font-display);
+      font-size: 14px;
+      color: var(--gold);
+      flex: 1;
+    }
+    .notes-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    /* Note card */
+    .note-card {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 12px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+    .note-card:hover {
+      border-color: var(--gold-dim);
+    }
+    .note-card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+    .note-card-body {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .note-card-meta {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+    .note-card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .note-btn {
+      appearance: none;
+      border: 1px solid var(--navy-line);
+      background: var(--navy);
+      color: var(--text-secondary);
+      padding: 3px 8px;
+      border-radius: var(--r-sharp);
+      font-size: 10px;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .note-btn:hover {
+      border-color: var(--gold-dim);
+      color: var(--text-primary);
+    }
+    .note-btn--danger:hover {
+      border-color: var(--oxblood);
+      color: var(--danger);
+    }
+
+    /* Notes empty state */
+    .notes-empty {
+      color: var(--text-tertiary);
+      font-size: 12px;
+      text-align: center;
+      padding: 32px 16px;
+      line-height: 1.8;
+    }
+
+    /* ===== Memory Save Dialog ===== */
+    .save-dialog-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .save-dialog-overlay.active {
+      display: flex;
+    }
+    .save-dialog {
+      background: var(--navy);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 24px;
+      width: 380px;
+      max-width: 90vw;
+      box-shadow: var(--shadow-lift);
+    }
+    .save-dialog h3 {
+      font-family: var(--font-display);
+      color: var(--gold);
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .save-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .save-option:hover {
+      border-color: var(--gold-dim);
+      background: var(--navy-light);
+    }
+    .save-option input[type="radio"] {
+      accent-color: var(--gold);
+    }
+    .save-option-label {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .save-option-desc {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .save-dialog-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+      justify-content: flex-end;
+    }
+
+    /* ===== No-Trace Badge ===== */
+    .no-trace-badge {
+      display: none;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      background: rgba(196,96,79,0.15);
+      color: var(--danger);
+      border: 1px solid rgba(196,96,79,0.3);
+    }
+    .no-trace-badge.active {
+      display: inline-block;
+    }
+
+    /* ===== Note Edit Modal ===== */
+    .note-edit-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 110;
+      align-items: center;
+      justify-content: center;
+    }
+    .note-edit-overlay.active { display: flex; }
+    .note-edit-dialog {
+      background: var(--navy);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      padding: 24px;
+      width: 480px;
+      max-width: 92vw;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lift);
+    }
+    .note-edit-dialog h3 {
+      font-family: var(--font-display);
+      color: var(--gold);
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 14px;
+    }
+    .note-edit-field { margin-bottom: 12px; }
+    .note-edit-label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+    .note-edit-input,
+    .note-edit-textarea {
+      width: 100%;
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+    }
+    .note-edit-input:focus,
+    .note-edit-textarea:focus {
+      border-color: var(--gold-dim);
+    }
+    .note-edit-textarea {
+      resize: vertical;
+      min-height: 160px;
+      max-height: 40vh;
+      line-height: 1.7;
+    }
+    .note-edit-tags-hint {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+    .note-edit-meta {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+    }
+
+    /* ===== Notes Filter Bar ===== */
+    .notes-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--navy-line);
+    }
+    .notes-filter-bar:empty { display: none; }
+    .filter-tag {
+      appearance: none;
+      border: 1px solid var(--navy-line);
+      background: var(--navy-light);
+      color: var(--text-tertiary);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .filter-tag:hover {
+      border-color: var(--gold-dim);
+      color: var(--text-secondary);
+    }
+    .filter-tag--active {
+      background: var(--gold-glow);
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+
+    /* ===== Export Dropdown ===== */
+    .export-wrap { position: relative; }
+    .export-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      margin-top: 4px;
+      background: var(--navy);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow-lift);
+      z-index: 60;
+      min-width: 120px;
+    }
+    .export-dropdown.active { display: block; }
+    .export-item {
+      display: block;
+      width: 100%;
+      appearance: none;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-family: inherit;
+      padding: 8px 14px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .export-item:hover {
+      background: var(--navy-light);
+      color: var(--text-primary);
+    }
+    .export-item + .export-item {
+      border-top: 1px solid var(--navy-line);
+    }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--navy-light);
+      border: 1px solid var(--gold-dim);
+      color: var(--text-primary);
+      padding: 10px 20px;
+      border-radius: var(--r-card);
+      font-size: 13px;
+      z-index: 200;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      .notes-panel {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        z-index: 50;
+        border-left: none;
+      }
+      .notes-panel--hidden { display: none; }
+      .chat-msg { max-width: 92%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <span class="header-title">談心專區</span>
+  <span class="header-sub">Intimarium</span>
+  <span class="no-trace-badge" id="noTraceBadge">不留痕</span>
+  <div class="header-spacer"></div>
+  <button class="toggle-btn" id="btnNoTrace" title="開啟後對話不會寫入記憶">不留痕模式</button>
+  <button class="toggle-btn" id="btnNotes" title="開啟右側手札面板">手札</button>
+  <button class="toggle-btn toggle-btn--danger" id="btnClear" title="清除本次對話">清除對話</button>
+</header>
+
+<!-- Safety Banner -->
+<div class="safety-banner" id="safetyBanner">
+  這是陪伴型文字空間，不提供醫療、法律或金融專業判斷。
+  你隨時可以<a id="linkNoTrace">開啟不留痕</a>、<a id="linkDeleteAll">刪除紀錄</a>或<a id="linkMemOff">關閉長期記憶</a>。
+  私密內容預設不會同步雲端。
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Chat Panel -->
+  <div class="chat-panel">
+    <div class="chat-scroll" id="chatScroll"></div>
+    <div class="chat-input-bar">
+      <textarea class="chat-input" id="chatInput" rows="1" placeholder="和零韻聊聊吧…" maxlength="4000"></textarea>
+      <button class="chat-send" id="chatSend">送出</button>
+    </div>
+  </div>
+
+  <!-- Notes Panel -->
+  <div class="notes-panel notes-panel--hidden" id="notesPanel">
+    <div class="notes-header">
+      <span class="notes-title">零韻手札</span>
+      <div class="export-wrap">
+        <button class="toggle-btn" id="btnExport" title="匯出手札">匯出</button>
+        <div class="export-dropdown" id="exportDropdown">
+          <button class="export-item" data-fmt="md">Markdown (.md)</button>
+          <button class="export-item" data-fmt="json">JSON (.json)</button>
+        </div>
+      </div>
+      <button class="toggle-btn" id="btnCloseNotes" title="關閉手札">✕</button>
+    </div>
+    <div class="notes-filter-bar" id="filterBar"></div>
+    <div class="notes-scroll" id="notesScroll">
+      <div class="notes-empty" id="notesEmpty">
+        目前還沒有手札。<br>對話中零韻會詢問是否整理成手札。
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Memory Save Dialog -->
+<div class="save-dialog-overlay" id="saveOverlay">
+  <div class="save-dialog">
+    <h3>保存這段對話？</h3>
+    <label class="save-option">
+      <input type="radio" name="saveChoice" value="none" checked>
+      <div>
+        <div class="save-option-label">不保存</div>
+        <div class="save-option-desc">關閉後清除</div>
+      </div>
+    </label>
+    <label class="save-option">
+      <input type="radio" name="saveChoice" value="today">
+      <div>
+        <div class="save-option-label">只保留今日</div>
+        <div class="save-option-desc">存入 session，關閉瀏覽器後消失</div>
+      </div>
+    </label>
+    <label class="save-option">
+      <input type="radio" name="saveChoice" value="local">
+      <div>
+        <div class="save-option-label">存成本機手札</div>
+        <div class="save-option-desc">寫入零韻手札（IndexedDB），可隨時查閱刪除</div>
+      </div>
+    </label>
+    <label class="save-option">
+      <input type="radio" name="saveChoice" value="creative">
+      <div>
+        <div class="save-option-label">轉成創作素材</div>
+        <div class="save-option-desc">存為手札並標記「創作」標籤</div>
+      </div>
+    </label>
+    <label class="save-option">
+      <input type="radio" name="saveChoice" value="notion">
+      <div>
+        <div class="save-option-label">同步到 Notion</div>
+        <div class="save-option-desc">存入本機手札，並排入 Notion 同步佇列</div>
+      </div>
+    </label>
+    <div class="save-dialog-actions">
+      <button class="toggle-btn" id="saveDlgCancel">取消</button>
+      <button class="toggle-btn toggle-btn--active" id="saveDlgConfirm">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Note Edit Modal -->
+<div class="note-edit-overlay" id="editOverlay">
+  <div class="note-edit-dialog">
+    <h3 id="editDialogTitle">編輯手札</h3>
+    <div class="note-edit-field">
+      <label class="note-edit-label">標題</label>
+      <input class="note-edit-input" id="editTitle" type="text" maxlength="100">
+    </div>
+    <div class="note-edit-field">
+      <label class="note-edit-label">內容</label>
+      <textarea class="note-edit-textarea" id="editContent"></textarea>
+    </div>
+    <div class="note-edit-field">
+      <label class="note-edit-label">標籤</label>
+      <input class="note-edit-input" id="editTags" type="text" placeholder="以逗號分隔，例：談心, 創作">
+      <div class="note-edit-tags-hint">以半形或全形逗號分隔</div>
+    </div>
+    <div class="note-edit-meta" id="editMeta"></div>
+    <div class="save-dialog-actions">
+      <button class="toggle-btn" id="editCancel">取消</button>
+      <button class="toggle-btn toggle-btn--active" id="editSave">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script type="module">
+// ===== Imports =====
+// Memory APIs are in main window (App Shell), accessed via parent
+// We communicate with App Shell via PostMessage for AI calls
+
+const MODULE_NAME = 'private-reading-room';
+
+// ===== State =====
+const state = {
+  noTrace: false,
+  notesPanelOpen: false,
+  messages: [],        // { role, text, time }
+  notes: [],           // cached from IndexedDB
+  filterTag: null,     // active tag filter (null = show all)
+  sending: false,
+  typewriterTimer: null,
+};
+
+// ===== DOM refs =====
+const $ = id => document.getElementById(id);
+const chatScroll = $('chatScroll');
+const chatInput = $('chatInput');
+const chatSend = $('chatSend');
+const notesPanel = $('notesPanel');
+const notesScroll = $('notesScroll');
+const noTraceBadge = $('noTraceBadge');
+const btnNoTrace = $('btnNoTrace');
+const btnNotes = $('btnNotes');
+const btnClear = $('btnClear');
+const btnCloseNotes = $('btnCloseNotes');
+const saveOverlay = $('saveOverlay');
+const editOverlay = $('editOverlay');
+const filterBar = $('filterBar');
+const exportDropdown = $('exportDropdown');
+const toastEl = $('toast');
+
+// ===== Toast =====
+let toastTimer = null;
+function showToast(msg, ms = 2200) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+}
+
+// ===== Theme Sync =====
+(function syncMode() {
+  try {
+    const parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
+    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
+  } catch {}
+})();
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-mode-change') {
+    document.documentElement.setAttribute('data-mode', e.data.mode);
+  }
+});
+
+// ===== Chat Rendering =====
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function appendMessage(role, text, animate = true) {
+  const div = document.createElement('div');
+  div.className = `chat-msg chat-msg--${role}`;
+  if (!animate) div.style.animation = 'none';
+
+  const label = document.createElement('div');
+  label.className = 'chat-msg-label';
+  label.textContent = role === 'user' ? '' : '談心與手札整理員 · 月上零韻';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-msg-bubble';
+
+  if (role === 'user') {
+    bubble.textContent = text;
+  } else {
+    bubble.textContent = text;
+  }
+
+  if (role !== 'user') div.appendChild(label);
+  div.appendChild(bubble);
+  chatScroll.appendChild(div);
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+  return bubble;
+}
+
+function showThinking() {
+  const div = document.createElement('div');
+  div.className = 'chat-msg chat-msg--assistant chat-thinking';
+  div.id = 'thinking-msg';
+  const label = document.createElement('div');
+  label.className = 'chat-msg-label';
+  label.textContent = '談心與手札整理員 · 月上零韻';
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-msg-bubble';
+  bubble.textContent = '';
+  div.appendChild(label);
+  div.appendChild(bubble);
+  chatScroll.appendChild(div);
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+function removeThinking() {
+  const el = $('thinking-msg');
+  if (el) el.remove();
+}
+
+// Typewriter effect
+function typewrite(text, bubble, onDone) {
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'chat-cursor';
+  bubble.textContent = '';
+  bubble.appendChild(cursor);
+
+  clearInterval(state.typewriterTimer);
+  state.typewriterTimer = setInterval(() => {
+    if (i < text.length) {
+      cursor.before(document.createTextNode(text[i]));
+      i++;
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+    } else {
+      clearInterval(state.typewriterTimer);
+      state.typewriterTimer = null;
+      cursor.remove();
+      if (onDone) onDone();
+    }
+  }, 28);
+}
+
+// ===== AI Communication =====
+// The Reading Room talks to App Shell's AI infrastructure via PostMessage
+
+let pendingAIResolve = null;
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  const d = e.data;
+
+  // AI response from App Shell
+  if (d?.type === 'akasha-reading-room-response' && pendingAIResolve) {
+    pendingAIResolve(d);
+    pendingAIResolve = null;
+  }
+
+  // Context request from App Shell AI panel
+  if (d?.type === 'akasha-ai-get-context') {
+    const recentText = state.messages.slice(-6).map(m =>
+      `[${m.role === 'user' ? '使用者' : '零韻'}] ${m.text}`
+    ).join('\n');
+    window.parent.postMessage({
+      type: 'akasha-ai-context-response',
+      content: recentText || '(談心專區已開啟，尚無對話)',
+      fileName: '談心專區',
+      fileType: 'chat',
+    }, '*');
+  }
+});
+
+/**
+ * Send a message to the LLM via App Shell.
+ * App Shell handles: settings check, memory injection, LLM call, coin deduction.
+ */
+async function sendToAI(userText) {
+  return new Promise((resolve, reject) => {
+    pendingAIResolve = (data) => {
+      if (data.error) reject(new Error(data.error));
+      else resolve(data.response || '');
+    };
+    window.parent.postMessage({
+      type: 'akasha-reading-room-send',
+      text: userText,
+      module: MODULE_NAME,
+      noTrace: state.noTrace,
+    }, '*');
+
+    // Timeout
+    setTimeout(() => {
+      if (pendingAIResolve) {
+        pendingAIResolve = null;
+        reject(new Error('AI 回應逾時'));
+      }
+    }, 60000);
+  });
+}
+
+// ===== Send Message =====
+async function handleSend() {
+  const text = chatInput.value.trim();
+  if (!text || state.sending) return;
+
+  state.sending = true;
+  chatSend.disabled = true;
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+
+  // Record & render user message
+  state.messages.push({ role: 'user', text, time: Date.now() });
+  appendMessage('user', text);
+
+  // Show thinking
+  showThinking();
+
+  try {
+    const response = await sendToAI(text);
+    removeThinking();
+
+    // Render with typewriter
+    const bubble = appendMessage('assistant', '', true);
+    typewrite(response, bubble, () => {
+      // After response: check if we should suggest saving as note
+      maybeSuggestNote(text, response);
+    });
+
+    state.messages.push({ role: 'assistant', text: response, time: Date.now() });
+  } catch (err) {
+    removeThinking();
+    appendMessage('assistant', '連線時發生了問題：' + err.message);
+    state.messages.push({ role: 'assistant', text: '(error: ' + err.message + ')', time: Date.now() });
+  } finally {
+    state.sending = false;
+    chatSend.disabled = false;
+    chatInput.focus();
+  }
+}
+
+// ===== Auto-resize textarea =====
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+});
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    handleSend();
+  }
+});
+chatSend.addEventListener('click', handleSend);
+
+// ===== No-Trace Mode =====
+function setNoTrace(on) {
+  state.noTrace = on;
+  noTraceBadge.classList.toggle('active', on);
+  btnNoTrace.classList.toggle('toggle-btn--active', on);
+  btnNoTrace.textContent = on ? '不留痕：開' : '不留痕模式';
+  if (on) showToast('不留痕模式已開啟 — 對話不會寫入記憶');
+}
+
+btnNoTrace.addEventListener('click', () => setNoTrace(!state.noTrace));
+$('linkNoTrace').addEventListener('click', () => setNoTrace(true));
+
+// ===== Clear Chat =====
+btnClear.addEventListener('click', () => {
+  if (state.messages.length === 0) return;
+  if (!confirm('確定要清除本次所有對話嗎？')) return;
+  state.messages = [];
+  chatScroll.innerHTML = '';
+  clearInterval(state.typewriterTimer);
+  showGreeting();
+  showToast('對話已清除');
+});
+
+// ===== Notes Panel =====
+function toggleNotes(open) {
+  state.notesPanelOpen = open ?? !state.notesPanelOpen;
+  notesPanel.classList.toggle('notes-panel--hidden', !state.notesPanelOpen);
+  btnNotes.classList.toggle('toggle-btn--active', state.notesPanelOpen);
+  if (state.notesPanelOpen) loadNotes();
+}
+
+btnNotes.addEventListener('click', () => toggleNotes());
+btnCloseNotes.addEventListener('click', () => toggleNotes(false));
+
+// ===== Notes CRUD (via parent's approved-memory) =====
+
+async function loadNotes() {
+  try {
+    // Use parent window's memory API
+    const memories = await callParentMemory('getAll', MODULE_NAME);
+    state.notes = memories || [];
+    renderFilterBar();
+    renderNotes();
+  } catch (err) {
+    console.warn('Failed to load notes:', err);
+    state.notes = [];
+    renderFilterBar();
+    renderNotes();
+  }
+}
+
+function renderFilterBar() {
+  const allTags = new Set();
+  for (const n of state.notes) {
+    for (const t of (n.tags || [])) allTags.add(t);
+  }
+  if (allTags.size === 0) { filterBar.innerHTML = ''; return; }
+
+  const sorted = [...allTags].sort();
+  filterBar.innerHTML =
+    `<button class="filter-tag ${state.filterTag === null ? 'filter-tag--active' : ''}" data-tag="">全部</button>` +
+    sorted.map(t =>
+      `<button class="filter-tag ${state.filterTag === t ? 'filter-tag--active' : ''}" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`
+    ).join('');
+
+  filterBar.onclick = (e) => {
+    const btn = e.target.closest('.filter-tag');
+    if (!btn) return;
+    state.filterTag = btn.dataset.tag || null;
+    renderFilterBar();
+    renderNotes();
+  };
+}
+
+function renderNotes() {
+  const container = notesScroll;
+  const empty = $('notesEmpty');
+
+  const sorted = state.notes
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const filtered = state.filterTag
+    ? sorted.filter(n => (n.tags || []).includes(state.filterTag))
+    : sorted;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    const msg = state.notes.length === 0
+      ? '目前還沒有手札。<br>對話中零韻會詢問是否整理成手札。'
+      : '沒有符合「#' + escapeHtml(state.filterTag) + '」的手札。';
+    empty.innerHTML = msg;
+    container.appendChild(empty);
+    empty.style.display = '';
+    return;
+  }
+
+  empty.style.display = 'none';
+  container.innerHTML = filtered.map(n => `
+    <div class="note-card" data-id="${escapeHtml(n.id)}">
+      <div class="note-card-title">${escapeHtml(n.title || '(無標題)')}</div>
+      <div class="note-card-body">${escapeHtml(truncate(n.content, 200))}</div>
+      <div class="note-card-meta">
+        <span>${formatDate(n.createdAt)}</span>
+        ${(n.tags || []).map(t => '<span>#' + escapeHtml(t) + '</span>').join('')}
+      </div>
+      <div class="note-card-actions">
+        <button class="note-btn" onclick="window._viewNote('${escapeHtml(n.id)}')">編輯</button>
+        <button class="note-btn note-btn--danger" onclick="window._deleteNote('${escapeHtml(n.id)}')">刪除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function truncate(s, n) {
+  return (s || '').length > n ? s.slice(0, n) + '…' : (s || '');
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// Parent memory bridge — communicate via PostMessage
+let memoryReqId = 0;
+const memoryCallbacks = new Map();
+
+function callParentMemory(action, ...args) {
+  return new Promise((resolve, reject) => {
+    const id = ++memoryReqId;
+    memoryCallbacks.set(id, { resolve, reject });
+    window.parent.postMessage({
+      type: 'akasha-reading-room-memory',
+      action,
+      args,
+      reqId: id,
+    }, '*');
+    setTimeout(() => {
+      if (memoryCallbacks.has(id)) {
+        memoryCallbacks.delete(id);
+        reject(new Error('Memory call timeout'));
+      }
+    }, 5000);
+  });
+}
+
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-reading-room-memory-response') {
+    const cb = memoryCallbacks.get(e.data.reqId);
+    if (cb) {
+      memoryCallbacks.delete(e.data.reqId);
+      if (e.data.error) cb.reject(new Error(e.data.error));
+      else cb.resolve(e.data.result);
+    }
+  }
+});
+
+// Global handlers for inline onclick
+let editingNoteId = null;
+
+window._viewNote = async (id) => {
+  const note = state.notes.find(n => n.id === id);
+  if (!note) return;
+  editingNoteId = id;
+  $('editTitle').value = note.title || '';
+  $('editContent').value = note.content || '';
+  $('editTags').value = (note.tags || []).join(', ');
+  $('editMeta').textContent = '建立：' + formatDate(note.createdAt) +
+    (note.updatedAt && note.updatedAt !== note.createdAt ? '　更新：' + formatDate(note.updatedAt) : '');
+  editOverlay.classList.add('active');
+};
+
+$('editCancel').addEventListener('click', () => {
+  editOverlay.classList.remove('active');
+  editingNoteId = null;
+});
+
+$('editSave').addEventListener('click', async () => {
+  const note = state.notes.find(n => n.id === editingNoteId);
+  if (!note) return;
+  const title = $('editTitle').value.trim();
+  const content = $('editContent').value.trim();
+  const tagsRaw = $('editTags').value;
+  const tags = tagsRaw
+    .split(/[,，]/)
+    .map(t => t.trim())
+    .filter(Boolean);
+
+  if (!content) { showToast('內容不能為空'); return; }
+
+  try {
+    await callParentMemory('save', {
+      ...note,
+      title: title || autoTitle(content),
+      content,
+      tags,
+    });
+    editOverlay.classList.remove('active');
+    editingNoteId = null;
+    showToast('手札已更新');
+    await loadNotes();
+  } catch (err) {
+    showToast('儲存失敗：' + err.message);
+  }
+});
+
+window._deleteNote = async (id) => {
+  if (!confirm('確定要刪除這筆手札嗎？')) return;
+  try {
+    await callParentMemory('delete', id);
+    showToast('手札已刪除');
+    await loadNotes();
+  } catch (err) {
+    showToast('刪除失敗：' + err.message);
+  }
+};
+
+// ===== Memory Save Dialog =====
+let pendingSaveContent = '';
+
+function showSaveDialog(content) {
+  pendingSaveContent = content;
+  saveOverlay.classList.add('active');
+}
+
+$('saveDlgCancel').addEventListener('click', () => {
+  saveOverlay.classList.remove('active');
+  pendingSaveContent = '';
+});
+
+$('saveDlgConfirm').addEventListener('click', async () => {
+  const choice = document.querySelector('input[name="saveChoice"]:checked')?.value;
+  saveOverlay.classList.remove('active');
+
+  if (choice === 'none' || !pendingSaveContent) {
+    pendingSaveContent = '';
+    return;
+  }
+
+  try {
+    if (choice === 'today') {
+      // Session-only: stored in sessionStorage via parent
+      await callParentMemory('saveSession', {
+        module: MODULE_NAME,
+        title: autoTitle(pendingSaveContent),
+        content: pendingSaveContent,
+        tags: ['談心'],
+      });
+      showToast('已保留至本次 session');
+    } else if (choice === 'local' || choice === 'creative' || choice === 'notion') {
+      const tags = ['談心'];
+      if (choice === 'creative') tags.push('創作');
+      const record = {
+        module: MODULE_NAME,
+        title: autoTitle(pendingSaveContent),
+        content: pendingSaveContent,
+        tags,
+        source: 'reading-room',
+      };
+      const saved = await callParentMemory('save', record);
+      if (choice === 'notion') {
+        try {
+          await callParentMemory('enqueueSync', saved || record);
+          showToast('已存入手札並排入 Notion 同步');
+        } catch {
+          showToast('已存入手札，但 Notion 排隊失敗');
+        }
+      } else {
+        showToast(choice === 'creative' ? '已存為創作素材' : '已存入零韻手札');
+      }
+      if (state.notesPanelOpen) await loadNotes();
+    }
+  } catch (err) {
+    showToast('保存失敗：' + err.message);
+  }
+
+  pendingSaveContent = '';
+});
+
+// Auto-generate title from content
+function autoTitle(text) {
+  const first = text.split('\n').find(l => l.trim()) || '';
+  return first.slice(0, 30) + (first.length > 30 ? '…' : '') || '談心記錄';
+}
+
+// ===== Suggest Note =====
+// After every N assistant messages, or if the response is substantial
+let msgCountSinceSave = 0;
+
+function maybeSuggestNote(userText, response) {
+  if (state.noTrace) return; // never suggest in no-trace mode
+  msgCountSinceSave++;
+
+  // Suggest after every 5 exchanges or if response is long
+  const isSubstantial = response.length > 300;
+  if (msgCountSinceSave >= 5 || isSubstantial) {
+    // Build summary of recent conversation
+    const recentPairs = state.messages.slice(-10);
+    const summary = recentPairs.map(m =>
+      `[${m.role === 'user' ? '使用者' : '零韻'}] ${m.text}`
+    ).join('\n\n');
+
+    setTimeout(() => {
+      const suggest = appendMessage('assistant', '', true);
+      typewrite('是否要將這段對話整理成零韻手札？', suggest, () => {
+        // Add save/skip buttons
+        const actions = document.createElement('div');
+        actions.style.cssText = 'margin-top:8px;display:flex;gap:6px;';
+        actions.innerHTML = `
+          <button class="note-btn" style="color:var(--gold);border-color:var(--gold-dim);" id="suggestSave">整理成手札</button>
+          <button class="note-btn" id="suggestSkip">跳過</button>
+        `;
+        suggest.parentElement.appendChild(actions);
+
+        $('suggestSave')?.addEventListener('click', () => {
+          actions.remove();
+          showSaveDialog(summary);
+          msgCountSinceSave = 0;
+        });
+        $('suggestSkip')?.addEventListener('click', () => {
+          actions.remove();
+          showToast('已跳過');
+          msgCountSinceSave = 0;
+        });
+      });
+    }, 600);
+  }
+}
+
+// ===== Safety links =====
+$('linkDeleteAll').addEventListener('click', () => {
+  if (confirm('確定要刪除談心專區的所有手札嗎？此操作無法復原。')) {
+    callParentMemory('deleteAll', MODULE_NAME)
+      .then(() => {
+        showToast('所有談心手札已刪除');
+        state.notes = [];
+        renderNotes();
+      })
+      .catch(err => showToast('刪除失敗：' + err.message));
+  }
+});
+
+$('linkMemOff').addEventListener('click', () => {
+  setNoTrace(true);
+  showToast('已開啟不留痕模式，長期記憶暫停寫入');
+});
+
+// ===== Export =====
+$('btnExport').addEventListener('click', (e) => {
+  e.stopPropagation();
+  exportDropdown.classList.toggle('active');
+});
+document.addEventListener('click', () => exportDropdown.classList.remove('active'));
+
+exportDropdown.addEventListener('click', (e) => {
+  const btn = e.target.closest('.export-item');
+  if (!btn) return;
+  exportDropdown.classList.remove('active');
+  const fmt = btn.dataset.fmt;
+  if (state.notes.length === 0) { showToast('沒有可匯出的手札'); return; }
+
+  const sorted = state.notes
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const today = new Date().toISOString().slice(0, 10);
+  let blob, filename;
+
+  if (fmt === 'md') {
+    const md = sorted.map(n => {
+      const tags = (n.tags || []).map(t => '#' + t).join(' ');
+      const date = n.createdAt ? new Date(n.createdAt).toLocaleString('zh-TW') : '';
+      return `## ${n.title || '(無標題)'}\n\n${n.content || ''}\n\n> ${tags}${tags && date ? ' | ' : ''}${date}`;
+    }).join('\n\n---\n\n');
+    blob = new Blob(['# 零韻手札\n\n' + md], { type: 'text/markdown;charset=utf-8' });
+    filename = `零韻手札_${today}.md`;
+  } else {
+    blob = new Blob([JSON.stringify(sorted, null, 2)], { type: 'application/json;charset=utf-8' });
+    filename = `零韻手札_${today}.json`;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('已匯出 ' + filename);
+});
+
+// ===== Greeting =====
+function showGreeting() {
+  appendMessage('assistant', '', false);
+  const bubble = chatScroll.querySelector('.chat-msg:last-child .chat-msg-bubble');
+  if (bubble) {
+    typewrite('歡迎來到談心專區。我是零韻，你的談心與手札整理員。\n這裡是你的私人閱覽室 — 可以聊聊近況、整理思緒，或讓我幫你整理手札。', bubble);
+  }
+}
+
+// ===== Init =====
+showGreeting();
+chatInput.focus();
+
+</script>
+</body>
+</html>
