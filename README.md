@@ -16,17 +16,14 @@
 └───────────────┴─────────────────────────┘
 ```
 
-## 主要模組
+## 五大模組
 
 | 模組 | 別名 | 功能 | 支援格式 |
 |------|------|------|----------|
 | Code & Data Reader | Manuscripta | 多格式閱讀 / 編輯 / 搜尋 / 匯出摘要 / Sheets 匯出 / DOCX 匯入匯出 / 劇本偵測匯出 / Python 風險掃描 / TsukiSynth Score 儀表板 | .md .txt .py .json .score.json .docx .doc .blocks.jsonl |
 | PDF 閱讀器 | Lectorium | 翻頁閱讀 / 書籤 / 自訂切割 / 截圖框選 / AI 圖書館員（RAG 伴讀） | .pdf |
 | Table Forge | Tabularium | Canvas 表格編輯 / 公式引擎 / 多格式互通匯入匯出 | .csv .tsv（可從 Code & Data 接收 MD / JSON） |
-| **Script Editor** | **Scriptorium** | **4-TAB：速寫 / 編輯 / 搜尋 / 閱讀 · Voice TTS · BGM 4 preset · TAG 5 類 · AVG 立繪面板 · 角色關係圖 · 格式檢查 · 初稿生成** | **.txt .md .blocks.jsonl .ks .json** |
 | 書籍排版器 | Bibliopegia | 視覺化書頁排版 / 封面設計 / 匯出 | .pdf .html |
-| 談心專區 | Reading Room | 聊天式 AI 對話 / 零韻手札（記憶 CRUD）/ Notion 同步 | — |
-| 每日館報 | Daily Report | 文字輸入 → AI 整理結構化日報 / 朗讀 + BGM | — |
 | AI 設定 | Aetherium | API Key 管理（BYOK）/ 模型選擇 / 月幣系統 | — |
 
 ### Code & Data Reader 詳細功能
@@ -49,29 +46,6 @@ modules/table-forge/
   table-ui.js       # DOM 渲染 + 滑鼠選取 / 拖曳 / 雙擊編輯
   exporters.js      # CSV 匯出（RFC 4180 compliant）
 ```
-
-### Script Editor 架構（Phase 17 4-TAB 整合）
-
-```
-modules/script-editor/
-  index.html         # 4-TAB shell + CSS + tab 切換 + PostMessage
-  data-model.js      # AppState + Bus + 5 解析器 + validate + IndexedDB 角色 CRUD + ShortcutManager
-  write-tab.js       # 速寫 TAB（Voice TTS / BGM preset / 角色 slot badge + 右鍵指派）
-  editor-tab.js      # 編輯 TAB（6 種 BlockCard / TAG inline adder / AVG 面板 / JSON preview）
-  search-tab.js      # 搜尋 TAB（6 篩選器 / 結果卡片 / MD/CSV 匯出 / 跳轉 Editor）
-  reader-tab.js      # 閱讀 TAB（連續排版 / 場景 TOC / IntersectionObserver / Print PDF）
-  overlays.js        # 5 overlay：Table Forge / 角色關係圖 / 音效庫 / 格式檢查 / 初稿生成
-```
-
-**4-TAB**：
-- **速寫 Write**：textarea 即時解析 → blocks · Alt+1~9 快捷鍵插入（場景 / 旁白 / 角色）· Voice TTS 5 個 sub-panel
-- **編輯 Editor**：區塊卡片 CRUD · 6 種 type · TAG 連續新增 · AVG sprite/position/BGM/SFX · JSON 預覽
-- **搜尋 Search**：6 篩選器（關鍵字 / 角色 / 劇情 TAG / 情緒 TAG / 類型 / 排序）· 點結果跳 Editor + 金色光圈
-- **閱讀 Reader**：場景分組 · TOC IntersectionObserver · choice 互動跳轉 · `window.print` PDF
-
-**5 Overlay**（header 工具 dropdown）：Table Forge / 角色關係圖 / 音效庫 / 格式檢查（15+ 規則）/ 初稿生成（5 模板）
-
-**支援 import 格式**：Plain Script / blocks.jsonl / AVG JSON / TyranoScript .ks / Markdown
 
 ### PDF 閱讀器功能
 
@@ -171,8 +145,7 @@ npm test
 | Enhancement Phase 7–13（Translation / Script Editor / Memory / Notion / Security / Document Bridge） | ✅ |
 | Enhancement Phase 16（Export Core + 部署：build script / deploy / Worker 後端） | ✅ |
 | Enhancement Phase 14（Voice / BGM Prototype — Rein-Voice + TsukiSynth + 館報朗讀 + 伴讀 BGM） | ✅ |
-| Enhancement Phase 15（Private Reading Room + 每日館報） | ✅ |
-| Phase 17：Script Editor 4-TAB 整合（Archive 合併 → Vanilla JS 4-TAB） | ✅ |
+| Enhancement Phase 15（Private Reading Room + 每日館報） | ⬜ |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
