@@ -1,5 +1,49 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-5 Reader TAB 完成
+
+### 產出
+
+**`modules/script-editor/reader-tab.js`**（260 行）
+
+- `initReaderTab(panelEl)` — 訂閱 state 自動更新
+- **Scene 分組** — 遍歷 blocks，遇到 `scene` block 或 `#scene` command 即建新組
+- **TOC 側欄**（200px 寬，漸層背景）：
+  - 場次列表 + 副標 + 場景描述
+  - 點 TOC 項目 → `scrollIntoView` smooth
+  - IntersectionObserver（root: bodyEl, rootMargin: -20% / -60%）即時更新 active 項目
+  - 底部「⇣ Print / PDF」按鈕
+- **連續閱讀區**：
+  - 標題區（filename + meta）
+  - 各 scene section：場次標題 + 副標 + scene divider hr
+  - **dialogue**：speaker dot + serif italic 原文（左邊金色框線）+ 中譯 + TAG 膠囊
+  - **narration**：細左框 + 灰色字 + 大 letter-spacing
+  - **note**：括號斜體灰
+  - **choice**：藍色框 + 選項列表 + click target → scroll to target scene
+  - **command**：右對齊 mono 灰
+  - 首次出場角色顯示 `⊕ 首次出場` 徽章
+  - 結尾「— Fin —」
+- **PDF 列印**（window.print + `@media print`）：
+  - 隱藏 header / tab-bar / status-bar / TOC
+  - 白底黑字、20mm padding、A4 友善
+
+### 整合改動
+
+- `index.html`
+  - import `initReaderTab`
+  - 替換 Reader TAB placeholder 為 `<div class="reader-layout" id="reader-layout">`
+  - +160 行 CSS（TOC、scene-header、reader-dialogue、reader-choice、@media print）
+  - 初始化呼叫：`initReaderTab(layoutEl)`
+
+- `sw.js` v7→v8；快取加 `reader-tab.js`
+- `scripts/build.js`：critical path += `reader-tab.js`
+
+### 體驗
+
+切到 Reader TAB → 看到 TOC 左欄 + 右側連續閱讀區。捲動時 TOC 的金色光點自動跟隨當前場景。對白以左框 + 斜體原文 + 中譯 + TAG 顯示。choice block 點選項可跳到 target scene。按 TOC 下方「Print / PDF」呼叫 window.print → 白底黑字印刷預覽。
+
+---
+
 ## 2026-05-18：Phase 17-4 Search TAB 完成
 
 ### 產出

@@ -238,6 +238,7 @@ const critical = [
   join('modules', 'script-editor', 'write-tab.js'),
   join('modules', 'script-editor', 'editor-tab.js'),
   join('modules', 'script-editor', 'search-tab.js'),
+  join('modules', 'script-editor', 'reader-tab.js'),
   join('modules', 'book-editor', 'index.html'),
   join('modules', 'reading-room', 'index.html'),
   join('modules', 'daily-report', 'index.html'),

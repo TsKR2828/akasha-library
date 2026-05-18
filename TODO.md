@@ -384,12 +384,12 @@
 - [x] Export Bar：Markdown / CSV 匯出
 - [x] 點擊結果 → 跳轉 Editor TAB 定位 + 滾入視口 + 金色光圈高亮
 
-### 17-5 Reader TAB（reader-tab.js）
-- [ ] 連續排版（Scene 分組）
-- [ ] 場景 TOC + IntersectionObserver 捲動追蹤
-- [ ] TAG hover 顯示 + choice 互動跳轉
-- [ ] 角色筆記顯示（首次出場處）
-- [ ] PDF 匯出（window.print + 版權控管）
+### 17-5 Reader TAB（reader-tab.js）✅
+- [x] 連續排版（Scene 分組，含 `#scene` command 自動分組）
+- [x] 場景 TOC + IntersectionObserver 捲動追蹤
+- [x] TAG hover 顯示 + choice 互動跳轉（點選項 → 找 target block 對應 scene → smooth scroll）
+- [x] 角色筆記顯示（首次出場處 — 顯示「⊕ 首次出場」徽章；筆記內容待 17-7 加 notes-overlay）
+- [x] PDF 匯出（window.print + @media print 印刷樣式，黑字白底）
 
 ### 17-6 Overlays（overlays.js）
 - [ ] Table Forge（全畫面表格 + 行內編輯 + 寫回 blocks）
