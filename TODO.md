@@ -391,12 +391,12 @@
 - [x] 角色筆記顯示（首次出場處 — 顯示「⊕ 首次出場」徽章；筆記內容待 17-7 加 notes-overlay）
 - [x] PDF 匯出（window.print + @media print 印刷樣式，黑字白底）
 
-### 17-6 Overlays（overlays.js）
-- [ ] Table Forge（全畫面表格 + 行內編輯 + 寫回 blocks）
-- [ ] 角色關係圖（力導向 SVG + 拖曳 + 聚焦）
-- [ ] 音效庫面板（library.json + mood/world/type 篩選 + ZeroRhyme NL 搜尋）
-- [ ] 劇本格式檢查（ZeroRhyme.checkScript 15+ 規則 + 點擊導航）
-- [ ] 初稿生成（8 模板 + 角色/情緒設定 + 預覽/插入）
+### 17-6 Overlays（overlays.js）✅
+- [x] Table Forge（全畫面表格 + 行內編輯 + 寫回 blocks + CSV 匯出）
+- [x] 角色關係圖（SVG 力導向圓形佈局 + 場次共現邊權 + 點節點看詳情 + 重排）
+- [x] 音效庫面板（4 BGM preset + SFX/AMB/VOX 範例 + mood/type 篩選 + 試聽 + 指派到 focused block）
+- [x] 劇本格式檢查（15+ 規則：no-speaker / empty-dialogue / unknown-speaker / no-act / no-options / empty-option / missing-zh / missing-original / no-tags / short-text / consecutive-speaker / no-next / broken-link / sprite-no-pos / empty-scene + 三級嚴重度 + 點擊跳轉 + MD 報告匯出）
+- [x] 初稿生成（5 模板：開場 / 對話交換 / 場景轉換 / 分歧選項 / 結局 + 幕場/標題/情緒選項 + 即時預覽 + 一鍵插入）
 
 ### 17-7 整合收尾
 - [ ] 跨 TAB 同步驗證（Write ↔ Editor ↔ Search ↔ Reader）

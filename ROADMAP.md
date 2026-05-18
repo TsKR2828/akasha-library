@@ -211,7 +211,7 @@
 | 17-3 | Editor TAB — 區塊卡片（6 種 block type）+ AVG 面板 + TAG 編輯 + 角色 CRUD + 筆記 | ✅ |
 | 17-4 | Search TAB — 6 篩選器 + 結果卡片 + MD/CSV 匯出 + 跳轉 Editor | ✅ |
 | 17-5 | Reader TAB — 連續排版 + 場景 TOC + TAG hover + choice 互動 + PDF 匯出 | ✅ |
-| 17-6 | Overlays — Table Forge / 角色關係圖 / 音效庫 / 劇本檢查 / 初稿生成 | ⬜ |
+| 17-6 | Overlays — Table Forge / 角色關係圖 / 音效庫 / 劇本檢查 / 初稿生成 | ✅ |
 | 17-7 | 整合收尾 — 跨 TAB 同步 + 多作品支援 + 匯入統一 + README/ROADMAP 更新 | ⬜ |
 
 ---

@@ -1,5 +1,69 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-6 Overlays 完成
+
+### 產出
+
+**`modules/script-editor/overlays.js`**（750 行）
+
+- `initOverlays(rootEl)` + 統一 overlay shell（backdrop + close + Esc 鍵）
+- 5 個 overlay：
+
+**1. Table Forge** — 對白全表格編輯
+  - 角色 + 文字搜尋 filter
+  - 行內編輯：speaker select / original / zh textarea
+  - 同步 AppState + 自動存 localStorage draft
+  - 「↗」按鈕跳到 Editor TAB
+  - CSV 匯出（id / speaker / original / zh / tags）
+
+**2. 角色關係圖** — SVG 力導向
+  - 圓形初始排列 + 「🎲 重新排列」隨機重置
+  - 邊權重來自場次共現（同 scene 內出現過的角色對 → 連線粗細 = 共現場次）
+  - 節點 = 角色色點 + 名字首字 + 全名 label
+  - 點節點 → 下方詳情卡（對白數、關係數、夥伴列表）
+
+**3. 音效庫面板** — BGM presets + SFX/AMB/VOX
+  - 4 BGM presets（preset cards）+ 5 個範例 SFX/AMB/VOX 條目
+  - 篩選：類型（BGM/SFX/AMB/VOX）+ 情緒（quiet_archive/gentle/.../spiritual）+ 關鍵字
+  - 「▶ 試聽」呼叫 `bgm.playPreset()`
+  - 「📌 指派」更新 focused block 的 `avg.bgm` 或 `avg.sfx`
+
+**4. 劇本格式檢查** — 15+ 規則檢查
+  - 結構錯誤：no-speaker / empty-dialogue / unknown-speaker / no-act / no-options / empty-option
+  - 品質警告：missing-zh / missing-original / no-tags / short-text / no-next / broken-link
+  - 提示：consecutive-speaker / sprite-no-pos / empty-scene
+  - 三級嚴重度統計卡 + 篩選 checkbox
+  - 點「→ Editor」跳轉 + 滾入視口
+  - MD 報告匯出
+
+**5. 初稿生成** — 5 模板
+  - 開場 / 對話交換 / 場景轉換 / 分歧選項 / 結局
+  - 幕/場/標題/情緒選項即時更新預覽
+  - dialogue 顯示角色色彩、narration 斜體、scene 金色置中、choice 藍色
+  - 「↓ 插入 blocks」append 到 AppState.blocks + 自動 generateId
+
+### 整合改動
+
+- `index.html`
+  - 在 header 「匯出」前加「⚙ 工具」dropdown：5 個 overlay 入口
+  - import `initOverlays(document.body)`
+  - Tools dropdown click handler（mutex 與 export menu）
+  - +260 行 overlay-related CSS（overlay-backdrop、tf-table、rg-svg、sl-card、fc-issue、dg-blk 等）
+
+- `sw.js` v8→v9；快取加 `overlays.js`
+- `scripts/build.js`：critical path += `overlays.js`
+
+### 體驗
+
+按 header 「⚙ 工具」→ dropdown 顯示 5 個 overlay。試各個：
+- Table Forge：所有對白排成表，直接編輯 cell 自動寫回
+- 關係圖：看角色連結強度
+- 音效庫：選一個 BGM preset 試聽，或在 Editor focus 一個 dialogue 後指派 BGM/SFX
+- 格式檢查：跑全劇本檢查，看到 X 錯誤/Y 警告/Z 提示，點問題項跳到 Editor
+- 初稿生成：選「對話交換」→ 看到 4 句往返預覽 → 插入
+
+---
+
 ## 2026-05-18：Phase 17-5 Reader TAB 完成
 
 ### 產出
