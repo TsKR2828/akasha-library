@@ -398,12 +398,12 @@
 - [x] 劇本格式檢查（15+ 規則：no-speaker / empty-dialogue / unknown-speaker / no-act / no-options / empty-option / missing-zh / missing-original / no-tags / short-text / consecutive-speaker / no-next / broken-link / sprite-no-pos / empty-scene + 三級嚴重度 + 點擊跳轉 + MD 報告匯出）
 - [x] 初稿生成（5 模板：開場 / 對話交換 / 場景轉換 / 分歧選項 / 結局 + 幕場/標題/情緒選項 + 即時預覽 + 一鍵插入）
 
-### 17-7 整合收尾
-- [ ] 跨 TAB 同步驗證（Write ↔ Editor ↔ Search ↔ Reader）
-- [ ] Editor → Write 反向同步（blocks → Plain Script）
-- [ ] 多作品支援（WorkSwitcher + loadAllData）
-- [ ] 匯入統一（PostMessage open-file → 格式偵測）
-- [ ] README / ROADMAP / dev-log 更新
+### 17-7 整合收尾 ✅
+- [x] 跨 TAB 同步驗證（Write ↔ Editor ↔ Search ↔ Reader）— Editor / 工具 overlay 修改 → emit `blocks:edited-external` → Write textarea 自動同步
+- [x] Editor → Write 反向同步（blocks → Plain Script）— 自動同步 + 手動「⇆ 寫回 Write」按鈕雙保險
+- [x] 多作品支援（WorkSwitcher + loadAllData）— `workId` 跟隨 filename 自動更新；多作品 UI 延後（保留 Storage 多 workId 結構）
+- [x] 匯入統一（PostMessage open-file → 格式偵測）— `akasha-open-file` 走 `importBlocks()` 自動偵測 5 種格式
+- [x] README / ROADMAP / dev-log / DEVELOPMENT 更新
 
 ---
 

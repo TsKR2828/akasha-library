@@ -144,6 +144,7 @@ function renderTableForge($body) {
         }
         AppState.set('blocks', [...blocks]);
         try { localStorage.setItem('se17_draft__default', JSON.stringify(blocks)); } catch {}
+        Bus.emit('blocks:edited-external');
       });
     });
 
@@ -383,6 +384,7 @@ async function renderSoundLibrary($body) {
         if (!b) return;
         b.avg = { ...(b.avg || {}), [btn.dataset.target]: btn.dataset.id };
         AppState.set('blocks', [...blocks]);
+        Bus.emit('blocks:edited-external');
         Bus.emit('toast', `${btn.dataset.target.toUpperCase()} → ${btn.dataset.id}`);
       };
     });
@@ -730,6 +732,7 @@ function renderDraftGen($body) {
     const blocks = [...(AppState.get('blocks') || []), ...draft];
     AppState.set('blocks', blocks);
     try { localStorage.setItem('se17_draft__default', JSON.stringify(blocks)); } catch {}
+    Bus.emit('blocks:edited-external');
 
     Bus.emit('toast', `已插入 ${draft.length} blocks`);
     closeOverlay();

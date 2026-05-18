@@ -1901,22 +1901,28 @@ window.addEventListener('message', async e => {
   const d = e.data;
   if (!d || !d.type) return;
 
-  // Receive file from App Shell
+  // Receive file from App Shell — unified import dispatch
   if (d.type === 'akasha-open-file') {
-    AppState.set('filename', d.filename || 'untitled.txt');
-    $filenameDisp.textContent = AppState.get('filename');
+    const filename = d.filename || 'untitled.txt';
+    AppState.set('filename', filename);
+    AppState.set('workId', filename.replace(/\.\w+$/, '') || '_default');
+    $filenameDisp.textContent = filename;
 
     const text = d.content || '';
-    const imported = importBlocks(text, AppState.get('filename'));
+    const imported = importBlocks(text, filename);
     $formatBadge.textContent = imported.via === 'Plain Script'
       ? 'Plain Script'
       : `Plain Script (← ${imported.via})`;
 
+    // Set blocks + sync textarea
+    AppState.set('blocks', imported.blocks);
     $editor.value = blocksToPlainScript(imported.blocks);
     _lastSnapshot = $editor.value;
     AppState.get('undoStack').length = 0;
     AppState.get('redoStack').length = 0;
     onContentChange();
+
+    toast(`已開啟 ${filename}（${imported.blocks.length} blocks via ${imported.via}）`);
   }
 
   // AI context request
@@ -1961,9 +1967,21 @@ async function init() {
   // Render character list
   renderCharList();
 
-  // Restore draft from localStorage
-  const savedText = Storage.loadPlainText();
-  if (savedText) {
+  // Restore draft from localStorage (prefer blocks draft over plain text)
+  const savedBlocks = Storage.loadDraft();
+  const savedText   = Storage.loadPlainText();
+
+  if (savedBlocks && savedBlocks.length) {
+    AppState.set('blocks', savedBlocks);
+    $editor.value = blocksToPlainScript(savedBlocks);
+    _lastSnapshot = $editor.value;
+    AppState.set('content', $editor.value);
+    const lines = $editor.value.split('\n');
+    $lineCount.textContent  = lines.length + ' 行';
+    $blockCount.textContent = savedBlocks.length + ' blocks';
+    $charCount.textContent  = $editor.value.length + ' 字';
+    renderPreview();
+  } else if (savedText) {
     $editor.value = savedText;
     _lastSnapshot = savedText;
     onContentChange();
@@ -2006,6 +2024,32 @@ async function init() {
 
   // Toast bridge from sub-modules
   Bus.on('toast', msg => toast(msg));
+
+  // Cross-TAB sync: when blocks edited from Editor/Overlays, update Write textarea
+  let _externalSyncInProgress = false;
+  Bus.on('blocks:edited-external', () => {
+    if (_externalSyncInProgress) return;
+    const blocks = AppState.get('blocks') || [];
+    const text = blocksToPlainScript(blocks);
+    if ($editor.value !== text) {
+      _externalSyncInProgress = true;
+      $editor.value = text;
+      _lastSnapshot = text;
+      AppState.set('content', text);
+      Storage.savePlainText(text);
+      // Update line/char counts without re-parsing (avoid recursive set('blocks'))
+      const lines = text.split('\n');
+      $lineCount.textContent  = lines.length + ' 行';
+      $blockCount.textContent = blocks.length + ' blocks';
+      $charCount.textContent  = text.length + ' 字';
+      _externalSyncInProgress = false;
+    }
+  });
+
+  // Render TAB-specific data when switching
+  Bus.on('tab:switched', tab => {
+    if (tab === 'write') renderCharList();
+  });
 }
 
 init();

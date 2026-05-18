@@ -641,4 +641,6 @@ function writeBackToPlainScript() {
 function saveDraft() {
   const blocks = AppState.get('blocks') || [];
   try { localStorage.setItem('se17_draft__default', JSON.stringify(blocks)); } catch {}
+  // Notify Write TAB to sync textarea
+  Bus.emit('blocks:edited-external');
 }

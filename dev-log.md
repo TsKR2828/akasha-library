@@ -1,5 +1,53 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-7 整合收尾完成 — Phase 17 全部完工 🎉
+
+### 整合改動
+
+**跨 TAB 同步**：
+- 新增 Bus 事件 `blocks:edited-external` — Editor / Table Forge / Sound Library / Draft Generator 修改 blocks 後 emit
+- Write TAB 接收 → 自動 `blocksToPlainScript()` 寫回 textarea + 更新 line/block/char 統計（無遞迴 setBlocks）
+- 「⇆ 寫回 Write」按鈕保留作為手動觸發
+
+**匯入統一**：
+- `akasha-open-file` PostMessage handler：
+  - 設定 `workId = filename` 去副檔名 → 為將來多作品支援保留 keying
+  - `importBlocks()` 自動偵測 .ks / .jsonl / .json / .md / 其他 → Plain Script
+  - blocks 直接 set 到 AppState（不再依賴 textarea 解析回流）
+
+**啟動時 draft 還原**：
+- 優先 `Storage.loadDraft()`（blocks JSON）→ blocksToPlainScript → textarea
+- 次選 `Storage.loadPlainText()`（純文字）
+- 無遞迴觸發 onContentChange 避免重新解析
+
+**多作品支援基礎**：
+- `Storage` 全部 key 都帶 `workId`（`draft_${workId}` / `plain_${workId}` / `notes_${workId}`）
+- UI 層 WorkSwitcher 留待後續（資料層已準備好）
+
+### 文件更新
+
+- `README.md` — 模組表更新（加 Script Editor / Reading Room / Daily Report）、新增 Script Editor 4-TAB 架構章節、Phase 17 標記完成
+- `ROADMAP.md` — 17-1~7 全 ✅、Phase 1–17 全部完成宣告、剩餘 OAuth+APK
+- `DEVELOPMENT.md` — Phase 17 進度條 100%、6 個 Script Editor 檔案列表
+- `TODO.md` — 17-7 全 ✅
+
+### 最終 Phase 17 統計
+
+| 檔案 | Phase | 行數 |
+|------|:-----:|-----:|
+| `data-model.js`  | 17-1 | 596 |
+| `index.html`     | 17-1~6 | 2058 |
+| `write-tab.js`   | 17-2 | 524 |
+| `editor-tab.js`  | 17-3 | 646 |
+| `search-tab.js`  | 17-4 | 343 |
+| `reader-tab.js`  | 17-5 | 293 |
+| `overlays.js`    | 17-6 | 744 |
+| **總計**         | **17** | **5204** |
+
+整合工作：取代 Akasha v8 內嵌版（1661 行）+ Archive React 版（3618 行）→ 統一 Vanilla JS 4-TAB Module（5204 行），去除 React 依賴，與其他 Akasha 模組保持一致。
+
+---
+
 ## 2026-05-18：Phase 17-6 Overlays 完成
 
 ### 產出
