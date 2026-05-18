@@ -1,5 +1,49 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-3 Editor TAB 完成
+
+### 產出
+
+**`modules/script-editor/editor-tab.js`**（580 行）
+
+- `initEditorTab(panelEl, sideEl)` — 雙欄結構：左 block 卡片列、右側 AVG/JSON 面板
+- 訂閱 `state:blocks` / `state:characters` / `tab:switched`，可見時自動 re-render
+- **編輯工具列**：6 種 block 類型新增按鈕（場次 / 旁白 / 對白 / 選項 / 編註 / 指令）+ 「⇆ 寫回 Write」+ block 計數
+- **BlockCard 6 種類型**：
+  - dialogue — speakerId select + 原文/中譯 textarea + TAG row
+  - narration / note — text textarea
+  - scene — act + subtitle 兩欄
+  - choice — options 陣列（text + target + 刪除）+ 「+ 新增選項」
+  - command — command + value 兩欄
+- 即時驗證 — 紅色邊框 + 錯誤橫幅（從 `validateBlock` 取錯誤）
+- 區塊操作：上移 / 下移 / 刪除（confirm）/ focus（dialogue click）
+- **TAG 管理**：5 categories（plot/emotion/theme/form/role）+ 內聯 TagAdder（連續新增、Enter 提交、Esc 關閉）
+- **AVG 側面板**（dialogue focus 時）：
+  - 16:9 立繪預覽（背景 label + sprite 位置 + BGM/SFX 角標）
+  - Sprite 匯入（image/* + 512KB 上限）+ id 輸入
+  - Position 三按鈕（左 / 中 / 右）
+  - Background / BGM / SFX 三欄輸入
+- **JSON Preview** — focused block JSON 即時更新
+- 「⇆ 寫回 Write」— `blocksToPlainScript()` → 灌回 textarea + 同步 localStorage
+
+### 整合改動
+
+- `index.html`
+  - import `initEditorTab`
+  - 替換 Editor TAB placeholder 為 `<div class="editor-layout">` + 兩個容器
+  - 新增 100+ 行 CSS（編輯工具列、BlockCard、TagAdder、AVG 面板、Sprite preview、JSON preview）
+  - 初始化呼叫：`initEditorTab(blockListEl, sidePanelEl)`
+  - 新增 `Bus.on('toast', ...)` 讓 sub-modules 觸發 toast
+
+- `sw.js` v5→v6；快取加 `editor-tab.js`
+- `scripts/build.js`：critical path += `editor-tab.js`
+
+### 體驗
+
+切到 Editor TAB → 看到 block list（已從 Write TAB 解析的 blocks）→ 點 dialogue 開啟右側 AVG 面板 → 編輯 sprite/position/BGM/SFX → 即時看 16:9 預覽 + JSON 更新。新增/刪除/重排 block，TAG 連續新增。最後按「⇆ 寫回 Write」把 blocks 反向轉回 Plain Script。
+
+---
+
 ## 2026-05-18：Phase 17-2 Write TAB 完成
 
 ### 產出

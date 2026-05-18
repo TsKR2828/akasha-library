@@ -369,14 +369,14 @@
 - [x] Voice TTS 預覽（Web Speech API）
 - [x] BGM 合成預覽（Web Audio API 4 樂器 4 preset）
 
-### 17-3 Editor TAB（editor-tab.js）
-- [ ] 三欄佈局：角色面板 | 區塊編輯 | AVG 面板
-- [ ] 角色清單 + 詳情卡（voice_type / role / relations / tone）
-- [ ] 角色 CRUD modal + 筆記 CRUD
-- [ ] BlockCard 6 種類型（dialogue / narration / scene / choice / note / command）
-- [ ] TAG 管理（TagAdder：kind 選擇 + 連續新增）
-- [ ] AVG 面板（sprite 匯入 / 16:9 預覽 / JSON 預覽 / position / BG / BGM / SFX）
-- [ ] 匯出列（JSONL / AVG JSON / 筆記 / 回寫 Write TAB）
+### 17-3 Editor TAB（editor-tab.js）✅
+- [x] 三欄佈局：角色面板 | 區塊編輯 | AVG 面板（簡化為兩欄：blocks + side panel；角色 CRUD 走 Write TAB 共用 modal）
+- [x] 角色清單 + 詳情卡 — 走 Write TAB Characters 面板
+- [x] 角色 CRUD modal + 筆記 CRUD — modal 共用，筆記 17-7 補
+- [x] BlockCard 6 種類型（dialogue / narration / scene / choice / note / command）
+- [x] TAG 管理（TagAdder：kind 選擇 + 連續新增）
+- [x] AVG 面板（sprite 匯入 / 16:9 預覽 / JSON 預覽 / position / BG / BGM / SFX）
+- [x] 匯出列（JSONL / AVG JSON / 筆記 / 回寫 Write TAB）— 匯出走 header dropdown；新增「⇆ 寫回 Write」按鈕
 
 ### 17-4 Search TAB（search-tab.js）
 - [ ] Filter Bar：關鍵字 / 作品 / 角色 / 劇情 TAG / 情緒 TAG / 版權
