@@ -200,6 +200,40 @@
 
 ---
 
+## Phase 17：Script Editor 4-TAB 整合（Archive 合併）
+
+整合 `-Archive_Script_Editor-`（React 獨立版）與 Akasha 內嵌版，改寫為 Vanilla JS 4-TAB 模組。
+
+| 步驟 | 內容 | 狀態 |
+|------|------|:----:|
+| 17-1 | Foundation — `data-model.js` 共享狀態 + 事件匯流排 + 解析器 + 驗證 + IndexedDB + `index.html` 4-TAB 骨架 | ⬜ |
+| 17-2 | Write TAB — textarea 速寫 + Alt+N 角色快捷鍵 + undo/redo + Voice TTS + BGM 合成 + 預覽面板 | ⬜ |
+| 17-3 | Editor TAB — 區塊卡片（6 種 block type）+ AVG 面板 + TAG 編輯 + 角色 CRUD + 筆記 | ⬜ |
+| 17-4 | Search TAB — 6 篩選器 + 結果卡片 + MD/CSV 匯出 + 跳轉 Editor | ⬜ |
+| 17-5 | Reader TAB — 連續排版 + 場景 TOC + TAG hover + choice 互動 + PDF 匯出 | ⬜ |
+| 17-6 | Overlays — Table Forge / 角色關係圖 / 音效庫 / 劇本檢查 / 初稿生成 | ⬜ |
+| 17-7 | 整合收尾 — 跨 TAB 同步 + 多作品支援 + 匯入統一 + README/ROADMAP 更新 | ⬜ |
+
+---
+
+## 相依關係（更新）
+
+```
+Phase 1–16 全部完成 ✅
+
+進行中
+└─ Phase 17 (Script Editor 4-TAB 整合) ──→ 依賴 Phase 8 ✅ + Phase 14 ✅ + Phase 16 ✅
+   ├─ 17-1 Foundation
+   ├─ 17-2 Write TAB（含 Voice/BGM from Phase 14）
+   ├─ 17-3 Editor TAB
+   ├─ 17-4 Search TAB
+   ├─ 17-5 Reader TAB
+   ├─ 17-6 Overlays
+   └─ 17-7 整合收尾
+```
+
+---
+
 ## 已完成（不在 Roadmap 步驟內）
 
 - ✅ Code & Data Reader MVP（9 項新功能：tooltip / HINTS / undo-redo / diff / 存書庫 / 歷程）

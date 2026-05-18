@@ -339,6 +339,72 @@
 
 ---
 
-## 待做（追加規格 · 剩餘 Phase）
+## 進行中：Phase 17 Script Editor 4-TAB 整合
 
-（Enhancement Phase 1–16 全部完成）
+> Branch: `feature/script-editor-merge`
+> 整合 Archive 獨立版（React 3TAB）+ Akasha 內嵌版（Vanilla JS）→ 4-TAB Vanilla JS 模組
+
+### 17-1 Foundation（data-model.js + index.html 骨架）
+- [ ] AppState 單例 + Bus 事件匯流排
+- [ ] Block 類型定義（dialogue / narration / scene / choice / note / command）
+- [ ] Plain Script 解析器（regex parser 移植）
+- [ ] Blocks JSONL / AVG JSON / TyranoScript / Markdown 回流匯入解析器
+- [ ] blocksToPlainScript() 反向轉換
+- [ ] validateBlock() / validateBlocks()（從 Archive 移植）
+- [ ] IndexedDB 角色 CRUD（從 Akasha 移植）
+- [ ] 角色 alias 解析 + 自動偵測新角色
+- [ ] localStorage 工具（blocks draft / notes / shortcuts config）
+- [ ] 快捷鍵管理器（load / save / autoBind）
+- [ ] index.html 骨架（HTML + CSS + 4-TAB 切換）
+- [ ] PostMessage 協議（open-file / ai-context / mode-change / file-opened / export-to-table）
+
+### 17-2 Write TAB（write-tab.js）
+- [ ] textarea 編輯區 + 即時解析 → blocks[]
+- [ ] Undo/redo 棧（100 快照、Ctrl+Z/Y）
+- [ ] 狀態列（Ln/Col、格式徽章、block 計數）
+- [ ] Auto-save draft（debounce 400ms → localStorage）
+- [ ] Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色快捷鍵
+- [ ] 角色卡 slot badge + 右鍵指派
+- [ ] 右側預覽面板（Blocks / Stats / Layout / Voice / BGM）
+- [ ] Voice TTS 預覽（Web Speech API）
+- [ ] BGM 合成預覽（Web Audio API 4 樂器 4 preset）
+
+### 17-3 Editor TAB（editor-tab.js）
+- [ ] 三欄佈局：角色面板 | 區塊編輯 | AVG 面板
+- [ ] 角色清單 + 詳情卡（voice_type / role / relations / tone）
+- [ ] 角色 CRUD modal + 筆記 CRUD
+- [ ] BlockCard 6 種類型（dialogue / narration / scene / choice / note / command）
+- [ ] TAG 管理（TagAdder：kind 選擇 + 連續新增）
+- [ ] AVG 面板（sprite 匯入 / 16:9 預覽 / JSON 預覽 / position / BG / BGM / SFX）
+- [ ] 匯出列（JSONL / AVG JSON / 筆記 / 回寫 Write TAB）
+
+### 17-4 Search TAB（search-tab.js）
+- [ ] Filter Bar：關鍵字 / 作品 / 角色 / 劇情 TAG / 情緒 TAG / 版權
+- [ ] ResultCard：作品名、角色、原文、中譯、TAG 膠囊
+- [ ] Export Bar：Markdown / CSV 匯出
+- [ ] 點擊結果 → 跳轉 Editor TAB 定位
+
+### 17-5 Reader TAB（reader-tab.js）
+- [ ] 連續排版（Scene 分組）
+- [ ] 場景 TOC + IntersectionObserver 捲動追蹤
+- [ ] TAG hover 顯示 + choice 互動跳轉
+- [ ] 角色筆記顯示（首次出場處）
+- [ ] PDF 匯出（window.print + 版權控管）
+
+### 17-6 Overlays（overlays.js）
+- [ ] Table Forge（全畫面表格 + 行內編輯 + 寫回 blocks）
+- [ ] 角色關係圖（力導向 SVG + 拖曳 + 聚焦）
+- [ ] 音效庫面板（library.json + mood/world/type 篩選 + ZeroRhyme NL 搜尋）
+- [ ] 劇本格式檢查（ZeroRhyme.checkScript 15+ 規則 + 點擊導航）
+- [ ] 初稿生成（8 模板 + 角色/情緒設定 + 預覽/插入）
+
+### 17-7 整合收尾
+- [ ] 跨 TAB 同步驗證（Write ↔ Editor ↔ Search ↔ Reader）
+- [ ] Editor → Write 反向同步（blocks → Plain Script）
+- [ ] 多作品支援（WorkSwitcher + loadAllData）
+- [ ] 匯入統一（PostMessage open-file → 格式偵測）
+- [ ] README / ROADMAP / dev-log 更新
+
+---
+
+## 已完成（Enhancement Phase 1–16 全部完成）

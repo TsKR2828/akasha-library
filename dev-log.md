@@ -1,5 +1,50 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17 Script Editor 4-TAB 整合 開始
+
+### 背景
+
+Akasha Library 有兩版 Script Editor：
+1. **Akasha 內嵌版**（`modules/script-editor/index.html`, 1661 行, Vanilla JS）— Phase 8 產出，textarea 速寫 + Voice TTS + BGM 合成 + export-core 整合
+2. **Archive 獨立版**（`-Archive_Script_Editor-/uiux/app.jsx`, 3618 行, React 18 CDN）— 獨立專案，Search/Editor/Reader 三 TAB + 角色關係圖 + 音效庫 + 劇本檢查 + 初稿生成
+
+兩版定位互補：Akasha 版適合快速寫作（鍵盤流），Archive 版適合瀏覽監修（結構化視圖）。
+
+### 決策
+
+- 合併為 **4-TAB**（速寫 Write / 編輯 Editor / 搜尋 Search / 閱讀 Reader）
+- 技術棧：改寫為 **Vanilla JS**（與 Akasha 其他模組一致，去除 React 依賴）
+- 入口：取代現有 `script-editor` 側欄入口
+- 新功能：**Alt+N 快捷鍵**（Alt+1=場景 / Alt+2=旁白 / Alt+3~9=角色，混合模式：自動綁定+可手動調整）
+- Branch: `feature/script-editor-merge`
+
+### 檔案結構
+
+```
+modules/script-editor/
+  index.html         # HTML 骨架 + CSS + 4-TAB 切換 + PostMessage
+  data-model.js      # 共享狀態 + 事件匯流排 + 解析器 + 驗證 + IndexedDB
+  write-tab.js       # 速寫 TAB
+  editor-tab.js      # 編輯 TAB
+  search-tab.js      # 搜尋 TAB
+  reader-tab.js      # 閱讀 TAB
+  overlays.js        # Table Forge / 關係圖 / 音效庫 / 劇本檢查 / 初稿生成
+```
+
+### 7 Phase 實作計畫
+
+| Phase | 內容 | 預估行數 |
+|-------|------|---------|
+| 17-1 | Foundation（data-model.js + index.html 骨架） | ~1300 |
+| 17-2 | Write TAB（textarea + Alt+N 快捷鍵 + Voice/BGM） | ~650 |
+| 17-3 | Editor TAB（區塊卡片 + AVG 面板 + TAG） | ~900 |
+| 17-4 | Search TAB（6 篩選器 + 結果卡片） | ~450 |
+| 17-5 | Reader TAB（連續排版 + TOC + choice） | ~500 |
+| 17-6 | Overlays（5 個全屏 overlay） | ~1200 |
+| 17-7 | 整合收尾（跨 TAB 同步 + 多作品 + 匯入統一） | — |
+
+---
+
 ## 2026-05-16：Phase 15 Private Reading Room + 每日館報 完成（15-A/B/C/D）
 
 ### 15-A：談心專區模組（Reading Room）
