@@ -546,11 +546,13 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 /* ═══════════════════════════════════════════
    Search TAB
    ═══════════════════════════════════════════ */
-.search-layout{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.search-layout-inner{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
 .search-filters{
-  display:flex;flex-wrap:wrap;gap:8px;
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr auto;
+  gap:6px;align-items:center;
   padding:10px 16px;border-bottom:1px solid var(--navy-line);
-  background:var(--navy);
+  background:var(--navy);position:sticky;top:0;z-index:10;
 }
 .search-filters input,.search-filters select{
   padding:5px 10px;
@@ -558,7 +560,86 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
   color:var(--text-primary);font-size:12px;font-family:inherit;
 }
 .search-filters input:focus,.search-filters select:focus{outline:none;border-color:var(--gold-dim)}
-.search-results{flex:1;overflow-y:auto;padding:12px 16px;background:var(--navy-deep)}
+.search-clear{
+  padding:5px 12px;background:transparent;border:none;
+  color:var(--text-secondary);font:12px var(--font-serif-tc);
+  letter-spacing:.1em;cursor:pointer;
+}
+.search-clear:hover{color:var(--gold)}
+@media(max-width:900px){
+  .search-filters{grid-template-columns:1fr 1fr;gap:8px}
+}
+
+.search-meta{
+  padding:12px 28px 6px;
+  font:12.5px var(--font-serif-tc);color:var(--text-secondary);letter-spacing:.06em;
+  display:flex;align-items:baseline;gap:10px;
+}
+.search-meta .result-count{
+  font:italic 17px var(--font-serif-en);color:var(--gold);
+}
+.search-results{flex:1;overflow-y:auto;padding:8px 28px 80px;background:var(--navy-deep)}
+
+.result-card{
+  background:var(--navy-light);border:1px solid var(--navy-hover);
+  border-left:3px solid var(--gold-dim);
+  margin-bottom:12px;overflow:hidden;cursor:pointer;
+  transition:all .2s;
+}
+.result-card:hover{
+  border-left-color:var(--gold);
+  transform:translateY(-1px);box-shadow:var(--shadow-lift);
+}
+.rc-header{
+  padding:10px 18px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--navy-line);background:var(--navy);
+  font-size:11.5px;
+}
+.rc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rc-speaker{font:12.5px var(--font-serif-tc);color:var(--cream-dim)}
+.rc-speaker-en{font:italic 11px var(--font-serif-en);color:var(--gold-dim)}
+.rc-type{font:11px var(--font-display);letter-spacing:.12em;color:var(--gold-dim);text-transform:uppercase}
+.rc-idx,.rc-id{font:10px var(--font-mono);color:var(--text-tertiary);opacity:.7}
+.rc-body{padding:14px 18px 16px}
+.rc-original{font:italic 14px/1.7 var(--font-serif-en);color:var(--cream);margin-bottom:4px}
+.rc-zh{font:13px/1.7 var(--font-body);color:var(--cream);opacity:.85;margin-bottom:10px;letter-spacing:.04em}
+.rc-narr{font:italic 13px/1.7 var(--font-serif-tc);color:var(--text-secondary)}
+.rc-scene{font:13px var(--font-display);color:var(--gold);letter-spacing:.08em}
+.rc-choice{font:13px/1.7 var(--font-body);color:var(--text-primary)}
+.rc-choice div{margin-bottom:3px}
+.rc-cmd{font:12px var(--font-mono);color:var(--text-secondary)}
+.rc-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+
+.search-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:60px 20px;color:var(--text-tertiary);text-align:center;
+}
+.search-empty-icon{
+  width:60px;height:60px;border:1px solid var(--gold-line);
+  display:flex;align-items:center;justify-content:center;color:var(--gold-deep);
+}
+.search-empty-latin{
+  font:11px var(--font-display);letter-spacing:.34em;color:var(--gold-deep);text-transform:uppercase;
+}
+.search-empty-zh{
+  font:13.5px var(--font-serif-tc);color:var(--text-secondary);letter-spacing:.06em;
+}
+
+.search-export-bar{
+  position:absolute;left:0;right:0;bottom:0;z-index:20;
+  background:rgba(17,21,29,.94);backdrop-filter:blur(8px);
+  border-top:1px solid var(--gold-line);
+  padding:10px 28px;
+  display:flex;align-items:center;gap:8px;
+}
+.search-export-bar .bar-label{font:11px var(--font-display);letter-spacing:.12em;color:var(--gold-dim)}
+.search-export-bar button{
+  padding:5px 12px;background:transparent;border:1px solid var(--navy-line);
+  color:var(--text-secondary);font:12px var(--font-serif-tc);
+  border-radius:var(--r-soft);cursor:pointer;letter-spacing:.08em;
+}
+.search-export-bar button:hover{color:var(--gold);border-color:var(--gold-dim)}
+.search-export-bar button.bar-btn-accent{background:var(--gold-glow);border-color:var(--gold);color:var(--gold-bright)}
 
 /* ═══════════════════════════════════════════
    Reader TAB
@@ -867,14 +948,7 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 
   <!-- ── Search TAB ── -->
   <section id="tab-search" class="tab-panel">
-    <div class="tab-placeholder">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-        stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"/><path d="M16 16l4 4"/>
-      </svg>
-      搜尋面板<br>
-      <span style="font-size:11px">Phase 17-4 · 6 篩選器、結果卡片、匯出</span>
-    </div>
+    <div id="search-panel" style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative"></div>
   </section>
 
   <!-- ── Reader TAB ── -->
@@ -943,6 +1017,7 @@ import {
 } from './write-tab.js';
 
 import { initEditorTab } from './editor-tab.js';
+import { initSearchTab } from './search-tab.js';
 
 /* ──────────────────────────────────────────
    DOM Refs
@@ -1521,6 +1596,7 @@ async function init() {
     document.getElementById('editor-block-list'),
     document.getElementById('editor-side-panel'),
   );
+  initSearchTab(document.getElementById('search-panel'));
 
   // Tab keyboard navigation: Ctrl+1~4
   document.addEventListener('keydown', e => {

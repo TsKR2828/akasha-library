@@ -1,5 +1,49 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-4 Search TAB 完成
+
+### 產出
+
+**`modules/script-editor/search-tab.js`**（300 行）
+
+- `initSearchTab(panelEl)` — 訂閱 state 自動更新
+- **6 篩選器**（grid layout）：
+  - 關鍵字（搜原文/中譯/角色/text/act/subtitle/command/value）
+  - 角色 select（從 AppState.characters）
+  - 劇情 TAG input（含 datalist 自動建議）
+  - 情緒 TAG input（含 datalist）
+  - 類型 select（6 種 block type）
+  - 排序 select（原順序 / 依角色 / 依長度）
+- 即時篩選（debounce 200ms）+ 「清除」按鈕一鍵重置
+- **ResultCard 6 種類型**：
+  - dialogue — speaker dot + 原文（serif italic）+ 中譯 + TAG 膠囊
+  - narration / note — 旁白樣式
+  - scene — 金色場景標題
+  - choice — 選項列表
+  - command — mono font
+- **跳轉 Editor TAB** — 點 result card → switchTo('editor') → `scrollIntoView` + 金色光圈 1.2s 高亮
+- **匯出 Export Bar**（有結果時浮現）：
+  - Markdown — dialogue → `### 角色\n> 原文\n中譯\nTags: …`，其他類型對應格式
+  - CSV — id, type, speaker, original, zh, text, tags 七欄
+  - 「→ 跳到閱讀 TAB」捷徑
+
+### 整合改動
+
+- `index.html`
+  - import `initSearchTab`
+  - 替換 Search TAB placeholder 為 `<div id="search-panel">`
+  - +90 行 CSS（grid filter bar、result-card、search-empty、export-bar）
+  - 初始化呼叫：`initSearchTab(panelEl)`
+
+- `sw.js` v6→v7；快取加 `search-tab.js`
+- `scripts/build.js`：critical path += `search-tab.js`
+
+### 體驗
+
+切到 Search TAB → 輸入「愛」→ 即時看到所有含「愛」的對白 → 加角色 filter → 結果再縮減 → 點一筆結果 → 自動跳到 Editor TAB + 該 block 滾入視口 + 金色光圈 1 秒。或按底部「⇣ Markdown」匯出搜尋結果。
+
+---
+
 ## 2026-05-18：Phase 17-3 Editor TAB 完成
 
 ### 產出

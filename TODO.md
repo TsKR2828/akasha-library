@@ -378,11 +378,11 @@
 - [x] AVG 面板（sprite 匯入 / 16:9 預覽 / JSON 預覽 / position / BG / BGM / SFX）
 - [x] 匯出列（JSONL / AVG JSON / 筆記 / 回寫 Write TAB）— 匯出走 header dropdown；新增「⇆ 寫回 Write」按鈕
 
-### 17-4 Search TAB（search-tab.js）
-- [ ] Filter Bar：關鍵字 / 作品 / 角色 / 劇情 TAG / 情緒 TAG / 版權
-- [ ] ResultCard：作品名、角色、原文、中譯、TAG 膠囊
-- [ ] Export Bar：Markdown / CSV 匯出
-- [ ] 點擊結果 → 跳轉 Editor TAB 定位
+### 17-4 Search TAB（search-tab.js）✅
+- [x] Filter Bar：關鍵字 / 角色 / 劇情 TAG / 情緒 TAG / 類型 / 排序（作品/版權延後 17-7 多作品）
+- [x] ResultCard：角色、原文、中譯、TAG 膠囊、所有 6 種 block type 對應顯示
+- [x] Export Bar：Markdown / CSV 匯出
+- [x] 點擊結果 → 跳轉 Editor TAB 定位 + 滾入視口 + 金色光圈高亮
 
 ### 17-5 Reader TAB（reader-tab.js）
 - [ ] 連續排版（Scene 分組）
