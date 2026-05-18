@@ -220,7 +220,7 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 .stat-box .val{font-size:20px;font-weight:600;color:var(--gold);font-family:var(--font-display)}
 .stat-box .lbl{font-size:11px;color:var(--text-tertiary);margin-top:2px}
 
-/* ── Voice preview (14-A) ── */
+/* ── Voice preview (14-A / 17-2) ── */
 .block-play{
   float:right;margin:-2px -4px 0 0;
   padding:2px 6px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
@@ -230,6 +230,84 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 .block-play:hover{color:var(--gold);border-color:var(--gold-dim)}
 .block-play.speaking{color:var(--gold);border-color:var(--gold);animation:pulse-voice .8s infinite alternate}
 @keyframes pulse-voice{from{opacity:1}to{opacity:.5}}
+
+.voice-panel,.bgm-panel{display:flex;flex-direction:column;gap:10px}
+.voice-controls,.bgm-controls{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-light);
+}
+.voice-controls button,.bgm-controls button{
+  padding:4px 10px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;
+  transition:color .15s,border-color .15s;
+}
+.voice-controls button:hover,.bgm-controls button:hover{color:var(--gold);border-color:var(--gold-dim)}
+.voice-controls button.active,.bgm-controls button.active{color:var(--gold);border-color:var(--gold)}
+.voice-status,.bgm-status{font-size:11px;color:var(--text-tertiary)}
+
+.voice-settings,.bgm-settings{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-light);
+}
+.voice-settings label,.bgm-settings label{display:block;font-size:11px;color:var(--text-tertiary);margin-bottom:4px;margin-top:6px}
+.voice-settings label:first-child,.bgm-settings label:first-child{margin-top:0}
+.voice-settings select,.bgm-settings select,
+.voice-settings input[type=range],.bgm-settings input[type=range]{
+  width:100%;background:var(--navy-deep);color:var(--text-primary);
+  border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  padding:4px 6px;font-size:12px;
+}
+.voice-settings input[type=range],.bgm-settings input[type=range]{
+  padding:0;height:20px;cursor:pointer;
+}
+.voice-range-row{display:flex;align-items:center;gap:8px}
+.voice-range-row span{font-size:11px;color:var(--text-secondary);min-width:36px;text-align:right}
+
+.voice-queue-list{max-height:300px;overflow-y:auto}
+.voice-queue-item{
+  display:flex;align-items:flex-start;gap:6px;
+  padding:6px 8px;margin-bottom:3px;
+  border-radius:var(--r-soft);font-size:12px;cursor:pointer;
+  border:1px solid transparent;
+}
+.voice-queue-item:hover{background:var(--navy-light)}
+.voice-queue-item.current{border-color:var(--gold-dim);background:var(--navy-light)}
+.voice-queue-item .vq-speaker{font-weight:600;white-space:nowrap;min-width:60px}
+.voice-queue-item .vq-text{color:var(--text-secondary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.voice-queue-item .vq-num{font-size:10px;color:var(--text-tertiary);min-width:20px}
+
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.preset-card{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-deep);cursor:pointer;
+  transition:border-color .15s,background .15s;
+}
+.preset-card:hover{border-color:var(--gold-dim);background:var(--navy-light)}
+.preset-card.selected{border-color:var(--gold);background:var(--navy-light)}
+.preset-card .pc-name{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
+.preset-card .pc-inst{font-size:11px;color:var(--gold-dim)}
+.preset-card .pc-mood{font-size:10px;color:var(--text-tertiary);margin-top:2px}
+
+.score-preview{
+  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+  background:var(--navy-deep);
+}
+.score-preview-title{font-size:11px;color:var(--text-tertiary);margin-bottom:6px}
+.score-timeline{position:relative;height:60px;overflow:hidden;border-radius:4px;background:rgba(0,0,0,.2)}
+.score-note{
+  position:absolute;border-radius:2px;min-width:4px;
+  background:var(--gold-dim);opacity:.7;
+}
+.score-meta{display:flex;gap:12px;margin-top:6px;font-size:10px;color:var(--text-tertiary)}
+
+/* Slot badge on character cards */
+.char-slot-badge{
+  display:inline-block;font-size:9px;padding:1px 5px;
+  background:var(--gold-deep);color:var(--cream);
+  border-radius:3px;margin-left:4px;font-family:var(--font-mono);
+  vertical-align:middle;letter-spacing:.5px;
+}
 
 /* ═══════════════════════════════════════════
    Editor TAB — block card list + side panel
@@ -651,6 +729,10 @@ import {
   BLOCK_TYPES, TAG_PALETTE, TAG_CATEGORIES, ICONS,
 } from './data-model.js';
 
+import {
+  renderVoicePreview, renderBgmPreview, renderCharListWithSlots,
+} from './write-tab.js';
+
 /* ──────────────────────────────────────────
    DOM Refs
    ────────────────────────────────────────── */
@@ -843,41 +925,13 @@ function insertAtCursor(text) {
 }
 
 /* ──────────────────────────────────────────
-   Render — Character List (Write tab)
+   Render — Character List (delegated to write-tab.js for slot badges + ctx menu)
    ────────────────────────────────────────── */
-function renderCharList() {
-  const chars = AppState.get('characters') || [];
-  if (!chars.length) {
-    $charList.innerHTML = '<div class="empty-chars">尚未建立角色卡。<br>編輯器會自動偵測角色，<br>或點擊「+ 新增」手動建立。</div>';
-    return;
-  }
+function renderCharList() { renderCharListWithSlots($charList); }
 
-  const blocks = AppState.get('blocks') || [];
-  const counts = {};
-  for (const b of blocks) {
-    if (b.speaker) counts[b.speaker] = (counts[b.speaker] || 0) + 1;
-  }
-
-  $charList.innerHTML = chars.map(c => {
-    const n = counts[c.displayName] || 0;
-    const aliasStr = c.aliases?.length ? c.aliases.join(', ') : '';
-    return `<div class="char-card" data-id="${c.id}">
-      <span class="char-dot" style="background:${c.color || 'var(--gold)'}"></span>
-      <div class="char-info">
-        <div class="char-name">${esc(c.displayName)}</div>
-        ${aliasStr ? `<div class="char-aliases">${esc(aliasStr)}</div>` : ''}
-      </div>
-      <span class="char-count">${n}</span>
-      <div class="char-actions">
-        <button data-action="edit" data-id="${c.id}" title="編輯">&#9998;</button>
-      </div>
-    </div>`;
-  }).join('');
-
-  $charList.querySelectorAll('[data-action="edit"]').forEach(btn => {
-    btn.addEventListener('click', e => { e.stopPropagation(); openCharModal(btn.dataset.id); });
-  });
-}
+// Listen for char-edit requests from write-tab.js
+Bus.on('char:edit-requested', id => openCharModal(id));
+Bus.on('shortcuts:user-updated', () => { renderCharList(); renderShortcutHints(); });
 
 /* ──────────────────────────────────────────
    Render — Preview (Write tab right panel)
@@ -889,8 +943,8 @@ function renderPreview() {
   if (tab === 'blocks')  return renderBlocksPreview(blocks);
   if (tab === 'stats')   return renderStatsPreview(blocks);
   if (tab === 'layout')  return renderLayoutPreview(blocks);
-  if (tab === 'voice')   return renderVoicePreview();
-  if (tab === 'bgm')     return renderBgmPreview();
+  if (tab === 'voice')   return _renderVoicePanel();
+  if (tab === 'bgm')     return _renderBgmPanel();
 }
 
 function renderBlocksPreview(blocks) {
@@ -972,12 +1026,9 @@ function renderLayoutPreview(blocks) {
   $previewBody.innerHTML = html;
 }
 
-function renderVoicePreview() {
-  $previewBody.innerHTML = '<div class="empty-preview">試聽面板<br><span style="font-size:11px">Phase 17-2 — Web Speech API 預覽</span></div>';
-}
-function renderBgmPreview() {
-  $previewBody.innerHTML = '<div class="empty-preview">BGM 面板<br><span style="font-size:11px">Phase 17-2 — BGM Preset 試聽</span></div>';
-}
+// Voice / BGM panels delegated to write-tab.js (Phase 17-2)
+function _renderVoicePanel() { renderVoicePreview($previewBody); }
+function _renderBgmPanel()   { renderBgmPreview($previewBody);   }
 
 /* ──────────────────────────────────────────
    Character Modal

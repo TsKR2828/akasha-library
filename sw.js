@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-v4';
+const CACHE_NAME = 'akasha-library-v5';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -54,6 +54,8 @@ const LOCAL_ASSETS = [
   './modules/reading-room/index.html',
   './modules/daily-report/index.html',
   './modules/script-editor/index.html',
+  './modules/script-editor/data-model.js',
+  './modules/script-editor/write-tab.js',
   './modules/table-forge/index.html',
   './modules/table-forge/exporters.js',
   './modules/table-forge/md-extract.js',

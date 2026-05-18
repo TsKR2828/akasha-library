@@ -1,5 +1,48 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-2 Write TAB 完成
+
+### 產出
+
+**`modules/script-editor/write-tab.js`**（470 行，全新 ES module）
+
+- `renderVoicePreview(container)` — Voice TTS 預覽面板
+  - 動態 import `core/voice.js`，feature gate 未啟用時顯示提示
+  - 過濾語音引擎（zh / ja / en 優先）+ 系統預設選項
+  - 語速 (0.5~2.0) / 音高 (0~2) / 朗讀旁白 checkbox
+  - 全部播放 / 暫停 / 停止 + 從特定 block 開始播放
+  - 即時隊列清單（speaker 色 + 文字截取 30 字）+ current highlight
+
+- `renderBgmPreview(container)` — BGM Preset 預覽面板
+  - 動態 import `core/bgm.js`，4 個 preset card（靜謐書庫 / 柔風揚琴 / 冥想空靈鼓 / 流水水鐘）
+  - 音量滑桿 + 停止按鈕
+  - Score timeline 預覽（pitch 對應垂直位置、duration 對應寬度）
+  - 即時狀態（playing / idle）
+
+- `renderCharListWithSlots(container)` — 角色卡增強
+  - **Slot Badge** — 顯示 `⌥3 / ⌥4 / ⌥5…` 角色綁定的 Alt 快捷鍵
+  - **右鍵 Context Menu** — 「指派 {角色} 至 Alt+3~9」+ 「清除快捷鍵綁定」
+  - 已佔用 slot 顯示原使用者（半透明）
+  - 透過 Bus emit 觸發 `char:edit-requested` / `shortcuts:user-updated`
+
+### 整合改動
+
+- `modules/script-editor/index.html`
+  - import write-tab.js 三個函數
+  - 替換 `renderVoicePreview` / `renderBgmPreview` placeholder 為 delegate 呼叫
+  - 替換 `renderCharList` 內聯實作為 `renderCharListWithSlots`
+  - Bus listener：`char:edit-requested` → openCharModal；`shortcuts:user-updated` → 重 render
+  - 新增 CSS：Voice/BGM 面板、Voice queue 列表、Preset card、Score timeline、Slot badge
+
+- `sw.js`：CACHE_NAME → v5；快取清單加 `data-model.js` + `write-tab.js`
+- `scripts/build.js`：critical path 加 `data-model.js` + `write-tab.js`
+
+### 體驗
+
+打開 Script Editor → Write TAB → 右側預覽切到「試聽」可選 voice / 調整 speed/pitch / 播放全部對白。切到「BGM」可選 4 個 preset 試聽配樂 + 看 score timeline。角色卡上現在顯示 ⌥3~⌥9 badge，右鍵可重新指派。
+
+---
+
 ## 2026-05-18：Phase 17-1 Foundation 完成
 
 ### 產出

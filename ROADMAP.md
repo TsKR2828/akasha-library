@@ -207,7 +207,7 @@
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
 | 17-1 | Foundation — `data-model.js` 共享狀態 + 事件匯流排 + 解析器 + 驗證 + IndexedDB + `index.html` 4-TAB 骨架 | ✅ |
-| 17-2 | Write TAB — textarea 速寫 + Alt+N 角色快捷鍵 + undo/redo + Voice TTS + BGM 合成 + 預覽面板 | ⬜ |
+| 17-2 | Write TAB — textarea 速寫 + Alt+N 角色快捷鍵 + undo/redo + Voice TTS + BGM 合成 + 預覽面板 | ✅ |
 | 17-3 | Editor TAB — 區塊卡片（6 種 block type）+ AVG 面板 + TAG 編輯 + 角色 CRUD + 筆記 | ⬜ |
 | 17-4 | Search TAB — 6 篩選器 + 結果卡片 + MD/CSV 匯出 + 跳轉 Editor | ⬜ |
 | 17-5 | Reader TAB — 連續排版 + 場景 TOC + TAG hover + choice 互動 + PDF 匯出 | ⬜ |

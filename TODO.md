@@ -358,16 +358,16 @@
 - [x] index.html 骨架（HTML + CSS + 4-TAB 切換）
 - [x] PostMessage 協議（open-file / ai-context / mode-change / file-opened / export-to-table）
 
-### 17-2 Write TAB（write-tab.js）
-- [ ] textarea 編輯區 + 即時解析 → blocks[]
-- [ ] Undo/redo 棧（100 快照、Ctrl+Z/Y）
-- [ ] 狀態列（Ln/Col、格式徽章、block 計數）
-- [ ] Auto-save draft（debounce 400ms → localStorage）
-- [ ] Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色快捷鍵
-- [ ] 角色卡 slot badge + 右鍵指派
-- [ ] 右側預覽面板（Blocks / Stats / Layout / Voice / BGM）
-- [ ] Voice TTS 預覽（Web Speech API）
-- [ ] BGM 合成預覽（Web Audio API 4 樂器 4 preset）
+### 17-2 Write TAB（write-tab.js）✅
+- [x] textarea 編輯區 + 即時解析 → blocks[]
+- [x] Undo/redo 棧（100 快照、Ctrl+Z/Y）
+- [x] 狀態列（Ln/Col、格式徽章、block 計數）
+- [x] Auto-save draft（debounce 400ms → localStorage）
+- [x] Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色快捷鍵
+- [x] 角色卡 slot badge + 右鍵指派
+- [x] 右側預覽面板（Blocks / Stats / Layout / Voice / BGM）
+- [x] Voice TTS 預覽（Web Speech API）
+- [x] BGM 合成預覽（Web Audio API 4 樂器 4 preset）
 
 ### 17-3 Editor TAB（editor-tab.js）
 - [ ] 三欄佈局：角色面板 | 區塊編輯 | AVG 面板
