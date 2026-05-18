@@ -6,8 +6,12 @@
 <title>Script Editor — Akasha Library</title>
 <link rel="stylesheet" href="../../assets/styles/shared.css">
 <style>
-/* ===== Layout ===== */
+/* ═══════════════════════════════════════════
+   Layout Shell
+   ═══════════════════════════════════════════ */
 html,body{margin:0;height:100%;overflow:hidden}
+
+/* ── Header ── */
 header{
   position:sticky;top:0;z-index:20;
   display:flex;align-items:center;gap:8px;
@@ -17,35 +21,84 @@ header{
 }
 header h1{font:600 13px/1 var(--font-display);color:var(--gold);margin:0;white-space:nowrap;letter-spacing:.5px}
 header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
+.spacer{flex:1}
 
-/* toolbar buttons */
+/* ── Toolbar buttons ── */
 .tb{
   display:inline-flex;align-items:center;gap:4px;
   padding:4px 10px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
   background:transparent;color:var(--text-secondary);font-size:12px;
-  transition:border-color .15s,color .15s;
+  cursor:pointer;transition:border-color .15s,color .15s;
 }
 .tb:hover{border-color:var(--gold-dim);color:var(--text-primary)}
 .tb.accent{border-color:var(--gold-dim);color:var(--gold)}
 .tb.accent:hover{border-color:var(--gold);color:var(--gold-bright)}
 .tb svg{width:14px;height:14px;flex-shrink:0}
-.spacer{flex:1}
 .file-label{cursor:pointer}
 .file-label input{display:none}
 
-/* 3-col app */
-.app{
-  display:grid;
-  grid-template-columns:240px 1fr 320px;
-  height:calc(100vh - 42px);
+/* ═══════════════════════════════════════════
+   Tab Bar
+   ═══════════════════════════════════════════ */
+.tab-bar{
+  display:flex;
+  background:var(--navy-deep);
+  border-bottom:1px solid var(--navy-line);
+  overflow-x:auto;flex-shrink:0;
+}
+.tab-btn{
+  flex:0 0 auto;
+  padding:9px 20px;
+  font:500 12.5px/1 var(--font-display);letter-spacing:.08em;
+  color:var(--text-tertiary);
+  background:transparent;border:none;
+  border-bottom:2px solid transparent;
+  cursor:pointer;transition:color .15s,border-color .15s;
+  display:flex;align-items:center;gap:6px;
+  white-space:nowrap;
+}
+.tab-btn:hover{color:var(--text-secondary)}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-btn svg{width:14px;height:14px}
+
+@media(max-width:600px){
+  .tab-btn{padding:8px 14px;font-size:11.5px}
+}
+
+/* ═══════════════════════════════════════════
+   Tab Panels
+   ═══════════════════════════════════════════ */
+.tab-panels{
+  flex:1;overflow:hidden;position:relative;
+}
+.tab-panel{
+  position:absolute;inset:0;
+  display:none;overflow:hidden;
+}
+.tab-panel.active{display:flex;flex-direction:column}
+
+/* placeholder shown for unimplemented tabs */
+.tab-placeholder{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--text-tertiary);font-size:13px;line-height:1.7;text-align:center;
+  padding:40px 20px;gap:12px;
+}
+.tab-placeholder svg{width:36px;height:36px;opacity:.4}
+
+/* ═══════════════════════════════════════════
+   Write TAB — 3-column layout
+   ═══════════════════════════════════════════ */
+.write-layout{
+  flex:1;display:grid;
+  grid-template-columns:220px 1fr 300px;
   overflow:hidden;
 }
 @media(max-width:960px){
-  .app{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
-  .panel-left,.panel-right{max-height:35vh;overflow-y:auto}
+  .write-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr auto}
+  .write-layout .panel-left,.write-layout .panel-right{max-height:35vh;overflow-y:auto}
 }
 
-/* ===== Left panel — Characters ===== */
+/* ── Characters sidebar ── */
 .panel-left{
   background:var(--navy-deep);border-right:1px solid var(--navy-line);
   display:flex;flex-direction:column;overflow:hidden;
@@ -81,39 +134,10 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
   font-size:11px;cursor:pointer;border-radius:2px;
 }
 .char-actions button:hover{color:var(--gold);background:var(--navy-hover)}
-
-/* Character edit modal */
-.char-modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;
-  display:flex;align-items:center;justify-content:center;
-}
-.char-modal{
-  background:var(--navy);border:1px solid var(--navy-line);border-radius:var(--r-card);
-  padding:20px;width:340px;max-width:90vw;box-shadow:var(--shadow-lift);
-}
-.char-modal h3{margin:0 0 14px;font:600 14px/1 var(--font-display);color:var(--gold)}
-.char-modal label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;margin-top:10px}
-.char-modal input{
-  width:100%;padding:6px 8px;
-  background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:var(--r-soft);
-  color:var(--text-primary);font-size:13px;font-family:inherit;
-}
-.char-modal input:focus{outline:none;border-color:var(--gold-dim)}
-.char-modal .color-row{display:flex;align-items:center;gap:8px}
-.char-modal .color-row input[type="color"]{width:32px;height:28px;padding:0;border:none;cursor:pointer;background:none}
-.char-modal .btn-row{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
-.char-modal .btn-row button{
-  padding:6px 16px;border-radius:var(--r-soft);font-size:12px;border:1px solid var(--navy-line);
-  background:transparent;color:var(--text-secondary);cursor:pointer;
-}
-.char-modal .btn-row button.primary{background:var(--gold-deep);color:var(--cream);border-color:var(--gold-dim)}
-.char-modal .btn-row button.danger{color:var(--danger);border-color:var(--danger)}
-
-/* empty state */
 .empty-chars{padding:20px 16px;text-align:center;color:var(--text-tertiary);font-size:12px;line-height:1.6}
 
-/* ===== Center — Editor ===== */
-.editor-panel{
+/* ── Editor center ── */
+.editor-center{
   display:flex;flex-direction:column;overflow:hidden;
   background:var(--navy-deep);
 }
@@ -133,20 +157,7 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 }
 #script-editor::placeholder{color:var(--text-tertiary)}
 
-/* status bar */
-.status-bar{
-  display:flex;align-items:center;gap:8px;
-  padding:4px 12px;border-top:1px solid var(--navy-line);
-  background:var(--navy);font-size:11px;color:var(--text-tertiary);
-}
-.status-bar .badge{
-  padding:1px 6px;border-radius:var(--r-sharp);
-  background:var(--navy-light);color:var(--text-secondary);font-size:10px;
-}
-.status-bar .badge.ok{color:var(--success)}
-.status-bar .badge.warn{color:var(--gold)}
-
-/* ===== Right panel — Preview ===== */
+/* ── Preview sidebar ── */
 .panel-right{
   background:var(--navy-deep);border-left:1px solid var(--navy-line);
   display:flex;flex-direction:column;overflow:hidden;
@@ -164,8 +175,9 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 .preview-tab:hover{color:var(--text-secondary)}
 .preview-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .preview-body{flex:1;overflow-y:auto;padding:12px}
+.empty-preview{padding:24px 16px;text-align:center;color:var(--text-tertiary);font-size:12px;line-height:1.6}
 
-/* blocks preview cards */
+/* ── Block cards (preview + editor tab) ── */
 .block-card{
   margin-bottom:6px;padding:8px 10px;
   border-radius:var(--r-card);border:1px solid var(--navy-line);
@@ -173,7 +185,10 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 }
 .block-card.dialogue{background:var(--navy-light)}
 .block-card.narration{background:rgba(201,168,106,.06);border-color:var(--gold-line)}
+.block-card.scene{background:rgba(106,201,168,.06);border-color:rgba(106,174,127,.25)}
 .block-card.command{background:rgba(100,107,120,.08);border-color:rgba(100,107,120,.2)}
+.block-card.choice{background:rgba(176,122,204,.06);border-color:rgba(176,122,204,.2)}
+.block-card.note{background:rgba(123,142,201,.06);border-color:rgba(123,142,201,.2)}
 .block-speaker{
   font-size:12px;font-weight:600;margin-bottom:2px;
   display:flex;align-items:center;gap:6px;
@@ -184,10 +199,20 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 .block-cmd{font-family:var(--font-mono);font-size:12px;color:var(--text-secondary)}
 .block-number{font-size:10px;color:var(--text-tertiary);float:right;margin-top:2px}
 
-/* stats / outline in preview */
-.stats-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;
+/* ── Tags ── */
+.tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 9px;border-radius:10px;
+  font-size:11px;letter-spacing:.04em;white-space:nowrap;
+  transition:opacity .15s;
 }
+.tag .tag-remove{
+  background:transparent;border:none;color:inherit;cursor:pointer;
+  padding:0;opacity:.7;display:flex;font-size:9px;
+}
+
+/* ── Stats grid ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .stat-box{
   padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
   background:var(--navy-light);text-align:center;
@@ -195,48 +220,7 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 .stat-box .val{font-size:20px;font-weight:600;color:var(--gold);font-family:var(--font-display)}
 .stat-box .lbl{font-size:11px;color:var(--text-tertiary);margin-top:2px}
 
-/* empty preview */
-.empty-preview{padding:24px 16px;text-align:center;color:var(--text-tertiary);font-size:12px;line-height:1.6}
-
-/* ===== Layout preview (8-F) ===== */
-.layout-page{
-  background:var(--navy-light);border:1px solid var(--navy-line);border-radius:var(--r-card);
-  padding:28px 24px 32px;margin-bottom:12px;
-  font-family:var(--font-body);font-size:13px;line-height:1.85;
-  min-height:200px;
-  box-shadow:0 2px 8px rgba(0,0,0,.18);
-}
-.layout-title{
-  text-align:center;font:600 16px/1.4 var(--font-display);color:var(--gold);
-  margin-bottom:16px;padding-bottom:10px;
-  border-bottom:1px solid var(--gold-line);letter-spacing:.5px;
-}
-.layout-scene{
-  text-align:center;font-size:11px;color:var(--gold-dim);
-  margin:14px 0 8px;letter-spacing:1px;text-transform:uppercase;
-}
-.layout-dlg{margin-bottom:8px;padding-left:20px;text-indent:-20px}
-.layout-dlg .lspeaker{
-  font-weight:700;margin-right:6px;display:inline;
-}
-.layout-dlg .ltext{display:inline;color:var(--text-primary)}
-.layout-narr{
-  margin:10px 0;padding:6px 16px;
-  font-style:italic;color:var(--text-secondary);
-  border-left:2px solid var(--gold-line);
-}
-.layout-cmd{
-  margin:6px 0;text-align:right;
-  font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);
-}
-.layout-toolbar{
-  display:flex;align-items:center;gap:6px;
-  margin-bottom:10px;padding-bottom:8px;
-  border-bottom:1px solid var(--navy-line);
-}
-.layout-toolbar .tb{font-size:11px;padding:3px 8px}
-
-/* ===== Voice Preview (14-A) ===== */
+/* ── Voice preview (14-A) ── */
 .block-play{
   float:right;margin:-2px -4px 0 0;
   padding:2px 6px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
@@ -247,132 +231,147 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 .block-play.speaking{color:var(--gold);border-color:var(--gold);animation:pulse-voice .8s infinite alternate}
 @keyframes pulse-voice{from{opacity:1}to{opacity:.5}}
 
-.voice-panel{display:flex;flex-direction:column;gap:10px}
-.voice-controls{
-  display:flex;align-items:center;gap:6px;
-  padding:8px 10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
-  background:var(--navy-light);
+/* ═══════════════════════════════════════════
+   Editor TAB — block card list + side panel
+   ═══════════════════════════════════════════ */
+.editor-layout{
+  flex:1;display:grid;
+  grid-template-columns:1fr 320px;
+  overflow:hidden;
 }
-.voice-controls button{
-  padding:4px 10px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
-  background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;
-  transition:color .15s,border-color .15s;
-}
-.voice-controls button:hover{color:var(--gold);border-color:var(--gold-dim)}
-.voice-controls button.active{color:var(--gold);border-color:var(--gold)}
-.voice-controls .spacer{flex:1}
-.voice-status{font-size:11px;color:var(--text-tertiary)}
-
-.voice-settings{
-  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
-  background:var(--navy-light);
-}
-.voice-settings label{display:block;font-size:11px;color:var(--text-tertiary);margin-bottom:4px}
-.voice-settings select,.voice-settings input[type=range]{
-  width:100%;margin-bottom:8px;
-  background:var(--navy-deep);color:var(--text-primary);
-  border:1px solid var(--navy-line);border-radius:var(--r-soft);
-  padding:4px 6px;font-size:12px;
-}
-.voice-settings input[type=range]{padding:0;height:20px;cursor:pointer}
-.voice-range-row{display:flex;align-items:center;gap:8px}
-.voice-range-row span{font-size:11px;color:var(--text-secondary);min-width:28px;text-align:right}
-
-.voice-queue-list{max-height:300px;overflow-y:auto}
-.voice-queue-item{
-  display:flex;align-items:flex-start;gap:6px;
-  padding:6px 8px;margin-bottom:3px;
-  border-radius:var(--r-soft);font-size:12px;
-  border:1px solid transparent;
-}
-.voice-queue-item.current{border-color:var(--gold-dim);background:var(--navy-light)}
-.voice-queue-item .vq-speaker{font-weight:600;white-space:nowrap;min-width:60px}
-.voice-queue-item .vq-text{color:var(--text-secondary);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.voice-queue-item .vq-num{font-size:10px;color:var(--text-tertiary);min-width:20px}
-
-.voice-unavailable{padding:24px 16px;text-align:center;color:var(--text-tertiary);font-size:12px;line-height:1.6}
-
-/* ===== BGM Preview (14-B) ===== */
-.bgm-panel{display:flex;flex-direction:column;gap:10px}
-.bgm-controls{
-  display:flex;align-items:center;gap:6px;
-  padding:8px 10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
-  background:var(--navy-light);
-}
-.bgm-controls button{
-  padding:4px 10px;border:1px solid var(--navy-line);border-radius:var(--r-soft);
-  background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer;
-  transition:color .15s,border-color .15s;
-}
-.bgm-controls button:hover{color:var(--gold);border-color:var(--gold-dim)}
-.bgm-controls button.active{color:var(--gold);border-color:var(--gold)}
-.bgm-controls .spacer{flex:1}
-.bgm-status{font-size:11px;color:var(--text-tertiary)}
-
-.bgm-settings{
-  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
-  background:var(--navy-light);
-}
-.bgm-settings label{display:block;font-size:11px;color:var(--text-tertiary);margin-bottom:4px;margin-top:6px}
-.bgm-settings label:first-child{margin-top:0}
-.bgm-settings select{
-  width:100%;background:var(--navy-deep);color:var(--text-primary);
-  border:1px solid var(--navy-line);border-radius:var(--r-soft);
-  padding:4px 6px;font-size:12px;
-}
-.bgm-settings input[type=range]{
-  width:100%;padding:0;height:20px;cursor:pointer;margin-bottom:2px;
-}
-.bgm-range-row{display:flex;align-items:center;gap:8px}
-.bgm-range-row span{font-size:11px;color:var(--text-secondary);min-width:28px;text-align:right}
-
-.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px}
-.preset-card{
-  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
-  background:var(--navy-deep);cursor:pointer;
-  transition:border-color .15s,background .15s;
-}
-.preset-card:hover{border-color:var(--gold-dim);background:var(--navy-light)}
-.preset-card.selected{border-color:var(--gold);background:var(--navy-light)}
-.preset-card .pc-name{font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:2px}
-.preset-card .pc-inst{font-size:11px;color:var(--gold-dim)}
-.preset-card .pc-mood{font-size:10px;color:var(--text-tertiary);margin-top:2px}
-
-.score-preview{
-  padding:10px;border-radius:var(--r-card);border:1px solid var(--navy-line);
+.editor-block-list{
+  flex:1;overflow-y:auto;padding:12px 16px;
   background:var(--navy-deep);
 }
-.score-preview-title{font-size:11px;color:var(--text-tertiary);margin-bottom:6px}
-.score-timeline{position:relative;height:60px;overflow:hidden;border-radius:4px;background:rgba(0,0,0,.2)}
-.score-note{
-  position:absolute;border-radius:2px;min-width:4px;
-  background:var(--gold-dim);opacity:.7;
-  transition:opacity .15s;
+.editor-side-panel{
+  background:var(--navy);border-left:1px solid var(--navy-line);
+  display:flex;flex-direction:column;overflow-y:auto;padding:12px;
 }
-.score-note.active{opacity:1;background:var(--gold)}
-.score-meta{display:flex;gap:12px;margin-top:6px;font-size:10px;color:var(--text-tertiary)}
+@media(max-width:800px){
+  .editor-layout{grid-template-columns:1fr}
+  .editor-side-panel{display:none}
+}
 
-/* ===== Toast ===== */
-#toast-container{
-  position:fixed;bottom:16px;right:16px;z-index:200;
-  display:flex;flex-direction:column;gap:6px;
+/* ═══════════════════════════════════════════
+   Search TAB
+   ═══════════════════════════════════════════ */
+.search-layout{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.search-filters{
+  display:flex;flex-wrap:wrap;gap:8px;
+  padding:10px 16px;border-bottom:1px solid var(--navy-line);
+  background:var(--navy);
 }
-.toast{
-  padding:8px 16px;border-radius:var(--r-card);
-  background:var(--navy);border:1px solid var(--gold-dim);
-  color:var(--cream-dim);font-size:12px;
-  box-shadow:var(--shadow-card);
-  animation:fadeInUp .25s ease;
+.search-filters input,.search-filters select{
+  padding:5px 10px;
+  background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  color:var(--text-primary);font-size:12px;font-family:inherit;
 }
-@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.search-filters input:focus,.search-filters select:focus{outline:none;border-color:var(--gold-dim)}
+.search-results{flex:1;overflow-y:auto;padding:12px 16px;background:var(--navy-deep)}
 
-/* ===== Export dropdown ===== */
+/* ═══════════════════════════════════════════
+   Reader TAB
+   ═══════════════════════════════════════════ */
+.reader-layout{flex:1;display:grid;grid-template-columns:180px 1fr;overflow:hidden}
+.reader-toc{
+  background:var(--navy);border-right:1px solid var(--navy-line);
+  overflow-y:auto;padding:12px;font-size:12px;
+}
+.reader-toc-item{
+  display:block;padding:4px 8px;margin-bottom:2px;border-radius:var(--r-soft);
+  color:var(--text-tertiary);text-decoration:none;cursor:pointer;
+  transition:color .15s,background .15s;
+}
+.reader-toc-item:hover{color:var(--text-primary);background:var(--navy-light)}
+.reader-toc-item.active{color:var(--gold);background:var(--navy-light)}
+.reader-body{
+  flex:1;overflow-y:auto;padding:32px 40px;
+  background:var(--navy-deep);max-width:700px;margin:0 auto;
+}
+@media(max-width:700px){
+  .reader-layout{grid-template-columns:1fr}
+  .reader-toc{display:none}
+  .reader-body{padding:20px 16px}
+}
+
+/* ── Layout / print-style pages ── */
+.layout-page{
+  background:var(--navy-light);border:1px solid var(--navy-line);border-radius:var(--r-card);
+  padding:28px 24px 32px;margin-bottom:12px;
+  font-family:var(--font-body);font-size:13px;line-height:1.85;min-height:200px;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+.layout-title{
+  text-align:center;font:600 16px/1.4 var(--font-display);color:var(--gold);
+  margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gold-line);letter-spacing:.5px;
+}
+.layout-scene{text-align:center;font-size:11px;color:var(--gold-dim);margin:14px 0 8px;letter-spacing:1px;text-transform:uppercase}
+.layout-dlg{margin-bottom:8px;padding-left:20px;text-indent:-20px}
+.layout-dlg .lspeaker{font-weight:700;margin-right:6px;display:inline}
+.layout-dlg .ltext{display:inline;color:var(--text-primary)}
+.layout-narr{margin:10px 0;padding:6px 16px;font-style:italic;color:var(--text-secondary);border-left:2px solid var(--gold-line)}
+.layout-cmd{margin:6px 0;text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary)}
+
+/* ═══════════════════════════════════════════
+   Status Bar (shared)
+   ═══════════════════════════════════════════ */
+.status-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 12px;border-top:1px solid var(--navy-line);
+  background:var(--navy);font-size:11px;color:var(--text-tertiary);
+  flex-shrink:0;
+}
+.status-bar .badge{
+  padding:1px 6px;border-radius:var(--r-sharp);
+  background:var(--navy-light);color:var(--text-secondary);font-size:10px;
+}
+.status-bar .badge.ok{color:var(--success)}
+.status-bar .badge.warn{color:var(--gold)}
+.shortcut-hints{display:flex;gap:6px;overflow:hidden}
+.shortcut-hints span{
+  padding:1px 6px;border-radius:3px;
+  background:var(--navy-light);color:var(--text-tertiary);font-size:10px;
+  white-space:nowrap;
+}
+
+/* ═══════════════════════════════════════════
+   Character Modal
+   ═══════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;
+  display:flex;align-items:center;justify-content:center;
+}
+.modal-box{
+  background:var(--navy);border:1px solid var(--navy-line);border-radius:var(--r-card);
+  padding:20px;width:340px;max-width:90vw;box-shadow:var(--shadow-lift);
+}
+.modal-box h3{margin:0 0 14px;font:600 14px/1 var(--font-display);color:var(--gold)}
+.modal-box label{display:block;font-size:12px;color:var(--text-secondary);margin-bottom:4px;margin-top:10px}
+.modal-box input{
+  width:100%;padding:6px 8px;
+  background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:var(--r-soft);
+  color:var(--text-primary);font-size:13px;font-family:inherit;box-sizing:border-box;
+}
+.modal-box input:focus{outline:none;border-color:var(--gold-dim)}
+.modal-box .color-row{display:flex;align-items:center;gap:8px}
+.modal-box .color-row input[type="color"]{width:32px;height:28px;padding:0;border:none;cursor:pointer;background:none}
+.modal-box .btn-row{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.modal-box .btn-row button{
+  padding:6px 16px;border-radius:var(--r-soft);font-size:12px;
+  border:1px solid var(--navy-line);background:transparent;color:var(--text-secondary);cursor:pointer;
+}
+.modal-box .btn-row button.primary{background:var(--gold-deep);color:var(--cream);border-color:var(--gold-dim)}
+.modal-box .btn-row button.danger{color:var(--danger);border-color:var(--danger)}
+
+/* ═══════════════════════════════════════════
+   Export Dropdown
+   ═══════════════════════════════════════════ */
+.export-wrap{position:relative;display:inline-flex}
 .export-menu{
   position:absolute;top:100%;right:0;z-index:50;
   min-width:180px;padding:4px;
   background:var(--navy);border:1px solid var(--navy-line);border-radius:var(--r-card);
-  box-shadow:var(--shadow-lift);
-  display:none;
+  box-shadow:var(--shadow-lift);display:none;
 }
 .export-menu.show{display:block}
 .export-menu button{
@@ -382,11 +381,34 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 }
 .export-menu button:hover{background:var(--navy-light);color:var(--text-primary)}
 .export-menu .menu-divider{height:1px;background:var(--navy-line);margin:4px 0}
+
+/* ═══════════════════════════════════════════
+   Toast
+   ═══════════════════════════════════════════ */
+#toast-container{
+  position:fixed;bottom:16px;right:16px;z-index:200;
+  display:flex;flex-direction:column;gap:6px;
+}
+.toast{
+  padding:8px 16px;border-radius:var(--r-card);
+  background:var(--navy);border:1px solid var(--gold-dim);
+  color:var(--cream-dim);font-size:12px;
+  box-shadow:var(--shadow-card);animation:fadeInUp .25s ease;
+}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════════
+   Outer app structure
+   ═══════════════════════════════════════════ */
+.app-shell{
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
 </style>
 </head>
 <body>
+<div class="app-shell">
 
-<!-- ===== Header toolbar ===== -->
+<!-- ═══════ Header ═══════ -->
 <header>
   <h1>SCRIPT EDITOR</h1>
   <span class="sep">/</span>
@@ -394,24 +416,41 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
   <span class="spacer"></span>
 
   <label class="tb file-label" title="開啟劇本檔案">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+      <path d="M14 2v6h6"/>
+    </svg>
     開啟
     <input type="file" id="file-input" accept=".txt,.md,.blocks.jsonl,.jsonl,.ks,.json">
   </label>
 
   <button class="tb" id="btn-new" title="新建劇本">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
     新建
   </button>
 
   <button class="tb" id="btn-save" title="下載 Plain Script">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
     儲存
   </button>
 
-  <div style="position:relative;display:inline-flex">
+  <div class="export-wrap">
     <button class="tb accent" id="btn-export" title="匯出">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/>
+        <polyline points="16 6 12 2 8 6"/>
+        <line x1="12" y1="2" x2="12" y2="15"/>
+      </svg>
       匯出
     </button>
     <div class="export-menu" id="export-menu">
@@ -428,70 +467,157 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
   </div>
 </header>
 
-<!-- ===== 3-column layout ===== -->
-<div class="app">
+<!-- ═══════ Tab Bar ═══════ -->
+<nav class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" data-tab="write">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20 2c-2 0-7 1-9 5-1 2-1.5 4-1.5 6H7l-2 4.5L3 22h2l1.5-3H12c0-2 .5-4 1.5-6 2-4 5-5 7-5l1-1c0-2-1-5-1.5-5z"/>
+    </svg>
+    速寫 Write
+  </button>
+  <button class="tab-btn" data-tab="editor">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 4l4 4-12 12H4v-4z"/>
+    </svg>
+    編輯 Editor
+  </button>
+  <button class="tab-btn" data-tab="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="7"/><path d="M16 16l4 4"/>
+    </svg>
+    搜尋 Search
+  </button>
+  <button class="tab-btn" data-tab="reader">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/>
+    </svg>
+    閱讀 Reader
+  </button>
+</nav>
 
-  <!-- Left: Characters -->
-  <aside class="panel-left">
-    <div class="panel-header">
-      <span>CHARACTERS</span>
-      <button id="btn-add-char">+ 新增</button>
-    </div>
-    <div class="char-list" id="char-list">
-      <div class="empty-chars">
-        尚未建立角色卡。<br>
-        編輯器會自動從劇本偵測角色，<br>
-        或點擊「+ 新增」手動建立。
-      </div>
-    </div>
-  </aside>
+<!-- ═══════ Tab Panels ═══════ -->
+<div class="tab-panels" id="tab-panels">
 
-  <!-- Center: Editor -->
-  <section class="editor-panel">
-    <div class="editor-toolbar">
-      <button class="tb" id="btn-undo" title="復原">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-      </button>
-      <button class="tb" id="btn-redo" title="重做">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.13-9.36L23 10"/></svg>
-      </button>
-      <span class="stat" id="line-count">0 行</span>
-      <span class="stat" id="block-count">0 blocks</span>
-      <span class="spacer"></span>
-      <span class="stat" id="char-count">0 字</span>
-    </div>
-    <div class="editor-wrap">
-      <textarea id="script-editor" placeholder="在此輸入劇本...&#10;&#10;格式範例：&#10;角色名：台詞內容&#10;旁白：場景描述&#10;#scene: 場景名稱&#10;// 這是註解" spellcheck="false"></textarea>
-    </div>
-    <div class="status-bar">
-      <span id="format-badge" class="badge">Plain Script</span>
-      <span id="parse-status"></span>
-      <span class="spacer"></span>
-      <span id="cursor-pos">Ln 1, Col 1</span>
+  <!-- ── Write TAB ── -->
+  <section id="tab-write" class="tab-panel active">
+    <div class="write-layout">
+      <!-- Characters sidebar -->
+      <aside class="panel-left">
+        <div class="panel-header">
+          <span>CHARACTERS</span>
+          <button id="btn-add-char">+ 新增</button>
+        </div>
+        <div class="char-list" id="char-list">
+          <div class="empty-chars">
+            尚未建立角色卡。<br>
+            編輯器會自動偵測角色，<br>
+            或點擊「+ 新增」手動建立。
+          </div>
+        </div>
+      </aside>
+
+      <!-- Editor center -->
+      <section class="editor-center">
+        <div class="editor-toolbar">
+          <button class="tb" id="btn-undo" title="復原 (Ctrl+Z)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+            </svg>
+          </button>
+          <button class="tb" id="btn-redo" title="重做 (Ctrl+Y)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.13-9.36L23 10"/>
+            </svg>
+          </button>
+          <span class="stat" id="line-count">0 行</span>
+          <span class="stat" id="block-count">0 blocks</span>
+          <span class="spacer"></span>
+          <span class="stat" id="char-count">0 字</span>
+        </div>
+        <div class="editor-wrap">
+          <textarea id="script-editor"
+            placeholder="在此輸入劇本...&#10;&#10;格式範例：&#10;角色名：台詞內容&#10;旁白：場景描述&#10;#scene：場景名稱&#10;// 這是註解"
+            spellcheck="false"></textarea>
+        </div>
+      </section>
+
+      <!-- Preview sidebar -->
+      <aside class="panel-right">
+        <div class="preview-tabs">
+          <button class="preview-tab active" data-preview="blocks">Blocks</button>
+          <button class="preview-tab" data-preview="layout">版面</button>
+          <button class="preview-tab" data-preview="stats">統計</button>
+          <button class="preview-tab" data-preview="voice">試聽</button>
+          <button class="preview-tab" data-preview="bgm">BGM</button>
+        </div>
+        <div class="preview-body" id="preview-body">
+          <div class="empty-preview">
+            在左側編輯器輸入劇本後，<br>
+            此處即時顯示解析結果。
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 
-  <!-- Right: Preview -->
-  <aside class="panel-right">
-    <div class="preview-tabs">
-      <button class="preview-tab active" data-tab="blocks">Blocks</button>
-      <button class="preview-tab" data-tab="layout">版面</button>
-      <button class="preview-tab" data-tab="stats">統計</button>
-      <button class="preview-tab" data-tab="voice">試聽</button>
-      <button class="preview-tab" data-tab="bgm">BGM</button>
+  <!-- ── Editor TAB ── -->
+  <section id="tab-editor" class="tab-panel">
+    <div class="tab-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 4l4 4-12 12H4v-4z"/>
+      </svg>
+      區塊編輯器<br>
+      <span style="font-size:11px">Phase 17-3 · 區塊卡片 CRUD、AVG 面板、TAG 系統</span>
     </div>
-    <div class="preview-body" id="preview-body">
-      <div class="empty-preview">
-        在左側編輯器輸入劇本後，<br>
-        此處即時顯示解析結果。
-      </div>
-    </div>
-  </aside>
-</div>
+  </section>
 
-<!-- Character edit modal (hidden) -->
-<div class="char-modal-overlay" id="char-modal" style="display:none">
-  <div class="char-modal">
+  <!-- ── Search TAB ── -->
+  <section id="tab-search" class="tab-panel">
+    <div class="tab-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/><path d="M16 16l4 4"/>
+      </svg>
+      搜尋面板<br>
+      <span style="font-size:11px">Phase 17-4 · 6 篩選器、結果卡片、匯出</span>
+    </div>
+  </section>
+
+  <!-- ── Reader TAB ── -->
+  <section id="tab-reader" class="tab-panel">
+    <div class="tab-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 4h7a3 3 0 013 3v13a2 2 0 00-2-2H4zM20 4h-7a3 3 0 00-3 3v13a2 2 0 012-2h8z"/>
+      </svg>
+      閱讀模式<br>
+      <span style="font-size:11px">Phase 17-5 · 連續排版、目錄、分歧選項</span>
+    </div>
+  </section>
+
+</div><!-- /tab-panels -->
+
+<!-- ═══════ Status Bar ═══════ -->
+<footer class="status-bar" id="status-bar">
+  <span id="format-badge" class="badge">Plain Script</span>
+  <span id="parse-status"></span>
+  <span class="spacer"></span>
+  <span class="shortcut-hints" id="shortcut-hints"></span>
+  <span id="cursor-pos">Ln 1, Col 1</span>
+</footer>
+
+</div><!-- /app-shell -->
+
+<!-- ═══════ Character Modal ═══════ -->
+<div class="modal-overlay" id="char-modal" style="display:none">
+  <div class="modal-box">
     <h3 id="char-modal-title">新增角色</h3>
     <label>顯示名稱 *</label>
     <input id="char-input-name" placeholder="例：零韻">
@@ -504,7 +630,7 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
     </div>
     <div class="btn-row">
       <button id="char-btn-delete" class="danger" style="display:none">刪除</button>
-      <span class="spacer" style="flex:1"></span>
+      <span style="flex:1"></span>
       <button id="char-btn-cancel">取消</button>
       <button id="char-btn-save" class="primary">儲存</button>
     </div>
@@ -513,374 +639,228 @@ header .sep{color:var(--text-tertiary);font-size:11px;margin:0 2px}
 
 <div id="toast-container"></div>
 
-<!-- ====== Script ====== -->
+<!-- ═══════ Module Script ═══════ -->
 <script type="module">
+import {
+  AppState, Bus, ShortcutManager, Storage,
+  esc, debounce, downloadFile, generateId, icon,
+  parsePlainScript, blocksToPlainScript, importBlocks,
+  validateBlock, validateBlocks,
+  loadCharacters, saveCharacter, deleteCharacter,
+  resolveCharacterId, getCharColor, detectNewSpeakers, autoRegisterSpeakers,
+  BLOCK_TYPES, TAG_PALETTE, TAG_CATEGORIES, ICONS,
+} from './data-model.js';
 
 /* ──────────────────────────────────────────
-   State
+   DOM Refs
    ────────────────────────────────────────── */
-const state = {
-  filename: 'untitled.txt',
-  format: 'plain-script',   // plain-script | blocks-jsonl
-  blocks: [],
-  characters: [],            // Character DB
-  content: '',
-  dirty: false,
-  undoStack: [],
-  redoStack: [],
-  previewTab: 'blocks',
-  voice: { speed: 1.0, pitch: 1.0, voiceId: '', includeNarration: false },
-};
+const $editor       = document.getElementById('script-editor');
+const $filenameDisp = document.getElementById('filename-display');
+const $charList     = document.getElementById('char-list');
+const $previewBody  = document.getElementById('preview-body');
+const $lineCount    = document.getElementById('line-count');
+const $blockCount   = document.getElementById('block-count');
+const $charCount    = document.getElementById('char-count');
+const $cursorPos    = document.getElementById('cursor-pos');
+const $formatBadge  = document.getElementById('format-badge');
+const $parseStatus  = document.getElementById('parse-status');
+const $shortcutBar  = document.getElementById('shortcut-hints');
+const $toastBox     = document.getElementById('toast-container');
 
 /* ──────────────────────────────────────────
-   Character DB (separate IndexedDB)
+   Toast
    ────────────────────────────────────────── */
-const CHAR_DB_NAME = 'script-editor-characters';
-const CHAR_DB_VERSION = 1;
-let _charDb = null;
-
-function openCharDB() {
-  if (_charDb) return Promise.resolve(_charDb);
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(CHAR_DB_NAME, CHAR_DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains('characters')) {
-        db.createObjectStore('characters', { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = () => { _charDb = req.result; resolve(_charDb); };
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function loadCharacters() {
-  const db = await openCharDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('characters', 'readonly');
-    const store = tx.objectStore('characters');
-    const req = store.getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function saveCharacter(char) {
-  const db = await openCharDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('characters', 'readwrite');
-    tx.objectStore('characters').put(char);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-async function deleteCharacter(id) {
-  const db = await openCharDB();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction('characters', 'readwrite');
-    tx.objectStore('characters').delete(id);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
+function toast(msg) {
+  const el = document.createElement('div');
+  el.className = 'toast'; el.textContent = msg;
+  $toastBox.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0'; el.style.transition = 'opacity .3s';
+    setTimeout(() => el.remove(), 300);
+  }, 2500);
 }
 
 /* ──────────────────────────────────────────
-   Parser — Plain Script → blocks
+   Tab Switching
    ────────────────────────────────────────── */
-function parseBlocks(content) {
-  if (!content.trim()) return [];
-  const lines = content.split('\n');
-  const blocks = [];
-  const DIALOGUE_RE = /^([^#/\n][^：:]{0,20})[：:](.+)/;
-  const COMMAND_RE = /^#(\w[\w.-]*)\s*[:：]\s*(.+)/;
-  const COMMENT_RE = /^\s*\/\//;
+const $tabBtns   = document.querySelectorAll('#tab-bar .tab-btn');
+const $tabPanels = document.querySelectorAll('#tab-panels .tab-panel');
 
-  for (const raw of lines) {
-    const line = raw.trimEnd();
-    if (!line || COMMENT_RE.test(line)) continue;
-
-    const cmdMatch = line.match(COMMAND_RE);
-    if (cmdMatch) {
-      blocks.push({ type: 'command', command: cmdMatch[1].trim(), value: cmdMatch[2].trim() });
-      continue;
-    }
-
-    const dlgMatch = line.match(DIALOGUE_RE);
-    if (dlgMatch) {
-      const speaker = dlgMatch[1].trim();
-      const text = dlgMatch[2].trim();
-      if (speaker === '旁白' || speaker === 'Narrator' || speaker === 'narrator') {
-        blocks.push({ type: 'narration', text });
-      } else {
-        blocks.push({ type: 'dialogue', speaker, text, speakerId: resolveSpeakerId(speaker) });
-      }
-      continue;
-    }
-
-    // Fallback: narration
-    blocks.push({ type: 'narration', text: line.trim() });
-  }
-  return blocks;
+function switchTab(tabId) {
+  AppState.set('activeTab', tabId);
+  $tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  $tabPanels.forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabId));
+  Bus.emit('tab:switched', tabId);
 }
 
-function parseBlocksJsonl(content) {
-  const blocks = [];
-  for (const line of content.split('\n')) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try { blocks.push(JSON.parse(trimmed)); } catch {}
-  }
-  return blocks;
-}
+document.getElementById('tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (btn) switchTab(btn.dataset.tab);
+});
 
 /* ──────────────────────────────────────────
-   Reverse parsers — external formats → blocks  (8-G)
+   Preview Sub-Tabs (Write tab right panel)
    ────────────────────────────────────────── */
-
-/** AVG JSON → blocks  (full fidelity) */
-function parseAvgJson(text) {
-  try {
-    const obj = JSON.parse(text);
-    // { title, blocks: [...] }  or bare array
-    const arr = Array.isArray(obj) ? obj : (obj.blocks || []);
-    return arr.filter(b => b && b.type);
-  } catch { return []; }
-}
-
-/** TyranoScript .ks → blocks  (best-effort) */
-function parseTyranoScript(text) {
-  const blocks = [];
-  let currentSpeaker = null;
-  for (const raw of text.split('\n')) {
-    const line = raw.trimEnd();
-    if (!line || line === '[p]' || line === '[l]') continue;
-
-    // Speaker tag:  #角色名
-    const spk = line.match(/^#(.+)/);
-    if (spk && !/^\[/.test(spk[1])) { currentSpeaker = spk[1].trim(); continue; }
-
-    // Commands: [tag key=value ...]
-    const tagMatch = line.match(/^\[(\w+)\s*(.*?)\]$/);
-    if (tagMatch) {
-      const tag = tagMatch[1]; const attrs = tagMatch[2];
-      if (tag === 'cm' || tag === 'er') { currentSpeaker = null; continue; }
-      if (tag === 'scene') {
-        const v = attrs.match(/value="([^"]+)"/);
-        blocks.push({ type: 'command', command: 'scene', value: v ? v[1] : attrs });
-        continue;
-      }
-      if (tag === 'playbgm') {
-        const s = attrs.match(/storage="([^"]+)"/);
-        blocks.push({ type: 'command', command: 'bgm', value: s ? s[1] : attrs });
-        continue;
-      }
-      if (tag === 'playse') {
-        const s = attrs.match(/storage="([^"]+)"/);
-        blocks.push({ type: 'command', command: 'se', value: s ? s[1] : attrs });
-        continue;
-      }
-      // Generic tag → command
-      blocks.push({ type: 'command', command: tag, value: attrs || '' });
-      continue;
-    }
-
-    // Text line — strip inline [p] [l] [r]
-    let cleaned = line.replace(/\[p\]|\[l\]|\[r\]|\[cm\]|\[er\]/g, '').trim();
-    if (!cleaned) continue;
-
-    if (currentSpeaker) {
-      blocks.push({ type: 'dialogue', speaker: currentSpeaker, text: cleaned });
-    } else {
-      blocks.push({ type: 'narration', text: cleaned });
-    }
-  }
-  return blocks;
-}
-
-/** Exported Markdown → blocks  (best-effort)
- *  Recognises patterns from blocksToMarkdown():
- *    **角色**：台詞
- *    *旁白文字*
- *    `#command: value`
- */
-function parseMarkdownScript(text) {
-  const blocks = [];
-  for (const raw of text.split('\n')) {
-    const line = raw.trim();
-    if (!line) continue;
-    // Skip heading lines
-    if (/^#{1,3}\s/.test(line)) continue;
-    if (line === '---') continue;
-
-    // Command: `#cmd: val`
-    const cmdMatch = line.match(/^`#([\w.-]+)\s*[:：]\s*(.+)`$/);
-    if (cmdMatch) {
-      blocks.push({ type: 'command', command: cmdMatch[1], value: cmdMatch[2] });
-      continue;
-    }
-
-    // Dialogue: **speaker**：text  or  **speaker**: text
-    const dlgMatch = line.match(/^\*\*(.+?)\*\*\s*[：:]\s*(.+)/);
-    if (dlgMatch) {
-      const speaker = dlgMatch[1].trim();
-      const txt = dlgMatch[2].trim();
-      if (speaker === '旁白' || speaker === 'Narrator') {
-        blocks.push({ type: 'narration', text: txt });
-      } else {
-        blocks.push({ type: 'dialogue', speaker, text: txt });
-      }
-      continue;
-    }
-
-    // Narration: *italic text*  (whole line)
-    const narrMatch = line.match(/^\*(.+)\*$/);
-    if (narrMatch) {
-      blocks.push({ type: 'narration', text: narrMatch[1].trim() });
-      continue;
-    }
-
-    // Fallback narration
-    if (line.length > 1) {
-      blocks.push({ type: 'narration', text: line });
-    }
-  }
-  return blocks;
-}
-
-/** Blocks → Plain Script text  (round-trip core) */
-function blocksToPlainScript(blocks) {
-  const lines = [];
-  for (const b of blocks) {
-    if (b.type === 'command') {
-      lines.push(`#${b.command}：${b.value}`);
-    } else if (b.type === 'narration') {
-      lines.push(`旁白：${b.text}`);
-    } else if (b.type === 'dialogue') {
-      lines.push(`${b.speaker}：${b.text}`);
-    }
-  }
-  return lines.join('\n');
-}
-
-/** Detect file format + convert for import */
-function importAsPlainScript(text, filename) {
-  const ext = (filename || '').toLowerCase();
-  let blocks = null;
-  let via = '';
-
-  if (ext.endsWith('.blocks.jsonl') || ext.endsWith('.jsonl')) {
-    blocks = parseBlocksJsonl(text);
-    via = 'blocks.jsonl';
-  } else if (ext.endsWith('.ks')) {
-    blocks = parseTyranoScript(text);
-    via = 'TyranoScript';
-  } else if (ext.endsWith('.json')) {
-    // Try AVG JSON first
-    blocks = parseAvgJson(text);
-    via = 'AVG JSON';
-    if (!blocks.length) { blocks = null; } // not valid AVG JSON, treat as text
-  } else if (ext.endsWith('.md')) {
-    blocks = parseMarkdownScript(text);
-    via = 'Markdown';
-    if (!blocks.length) { blocks = null; }
-  }
-
-  if (blocks && blocks.length) {
-    return { plainScript: blocksToPlainScript(blocks), blocks, via };
-  }
-  return null; // no conversion needed, treat as raw Plain Script
-}
-
-function resolveSpeakerId(speakerName) {
-  for (const c of state.characters) {
-    if (c.displayName === speakerName) return c.id;
-    if (c.aliases && c.aliases.some(a => a === speakerName)) return c.id;
-  }
-  return null;
-}
-
-/* ──────────────────────────────────────────
-   Auto-detect characters from blocks
-   ────────────────────────────────────────── */
-function detectNewSpeakers(blocks) {
-  const known = new Set();
-  for (const c of state.characters) {
-    known.add(c.displayName);
-    if (c.aliases) c.aliases.forEach(a => known.add(a));
-  }
-  const newSpeakers = new Set();
-  for (const b of blocks) {
-    if (b.type === 'dialogue' && b.speaker && !known.has(b.speaker)) {
-      newSpeakers.add(b.speaker);
-    }
-  }
-  return [...newSpeakers];
-}
-
-async function autoRegisterSpeakers(blocks) {
-  const newNames = detectNewSpeakers(blocks);
-  if (!newNames.length) return false;
-  const PALETTE = ['#C9A86A','#6aae7f','#7aa3cc','#c4604f','#b07acc','#cc9a6a','#6accc0','#cc6a8a','#8a8acc','#aab06a'];
-  for (const name of newNames) {
-    const char = {
-      id: 'char_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
-      displayName: name,
-      aliases: [],
-      color: PALETTE[state.characters.length % PALETTE.length],
-      createdAt: Date.now(),
-    };
-    state.characters.push(char);
-    await saveCharacter(char);
-  }
-  return true;
-}
+document.querySelector('.preview-tabs')?.addEventListener('click', e => {
+  const btn = e.target.closest('.preview-tab');
+  if (!btn) return;
+  document.querySelectorAll('.preview-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  AppState.set('previewTab', btn.dataset.preview);
+  renderPreview();
+});
 
 /* ──────────────────────────────────────────
    Undo / Redo
    ────────────────────────────────────────── */
 let _lastSnapshot = '';
+
 function pushUndo() {
-  const cur = editor.value;
+  const cur = $editor.value;
   if (cur === _lastSnapshot) return;
-  state.undoStack.push(_lastSnapshot);
-  if (state.undoStack.length > 100) state.undoStack.shift();
-  state.redoStack.length = 0;
+  const stack = AppState.get('undoStack');
+  stack.push(_lastSnapshot);
+  if (stack.length > 100) stack.shift();
+  AppState.get('redoStack').length = 0;
   _lastSnapshot = cur;
 }
+
 function doUndo() {
-  if (!state.undoStack.length) return;
-  state.redoStack.push(editor.value);
-  editor.value = state.undoStack.pop();
-  _lastSnapshot = editor.value;
+  const stack = AppState.get('undoStack');
+  if (!stack.length) return;
+  AppState.get('redoStack').push($editor.value);
+  $editor.value = stack.pop();
+  _lastSnapshot = $editor.value;
   onContentChange();
 }
+
 function doRedo() {
-  if (!state.redoStack.length) return;
-  state.undoStack.push(editor.value);
-  editor.value = state.redoStack.pop();
-  _lastSnapshot = editor.value;
+  const stack = AppState.get('redoStack');
+  if (!stack.length) return;
+  AppState.get('undoStack').push($editor.value);
+  $editor.value = stack.pop();
+  _lastSnapshot = $editor.value;
+  onContentChange();
+}
+
+document.getElementById('btn-undo').addEventListener('click', doUndo);
+document.getElementById('btn-redo').addEventListener('click', doRedo);
+
+/* ──────────────────────────────────────────
+   Content Change Handler (Write tab)
+   ────────────────────────────────────────── */
+const debouncedParse = debounce(() => {
+  const text = $editor.value;
+  AppState.set('content', text);
+
+  // Parse
+  const blocks = parsePlainScript(text);
+  AppState.set('blocks', blocks);
+
+  // Auto-detect characters
+  autoRegisterSpeakers(blocks).then(added => {
+    if (added.length) {
+      toast(`偵測到新角色：${added.map(c => c.displayName).join('、')}`);
+      renderCharList();
+      ShortcutManager.autoBind();
+    }
+  });
+
+  // Update stats
+  const lines = text.split('\n');
+  $lineCount.textContent  = lines.length + ' 行';
+  $blockCount.textContent = blocks.length + ' blocks';
+  $charCount.textContent  = text.length + ' 字';
+
+  // Validation badge
+  const v = blocks.length ? validateBlocks(blocks, AppState.get('characters')) : { valid: true, results: [] };
+  $parseStatus.textContent = v.valid ? '' : `${v.results.length} 問題`;
+  $parseStatus.className   = v.valid ? '' : 'badge warn';
+
+  // Auto-save draft
+  Storage.savePlainText(text);
+  Storage.saveDraft(blocks);
+
+  renderPreview();
+}, 300);
+
+function onContentChange() {
+  debouncedParse();
+}
+
+$editor.addEventListener('input', () => { pushUndo(); onContentChange(); });
+
+// Cursor position tracking
+$editor.addEventListener('keyup',     updateCursor);
+$editor.addEventListener('click',     updateCursor);
+$editor.addEventListener('mouseup',   updateCursor);
+
+function updateCursor() {
+  const pos = $editor.selectionStart;
+  const lines = $editor.value.slice(0, pos).split('\n');
+  $cursorPos.textContent = `Ln ${lines.length}, Col ${lines[lines.length - 1].length + 1}`;
+}
+
+// Keyboard shortcuts in editor
+$editor.addEventListener('keydown', e => {
+  // Ctrl+Z / Ctrl+Y
+  if (e.ctrlKey && e.key === 'z') { e.preventDefault(); doUndo(); return; }
+  if (e.ctrlKey && e.key === 'y') { e.preventDefault(); doRedo(); return; }
+
+  // Alt+1 ~ Alt+9 shortcuts
+  if (e.altKey && /^[1-9]$/.test(e.key)) {
+    e.preventDefault();
+    const binding = ShortcutManager.resolve(`Alt+${e.key}`);
+    if (!binding) return;
+
+    if (binding.type === 'scene') {
+      insertAtCursor('#scene：');
+    } else if (binding.type === 'narration') {
+      insertAtCursor('旁白：');
+    } else if (binding.type === 'character') {
+      const chars = AppState.get('characters') || [];
+      const c = chars.find(ch => ch.id === binding.charId);
+      if (c) insertAtCursor(c.displayName + '：');
+    }
+    return;
+  }
+});
+
+function insertAtCursor(text) {
+  const start = $editor.selectionStart;
+  const end   = $editor.selectionEnd;
+  const val   = $editor.value;
+
+  // If cursor is not at line start, add newline first
+  const prefix = (start > 0 && val[start - 1] !== '\n') ? '\n' : '';
+
+  pushUndo();
+  $editor.value = val.slice(0, start) + prefix + text + val.slice(end);
+  const newPos = start + prefix.length + text.length;
+  $editor.selectionStart = $editor.selectionEnd = newPos;
+  $editor.focus();
   onContentChange();
 }
 
 /* ──────────────────────────────────────────
-   Render — Character list
+   Render — Character List (Write tab)
    ────────────────────────────────────────── */
 function renderCharList() {
-  const el = document.getElementById('char-list');
-  if (!state.characters.length) {
-    el.innerHTML = '<div class="empty-chars">尚未建立角色卡。<br>編輯器會自動從劇本偵測角色，<br>或點擊「+ 新增」手動建立。</div>';
+  const chars = AppState.get('characters') || [];
+  if (!chars.length) {
+    $charList.innerHTML = '<div class="empty-chars">尚未建立角色卡。<br>編輯器會自動偵測角色，<br>或點擊「+ 新增」手動建立。</div>';
     return;
   }
-  // count lines per speaker
+
+  const blocks = AppState.get('blocks') || [];
   const counts = {};
-  for (const b of state.blocks) {
+  for (const b of blocks) {
     if (b.speaker) counts[b.speaker] = (counts[b.speaker] || 0) + 1;
   }
 
-  el.innerHTML = state.characters.map(c => {
+  $charList.innerHTML = chars.map(c => {
     const n = counts[c.displayName] || 0;
-    const aliasStr = c.aliases && c.aliases.length ? c.aliases.join(', ') : '';
+    const aliasStr = c.aliases?.length ? c.aliases.join(', ') : '';
     return `<div class="char-card" data-id="${c.id}">
       <span class="char-dot" style="background:${c.color || 'var(--gold)'}"></span>
       <div class="char-info">
@@ -894,936 +874,397 @@ function renderCharList() {
     </div>`;
   }).join('');
 
-  // click to edit
-  el.querySelectorAll('[data-action="edit"]').forEach(btn => {
+  $charList.querySelectorAll('[data-action="edit"]').forEach(btn => {
     btn.addEventListener('click', e => { e.stopPropagation(); openCharModal(btn.dataset.id); });
   });
 }
 
 /* ──────────────────────────────────────────
-   Render — Blocks preview
+   Render — Preview (Write tab right panel)
    ────────────────────────────────────────── */
-function renderBlocksPreview() {
-  const body = document.getElementById('preview-body');
-  if (state.previewTab !== 'blocks') return;
-  if (!state.blocks.length) {
-    body.innerHTML = '<div class="empty-preview">在左側編輯器輸入劇本後，<br>此處即時顯示解析結果。</div>';
+function renderPreview() {
+  const tab = AppState.get('previewTab');
+  const blocks = AppState.get('blocks') || [];
+
+  if (tab === 'blocks')  return renderBlocksPreview(blocks);
+  if (tab === 'stats')   return renderStatsPreview(blocks);
+  if (tab === 'layout')  return renderLayoutPreview(blocks);
+  if (tab === 'voice')   return renderVoicePreview();
+  if (tab === 'bgm')     return renderBgmPreview();
+}
+
+function renderBlocksPreview(blocks) {
+  if (!blocks.length) {
+    $previewBody.innerHTML = '<div class="empty-preview">在左側編輯器輸入劇本後，<br>此處即時顯示解析結果。</div>';
     return;
   }
-  body.innerHTML = state.blocks.map((b, i) => {
+  $previewBody.innerHTML = blocks.map((b, i) => {
     const num = `<span class="block-number">#${i + 1}</span>`;
-    if (b.type === 'command') {
+    if (b.type === 'command')
       return `<div class="block-card command">${num}<span class="block-cmd">#${esc(b.command)}: ${esc(b.value)}</span></div>`;
-    }
-    if (b.type === 'narration') {
+    if (b.type === 'narration')
       return `<div class="block-card narration">${num}<div class="block-text" style="font-style:italic;color:var(--text-secondary)">${esc(b.text)}</div></div>`;
-    }
+    if (b.type === 'scene')
+      return `<div class="block-card scene">${num}<div class="block-text" style="color:var(--gold)">${esc(b.act || '')} ${esc(b.subtitle || '')}</div></div>`;
+    if (b.type === 'note')
+      return `<div class="block-card note">${num}<div class="block-text" style="color:var(--text-tertiary);font-style:italic">${esc(b.text)}</div></div>`;
+
     // dialogue
     const color = getCharColor(b.speaker);
-    const playBtn = _hasTTS ? `<button class="block-play" data-voice-idx="${i}" title="試聽此台詞">&#9654;</button>` : '';
-    return `<div class="block-card dialogue">${num}${playBtn}
+    return `<div class="block-card dialogue">${num}
       <div class="block-speaker"><span class="dot" style="background:${color}"></span><span style="color:${color}">${esc(b.speaker)}</span></div>
       <div class="block-text">${esc(b.text)}</div>
-      ${b.emotion ? `<div class="block-meta">emotion: ${esc(b.emotion)}</div>` : ''}
     </div>`;
   }).join('');
 }
 
-function renderStatsPreview() {
-  const body = document.getElementById('preview-body');
-  if (state.previewTab !== 'stats') return;
+function renderStatsPreview(blocks) {
+  const dlg  = blocks.filter(b => b.type === 'dialogue');
+  const narr = blocks.filter(b => b.type === 'narration');
+  const speakers = {};
+  for (const b of dlg) speakers[b.speaker] = (speakers[b.speaker] || 0) + 1;
+  const sorted = Object.entries(speakers).sort((a, b) => b[1] - a[1]);
 
-  const total = state.blocks.length;
-  const dialogues = state.blocks.filter(b => b.type === 'dialogue').length;
-  const narrations = state.blocks.filter(b => b.type === 'narration').length;
-  const commands = state.blocks.filter(b => b.type === 'command').length;
-
-  // speaker ranking
-  const speakerCounts = {};
-  for (const b of state.blocks) {
-    if (b.speaker) speakerCounts[b.speaker] = (speakerCounts[b.speaker] || 0) + 1;
-  }
-  const ranking = Object.entries(speakerCounts).sort((a, b) => b[1] - a[1]);
-  const totalChars = state.blocks.reduce((s, b) => s + (b.text || '').length, 0);
-
-  body.innerHTML = `
+  $previewBody.innerHTML = `
     <div class="stats-grid">
-      <div class="stat-box"><div class="val">${total}</div><div class="lbl">Total Blocks</div></div>
-      <div class="stat-box"><div class="val">${dialogues}</div><div class="lbl">Dialogue</div></div>
-      <div class="stat-box"><div class="val">${narrations}</div><div class="lbl">Narration</div></div>
-      <div class="stat-box"><div class="val">${commands}</div><div class="lbl">Commands</div></div>
+      <div class="stat-box"><div class="val">${blocks.length}</div><div class="lbl">區塊</div></div>
+      <div class="stat-box"><div class="val">${dlg.length}</div><div class="lbl">對白</div></div>
+      <div class="stat-box"><div class="val">${narr.length}</div><div class="lbl">旁白</div></div>
+      <div class="stat-box"><div class="val">${Object.keys(speakers).length}</div><div class="lbl">角色</div></div>
     </div>
-    <div class="stat-box" style="margin-bottom:12px"><div class="val">${totalChars.toLocaleString()}</div><div class="lbl">Total Characters</div></div>
-    <div class="panel-header" style="padding:0 0 6px;border:none"><span>SPEAKER RANKING</span></div>
-    ${ranking.map(([name, count], i) => {
-      const pct = total ? Math.round(count / dialogues * 100) : 0;
-      const color = getCharColor(name);
-      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px">
-        <span style="color:var(--text-tertiary);width:16px;text-align:right">${i + 1}.</span>
-        <span class="dot" style="background:${color};width:8px;height:8px;border-radius:50%;flex-shrink:0"></span>
-        <span style="flex:1;color:var(--text-primary)">${esc(name)}</span>
-        <span style="color:var(--text-secondary)">${count}</span>
-        <span style="color:var(--text-tertiary)">${pct}%</span>
+    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:6px">台詞分布</div>
+    ${sorted.map(([s, n]) => {
+      const pct = Math.round(n / dlg.length * 100) || 0;
+      const color = getCharColor(s);
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px">
+        <span style="min-width:70px;color:${color};text-align:right">${esc(s)}</span>
+        <div style="flex:1;height:12px;background:var(--navy-light);border-radius:2px;overflow:hidden">
+          <div style="width:${pct}%;height:100%;background:${color};opacity:.7;border-radius:2px"></div>
+        </div>
+        <span style="min-width:28px;color:var(--text-tertiary);font-size:11px">${n}</span>
       </div>`;
-    }).join('')}
-  `;
+    }).join('')}`;
 }
 
-function getCharColor(speakerName) {
-  const c = state.characters.find(c => c.displayName === speakerName || (c.aliases && c.aliases.includes(speakerName)));
-  return c ? c.color : 'var(--text-secondary)';
-}
-
-function renderLayoutPreview() {
-  const body = document.getElementById('preview-body');
-  if (state.previewTab !== 'layout') return;
-  if (!state.blocks.length) {
-    body.innerHTML = '<div class="empty-preview">輸入劇本後，此處顯示排版預覽。<br>版面對應 PDF / DOCX 匯出結果。</div>';
+function renderLayoutPreview(blocks) {
+  if (!blocks.length) {
+    $previewBody.innerHTML = '<div class="empty-preview">先寫點劇本吧。</div>';
     return;
   }
-  const title = state.filename.replace(/\.\w+$/, '') || 'Script';
-  let currentScene = '';
-  const items = state.blocks.map(b => {
-    if (b.type === 'command') {
-      if (b.command === 'scene' || b.command === 'location') {
-        currentScene = b.value;
-        return `<div class="layout-scene">— ${esc(b.value)} —</div>`;
-      }
-      return `<div class="layout-cmd">[${esc(b.command)}: ${esc(b.value)}]</div>`;
+  const title = AppState.get('filename').replace(/\.\w+$/, '') || '未命名';
+  let html = `<div class="layout-page"><div class="layout-title">${esc(title)}</div>`;
+
+  for (const b of blocks) {
+    if (b.type === 'command' && b.command === 'scene') {
+      html += `<div class="layout-scene">${esc(b.value)}</div>`;
+    } else if (b.type === 'scene') {
+      html += `<div class="layout-scene">${esc(b.act || '')} ${esc(b.subtitle || '')}</div>`;
+    } else if (b.type === 'narration') {
+      html += `<div class="layout-narr">${esc(b.text)}</div>`;
+    } else if (b.type === 'dialogue') {
+      const color = getCharColor(b.speaker);
+      html += `<div class="layout-dlg"><span class="lspeaker" style="color:${color}">${esc(b.speaker)}</span><span class="ltext">${esc(b.text)}</span></div>`;
+    } else if (b.type === 'command') {
+      html += `<div class="layout-cmd">[${esc(b.command)}: ${esc(b.value)}]</div>`;
     }
-    if (b.type === 'narration') {
-      return `<div class="layout-narr">${esc(b.text)}</div>`;
-    }
-    const color = getCharColor(b.speaker);
-    return `<div class="layout-dlg"><span class="lspeaker" style="color:${color}">${esc(b.speaker)}</span><span class="ltext">${esc(b.text)}</span></div>`;
-  }).join('\n');
-
-  body.innerHTML = `
-    <div class="layout-toolbar">
-      <button class="tb" id="btn-layout-print" title="列印 / 另存 PDF">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        列印預覽
-      </button>
-      <button class="tb" id="btn-layout-docx" title="匯出 DOCX">DOCX</button>
-      <span class="spacer"></span>
-      <span style="font-size:11px;color:var(--text-tertiary)">${state.blocks.length} blocks</span>
-    </div>
-    <div class="layout-page">
-      <div class="layout-title">${esc(title)}</div>
-      ${items}
-    </div>`;
-
-  // Wire inline buttons
-  body.querySelector('#btn-layout-print')?.addEventListener('click', () => doExport('pdf'));
-  body.querySelector('#btn-layout-docx')?.addEventListener('click', () => doExport('docx'));
-}
-
-function renderPreview() {
-  if (state.previewTab === 'blocks') renderBlocksPreview();
-  else if (state.previewTab === 'layout') renderLayoutPreview();
-  else if (state.previewTab === 'stats') renderStatsPreview();
-  else if (state.previewTab === 'voice') renderVoicePreview();
-  else if (state.previewTab === 'bgm') renderBgmPreview();
-}
-
-/* ──────────────────────────────────────────
-   Voice Preview Engine (Phase 14-A)
-   ────────────────────────────────────────── */
-const _hasTTS = typeof speechSynthesis !== 'undefined';
-let _voiceList = [];
-let _voiceSpeaking = false;
-let _voiceQueue = [];
-let _voiceQueueIdx = -1;
-let _voiceQueueActive = false;
-
-if (_hasTTS) {
-  const loadVoices = () => { _voiceList = speechSynthesis.getVoices(); };
-  loadVoices();
-  speechSynthesis.addEventListener('voiceschanged', loadVoices);
-}
-
-function speakBlock(blockIdx) {
-  if (!_hasTTS) return;
-  const b = state.blocks[blockIdx];
-  if (!b || !b.text) return;
-  speechSynthesis.cancel();
-
-  const utt = new SpeechSynthesisUtterance(b.text);
-  utt.rate = state.voice.speed;
-  utt.pitch = state.voice.pitch;
-  if (state.voice.voiceId) {
-    const v = _voiceList.find(x => x.name === state.voice.voiceId);
-    if (v) utt.voice = v;
   }
-
-  const btn = document.querySelector(`.block-play[data-voice-idx="${blockIdx}"]`);
-  utt.onstart = () => { _voiceSpeaking = true; btn?.classList.add('speaking'); updateVoiceStatus(); };
-  utt.onend = () => { _voiceSpeaking = false; btn?.classList.remove('speaking'); updateVoiceStatus(); };
-  utt.onerror = () => { _voiceSpeaking = false; btn?.classList.remove('speaking'); updateVoiceStatus(); };
-
-  speechSynthesis.speak(utt);
-}
-
-function buildVoiceQueue() {
-  _voiceQueue = [];
-  for (let i = 0; i < state.blocks.length; i++) {
-    const b = state.blocks[i];
-    if (b.type === 'dialogue') _voiceQueue.push({ idx: i, ...b });
-    else if (b.type === 'narration' && state.voice.includeNarration) _voiceQueue.push({ idx: i, ...b });
-  }
-  return _voiceQueue;
-}
-
-async function playVoiceQueue(startFrom = 0) {
-  if (!_hasTTS || _voiceQueueActive) return;
-  buildVoiceQueue();
-  if (!_voiceQueue.length) return;
-  _voiceQueueActive = true;
-  _voiceQueueIdx = startFrom;
-  renderVoicePreview();
-
-  for (let i = startFrom; i < _voiceQueue.length; i++) {
-    if (!_voiceQueueActive) break;
-    _voiceQueueIdx = i;
-    renderVoiceQueueList();
-
-    const item = _voiceQueue[i];
-    await new Promise((resolve, reject) => {
-      const utt = new SpeechSynthesisUtterance(item.text);
-      utt.rate = state.voice.speed;
-      utt.pitch = state.voice.pitch;
-      if (state.voice.voiceId) {
-        const v = _voiceList.find(x => x.name === state.voice.voiceId);
-        if (v) utt.voice = v;
-      }
-      utt.onend = resolve;
-      utt.onerror = (e) => { e.error === 'canceled' ? resolve() : resolve(); };
-      _voiceSpeaking = true;
-      updateVoiceStatus();
-      speechSynthesis.speak(utt);
-    });
-    _voiceSpeaking = false;
-  }
-
-  _voiceQueueActive = false;
-  _voiceSpeaking = false;
-  updateVoiceStatus();
-  renderVoiceQueueList();
-}
-
-function stopVoiceQueue() {
-  _voiceQueueActive = false;
-  if (_hasTTS) speechSynthesis.cancel();
-  _voiceSpeaking = false;
-  updateVoiceStatus();
-  renderVoiceQueueList();
-}
-
-function updateVoiceStatus() {
-  const el = document.getElementById('voice-status');
-  if (!el) return;
-  if (_voiceQueueActive) {
-    el.textContent = `播放中 ${_voiceQueueIdx + 1}/${_voiceQueue.length}`;
-  } else if (_voiceSpeaking) {
-    el.textContent = '播放中…';
-  } else {
-    el.textContent = '待命';
-  }
+  html += '</div>';
+  $previewBody.innerHTML = html;
 }
 
 function renderVoicePreview() {
-  const body = document.getElementById('preview-body');
-  if (state.previewTab !== 'voice') return;
-
-  if (!_hasTTS) {
-    body.innerHTML = '<div class="voice-unavailable">此瀏覽器不支援語音合成（Web Speech API）。<br>請使用 Chrome 或 Edge。</div>';
-    return;
-  }
-
-  const dialogueCount = state.blocks.filter(b => b.type === 'dialogue').length;
-  if (!dialogueCount) {
-    body.innerHTML = '<div class="voice-unavailable">尚無對白可試聽。<br>在左側編輯器輸入劇本即可。</div>';
-    return;
-  }
-
-  const voiceOpts = _voiceList.map(v =>
-    `<option value="${esc(v.name)}" ${v.name === state.voice.voiceId ? 'selected' : ''}>${esc(v.name)} (${v.lang})</option>`
-  ).join('');
-
-  body.innerHTML = `
-    <div class="voice-panel">
-      <div class="voice-controls">
-        <button id="vc-play-all" title="全部播放">&#9654; 全部播放</button>
-        <button id="vc-stop" title="停止">&#9632; 停止</button>
-        <div class="spacer"></div>
-        <span class="voice-status" id="voice-status">待命</span>
-      </div>
-      <div class="voice-settings">
-        <label>語音</label>
-        <select id="vs-voice"><option value="">系統預設</option>${voiceOpts}</select>
-        <label>速度</label>
-        <div class="voice-range-row">
-          <input type="range" id="vs-speed" min="0.5" max="2" step="0.1" value="${state.voice.speed}">
-          <span id="vs-speed-val">${state.voice.speed.toFixed(1)}</span>
-        </div>
-        <label>音調</label>
-        <div class="voice-range-row">
-          <input type="range" id="vs-pitch" min="0" max="2" step="0.1" value="${state.voice.pitch}">
-          <span id="vs-pitch-val">${state.voice.pitch.toFixed(1)}</span>
-        </div>
-        <label style="margin-top:4px">
-          <input type="checkbox" id="vs-narration" ${state.voice.includeNarration ? 'checked' : ''}>
-          包含旁白
-        </label>
-      </div>
-      <div class="voice-queue-list" id="voice-queue-list"></div>
-    </div>`;
-
-  // Wire controls
-  document.getElementById('vc-play-all').addEventListener('click', () => playVoiceQueue());
-  document.getElementById('vc-stop').addEventListener('click', stopVoiceQueue);
-  document.getElementById('vs-voice').addEventListener('change', e => { state.voice.voiceId = e.target.value; });
-  document.getElementById('vs-speed').addEventListener('input', e => {
-    state.voice.speed = parseFloat(e.target.value);
-    document.getElementById('vs-speed-val').textContent = state.voice.speed.toFixed(1);
-  });
-  document.getElementById('vs-pitch').addEventListener('input', e => {
-    state.voice.pitch = parseFloat(e.target.value);
-    document.getElementById('vs-pitch-val').textContent = state.voice.pitch.toFixed(1);
-  });
-  document.getElementById('vs-narration').addEventListener('change', e => { state.voice.includeNarration = e.target.checked; renderVoiceQueueList(); });
-
-  renderVoiceQueueList();
+  $previewBody.innerHTML = '<div class="empty-preview">試聽面板<br><span style="font-size:11px">Phase 17-2 — Web Speech API 預覽</span></div>';
 }
-
-function renderVoiceQueueList() {
-  const el = document.getElementById('voice-queue-list');
-  if (!el) return;
-  buildVoiceQueue();
-  if (!_voiceQueue.length) { el.innerHTML = ''; return; }
-  el.innerHTML = _voiceQueue.map((item, qi) => {
-    const cur = _voiceQueueActive && qi === _voiceQueueIdx ? ' current' : '';
-    const color = item.speaker ? getCharColor(item.speaker) : 'var(--text-tertiary)';
-    const label = item.speaker || '（旁白）';
-    return `<div class="voice-queue-item${cur}" data-vq="${qi}">
-      <span class="vq-num">${qi + 1}</span>
-      <span class="vq-speaker" style="color:${color}">${esc(label)}</span>
-      <span class="vq-text">${esc(item.text)}</span>
-    </div>`;
-  }).join('');
-
-  // Click to play from that point
-  el.querySelectorAll('.voice-queue-item').forEach(row => {
-    row.addEventListener('click', () => {
-      const qi = parseInt(row.dataset.vq, 10);
-      stopVoiceQueue();
-      setTimeout(() => playVoiceQueue(qi), 100);
-    });
-  });
-}
-
-/* ──────────────────────────────────────────
-   BGM Preview Engine (Phase 14-B)
-   ────────────────────────────────────────── */
-const _hasAudio = typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined';
-let _bgmCtx = null, _bgmMaster = null, _bgmReverb = null, _bgmDelay = null;
-let _bgmNodes = [], _bgmPlaying = false, _bgmTimeout = null;
-let _bgmSelectedPreset = null;
-
-const _BGM_INSTRUMENTS = {
-  piano:       { nameZh: '鋼琴',   wave: 'triangle', a: 0.01, d: 0.3, s: 0.4, r: 0.8, h: [1, 0.5, 0.25, 0.12] },
-  yangqin:     { nameZh: '揚琴',   wave: 'sine',     a: 0.005,d: 0.15,s: 0.2, r: 1.2, h: [1, 0.7, 0.3, 0.15, 0.08] },
-  tongue_drum: { nameZh: '空靈鼓', wave: 'sine',     a: 0.02, d: 0.5, s: 0.6, r: 2.0, h: [1, 0.3, 0.1] },
-  water_chime: { nameZh: '水鐘',   wave: 'sine',     a: 0.001,d: 0.1, s: 0.05,r: 3.0, h: [1, 0.6, 0.4, 0.3, 0.2] },
-};
-
-const _BGM_PRESETS = [
-  { id: 'quiet_archive_piano', name: '靜謐書庫', inst: 'piano', tempo: 60, mood: 'quiet_archive',
-    notes: [{t:0,p:'D4',d:1.5,v:.35},{t:2,p:'A4',d:1,v:.3},{t:3.5,p:'E4',d:2,v:.28},{t:6,p:'G4',d:1.5,v:.32},{t:8,p:'D5',d:2,v:.25},{t:10.5,p:'A4',d:1.5,v:.3},{t:12.5,p:'E4',d:2.5,v:.22}],
-    fx: { rev: 0.4, del: 0.15 } },
-  { id: 'gentle_yangqin', name: '柔風揚琴', inst: 'yangqin', tempo: 72, mood: 'gentle',
-    notes: [{t:0,p:'G4',d:.5,v:.4},{t:.5,p:'A4',d:.5,v:.38},{t:1,p:'B4',d:1,v:.42},{t:2.5,p:'D5',d:.75,v:.36},{t:3.5,p:'E5',d:1.5,v:.34},{t:5.5,p:'B4',d:1,v:.38},{t:7,p:'G4',d:2,v:.3},{t:9.5,p:'A4',d:1,v:.35},{t:11,p:'D5',d:1.5,v:.32}],
-    fx: { rev: 0.35, del: 0.2 } },
-  { id: 'meditative_drum', name: '冥想空靈鼓', inst: 'tongue_drum', tempo: 54, mood: 'meditative',
-    notes: [{t:0,p:'C4',d:2,v:.45},{t:3,p:'Eb4',d:2,v:.4},{t:6,p:'G4',d:2.5,v:.38},{t:9,p:'Bb4',d:2,v:.35},{t:12,p:'C5',d:3,v:.32},{t:16,p:'G4',d:2.5,v:.38},{t:19,p:'Eb4',d:3,v:.3}],
-    fx: { rev: 0.55, del: 0.1 } },
-  { id: 'flowing_chime', name: '流水水鐘', inst: 'water_chime', tempo: 80, mood: 'flowing',
-    notes: [{t:0,p:'E5',d:.3,v:.5},{t:.4,p:'G5',d:.3,v:.45},{t:.8,p:'A5',d:.3,v:.4},{t:1.5,p:'E6',d:.5,v:.35},{t:2.5,p:'B5',d:.4,v:.42},{t:3.2,p:'G5',d:.3,v:.38},{t:4,p:'A5',d:.5,v:.4},{t:5,p:'E5',d:.3,v:.45},{t:5.5,p:'B5',d:.4,v:.36},{t:6.2,p:'E6',d:.6,v:.3},{t:7.5,p:'G5',d:.5,v:.42}],
-    fx: { rev: 0.6, del: 0.25 } },
-];
-
-const _NOTE_MAP = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
-function _p2f(p) {
-  const m = p.match(/^([A-G])(b|#)?(\d)$/);
-  if (!m) return 440;
-  let s = _NOTE_MAP[m[1]]; if (m[2]==='#') s++; if (m[2]==='b') s--;
-  return 440 * Math.pow(2, ((parseInt(m[3],10)+1)*12+s-69)/12);
-}
-
-function _ensureBgmCtx() {
-  if (_bgmCtx && _bgmCtx.state !== 'closed') return _bgmCtx;
-  _bgmCtx = new (window.AudioContext || window.webkitAudioContext)();
-  _bgmMaster = _bgmCtx.createGain();
-  _bgmMaster.gain.value = 0.45;
-  // Reverb impulse
-  const sr = _bgmCtx.sampleRate, len = sr * 2;
-  const imp = _bgmCtx.createBuffer(2, len, sr);
-  for (let ch = 0; ch < 2; ch++) {
-    const d = imp.getChannelData(ch);
-    for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1)*Math.pow(1-i/len, 2.5);
-  }
-  _bgmReverb = _bgmCtx.createConvolver();
-  _bgmReverb.buffer = imp;
-  // Delay
-  _bgmDelay = _bgmCtx.createDelay(1.0);
-  _bgmDelay.delayTime.value = 0.25;
-  const fb = _bgmCtx.createGain(); fb.gain.value = 0.2;
-  _bgmDelay.connect(fb); fb.connect(_bgmDelay);
-  _bgmMaster.connect(_bgmCtx.destination);
-  return _bgmCtx;
-}
-
-function _bgmPlayNote(ctx, instKey, note, startTime, fx) {
-  const inst = _BGM_INSTRUMENTS[instKey] || _BGM_INSTRUMENTS.piano;
-  const freq = _p2f(note.p), vel = note.v || 0.4;
-  const ng = ctx.createGain();
-  const dry = ctx.createGain(); dry.gain.value = 1 - (fx.rev||0)*0.6;
-  const wet = ctx.createGain(); wet.gain.value = (fx.rev||0)*0.6;
-  ng.connect(dry); ng.connect(wet);
-  dry.connect(_bgmMaster); wet.connect(_bgmReverb); _bgmReverb.connect(_bgmMaster);
-  if ((fx.del||0) > 0.05) {
-    const dw = ctx.createGain(); dw.gain.value = fx.del*0.4;
-    ng.connect(dw); dw.connect(_bgmDelay); _bgmDelay.connect(_bgmMaster);
-  }
-  for (let h = 0; h < inst.h.length; h++) {
-    const osc = ctx.createOscillator(); osc.type = inst.wave; osc.frequency.value = freq*(h+1);
-    const hg = ctx.createGain(); hg.gain.value = inst.h[h]*vel;
-    osc.connect(hg); hg.connect(ng); _bgmNodes.push(osc);
-    const dur = note.d * (60/(note._bpm||72));
-    const pk = startTime+inst.a, de = pk+inst.d, se = startTime+dur, re = se+inst.r;
-    ng.gain.setValueAtTime(0, startTime);
-    ng.gain.linearRampToValueAtTime(vel, pk);
-    ng.gain.linearRampToValueAtTime(vel*inst.s, de);
-    ng.gain.setValueAtTime(vel*inst.s, se);
-    ng.gain.linearRampToValueAtTime(0, re);
-    osc.start(startTime); osc.stop(re+0.1);
-  }
-  _bgmNodes.push(ng, dry, wet);
-}
-
-function bgmPlay(preset, volume) {
-  bgmStop();
-  const ctx = _ensureBgmCtx();
-  if (ctx.state === 'suspended') ctx.resume();
-  _bgmMaster.gain.value = Math.min(1, Math.max(0, volume ?? 0.45));
-  const bpm = preset.tempo || 72, beatDur = 60/bpm, base = ctx.currentTime + 0.1;
-  for (const n of preset.notes) {
-    _bgmPlayNote(ctx, preset.inst, { ...n, _bpm: bpm }, base + n.t*beatDur, preset.fx || {});
-  }
-  const last = preset.notes.reduce((m, n) => Math.max(m, n.t+n.d), 0);
-  const dur = last*beatDur + (_BGM_INSTRUMENTS[preset.inst]?.r || 1);
-  _bgmPlaying = true;
-  updateBgmStatus();
-  _bgmTimeout = setTimeout(() => { _bgmPlaying = false; updateBgmStatus(); }, (dur+0.5)*1000);
-  return dur;
-}
-
-function bgmStop() {
-  _bgmPlaying = false;
-  if (_bgmTimeout) { clearTimeout(_bgmTimeout); _bgmTimeout = null; }
-  for (const n of _bgmNodes) { try { n.stop?.(); } catch {} try { n.disconnect?.(); } catch {} }
-  _bgmNodes = [];
-  updateBgmStatus();
-}
-
-function updateBgmStatus() {
-  const el = document.getElementById('bgm-status');
-  if (el) el.textContent = _bgmPlaying ? '♪ 播放中…' : '待命';
-}
-
 function renderBgmPreview() {
-  const body = document.getElementById('preview-body');
-  if (state.previewTab !== 'bgm') return;
-
-  if (!_hasAudio) {
-    body.innerHTML = '<div class="voice-unavailable">此瀏覽器不支援 Web Audio API。</div>';
-    return;
-  }
-
-  const presetCards = _BGM_PRESETS.map(p => {
-    const inst = _BGM_INSTRUMENTS[p.inst];
-    const sel = _bgmSelectedPreset === p.id ? ' selected' : '';
-    return `<div class="preset-card${sel}" data-preset="${p.id}">
-      <div class="pc-name">${esc(p.name)}</div>
-      <div class="pc-inst">${esc(inst?.nameZh || p.inst)}</div>
-      <div class="pc-mood">${esc(p.mood)} · ${p.tempo} BPM</div>
-    </div>`;
-  }).join('');
-
-  const sel = _bgmSelectedPreset ? _BGM_PRESETS.find(p => p.id === _bgmSelectedPreset) : null;
-  let scoreViz = '';
-  if (sel) {
-    const maxT = sel.notes.reduce((m, n) => Math.max(m, n.t + n.d), 0);
-    const bars = sel.notes.map(n => {
-      const left = (n.t / maxT * 100).toFixed(1);
-      const width = Math.max(3, (n.d / maxT * 100)).toFixed(1);
-      const pitchNum = _p2f(n.p);
-      const bottom = Math.max(2, Math.min(90, ((Math.log2(pitchNum) - 7) / 4) * 100)).toFixed(0);
-      const h = Math.max(4, (n.v * 14)).toFixed(0);
-      return `<div class="score-note" style="left:${left}%;width:${width}%;bottom:${bottom}%;height:${h}px" title="${n.p}"></div>`;
-    }).join('');
-    const inst = _BGM_INSTRUMENTS[sel.inst];
-    scoreViz = `<div class="score-preview">
-      <div class="score-preview-title">Score 預覽</div>
-      <div class="score-timeline">${bars}</div>
-      <div class="score-meta">
-        <span>${esc(inst?.nameZh || sel.inst)}</span>
-        <span>${sel.tempo} BPM</span>
-        <span>Rev ${(sel.fx?.rev||0).toFixed(1)}</span>
-        <span>Del ${(sel.fx?.del||0).toFixed(1)}</span>
-        <span>${sel.notes.length} notes</span>
-      </div>
-    </div>`;
-  }
-
-  body.innerHTML = `
-    <div class="bgm-panel">
-      <div class="bgm-controls">
-        <button id="bgm-play" ${!sel ? 'disabled style="opacity:.4"' : ''}>&#9654; 播放</button>
-        <button id="bgm-stop">&#9632; 停止</button>
-        <div class="spacer"></div>
-        <span class="bgm-status" id="bgm-status">${_bgmPlaying ? '♪ 播放中…' : '待命'}</span>
-      </div>
-      <div class="bgm-settings">
-        <label>音量</label>
-        <div class="bgm-range-row">
-          <input type="range" id="bgm-volume" min="0" max="1" step="0.05" value="0.45">
-          <span id="bgm-vol-val">0.45</span>
-        </div>
-      </div>
-      <div class="bgm-settings">
-        <label>選擇 Preset</label>
-        <div class="preset-grid">${presetCards}</div>
-      </div>
-      ${scoreViz}
-    </div>`;
-
-  // Wire
-  document.getElementById('bgm-play')?.addEventListener('click', () => {
-    if (!_bgmSelectedPreset) return;
-    const p = _BGM_PRESETS.find(x => x.id === _bgmSelectedPreset);
-    if (p) bgmPlay(p, parseFloat(document.getElementById('bgm-volume')?.value || 0.45));
-  });
-  document.getElementById('bgm-stop')?.addEventListener('click', bgmStop);
-  document.getElementById('bgm-volume')?.addEventListener('input', e => {
-    const v = parseFloat(e.target.value);
-    document.getElementById('bgm-vol-val').textContent = v.toFixed(2);
-    if (_bgmMaster) _bgmMaster.gain.value = v;
-  });
-  body.querySelectorAll('.preset-card').forEach(card => {
-    card.addEventListener('click', () => {
-      _bgmSelectedPreset = card.dataset.preset;
-      renderBgmPreview();
-    });
-  });
+  $previewBody.innerHTML = '<div class="empty-preview">BGM 面板<br><span style="font-size:11px">Phase 17-2 — BGM Preset 試聽</span></div>';
 }
 
 /* ──────────────────────────────────────────
-   Character modal
+   Character Modal
    ────────────────────────────────────────── */
+const $charModal = document.getElementById('char-modal');
 let _editingCharId = null;
 
 function openCharModal(id) {
   _editingCharId = id || null;
-  const modal = document.getElementById('char-modal');
-  const title = document.getElementById('char-modal-title');
-  const nameInput = document.getElementById('char-input-name');
-  const aliasInput = document.getElementById('char-input-aliases');
-  const colorInput = document.getElementById('char-input-color');
-  const colorHex = document.getElementById('char-input-color-hex');
-  const delBtn = document.getElementById('char-btn-delete');
+  const c = id ? (AppState.get('characters') || []).find(ch => ch.id === id) : null;
 
-  if (id) {
-    const c = state.characters.find(x => x.id === id);
-    if (!c) return;
-    title.textContent = '編輯角色';
-    nameInput.value = c.displayName;
-    aliasInput.value = (c.aliases || []).join(', ');
-    colorInput.value = c.color || '#C9A86A';
-    colorHex.value = c.color || '#C9A86A';
-    delBtn.style.display = '';
-  } else {
-    title.textContent = '新增角色';
-    nameInput.value = '';
-    aliasInput.value = '';
-    colorInput.value = '#C9A86A';
-    colorHex.value = '#C9A86A';
-    delBtn.style.display = 'none';
-  }
-  modal.style.display = '';
-  nameInput.focus();
+  document.getElementById('char-modal-title').textContent = c ? '編輯角色' : '新增角色';
+  document.getElementById('char-input-name').value    = c ? c.displayName : '';
+  document.getElementById('char-input-aliases').value = c?.aliases?.join(', ') || '';
+  document.getElementById('char-input-color').value   = c?.color || '#C9A86A';
+  document.getElementById('char-input-color-hex').value = c?.color || '#C9A86A';
+  document.getElementById('char-btn-delete').style.display = c ? '' : 'none';
+
+  $charModal.style.display = '';
+  document.getElementById('char-input-name').focus();
 }
 
 function closeCharModal() {
-  document.getElementById('char-modal').style.display = 'none';
+  $charModal.style.display = 'none';
   _editingCharId = null;
 }
 
-async function saveCharModal() {
+document.getElementById('btn-add-char').addEventListener('click', () => openCharModal());
+document.getElementById('char-btn-cancel').addEventListener('click', closeCharModal);
+
+$charModal.addEventListener('click', e => { if (e.target === $charModal) closeCharModal(); });
+
+// Color sync
+document.getElementById('char-input-color').addEventListener('input', e => {
+  document.getElementById('char-input-color-hex').value = e.target.value;
+});
+document.getElementById('char-input-color-hex').addEventListener('input', e => {
+  if (/^#[0-9a-fA-F]{6}$/.test(e.target.value))
+    document.getElementById('char-input-color').value = e.target.value;
+});
+
+// Save
+document.getElementById('char-btn-save').addEventListener('click', async () => {
   const name = document.getElementById('char-input-name').value.trim();
   if (!name) { toast('請輸入角色名稱'); return; }
-  const aliases = document.getElementById('char-input-aliases').value
-    .split(/[,，]/).map(s => s.trim()).filter(Boolean);
-  const color = document.getElementById('char-input-color').value;
+
+  const aliasRaw = document.getElementById('char-input-aliases').value;
+  const aliases  = aliasRaw ? aliasRaw.split(/[,，]/).map(s => s.trim()).filter(Boolean) : [];
+  const color    = document.getElementById('char-input-color').value;
+
+  const chars = AppState.get('characters') || [];
 
   if (_editingCharId) {
-    const c = state.characters.find(x => x.id === _editingCharId);
-    if (c) { c.displayName = name; c.aliases = aliases; c.color = color; await saveCharacter(c); }
+    const idx = chars.findIndex(c => c.id === _editingCharId);
+    if (idx >= 0) {
+      chars[idx] = { ...chars[idx], displayName: name, aliases, color };
+      await saveCharacter(chars[idx]);
+    }
   } else {
-    const c = {
-      id: 'char_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6),
-      displayName: name, aliases, color, createdAt: Date.now(),
-    };
-    state.characters.push(c);
+    const c = { id: generateId('char'), displayName: name, aliases, color, createdAt: Date.now() };
+    chars.push(c);
     await saveCharacter(c);
   }
+
+  AppState.set('characters', [...chars]);
   closeCharModal();
-  reparse();
   renderCharList();
-  renderPreview();
+  ShortcutManager.autoBind();
+  renderShortcutHints();
   toast(_editingCharId ? '角色已更新' : '角色已新增');
-}
+});
 
-async function deleteCharFromModal() {
+// Delete
+document.getElementById('char-btn-delete').addEventListener('click', async () => {
   if (!_editingCharId) return;
+  if (!confirm('確定刪除此角色？此操作無法復原。')) return;
+
   await deleteCharacter(_editingCharId);
-  state.characters = state.characters.filter(c => c.id !== _editingCharId);
+  const chars = (AppState.get('characters') || []).filter(c => c.id !== _editingCharId);
+  AppState.set('characters', chars);
+
   closeCharModal();
-  reparse();
   renderCharList();
-  renderPreview();
+  ShortcutManager.autoBind();
+  renderShortcutHints();
   toast('角色已刪除');
-}
-
-/* ──────────────────────────────────────────
-   Content change handler (debounced parse)
-   ────────────────────────────────────────── */
-let _parseTimer = null;
-
-function onContentChange() {
-  state.content = editor.value;
-  state.dirty = true;
-
-  // Update stats
-  const lines = state.content.split('\n');
-  document.getElementById('line-count').textContent = lines.length + ' 行';
-  document.getElementById('char-count').textContent = state.content.length + ' 字';
-
-  // Debounced parse
-  clearTimeout(_parseTimer);
-  _parseTimer = setTimeout(() => reparse(), 200);
-}
-
-async function reparse() {
-  if (state.format === 'blocks-jsonl') {
-    state.blocks = parseBlocksJsonl(state.content);
-  } else {
-    state.blocks = parseBlocks(state.content);
-  }
-
-  // auto-register new speakers
-  const added = await autoRegisterSpeakers(state.blocks);
-
-  // re-resolve speakerIds
-  for (const b of state.blocks) {
-    if (b.type === 'dialogue' && b.speaker) {
-      b.speakerId = resolveSpeakerId(b.speaker);
-    }
-  }
-
-  document.getElementById('block-count').textContent = state.blocks.length + ' blocks';
-  const errCount = state.blocks.filter(b => b.type === 'narration' && !b.text).length;
-  const statusEl = document.getElementById('parse-status');
-  if (state.blocks.length) {
-    statusEl.innerHTML = errCount
-      ? `<span class="badge warn">${errCount} empty</span>`
-      : `<span class="badge ok">OK</span>`;
-  } else {
-    statusEl.textContent = '';
-  }
-
-  if (added) renderCharList();
-  renderPreview();
-
-  // Draft auto-save
-  try { localStorage.setItem('script-editor-draft', state.content); } catch {}
-}
+});
 
 /* ──────────────────────────────────────────
    Export
    ────────────────────────────────────────── */
-async function doExport(fmt) {
-  if (!state.blocks.length) { toast('沒有可匯出的 blocks'); return; }
-  const title = state.filename.replace(/\.\w+$/, '') || 'script';
+const $exportMenu = document.getElementById('export-menu');
+document.getElementById('btn-export').addEventListener('click', () => {
+  $exportMenu.classList.toggle('show');
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.export-wrap')) $exportMenu.classList.remove('show');
+});
 
-  // Send to Table Forge via PostMessage bridge
+$exportMenu.addEventListener('click', async e => {
+  const btn = e.target.closest('button[data-fmt]');
+  if (!btn) return;
+  $exportMenu.classList.remove('show');
+  await doExport(btn.dataset.fmt);
+});
+
+async function doExport(fmt) {
+  const blocks = AppState.get('blocks') || [];
+  if (!blocks.length) { toast('沒有可匯出的 blocks'); return; }
+  const title = AppState.get('filename').replace(/\.\w+$/, '') || 'script';
+
   if (fmt === 'table') {
-    const { blocksToTablePayload, MSG_TYPES, STORAGE_KEY } = await import('../../core/export/bridge.js');
-    const payload = blocksToTablePayload(state.blocks, title);
-    if (!payload) { toast('無可轉換的對話資料'); return; }
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    window.parent.postMessage({ type: MSG_TYPES.SCRIPT_EDITOR_EXPORT_TO_TABLE }, '*');
-    toast('已送往 Table Forge');
+    try {
+      const { blocksToTablePayload, MSG_TYPES, STORAGE_KEY } = await import('../../core/export/bridge.js');
+      const payload = blocksToTablePayload(blocks, title);
+      if (!payload) { toast('無可轉換的對話資料'); return; }
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      window.parent.postMessage({ type: MSG_TYPES.SCRIPT_EDITOR_EXPORT_TO_TABLE }, '*');
+      toast('已送往 Table Forge');
+    } catch (err) { toast('匯出失敗：' + err.message); }
     return;
   }
 
-  // Map fmt to export-core dataType:format
-  const fmtMap = {
-    'jsonl': 'jsonl', 'ks': 'ks', 'avg-json': 'avg-json',
-    'md': 'md', 'docx': 'docx', 'pdf': 'pdf',
-  };
-  const outputFormat = fmtMap[fmt];
-  if (!outputFormat) return;
-
+  const fmtMap = { 'jsonl':'jsonl', 'ks':'ks', 'avg-json':'avg-json', 'md':'md', 'docx':'docx', 'pdf':'pdf' };
   try {
     const { exportAndDownload } = await import('../../core/export-core.js');
-    await exportAndDownload('dialogue', outputFormat, { blocks: state.blocks }, { title });
+    await exportAndDownload('dialogue', fmtMap[fmt], { blocks }, { title });
     toast(`已匯出 ${fmt.toUpperCase()}`);
-  } catch (err) {
-    console.error('Export error:', err);
-    toast('匯出失敗：' + err.message);
-  }
+  } catch (err) { toast('匯出失敗：' + err.message); }
 }
 
 /* ──────────────────────────────────────────
    File I/O
    ────────────────────────────────────────── */
+document.getElementById('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (file) openFile(file);
+  e.target.value = '';
+});
+
+document.getElementById('btn-new').addEventListener('click', newScript);
+document.getElementById('btn-save').addEventListener('click', saveScript);
+
 function openFile(file) {
   const reader = new FileReader();
   reader.onload = () => {
     const text = reader.result;
-    state.filename = file.name;
-    document.getElementById('filename-display').textContent = file.name;
+    AppState.set('filename', file.name);
+    $filenameDisp.textContent = file.name;
 
-    // Try round-trip import (8-G): .ks / .jsonl / AVG JSON / MD → Plain Script
-    const imported = importAsPlainScript(text, file.name);
-    if (imported) {
-      state.format = 'plain-script';
-      document.getElementById('format-badge').textContent = `Plain Script (← ${imported.via})`;
-      editor.value = imported.plainScript;
-      toast(`已從 ${imported.via} 匯入 ${imported.blocks.length} blocks`);
-    } else {
-      state.format = 'plain-script';
-      document.getElementById('format-badge').textContent = 'Plain Script';
-      editor.value = text;
-    }
+    const imported = importBlocks(text, file.name);
+    $formatBadge.textContent = imported.via === 'Plain Script'
+      ? 'Plain Script'
+      : `Plain Script (← ${imported.via})`;
 
-    _lastSnapshot = editor.value;
-    state.undoStack.length = 0;
-    state.redoStack.length = 0;
+    $editor.value = blocksToPlainScript(imported.blocks);
+    AppState.set('format', 'plain-script');
+    _lastSnapshot = $editor.value;
+    AppState.get('undoStack').length = 0;
+    AppState.get('redoStack').length = 0;
     onContentChange();
 
     // Notify App Shell
-    const ext = file.name.toLowerCase();
-    const ftype = ext.endsWith('.jsonl') ? 'jsonl' : ext.endsWith('.ks') ? 'ks' : 'txt';
     window.parent.postMessage({
       type: 'akasha-file-opened',
-      entry: { name: file.name, type: ftype, size: file.size, lastOpened: Date.now() }
+      entry: { name: file.name, type: file.name.split('.').pop(), size: file.size, lastOpened: Date.now() },
     }, '*');
+
+    toast(`已開啟 ${file.name}（${imported.blocks.length} blocks via ${imported.via}）`);
   };
   reader.readAsText(file);
 }
 
 function newScript() {
-  state.filename = 'untitled.txt';
-  state.format = 'plain-script';
-  document.getElementById('filename-display').textContent = 'untitled.txt';
-  document.getElementById('format-badge').textContent = 'Plain Script';
-  editor.value = '';
+  AppState.merge({ filename: 'untitled.txt', format: 'plain-script', blocks: [], content: '' });
+  $filenameDisp.textContent = 'untitled';
+  $formatBadge.textContent  = 'Plain Script';
+  $editor.value = '';
   _lastSnapshot = '';
-  state.undoStack.length = 0;
-  state.redoStack.length = 0;
+  AppState.get('undoStack').length = 0;
+  AppState.get('redoStack').length = 0;
   onContentChange();
 }
 
 function saveScript() {
-  const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = state.filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast('已下載 ' + state.filename);
+  const text = $editor.value;
+  downloadFile(AppState.get('filename'), text);
+  toast('已下載 ' + AppState.get('filename'));
 }
 
 /* ──────────────────────────────────────────
-   PostMessage — from App Shell
+   Shortcut Hints (Status Bar)
+   ────────────────────────────────────────── */
+function renderShortcutHints() {
+  const labels = ShortcutManager.getSlotLabels();
+  $shortcutBar.innerHTML = labels
+    .filter(Boolean)
+    .map((l, i) => `<span>Alt+${i + 1} ${esc(l.replace(/^Alt\+\d\s*/, ''))}</span>`)
+    .join('');
+}
+
+/* ──────────────────────────────────────────
+   PostMessage Bridge
    ────────────────────────────────────────── */
 window.addEventListener('message', async e => {
   const d = e.data;
   if (!d || !d.type) return;
 
+  // Receive file from App Shell
   if (d.type === 'akasha-open-file') {
-    state.filename = d.filename || 'untitled.txt';
-    document.getElementById('filename-display').textContent = state.filename;
+    AppState.set('filename', d.filename || 'untitled.txt');
+    $filenameDisp.textContent = AppState.get('filename');
 
     const text = d.content || '';
-    const imported = importAsPlainScript(text, state.filename);
-    if (imported) {
-      state.format = 'plain-script';
-      document.getElementById('format-badge').textContent = `Plain Script (← ${imported.via})`;
-      editor.value = imported.plainScript;
-    } else {
-      state.format = 'plain-script';
-      document.getElementById('format-badge').textContent = 'Plain Script';
-      editor.value = text;
-    }
+    const imported = importBlocks(text, AppState.get('filename'));
+    $formatBadge.textContent = imported.via === 'Plain Script'
+      ? 'Plain Script'
+      : `Plain Script (← ${imported.via})`;
 
-    _lastSnapshot = editor.value;
-    state.undoStack.length = 0;
-    state.redoStack.length = 0;
+    $editor.value = blocksToPlainScript(imported.blocks);
+    _lastSnapshot = $editor.value;
+    AppState.get('undoStack').length = 0;
+    AppState.get('redoStack').length = 0;
     onContentChange();
   }
 
+  // AI context request
   if (d.type === 'akasha-ai-get-context') {
-    const truncated = state.content.slice(0, 12000);
+    const content   = AppState.get('content');
+    const blocks    = AppState.get('blocks') || [];
+    const chars     = AppState.get('characters') || [];
+    const truncated = content.slice(0, 12000);
+
     window.parent.postMessage({
       type: 'akasha-ai-context-response',
       module: 'script-editor',
-      fileName: state.filename,
-      fileType: state.format,
-      content: truncated,
-      blockCount: state.blocks.length,
-      characters: state.characters.map(c => c.displayName),
+      fileName:   AppState.get('filename'),
+      fileType:   AppState.get('format'),
+      content:    truncated,
+      blockCount: blocks.length,
+      characters: chars.map(c => c.displayName),
+      activeTab:  AppState.get('activeTab'),
     }, '*');
   }
 
+  // Dark/light mode
   if (d.type === 'akasha-mode-change') {
     document.documentElement.dataset.mode = d.mode;
   }
 });
 
 /* ──────────────────────────────────────────
-   Toast
+   Initialization
    ────────────────────────────────────────── */
-function toast(msg) {
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 2500);
-}
-
-/* ──────────────────────────────────────────
-   Utilities
-   ────────────────────────────────────────── */
-function esc(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-/* ──────────────────────────────────────────
-   Init + Wiring
-   ────────────────────────────────────────── */
-const editor = document.getElementById('script-editor');
-
-// Restore draft
-const draft = localStorage.getItem('script-editor-draft');
-if (draft) { editor.value = draft; _lastSnapshot = draft; }
-
-// Load characters
-(async () => {
+async function init() {
+  // Load characters from IndexedDB
   try {
-    state.characters = await loadCharacters();
-  } catch { state.characters = []; }
+    const chars = await loadCharacters();
+    AppState.set('characters', chars);
+  } catch (e) { console.error('[SE] Failed to load characters:', e); }
+
+  // Init shortcuts
+  ShortcutManager.init();
+  renderShortcutHints();
+
+  // Render character list
   renderCharList();
-  if (editor.value) onContentChange();
-})();
 
-// Editor input
-let _undoTimer = null;
-editor.addEventListener('input', () => {
-  clearTimeout(_undoTimer);
-  _undoTimer = setTimeout(pushUndo, 400);
-  onContentChange();
-});
+  // Restore draft from localStorage
+  const savedText = Storage.loadPlainText();
+  if (savedText) {
+    $editor.value = savedText;
+    _lastSnapshot = savedText;
+    onContentChange();
+  }
 
-// Cursor position
-editor.addEventListener('click', updateCursor);
-editor.addEventListener('keyup', updateCursor);
-function updateCursor() {
-  const val = editor.value.slice(0, editor.selectionStart);
-  const ln = val.split('\n').length;
-  const col = val.length - val.lastIndexOf('\n');
-  document.getElementById('cursor-pos').textContent = `Ln ${ln}, Col ${col}`;
+  // Tab keyboard navigation: Ctrl+1~4
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && /^[1-4]$/.test(e.key)) {
+      e.preventDefault();
+      const tabs = ['write', 'editor', 'search', 'reader'];
+      switchTab(tabs[parseInt(e.key) - 1]);
+    }
+  });
 }
 
-// Keyboard shortcuts
-editor.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); }
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); doRedo(); }
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveScript(); }
-});
-
-// Toolbar buttons
-document.getElementById('btn-new').addEventListener('click', newScript);
-document.getElementById('btn-save').addEventListener('click', saveScript);
-document.getElementById('btn-undo').addEventListener('click', doUndo);
-document.getElementById('btn-redo').addEventListener('click', doRedo);
-
-// File input
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files[0]) openFile(e.target.files[0]);
-  e.target.value = '';
-});
-
-// Export menu
-const exportBtn = document.getElementById('btn-export');
-const exportMenu = document.getElementById('export-menu');
-exportBtn.addEventListener('click', () => exportMenu.classList.toggle('show'));
-document.addEventListener('click', e => {
-  if (!exportBtn.contains(e.target) && !exportMenu.contains(e.target)) exportMenu.classList.remove('show');
-});
-exportMenu.querySelectorAll('[data-fmt]').forEach(btn => {
-  btn.addEventListener('click', () => { exportMenu.classList.remove('show'); doExport(btn.dataset.fmt); });
-});
-
-// Preview tabs
-document.querySelectorAll('.preview-tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-    state.previewTab = tab.dataset.tab;
-    renderPreview();
-  });
-});
-
-// Delegated click for per-block play buttons
-document.getElementById('preview-body').addEventListener('click', e => {
-  const btn = e.target.closest('.block-play');
-  if (!btn) return;
-  const idx = parseInt(btn.dataset.voiceIdx, 10);
-  if (!isNaN(idx)) speakBlock(idx);
-});
-
-// Character modal
-document.getElementById('btn-add-char').addEventListener('click', () => openCharModal(null));
-document.getElementById('char-btn-cancel').addEventListener('click', closeCharModal);
-document.getElementById('char-btn-save').addEventListener('click', saveCharModal);
-document.getElementById('char-btn-delete').addEventListener('click', deleteCharFromModal);
-document.getElementById('char-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCharModal(); });
-
-// Color input sync
-const colorPicker = document.getElementById('char-input-color');
-const colorHex = document.getElementById('char-input-color-hex');
-colorPicker.addEventListener('input', () => { colorHex.value = colorPicker.value; });
-colorHex.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(colorHex.value)) colorPicker.value = colorHex.value; });
-
-// Inherit parent mode
-try {
-  const parentMode = window.parent.document.documentElement.dataset.mode;
-  if (parentMode) document.documentElement.dataset.mode = parentMode;
-} catch {}
-
+init();
 </script>
 </body>
 </html>

@@ -344,19 +344,19 @@
 > Branch: `feature/script-editor-merge`
 > 整合 Archive 獨立版（React 3TAB）+ Akasha 內嵌版（Vanilla JS）→ 4-TAB Vanilla JS 模組
 
-### 17-1 Foundation（data-model.js + index.html 骨架）
-- [ ] AppState 單例 + Bus 事件匯流排
-- [ ] Block 類型定義（dialogue / narration / scene / choice / note / command）
-- [ ] Plain Script 解析器（regex parser 移植）
-- [ ] Blocks JSONL / AVG JSON / TyranoScript / Markdown 回流匯入解析器
-- [ ] blocksToPlainScript() 反向轉換
-- [ ] validateBlock() / validateBlocks()（從 Archive 移植）
-- [ ] IndexedDB 角色 CRUD（從 Akasha 移植）
-- [ ] 角色 alias 解析 + 自動偵測新角色
-- [ ] localStorage 工具（blocks draft / notes / shortcuts config）
-- [ ] 快捷鍵管理器（load / save / autoBind）
-- [ ] index.html 骨架（HTML + CSS + 4-TAB 切換）
-- [ ] PostMessage 協議（open-file / ai-context / mode-change / file-opened / export-to-table）
+### 17-1 Foundation（data-model.js + index.html 骨架）✅
+- [x] AppState 單例 + Bus 事件匯流排
+- [x] Block 類型定義（dialogue / narration / scene / choice / note / command）
+- [x] Plain Script 解析器（regex parser 移植）
+- [x] Blocks JSONL / AVG JSON / TyranoScript / Markdown 回流匯入解析器
+- [x] blocksToPlainScript() 反向轉換
+- [x] validateBlock() / validateBlocks()（從 Archive 移植）
+- [x] IndexedDB 角色 CRUD（從 Akasha 移植）
+- [x] 角色 alias 解析 + 自動偵測新角色
+- [x] localStorage 工具（blocks draft / notes / shortcuts config）
+- [x] 快捷鍵管理器（load / save / autoBind）
+- [x] index.html 骨架（HTML + CSS + 4-TAB 切換）
+- [x] PostMessage 協議（open-file / ai-context / mode-change / file-opened / export-to-table）
 
 ### 17-2 Write TAB（write-tab.js）
 - [ ] textarea 編輯區 + 即時解析 → blocks[]

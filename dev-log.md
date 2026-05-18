@@ -1,5 +1,59 @@
 # Akasha Library — Dev Log
 
+## 2026-05-18：Phase 17-1 Foundation 完成
+
+### 產出
+
+**`modules/script-editor/data-model.js`**（596 行，全新 ES module）
+- `EventBus` class + `Bus` 全域單例（on / off / emit / once）
+- `AppState` 單例（get / set / merge / getAll）— blocks / characters / undoStack / activeTab / voice / shortcuts
+- `BLOCK_TYPES`（6 種：dialogue / narration / scene / choice / note / command）
+- `TAG_PALETTE` 5 色系（plot / emotion / theme / form / role）
+- 5 個解析器：
+  - `parsePlainScript()` —「角色：台詞 / #cmd：value / // 註解」regex parser
+  - `parseJsonl()` — blocks.jsonl 逐行 JSON
+  - `parseAvgJson()` — `{blocks: [...]}` 或 bare array
+  - `parseTyranoScript()` — `.ks` 標籤解析（`[scene]/[playbgm]/[playse]/#speaker`）
+  - `parseMarkdownScript()` — 自家匯出 Markdown 回流
+- `blocksToPlainScript()` — 6 種 block type 反向轉換
+- `importBlocks()` — 副檔名自動偵測 + fallback
+- `validateBlock()` / `validateBlocks()` — 15+ 規則（從 Archive 移植）
+- IndexedDB（`script-editor-characters`）：`loadCharacters()` / `saveCharacter()` / `deleteCharacter()`
+- 角色工具：`resolveCharacterId()` / `getCharColor()` / `detectNewSpeakers()` / `autoRegisterSpeakers()`
+- `Storage` 物件 — localStorage 封裝（draft / notes / plainText / shortcuts / focusBlock）
+- `ShortcutManager` — Alt+1=場景 / Alt+2=旁白 / Alt+3~9=角色（autoBind / set / remove / getSlotLabels）
+- `ICONS` + `icon(name, size, stroke)` — 25 個 SVG path 字典
+
+**`modules/script-editor/index.html`**（1270 行，完整改寫）
+- Header：title + filename + 開啟 / 新建 / 儲存 / 匯出 dropdown（7 格式）
+- Tab Bar：Write / Editor / Search / Reader（圖標 + 中英雙語標題）
+- **Write TAB**（完整接線）：
+  - 3-column：CHARACTERS 面板 + textarea 編輯 + 預覽面板（5 sub-tab）
+  - 即時解析 + 自動偵測新角色 + auto-save draft
+  - Undo/Redo 棧（100 快照、Ctrl+Z/Y）
+  - Alt+1~9 快捷鍵插入
+  - Blocks / Stats / Layout / Voice / BGM 預覽（前 3 個完整實作）
+- **Editor / Search / Reader TAB**：placeholder（待 17-3 / 17-4 / 17-5）
+- 角色 Modal：新增 / 編輯 / 刪除 + IndexedDB 持久化 + 色彩選擇器
+- 狀態列：format badge + 驗證狀態 + Alt+N 快捷鍵提示 + Ln/Col 游標
+- PostMessage Bridge 5 協議：
+  - `akasha-open-file` — 接收 App Shell 開檔
+  - `akasha-ai-get-context` ↔ `akasha-ai-context-response` — AI 上下文
+  - `akasha-mode-change` — dark/light
+  - `akasha-file-opened` — 通知 App Shell 開檔
+  - `akasha-export-to-table`（via core/export/bridge.js）
+- 鍵盤導航：Ctrl+1~4 切 TAB
+
+### 設計決策
+
+- **Vanilla JS ES module** — 不引入 React/Vue，與 Akasha 其他模組一致
+- **多檔分離** — `data-model.js` 共享 + 後續各 TAB 拆獨立 JS（write-tab.js / editor-tab.js / search-tab.js / reader-tab.js / overlays.js）
+- **State + Bus 模式** — AppState 為單例物件，Bus emit 跨 TAB 事件
+- **保留向後相容** — 既有 PostMessage 協議、`script-editor-characters` IndexedDB 庫名不變
+- **TAB 切換用 CSS class** — 不真正卸載 DOM，保留各 TAB 狀態
+
+---
+
 ## 2026-05-18：Phase 17 Script Editor 4-TAB 整合 開始
 
 ### 背景
