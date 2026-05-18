@@ -339,6 +339,72 @@
 
 ---
 
-## 待做（追加規格 · 剩餘 Phase）
+## 進行中：Phase 17 Script Editor 4-TAB 整合
 
-（Enhancement Phase 1–16 全部完成）
+> Branch: `feature/script-editor-merge`
+> 整合 Archive 獨立版（React 3TAB）+ Akasha 內嵌版（Vanilla JS）→ 4-TAB Vanilla JS 模組
+
+### 17-1 Foundation（data-model.js + index.html 骨架）✅
+- [x] AppState 單例 + Bus 事件匯流排
+- [x] Block 類型定義（dialogue / narration / scene / choice / note / command）
+- [x] Plain Script 解析器（regex parser 移植）
+- [x] Blocks JSONL / AVG JSON / TyranoScript / Markdown 回流匯入解析器
+- [x] blocksToPlainScript() 反向轉換
+- [x] validateBlock() / validateBlocks()（從 Archive 移植）
+- [x] IndexedDB 角色 CRUD（從 Akasha 移植）
+- [x] 角色 alias 解析 + 自動偵測新角色
+- [x] localStorage 工具（blocks draft / notes / shortcuts config）
+- [x] 快捷鍵管理器（load / save / autoBind）
+- [x] index.html 骨架（HTML + CSS + 4-TAB 切換）
+- [x] PostMessage 協議（open-file / ai-context / mode-change / file-opened / export-to-table）
+
+### 17-2 Write TAB（write-tab.js）✅
+- [x] textarea 編輯區 + 即時解析 → blocks[]
+- [x] Undo/redo 棧（100 快照、Ctrl+Z/Y）
+- [x] 狀態列（Ln/Col、格式徽章、block 計數）
+- [x] Auto-save draft（debounce 400ms → localStorage）
+- [x] Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色快捷鍵
+- [x] 角色卡 slot badge + 右鍵指派
+- [x] 右側預覽面板（Blocks / Stats / Layout / Voice / BGM）
+- [x] Voice TTS 預覽（Web Speech API）
+- [x] BGM 合成預覽（Web Audio API 4 樂器 4 preset）
+
+### 17-3 Editor TAB（editor-tab.js）✅
+- [x] 三欄佈局：角色面板 | 區塊編輯 | AVG 面板（簡化為兩欄：blocks + side panel；角色 CRUD 走 Write TAB 共用 modal）
+- [x] 角色清單 + 詳情卡 — 走 Write TAB Characters 面板
+- [x] 角色 CRUD modal + 筆記 CRUD — modal 共用，筆記 17-7 補
+- [x] BlockCard 6 種類型（dialogue / narration / scene / choice / note / command）
+- [x] TAG 管理（TagAdder：kind 選擇 + 連續新增）
+- [x] AVG 面板（sprite 匯入 / 16:9 預覽 / JSON 預覽 / position / BG / BGM / SFX）
+- [x] 匯出列（JSONL / AVG JSON / 筆記 / 回寫 Write TAB）— 匯出走 header dropdown；新增「⇆ 寫回 Write」按鈕
+
+### 17-4 Search TAB（search-tab.js）✅
+- [x] Filter Bar：關鍵字 / 角色 / 劇情 TAG / 情緒 TAG / 類型 / 排序（作品/版權延後 17-7 多作品）
+- [x] ResultCard：角色、原文、中譯、TAG 膠囊、所有 6 種 block type 對應顯示
+- [x] Export Bar：Markdown / CSV 匯出
+- [x] 點擊結果 → 跳轉 Editor TAB 定位 + 滾入視口 + 金色光圈高亮
+
+### 17-5 Reader TAB（reader-tab.js）✅
+- [x] 連續排版（Scene 分組，含 `#scene` command 自動分組）
+- [x] 場景 TOC + IntersectionObserver 捲動追蹤
+- [x] TAG hover 顯示 + choice 互動跳轉（點選項 → 找 target block 對應 scene → smooth scroll）
+- [x] 角色筆記顯示（首次出場處 — 顯示「⊕ 首次出場」徽章；筆記內容待 17-7 加 notes-overlay）
+- [x] PDF 匯出（window.print + @media print 印刷樣式，黑字白底）
+
+### 17-6 Overlays（overlays.js）✅
+- [x] Table Forge（全畫面表格 + 行內編輯 + 寫回 blocks + CSV 匯出）
+- [x] 角色關係圖（SVG 力導向圓形佈局 + 場次共現邊權 + 點節點看詳情 + 重排）
+- [x] 音效庫面板（4 BGM preset + SFX/AMB/VOX 範例 + mood/type 篩選 + 試聽 + 指派到 focused block）
+- [x] 劇本格式檢查（15+ 規則：no-speaker / empty-dialogue / unknown-speaker / no-act / no-options / empty-option / missing-zh / missing-original / no-tags / short-text / consecutive-speaker / no-next / broken-link / sprite-no-pos / empty-scene + 三級嚴重度 + 點擊跳轉 + MD 報告匯出）
+- [x] 初稿生成（5 模板：開場 / 對話交換 / 場景轉換 / 分歧選項 / 結局 + 幕場/標題/情緒選項 + 即時預覽 + 一鍵插入）
+
+### 17-7 整合收尾 ✅
+- [x] 跨 TAB 同步驗證（Write ↔ Editor ↔ Search ↔ Reader）— Editor / 工具 overlay 修改 → emit `blocks:edited-external` → Write textarea 自動同步
+- [x] Editor → Write 反向同步（blocks → Plain Script）— 自動同步 + 手動「⇆ 寫回 Write」按鈕雙保險
+- [x] 多作品支援（WorkSwitcher + loadAllData）— `workId` 跟隨 filename 自動更新；多作品 UI 延後（保留 Storage 多 workId 結構）
+- [x] 匯入統一（PostMessage open-file → 格式偵測）— `akasha-open-file` 走 `importBlocks()` 自動偵測 5 種格式
+- [x] README / ROADMAP / dev-log / DEVELOPMENT 更新
+
+---
+
+## 已完成（Enhancement Phase 1–16 全部完成）

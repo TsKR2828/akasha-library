@@ -147,6 +147,7 @@
 | Phase 14 | Voice / BGM Prototype（Rein-Voice + TsukiSynth + 館報朗讀稿 + 伴讀 BGM） | ✅ 全部完成 |
 | Phase 15 | Private Reading Room + 每日館報（15-A 談心 / 15-B 手札強化 / 15-C 館報 MVP / 15-D 朗讀+BGM） | ✅ 全部完成 |
 | Phase 16 | Export Core + 部署（build script / deploy workflow / Worker 後端 / SW v4） | ✅ 全部完成 |
+| Phase 17 | Script Editor 4-TAB 整合（17-1 Foundation / 17-2 Write / 17-3 Editor / 17-4 Search / 17-5 Reader / 17-6 Overlays / 17-7 整合收尾） | ✅ 全部完成 |
 
 Enhancement Phase 新增的核心模組：
 
@@ -166,7 +167,13 @@ Enhancement Phase 新增的核心模組：
 | `core/export-core.js` | 16-A | 統一匯出引擎（17 converter + exportAs API） |
 | `core/export/bridge.js` | 5-B | 跨模組匯出橋接（blocks → table payload） |
 | `core/security.js` | 12 | 資料分級 + AES-GCM 加密 + BYOK 金鑰管理 + Record Stamping + Build Mode |
-| `modules/script-editor/index.html` | 8 | 劇本編輯器 MVP（三欄 UI / 角色 DB / 6 格式匯出入） |
+| `modules/script-editor/index.html` | 8 / 17 | 劇本編輯器 4-TAB shell（速寫/編輯/搜尋/閱讀 + 工具 overlay dropdown） |
+| `modules/script-editor/data-model.js` | 17-1 | AppState + Bus + 5 解析器 + 驗證 + IndexedDB 角色 CRUD + ShortcutManager |
+| `modules/script-editor/write-tab.js` | 17-2 | 速寫 TAB（Voice TTS / BGM preset / 角色 slot badge + 右鍵指派） |
+| `modules/script-editor/editor-tab.js` | 17-3 | 編輯 TAB（BlockCard CRUD / TAG / AVG 面板 / JSON preview） |
+| `modules/script-editor/search-tab.js` | 17-4 | 搜尋 TAB（6 篩選器 / 結果卡片 / MD/CSV 匯出 / 跳轉 Editor） |
+| `modules/script-editor/reader-tab.js` | 17-5 | 閱讀 TAB（連續排版 / 場景 TOC / IntersectionObserver / Print PDF） |
+| `modules/script-editor/overlays.js` | 17-6 | 5 overlay（Table Forge / 關係圖 / 音效庫 / 格式檢查 / 初稿生成） |
 | `core/voice.js` | 14-A | Rein-Voice 核心（voice task format / Web Speech TTS / queue） |
 | `core/bgm.js` | 14-B | TsukiSynth BGM 核心（score.json / Web Audio synth / 4 presets） |
 | `core/report-voice.js` | 14-C | 館報朗讀稿轉換器（report JSON → voice tasks / reading script） |
@@ -232,4 +239,5 @@ Phase 13   ████████████████ 100% (Document Bridg
 Phase 14   ████████████████ 100% (Voice / BGM — 14-A/B/C/D 全部完成)
 Phase 15   ████████████████ 100% (談心 + 館報 — 15-A/B/C/D 全部完成)
 Phase 16   ████████████████ 100% (Export Core + 部署 — 16-A/B/C/D 全部完成)
+Phase 17   ████████████████ 100% (Script Editor 4-TAB 整合 — 17-1~7 全部完成)
 ```
