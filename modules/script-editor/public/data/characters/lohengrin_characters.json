@@ -1,0 +1,121 @@
+[
+  {
+    "character_id": "lohengrin",
+    "work_id": "lohengrin",
+    "name_original": "Lohengrin",
+    "name_zh": "羅恩格林",
+    "speaker_id": "lohengrin",
+    "role_type": ["protagonist", "knight", "Grail knight"],
+    "voice_type": "Tenor",
+    "relationship_tags": ["艾爾莎之夫", "帕西法爾之子"],
+    "plot_function": ["守護者", "審判者", "身份隱匿者", "離去者"],
+    "voice_note": "崇高、溫柔且威嚴並存。對艾爾莎充滿愛意，對敵人冷靜果斷，揭露身分時帶有深沉的悲傷。",
+    "tags": ["聖杯", "禁問", "騎士", "犧牲", "離別", "神聖"],
+    "avg_assets": {
+      "default_portrait": "lohengrin_neutral",
+      "available_portraits": ["lohengrin_neutral", "lohengrin_tender", "lohengrin_solemn", "lohengrin_grief"]
+    }
+  },
+  {
+    "character_id": "elsa",
+    "work_id": "lohengrin",
+    "name_original": "Elsa von Brabant",
+    "name_zh": "艾爾莎·馮·布拉班特",
+    "speaker_id": "elsa",
+    "role_type": ["protagonist", "princess", "accused"],
+    "voice_type": "Soprano",
+    "relationship_tags": ["羅恩格林之妻", "戈特弗里德之姊", "被泰拉蒙德誣告"],
+    "plot_function": ["受害者", "禁忌違反者", "信仰動搖者"],
+    "voice_note": "純淨、夢幻，初期充滿信仰，後期在懷疑與愛之間掙扎，最終因無法抑制疑問而導致悲劇。",
+    "tags": ["純潔", "夢境", "信任", "懷疑", "禁問", "悲劇"],
+    "avg_assets": {
+      "default_portrait": "elsa_neutral",
+      "available_portraits": ["elsa_neutral", "elsa_dream", "elsa_anguish", "elsa_despair"]
+    }
+  },
+  {
+    "character_id": "ortrud",
+    "work_id": "lohengrin",
+    "name_original": "Ortrud",
+    "name_zh": "奧特魯德",
+    "speaker_id": "ortrud",
+    "role_type": ["antagonist", "sorceress", "pagan priestess"],
+    "voice_type": "Mezzo-soprano / Dramatic soprano",
+    "relationship_tags": ["泰拉蒙德之妻", "拉德博德後裔", "艾爾莎之敵"],
+    "plot_function": ["陰謀者", "誘惑者", "異教勢力代表", "真相揭露者"],
+    "voice_note": "陰沉、強悍、充滿權謀。偽裝時柔弱可憐，暴露本性時凶狠而狂野。召喚異教神祇時帶有原始的力量感。",
+    "tags": ["異教", "陰謀", "復仇", "偽裝", "魔法", "權力"],
+    "avg_assets": {
+      "default_portrait": "ortrud_neutral",
+      "available_portraits": ["ortrud_neutral", "ortrud_scheming", "ortrud_humble", "ortrud_triumph"]
+    }
+  },
+  {
+    "character_id": "friedrich_telramund",
+    "work_id": "lohengrin",
+    "name_original": "Friedrich von Telramund",
+    "name_zh": "弗里德里希·馮·泰拉蒙德",
+    "speaker_id": "friedrich",
+    "role_type": ["antagonist", "count", "accuser"],
+    "voice_type": "Baritone",
+    "relationship_tags": ["奧特魯德之夫", "艾爾莎之控訴者"],
+    "plot_function": ["控訴者", "敗者", "被操縱者", "復仇者"],
+    "voice_note": "曾經高貴正直，被奧特魯德操縱後變得偏執絕望。語氣從憤怒轉為痛苦再到瘋狂。",
+    "tags": ["榮譽", "墮落", "被操縱", "復仇", "絕望"],
+    "avg_assets": {
+      "default_portrait": "friedrich_neutral",
+      "available_portraits": ["friedrich_neutral", "friedrich_rage", "friedrich_despair"]
+    }
+  },
+  {
+    "character_id": "koenig_heinrich",
+    "work_id": "lohengrin",
+    "name_original": "König Heinrich der Vogler",
+    "name_zh": "國王海因里希（捕鳥者）",
+    "speaker_id": "koenig_heinrich",
+    "role_type": ["authority", "king", "judge"],
+    "voice_type": "Bass",
+    "relationship_tags": ["德意志國王", "審判主持者"],
+    "plot_function": ["審判者", "秩序維護者", "場景引導者"],
+    "voice_note": "莊嚴、公正、富有王者威儀。對羅恩格林的到來充滿敬畏，對審判保持公正。",
+    "tags": ["王權", "正義", "審判", "秩序"],
+    "avg_assets": {
+      "default_portrait": "koenig_heinrich_neutral",
+      "available_portraits": ["koenig_heinrich_neutral", "koenig_heinrich_solemn"]
+    }
+  },
+  {
+    "character_id": "heerrufer",
+    "work_id": "lohengrin",
+    "name_original": "Der Heerrufer des Königs",
+    "name_zh": "傳令官",
+    "speaker_id": "heerrufer",
+    "role_type": ["herald", "official"],
+    "voice_type": "Baritone",
+    "relationship_tags": ["國王傳令官"],
+    "plot_function": ["場景引導者", "宣告者", "儀式主持者"],
+    "voice_note": "正式、莊重、清晰。負責宣讀王令與主持儀式，語氣始終保持官方的莊嚴感。",
+    "tags": ["宣告", "儀式", "秩序"],
+    "avg_assets": {
+      "default_portrait": "heerrufer_neutral",
+      "available_portraits": ["heerrufer_neutral"]
+    }
+  },
+  {
+    "character_id": "gottfried",
+    "work_id": "lohengrin",
+    "name_original": "Gottfried",
+    "name_zh": "戈特弗里德",
+    "speaker_id": "gottfried",
+    "role_type": ["silent role", "prince", "enchanted"],
+    "voice_type": "Stumme Rolle（默角）",
+    "relationship_tags": ["艾爾莎之弟", "布拉班特公爵繼承人", "被奧特魯德變為天鵝"],
+    "plot_function": ["被害者", "被救者", "真相的證據"],
+    "voice_note": "無台詞角色。全劇以天鵝形態出現，直到結尾被羅恩格林解除魔咒恢復人形。",
+    "tags": ["天鵝", "魔咒", "繼承人", "解放"],
+    "avg_assets": {
+      "default_portrait": "gottfried_neutral",
+      "available_portraits": ["gottfried_neutral"]
+    }
+  }
+]

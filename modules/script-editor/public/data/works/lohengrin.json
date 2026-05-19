@@ -1,0 +1,20 @@
+{
+  "work_id": "lohengrin",
+  "title_original": "Lohengrin",
+  "title_zh": "羅恩格林",
+  "author": "Richard Wagner",
+  "author_id": "richard_wagner",
+  "language": "German",
+  "country_or_region": "Germany",
+  "period": "Romantic",
+  "genre": ["opera", "romantische Oper", "music drama"],
+  "premiere_year": 1850,
+  "acts": 3,
+  "setting": "Antwerpen, 10世紀前半，德意志國王海因里希一世時代",
+  "synopsis_zh": "聖杯騎士羅恩格林乘天鵝之舟而來，為被誣陷的布拉班特公主艾爾莎辯護並與她結婚，但條件是她絕不可以詢問他的姓名與來歷。在女巫奧特魯德的挑撥下，艾爾莎終究問出了禁忌之問，羅恩格林被迫揭露聖杯騎士身分並離去。",
+  "copyright_status": "public_domain",
+  "copyright_note": "Richard Wagner 卒於 1883 年，劇本文本已進入公共領域。",
+  "source_name": "murashev.com (public domain libretto)",
+  "source_url": "http://www.murashev.com/opera/Lohengrin_libretto_German_Act_1",
+  "tags": ["聖杯", "禁問", "信任", "身份揭露", "天鵝", "騎士", "異教", "犧牲", "愛情", "命運"]
+}

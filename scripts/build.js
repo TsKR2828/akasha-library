@@ -49,8 +49,9 @@ const ALWAYS_EXCLUDE_DIRS = new Set([
   'design',
   'scripts',
   '_site',
-  // Vite source — the built output is in dist/
+  // Vite sources — the built outputs are in dist/<module>/
   join('modules', 'spreadsheet'),
+  join('modules', 'script-editor'),
 ]);
 
 /** Always excluded files (by relative path) */
@@ -58,6 +59,7 @@ const ALWAYS_EXCLUDE_FILES = new Set([
   'package.json',
   'package-lock.json',
   'vite.config.js',
+  'vite.config.script-editor.js',
   '.gitignore',
   '.npmrc',
 ]);
@@ -233,7 +235,7 @@ const critical = [
   join('modules', 'markdown', 'index.html'),
   join('modules', 'pdf-reader', 'index.html'),
   join('modules', 'table-forge', 'index.html'),
-  join('modules', 'script-editor', 'index.html'),
+  join('dist', 'script-editor', 'index.html'),
   join('modules', 'book-editor', 'index.html'),
   join('modules', 'reading-room', 'index.html'),
   join('modules', 'daily-report', 'index.html'),
