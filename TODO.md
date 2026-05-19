@@ -342,3 +342,31 @@
 ## 待做（追加規格 · 剩餘 Phase）
 
 （Enhancement Phase 1–16 全部完成）
+（Phase 17 v2 Script Editor Archive-host merge 全部完成，2026-05-19）
+
+### 已完成：Phase 17 v2 — Script Editor Archive-host merge
+
+> Branch: `feature/archive-host-merge`
+> 前次反方向嘗試（`feature/akasha-4tab-attempt`、PR #2）被 revert 後重做。
+
+- [x] **v2-1** 搬檔 + Vite 設定 + Archive 原樣跑（CDN+Babel → Vite+React）
+- [x] **v2-2** SwHeader 4-TAB + WriteTab placeholder（Write 放第一位 + 預設）
+- [x] **v2-3** WriteTab textarea + Plain Script parser + Blocks/Stats 預覽
+- [x] **v2-4** Alt+1~9 角色快捷鍵 + slot badges auto-bind
+- [x] **v2-5** Voice TTS（useVoiceTTS hook，Web Speech API）
+- [x] **v2-6** BGM 占位 + tsuki-synth 整合計畫（不自寫 Web Audio 合成）
+- [x] **v2-7** 跨 TAB 雙向同步（loop guard）
+- [x] **v2-8** App Shell 整合 + scripts/build.js / sw.js 修正
+- [x] **v2-9** README / ROADMAP / dev-log 更新 + commit
+
+### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
+
+阻塞條件：tsuki-synth `TsukiSynthCLI` 修好 `ScoreRenderer.h` API mismatch + sound library 鎖版。
+
+- [ ] **v3-1** tsuki-synth 批次預渲染 sound library → `exports/wav/`
+- [ ] **v3-2** WAV 收編進 akasha：`modules/script-editor/public/audio/{bgm,sfx}/`
+- [ ] **v3-3** `useAudioCues` hook：`#bgm:` / `#sfx:` cue → HTML5 `<audio>` 播放
+- [ ] **v3-4** BgmPanel 改為實際可操作面板（preset 選擇、音量、loop / fade）
+- [ ] **v3-5** 三軌混音：Voice TTS + BGM（ducking）+ SFX
+
+詳見 [`docs/tsuki-synth-integration.md`](docs/tsuki-synth-integration.md)。

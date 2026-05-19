@@ -166,7 +166,12 @@ Enhancement Phase 新增的核心模組：
 | `core/export-core.js` | 16-A | 統一匯出引擎（17 converter + exportAs API） |
 | `core/export/bridge.js` | 5-B | 跨模組匯出橋接（blocks → table payload） |
 | `core/security.js` | 12 | 資料分級 + AES-GCM 加密 + BYOK 金鑰管理 + Record Stamping + Build Mode |
-| `modules/script-editor/index.html` | 8 | 劇本編輯器 MVP（三欄 UI / 角色 DB / 6 格式匯出入） |
+| `modules/script-editor/src/App.jsx` | 17 v2 | 劇本工房 v3（Vite + React）— 4-TAB Write/Search/Editor/Reader，從 Archive React 移植，build 到 `dist/script-editor/` |
+| `modules/script-editor/src/components/WriteTab.jsx` | 17 v2-3~7 | 速寫 TAB — Plain Script textarea + parser + Alt+N slot 快捷鍵 + Voice TTS + BGM placeholder + 雙向同步 |
+| `modules/script-editor/src/components/BgmPanel.jsx` | 17 v2-6 | BGM/SFX 占位面板（合成委派 tsuki-synth，見 `docs/tsuki-synth-integration.md`） |
+| `modules/script-editor/src/hooks/useVoiceTTS.js` | 17 v2-5 | Web Speech API hook — speakOne / playQueue / settings 持久化 |
+| `modules/script-editor/src/lib/parser.js` | 17 v2-3 | Plain Script ↔ blocks round-trip + stats + caret line/col |
+| `modules/script-editor/legacy/index.legacy.html` | 8 | Phase 8 Vanilla 版備份（1829 行；不部署，僅留參考） |
 | `core/voice.js` | 14-A | Rein-Voice 核心（voice task format / Web Speech TTS / queue） |
 | `core/bgm.js` | 14-B | TsukiSynth BGM 核心（score.json / Web Audio synth / 4 presets） |
 | `core/report-voice.js` | 14-C | 館報朗讀稿轉換器（report JSON → voice tasks / reading script） |

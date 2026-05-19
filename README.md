@@ -145,7 +145,8 @@ npm test
 | Enhancement Phase 7–13（Translation / Script Editor / Memory / Notion / Security / Document Bridge） | ✅ |
 | Enhancement Phase 16（Export Core + 部署：build script / deploy / Worker 後端） | ✅ |
 | Enhancement Phase 14（Voice / BGM Prototype — Rein-Voice + TsukiSynth + 館報朗讀 + 伴讀 BGM） | ✅ |
-| Enhancement Phase 15（Private Reading Room + 每日館報） | ⬜ |
+| Enhancement Phase 15（Private Reading Room + 每日館報） | ✅ |
+| Enhancement Phase 17 v2（Script Editor 4-TAB — Archive-host merge：Vite + React + Voice TTS + tsuki-synth integration plan） | ✅ |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
