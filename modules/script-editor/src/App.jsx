@@ -211,7 +211,7 @@ const SwIcon = ({ name, size = 16, stroke = 1.6 }) => {
 };
 
 // ============= BLOCK VALIDATION (Phase 12-A) =============
-const VALID_BLOCK_TYPES = ["dialogue", "narration", "scene", "note", "choice"];
+const VALID_BLOCK_TYPES = ["dialogue", "narration", "scene", "note", "choice", "command"];
 const SAFE_ID_RE = /^[a-zA-Z0-9_\-]+$/;
 
 function validateBlock(block) {
@@ -224,12 +224,15 @@ function validateBlock(block) {
 
   // Type-specific checks
   if (block.type === "dialogue") {
-    if (!block.speakerId) errors.push("缺少 speakerId");
-    if (block.speakerId) {
-      if (CHARACTERS.length === 0) {
-        errors.push("角色表為空，無法驗證 speakerId");
-      } else if (!CHARACTERS.find(c => c.id === block.speakerId)) {
-        errors.push(`speakerId「${block.speakerId}」不存在於角色表`);
+    // v2-fix4: isUnknown 旗標 → 跳過角色表驗證（user-authored 未綁定角色）
+    if (!block.isUnknown) {
+      if (!block.speakerId) errors.push("缺少 speakerId");
+      if (block.speakerId) {
+        if (CHARACTERS.length === 0) {
+          errors.push("角色表為空，無法驗證 speakerId");
+        } else if (!CHARACTERS.find(c => c.id === block.speakerId)) {
+          errors.push(`speakerId「${block.speakerId}」不存在於角色表`);
+        }
       }
     }
     if (!block.original && !block.zh) errors.push("原文與中譯皆為空");
@@ -795,16 +798,20 @@ function ResultCard({ r, onClick }) {
           <span>·</span>
           <span style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12.5, color: "var(--cream-dim)" }}>{ch?.name}</span>
         </div>
-        <div style={{
-          fontFamily: "var(--font-serif-en)", fontStyle: "italic",
-          fontSize: 14.5, lineHeight: 1.7, color: "var(--cream)",
-          marginBottom: 4,
-        }}>「{r.original}」</div>
-        <div style={{
-          fontFamily: "var(--font-body)", fontSize: 13,
-          lineHeight: 1.7, color: "var(--cream)", opacity: 0.85,
-          marginBottom: 12, letterSpacing: "0.04em",
-        }}>「{r.zh}」</div>
+        {r.original && r.original.trim() && (
+          <div style={{
+            fontFamily: "var(--font-serif-en)", fontStyle: "italic",
+            fontSize: 14.5, lineHeight: 1.7, color: "var(--cream)",
+            marginBottom: 4,
+          }}>「{r.original}」</div>
+        )}
+        {r.zh && r.zh.trim() && (
+          <div style={{
+            fontFamily: "var(--font-body)", fontSize: 13,
+            lineHeight: 1.7, color: "var(--cream)", opacity: 0.85,
+            marginBottom: 12, letterSpacing: "0.04em",
+          }}>「{r.zh}」</div>
+        )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {(r.tags || []).map(([t, k], i) => <Tag key={i} kind={k}>{t}</Tag>)}
         </div>
@@ -1707,9 +1714,14 @@ const ZeroRhyme = {
 
       // ── Structural (error) ──
       if (b.type === "dialogue") {
-        if (!b.speakerId) issues.push({ ...loc, severity: "error", message: "對白缺少角色（speakerId）", rule: "no-speaker" });
+        // v2-fix4: isUnknown 表示 user-authored 未綁定角色 → 降為 info，不算 error
+        if (b.isUnknown) {
+          issues.push({ ...loc, severity: "info", message: `新角色「${b.speaker || "?"}」尚未綁定角色表`, rule: "new-speaker" });
+        } else {
+          if (!b.speakerId) issues.push({ ...loc, severity: "error", message: "對白缺少角色（speakerId）", rule: "no-speaker" });
+        }
         if (!b.original && !b.zh) issues.push({ ...loc, severity: "error", message: "對白內容為空（原文與中譯皆無）", rule: "empty-dialogue" });
-        if (b.speakerId && charIds.length > 0 && !charIds.includes(b.speakerId))
+        if (!b.isUnknown && b.speakerId && charIds.length > 0 && !charIds.includes(b.speakerId))
           issues.push({ ...loc, severity: "error", message: `角色「${b.speakerId}��不在角色表中`, rule: "unknown-speaker" });
       }
       if (b.type === "scene" && !b.act && !b.scene)
@@ -3722,23 +3734,27 @@ function ReaderDialogue({ block, ch, charNotes = [], goToBlock }) {
         </div>
       )}
 
-      {/* original — italic Cormorant */}
-      <div style={{
-        fontFamily: "var(--font-serif-en)", fontStyle: "italic",
-        fontSize: 16.5,
-        color: "var(--cream)",
-        lineHeight: 1.85,
-        margin: "0 32px 6px",
-        textAlign: "left",
-      }}>「{block.original}」</div>
-      {/* translation — Noto Serif TC, slightly dimmer */}
-      <div style={{
-        fontFamily: "var(--font-body)", fontSize: 14.5,
-        color: "var(--cream)", opacity: 0.78,
-        lineHeight: 1.85,
-        margin: "0 32px 4px",
-        letterSpacing: "0.04em",
-      }}>「{block.zh}」</div>
+      {/* original — italic Cormorant — 只在有原文時顯示 */}
+      {block.original && block.original.trim() && (
+        <div style={{
+          fontFamily: "var(--font-serif-en)", fontStyle: "italic",
+          fontSize: 16.5,
+          color: "var(--cream)",
+          lineHeight: 1.85,
+          margin: "0 32px 6px",
+          textAlign: "left",
+        }}>「{block.original}」</div>
+      )}
+      {/* translation — Noto Serif TC, slightly dimmer — 只在有中譯時顯示 */}
+      {block.zh && block.zh.trim() && (
+        <div style={{
+          fontFamily: "var(--font-body)", fontSize: 14.5,
+          color: "var(--cream)", opacity: 0.78,
+          lineHeight: 1.85,
+          margin: "0 32px 4px",
+          letterSpacing: "0.04em",
+        }}>「{block.zh}」</div>
+      )}
       {/* tags — hover only */}
       <div style={{
         display: "flex", flexWrap: "wrap", gap: 4,

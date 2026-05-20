@@ -25,11 +25,25 @@ export function generateId(prefix = "blk") {
 
 /* ---------- text → blocks[] ----------
    v2-7: 產出時補上 Reader/Editor 期待的欄位
-         - dialogue: speakerId（同 speaker）/ zh（鏡射 text）/ original（空）/ avg（空殼）
+         - dialogue: speakerId（從 characters 表 reverse lookup；找不到留 ""）/
+                     zh（鏡射 text）/ original（空）/ avg（空殼）
          - #scene: 特殊處理為 scene block（不再列為 command）
          - narration: zh 鏡射 text
-   保證 Plain Script ↔ Reader/Editor shape 雙向可用，雖然 original 欄會在 round-trip 中遺失。 */
-export function parsePlainScript(content) {
+   保證 Plain Script ↔ Reader/Editor shape 雙向可用，雖然 original 欄會在 round-trip 中遺失。
+   v2-fix4: 接受 optional characters[]，把 speaker 中文名反查回 speakerId（'羅恩格林' → 'lohengrin'）
+            若找不到，speakerId 留空 + 加 isUnknownSpeaker:true 旗標，
+            Editor / Reader 應顯示「未綁定角色」而不是 error。 */
+export function parsePlainScript(content, characters = []) {
+  // 建反查表：中文/英文/別名 name → id
+  const idByName = new Map();
+  for (const c of (characters || [])) {
+    if (!c || !c.id) continue;
+    if (c.name)   idByName.set(c.name, c.id);
+    if (c.nameEn) idByName.set(c.nameEn, c.id);
+    idByName.set(c.id, c.id); // 也允許直接用 id 當 speaker
+  }
+  const resolveId = (name) => idByName.get(name) || "";
+
   if (!content || !content.trim()) return [];
   const blocks = [];
   const lines = content.split("\n");
@@ -77,14 +91,17 @@ export function parsePlainScript(content) {
           _line: i + 1,
         });
       } else {
+        // v2-fix4: 從 characters 反查 ID；找不到 → speakerId 空 + isUnknown 旗標
+        const resolvedId = resolveId(speaker);
         blocks.push({
           id: generateId("dlg"),
           type: "dialogue",
-          speaker,
-          speakerId: speaker,        // Reader 用 speakerId；用 speaker 同字串當 ID
+          speaker,                     // 保留顯示用文字
+          speakerId: resolvedId,       // 反查結果；找不到留空
+          isUnknown: !resolvedId,      // 給 Editor/Reader UI 用，validate 也應跳過 error
           text,
-          zh: text,                   // Reader 顯示 b.zh
-          original: "",               // 原文留空（write-authored 無 source）
+          zh: text,                    // Reader 顯示 b.zh
+          original: "",                // 原文留空（write-authored 無 source）
           tags: [],
           avg: { sprite: "", position: "center", bg: "", bgm: "", sfx: "" },
           _line: i + 1,

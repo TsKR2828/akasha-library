@@ -64,8 +64,8 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
   const [caret, setCaret] = React.useState(0);
   const taRef = React.useRef(null);
 
-  /* parse + stats */
-  const parsedBlocks = React.useMemo(() => parsePlainScript(content), [content]);
+  /* parse + stats — v2-fix4: 把 characters 傳給 parser 反查 speakerId */
+  const parsedBlocks = React.useMemo(() => parsePlainScript(content, characters), [content, characters]);
   const stats = React.useMemo(() => computeStats(parsedBlocks), [parsedBlocks]);
   const { line, col } = React.useMemo(() => getLineCol(content, caret), [content, caret]);
 
@@ -204,6 +204,24 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
   const onTextChange = e => setContent(e.target.value);
   const onCaretMove  = e => setCaret(e.target.selectionStart || 0);
 
+  /* v2-fix3: 把當前游標所在行卷到視野「下 2/3」附近
+     — 只在游標超過 2/3 視野時才下捲；不會跳回上方。 */
+  const anchorCaretView = React.useCallback(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    const pos = ta.selectionStart || 0;
+    const before = ta.value.slice(0, pos);
+    const lineIdx = (before.match(/\n/g) || []).length;
+    const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 27;
+    const caretPx = lineIdx * lineHeight + 20; /* 20 = top padding */
+    const viewportH = ta.clientHeight;
+    const desiredCaretTop = viewportH * (2 / 3);
+    const currentCaretTop = caretPx - ta.scrollTop;
+    if (currentCaretTop > desiredCaretTop) {
+      ta.scrollTop = caretPx - desiredCaretTop;
+    }
+  }, []);
+
   const onClearDraft = () => {
     if (!confirm("清除草稿？此動作會清除本地儲存的速寫內容。")) return;
     setContent("");
@@ -243,6 +261,18 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
           {stats.total} blocks · {stats.speakers.length} speakers · {stats.totalChars} chars
         </span>
         <span style={{ flex: 1 }} />
+        <button
+          onClick={() => {
+            if (!Array.isArray(blocks) || blocks.length === 0) return;
+            if (content && !confirm("以目前劇本覆蓋草稿？")) return;
+            const text = blocksToPlainScript(blocks, characters);
+            setContent(text);
+            saveDraft(text);
+          }}
+          disabled={!Array.isArray(blocks) || blocks.length === 0}
+          style={tbBtnStyle}
+          title="從 Editor/Reader 的劇本載入到速寫區"
+        >↺ 從劇本</button>
         <button
           onClick={onResetSeed}
           style={tbBtnStyle}
@@ -317,15 +347,18 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
         ))}
       </div>
 
-      {/* ───── textarea (left, row 3) ───── */}
+      {/* ───── textarea (left, row 3)
+            v2-fix3: 加大 paddingBottom（~40% 容器高），讓游標停在「下 2/3」附近
+                     onInput/onKeyDown 後用 scrollIntoView 把當前行對齊視線中段 ───── */}
       <textarea
         ref={taRef}
         value={content}
         onChange={onTextChange}
         onKeyDown={onKeyDown}
-        onKeyUp={onCaretMove}
-        onClick={onCaretMove}
+        onKeyUp={(e) => { onCaretMove(e); anchorCaretView(); }}
+        onClick={(e) => { onCaretMove(e); anchorCaretView(); }}
         onSelect={onCaretMove}
+        onInput={() => requestAnimationFrame(anchorCaretView)}
         spellCheck={false}
         placeholder={`輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`}
         style={{
@@ -333,7 +366,10 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
           gridRow: "3 / 4",
           width: "100%",
           height: "100%",
-          padding: "20px 28px",
+          /* v2-fix3 寫作視線範圍：
+             top 20px → 大；bottom 40vh → 底部留白讓游標卡在「下 2/3」附近，
+             不會被擠到不可見的卷軸尾端。配合下方 anchorCaretView() 自動置中。 */
+          padding: "20px 28px 40vh",
           background: "var(--navy-deep)",
           color: "var(--text-primary)",
           border: "none",
@@ -345,6 +381,7 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
           letterSpacing: "0.02em",
           tabSize: 4,
           whiteSpace: "pre-wrap",
+          scrollPaddingBottom: "40vh",
         }}
       />
 
