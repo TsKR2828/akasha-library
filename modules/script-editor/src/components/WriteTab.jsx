@@ -17,6 +17,15 @@ import BgmPanel from "./BgmPanel.jsx";
    =========================================================== */
 
 const DRAFT_KEY = "sw_write_draft_v1";
+const LOCKS_KEY = "sw_slot_locks_v1";
+
+function loadLocks() {
+  try { return JSON.parse(localStorage.getItem(LOCKS_KEY) || "{}"); }
+  catch { return {}; }
+}
+function saveLocks(obj) {
+  try { localStorage.setItem(LOCKS_KEY, JSON.stringify(obj)); } catch {}
+}
 const SEED = `#scene：第一幕 · 第一場
 旁白：天色將明，舍爾德河畔聚集著布拉班特諸侯。
 傳令官：聽令！國王海因里希駕臨此地。
@@ -127,18 +136,59 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blocks, characters]);
 
-  /* ─── v2-4: Alt+N slots ────────────────────────────────
-     1, 2 固定（場景 / 旁白）；3-9 動態 auto-bind 對白角色 */
-  const dynamicSlots = React.useMemo(() => {
+  /* ─── v2-4 + fix5: Alt+N slots with lock/assign ─────────
+     1, 2 固定（場景 / 旁白）；3-9 先看 locks 再 auto-bind */
+  const [locks, setLocks] = React.useState(loadLocks);
+  const [ctxMenu, setCtxMenu] = React.useState(null); // { slotN, x, y }
+
+  React.useEffect(() => { saveLocks(locks); }, [locks]);
+
+  // close context menu on any click
+  React.useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [ctxMenu]);
+
+  const allSpeakers = React.useMemo(() => {
     const seen = [];
     for (const b of parsedBlocks) {
-      if (b.type === "dialogue" && b.speaker && !seen.includes(b.speaker)) {
+      if (b.type === "dialogue" && b.speaker && !seen.includes(b.speaker))
         seen.push(b.speaker);
-        if (seen.length >= 7) break;
-      }
     }
     return seen;
   }, [parsedBlocks]);
+
+  const dynamicSlots = React.useMemo(() => {
+    const slots = Array(7).fill(null);
+    const used = new Set();
+    const cleared = new Set();
+    // 1. locked slots first
+    for (let i = 0; i < 7; i++) {
+      const n = i + 3;
+      if (!locks[n]) continue;
+      if (locks[n] === "__clear__") { cleared.add(i); continue; }
+      if (allSpeakers.includes(locks[n])) {
+        slots[i] = locks[n];
+        used.add(locks[n]);
+      }
+    }
+    // 2. auto-fill remaining (skip cleared slots)
+    let ai = 0;
+    for (let i = 0; i < 7; i++) {
+      if (slots[i] || cleared.has(i)) continue;
+      while (ai < allSpeakers.length && used.has(allSpeakers[ai])) ai++;
+      if (ai < allSpeakers.length) {
+        slots[i] = allSpeakers[ai];
+        used.add(allSpeakers[ai]);
+        ai++;
+      }
+    }
+    return slots;
+  }, [allSpeakers, locks]);
+
+  const overflow = allSpeakers.filter(s => !dynamicSlots.includes(s));
 
   const slotLabels = React.useMemo(() => ({
     1: "#scene",
@@ -151,6 +201,28 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
     8: dynamicSlots[5] || null,
     9: dynamicSlots[6] || null,
   }), [dynamicSlots]);
+
+  const isLocked = (n) => n >= 3 && !!locks[n] && allSpeakers.includes(locks[n]);
+
+  const onSlotContext = React.useCallback((e, n) => {
+    if (n <= 2) return; // fixed slots
+    e.preventDefault();
+    setCtxMenu({ slotN: n, x: e.clientX, y: e.clientY });
+  }, []);
+
+  const lockSlot = (n) => {
+    const label = slotLabels[n];
+    if (label) setLocks(prev => ({ ...prev, [n]: label }));
+  };
+  const unlockSlot = (n) => {
+    setLocks(prev => { const next = { ...prev }; delete next[n]; return next; });
+  };
+  const clearSlot = (n) => {
+    setLocks(prev => { const next = { ...prev }; next[n] = "__clear__"; return next; });
+  };
+  const assignSlot = (n, speaker) => {
+    setLocks(prev => ({ ...prev, [n]: speaker }));
+  };
 
   /* insertSpeakerPrefix — Alt+N or click slot:
      於目前游標所在行的開頭塞入 prefix；若該行已有 speaker：前綴就替換之，
@@ -342,10 +414,53 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
             n={n}
             label={slotLabels[n]}
             fixed={n <= 2}
+            locked={isLocked(n)}
             onClick={() => slotLabels[n] && insertSpeakerPrefix(n)}
+            onContextMenu={(e) => onSlotContext(e, n)}
           />
         ))}
+        {overflow.length > 0 && (
+          <span style={{
+            fontSize: 10.5, color: "var(--text-tertiary)",
+            fontFamily: "var(--font-serif-en)",
+            letterSpacing: "0.08em",
+            marginLeft: 4,
+          }} title={overflow.join("、")}>⋯ +{overflow.length}</span>
+        )}
       </div>
+
+      {/* ───── slot context menu ───── */}
+      {ctxMenu && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: "fixed", left: ctxMenu.x, top: ctxMenu.y, zIndex: 999,
+            background: "var(--navy-light)", border: "1px solid var(--navy-line)",
+            borderRadius: 4, padding: "4px 0", minWidth: 140,
+            boxShadow: "var(--shadow-lift)",
+          }}
+        >
+          {slotLabels[ctxMenu.slotN] && !isLocked(ctxMenu.slotN) && (
+            <CtxItem label="🔒 鎖定" onClick={() => { lockSlot(ctxMenu.slotN); setCtxMenu(null); }} />
+          )}
+          {isLocked(ctxMenu.slotN) && (
+            <CtxItem label="🔓 解鎖" onClick={() => { unlockSlot(ctxMenu.slotN); setCtxMenu(null); }} />
+          )}
+          {slotLabels[ctxMenu.slotN] && (
+            <CtxItem label="✕ 清除" danger onClick={() => { clearSlot(ctxMenu.slotN); setCtxMenu(null); }} />
+          )}
+          <div style={{ height: 1, background: "var(--navy-line)", margin: "4px 0" }} />
+          <div style={{ padding: "2px 10px", fontSize: 9.5, color: "var(--text-tertiary)",
+            fontFamily: "var(--font-serif-en)", letterSpacing: "0.14em", textTransform: "uppercase",
+          }}>Assign</div>
+          {allSpeakers.filter(s => s !== slotLabels[ctxMenu.slotN]).map(s => (
+            <CtxItem key={s} label={s} onClick={() => { assignSlot(ctxMenu.slotN, s); setCtxMenu(null); }} />
+          ))}
+          {allSpeakers.length === 0 && (
+            <div style={{ padding: "4px 10px", fontSize: 11, color: "var(--text-tertiary)" }}>（無角色）</div>
+          )}
+        </div>
+      )}
 
       {/* ───── textarea (left, row 3)
             v2-fix3: 加大 paddingBottom（~40% 容器高），讓游標停在「下 2/3」附近
@@ -461,26 +576,28 @@ const badgeStyle = {
   textTransform: "uppercase",
 };
 
-/* ============= Slot Badge (v2-4) ============= */
-function SlotBadge({ n, label, fixed, onClick }) {
+/* ============= Slot Badge (v2-4 + fix5) ============= */
+function SlotBadge({ n, label, fixed, locked, onClick, onContextMenu }) {
   const filled = !!label;
-  // colour scheme: 1/2 = gold-bright (fixed scene/narrator), 3-9 = gold (filled) / muted (empty)
   const color = filled
-    ? (fixed ? "var(--gold-bright)" : "var(--gold)")
+    ? (fixed ? "var(--gold-bright)" : locked ? "var(--gold-bright)" : "var(--gold)")
     : "var(--text-tertiary)";
   const border = filled
-    ? (fixed ? "var(--gold-line)" : "var(--gold-line)")
+    ? (locked ? "rgba(227,196,134,0.35)" : "var(--gold-line)")
     : "var(--navy-line)";
   const bg = filled
-    ? (fixed ? "rgba(227,196,134,0.08)" : "rgba(201,168,106,0.06)")
+    ? (fixed ? "rgba(227,196,134,0.08)" : locked ? "rgba(227,196,134,0.12)" : "rgba(201,168,106,0.06)")
     : "transparent";
 
   return (
     <button
       type="button"
       onClick={onClick}
+      onContextMenu={onContextMenu}
       disabled={!filled}
-      title={filled ? `Alt+${n} 插入「${label}：」` : `空位 — 輸入對白後自動綁定`}
+      title={filled
+        ? `Alt+${n} 插入「${label}：」${locked ? "（已鎖定）" : ""}　右鍵管理`
+        : `空位 — 右鍵指派角色`}
       style={{
         display: "inline-flex", alignItems: "center", gap: 5,
         padding: "3px 8px 3px 6px",
@@ -488,7 +605,7 @@ function SlotBadge({ n, label, fixed, onClick }) {
         border: `1px solid ${border}`,
         borderRadius: 2,
         color,
-        cursor: filled ? "pointer" : "default",
+        cursor: filled ? "pointer" : "context-menu",
         fontSize: 11.5,
         fontFamily: "var(--font-serif-tc)",
         letterSpacing: "0.04em",
@@ -503,11 +620,32 @@ function SlotBadge({ n, label, fixed, onClick }) {
         color: filled ? "var(--gold-dim)" : "var(--text-tertiary)",
         fontVariant: "small-caps",
         textTransform: "uppercase",
-      }}>⌥{n}</span>
+      }}>{locked ? "🔒" : "⌥"}{n}</span>
       <span style={{ maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {label || "—"}
       </span>
     </button>
+  );
+}
+
+/* ============= Context Menu Item ============= */
+function CtxItem({ label, danger, onClick }) {
+  const [hover, setHover] = React.useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        padding: "5px 12px",
+        fontSize: 12,
+        fontFamily: "var(--font-serif-tc)",
+        color: danger ? "var(--danger)" : "var(--text-primary)",
+        background: hover ? "var(--navy-hover)" : "transparent",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+      }}
+    >{label}</div>
   );
 }
 
