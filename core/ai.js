@@ -13,9 +13,47 @@ const SETTINGS_KEY = 'akasha-ai-settings';
 const APIKEY_KEY = 'akasha-ai-apikey';
 
 import { buildPersonaCore, getModulePersona } from './persona.js';
+import { CONFIG } from './config.js';
+import { getToken } from './auth.js';
 
-// Proxy URL — set when Workers proxy is deployed (null = direct mode only)
-const PROXY_URL = null;
+const SESSION_TOKEN_KEY = 'akasha-session-token';
+const SESSION_EXPIRY_KEY = 'akasha-session-expiry';
+
+function getProxyUrl() {
+  const base = CONFIG.API_BASE;
+  if (!base || base.includes('your-subdomain')) return null;
+  return base;
+}
+
+async function getSessionToken() {
+  const cached = sessionStorage.getItem(SESSION_TOKEN_KEY);
+  const expiry = parseInt(sessionStorage.getItem(SESSION_EXPIRY_KEY) || '0', 10);
+  if (cached && Date.now() < expiry) return cached;
+
+  const proxyUrl = getProxyUrl();
+  const googleToken = getToken();
+  if (!proxyUrl || !googleToken) return null;
+
+  try {
+    const res = await fetch(`${proxyUrl}/v1/auth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: googleToken }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.ok || !data.token) return null;
+
+    sessionStorage.setItem(SESSION_TOKEN_KEY, data.token);
+    sessionStorage.setItem(SESSION_EXPIRY_KEY, String(Date.now() + (data.expiresIn - 300) * 1000));
+    return data.token;
+  } catch { return null; }
+}
+
+export function clearSessionToken() {
+  sessionStorage.removeItem(SESSION_TOKEN_KEY);
+  sessionStorage.removeItem(SESSION_EXPIRY_KEY);
+}
 
 // ===== Text Extraction =====
 
@@ -118,7 +156,7 @@ export function getAISettings() {
   if (result.mode === 'byok' && !result.apiKey) {
     result.error = 'no-api-key';
   }
-  if (result.mode === 'coin' && !PROXY_URL) {
+  if (result.mode === 'coin' && !getProxyUrl()) {
     result.error = 'no-proxy';
   }
 
@@ -333,11 +371,18 @@ async function callCustom(settings, systemPrompt, msgs) {
 }
 
 async function callViaProxy(settings, systemPrompt, msgs) {
-  if (!PROXY_URL) throw new Error('月幣模式尚未啟用（代理伺服器未設定）');
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) throw new Error('月幣模式尚未啟用（代理伺服器未設定）');
 
-  const res = await fetch(`${PROXY_URL}/v1/chat`, {
+  const headers = { 'Content-Type': 'application/json' };
+  const sessionToken = await getSessionToken();
+  if (sessionToken) {
+    headers['Authorization'] = `Bearer ${sessionToken}`;
+  }
+
+  const res = await fetch(`${proxyUrl}/v1/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       provider: settings.provider,
       model: settings.model,
@@ -349,6 +394,7 @@ async function callViaProxy(settings, systemPrompt, msgs) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    if (res.status === 401) clearSessionToken();
     throw new Error(`Proxy ${res.status}: ${err.error || res.statusText}`);
   }
 
