@@ -1946,7 +1946,8 @@ body { display: flex; }
     'markdown': { title: 'Code & Data', subtitle: 'Manuscripta', src: 'modules/markdown/index.html' },
     'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
     'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
-    'script-editor': { title: 'Script Editor', subtitle: 'Scriptorium', src: 'modules/script-editor/index.html' },
+    'spreadsheet': { title: '試算表', subtitle: 'Tabularium XL', src: 'dist/spreadsheet/index.html' },
+    'script-editor': { title: 'Script Editor', subtitle: 'Scriptorium', src: 'dist/script-editor/index.html' },
     'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
     'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
     'private-reading-room': { title: '談心專區', subtitle: 'Intimarium', src: 'modules/reading-room/index.html' },
@@ -2391,6 +2392,7 @@ body { display: flex; }
 
   // Listen for reading progress (no import needed)
   window.addEventListener('message', function(event) {
+    if (event.origin !== location.origin) return;
     if (event.data && event.data.type === 'akasha-reading-progress' && event.data.bookId) {
       try {
         var data = JSON.parse(localStorage.getItem('akasha-reading-progress') || '{}');
@@ -2407,7 +2409,7 @@ body { display: flex; }
           url: event.data.url,
           bookTitle: (event.data.book && event.data.book.title) || 'PDF',
           bookId: (event.data.book && event.data.book.id) || null,
-        }, '*');
+        }, location.origin);
       }, { once: true });
     }
   });
@@ -2483,7 +2485,7 @@ const TYPE_ICONS = {
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
 const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT', 'ocr-note': 'OCR', 'crop-screenshot': 'CROP' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'pdf-reader', jsonl: 'script-editor', ks: 'script-editor' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', xlsx: 'spreadsheet', xls: 'spreadsheet', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'pdf-reader', jsonl: 'script-editor', ks: 'script-editor' };
 const COPYRIGHT_TYPES = new Set(['ocr-note', 'crop-screenshot']);
 
 async function renderRecent() {

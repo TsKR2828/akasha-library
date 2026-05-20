@@ -2127,7 +2127,7 @@
           setFile(file.name, reader.result, file.size);
           try {
             const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
-            const fileExt = getExtension(file.name) || 'txt';
+            const fileExt = (getExtension(file.name) || '.txt').replace(/^\./, '');
             const entry = await saveFileEntry({ name: file.name, type: fileExt, size: file.size });
             await saveFileBlob(entry.id, new Blob([reader.result], { type: file.type || 'text/plain' }));
             if (window.parent !== window) {

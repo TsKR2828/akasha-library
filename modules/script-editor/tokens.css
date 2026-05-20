@@ -1,0 +1,49 @@
+/* Akasha Library — Design Tokens (extracted for Script Workshop prototype)
+   Source: akasha-library/assets/styles/shared.css */
+
+:root {
+  /* Base */
+  --navy: #181d28;
+  --navy-deep: #11151d;
+  --navy-light: #232a37;
+  --navy-hover: #2e3645;
+  --navy-line: #313a4b;
+
+  /* Brass / gold */
+  --gold: #c9a86a;
+  --gold-bright: #e3c486;
+  --gold-dim: #a08550;
+  --gold-deep: #7a6638;
+  --gold-glow: rgba(201,168,106,0.14);
+  --gold-line: rgba(201,168,106,0.22);
+
+  /* Paper / text */
+  --cream: #f1ead6;
+  --cream-dim: #d6cfb8;
+  --paper: #f5efe1;
+  --text-primary: #ece5cf;
+  --text-secondary: #9aa1ad;
+  --text-tertiary: #646b78;
+
+  /* States */
+  --danger: #c4604f;
+  --success: #6aae7f;
+  --info: #c9a86a;
+
+  /* Type */
+  --font-serif-en: "Cormorant Garamond", "EB Garamond", Garamond, serif;
+  --font-serif-tc: "Noto Serif TC", "Source Han Serif TC", "PingFang TC", serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", monospace;
+  --font-display: var(--font-serif-en);
+  --font-body: var(--font-serif-tc);
+
+  /* Sizing */
+  --r-sharp: 2px;
+  --r-soft: 4px;
+  --r-card: 6px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px -12px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.3);
+  --shadow-lift: 0 1px 0 rgba(255,255,255,0.06) inset, 0 18px 40px -20px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.35);
+  --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
+}

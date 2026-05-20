@@ -1,0 +1,1511 @@
+{
+  "$schema": "TsukiSynth Sound Library Index v1",
+  "library": [
+    {
+      "id": "akashic_bell_001",
+      "name": "Akashic Bell",
+      "name_zh": "阿卡西之鐘",
+      "primary_type": "magic",
+      "subcategory": "bell",
+      "sound_type": "oneshot",
+      "family_id": "akashic_bell",
+      "character": [
+        "metallic",
+        "airy"
+      ],
+      "tags": [
+        "bell",
+        "mystical",
+        "transition",
+        "reverb-heavy",
+        "sacred"
+      ],
+      "mood": "sacred",
+      "energy": "low",
+      "duration_sec": 8.5,
+      "use_cases": [
+        "VTuber scene transition",
+        "notification",
+        "meditation"
+      ],
+      "world": "akashic",
+      "score_file": "scores/examples/akashic_bell.score.json",
+      "wav_file": "exports/wav/akashic_bell_001.wav",
+      "export_filename": "Magic_Metallic_OneShot_C5",
+      "engine": "plate",
+      "primary_material": "bronze",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_warning_001",
+      "name": "Rabbit Warning",
+      "name_zh": "兔兔警告",
+      "primary_type": "ui",
+      "subcategory": "alert",
+      "sound_type": "oneshot",
+      "family_id": "rabbit_warning",
+      "character": [
+        "bright",
+        "punch"
+      ],
+      "tags": [
+        "warning",
+        "alert",
+        "short",
+        "character-sfx",
+        "bright"
+      ],
+      "mood": "tense",
+      "energy": "high",
+      "duration_sec": 0.8,
+      "use_cases": [
+        "VTuber reaction",
+        "UI alert",
+        "chat notification"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/examples/rabbit_warning.score.json",
+      "wav_file": "exports/wav/rabbit_warning_001.wav",
+      "export_filename": "UI_Bright_OneShot_E6",
+      "engine": "beam",
+      "primary_material": "aluminum",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_metal_click_001",
+      "name": "Restraint Metal Click",
+      "name_zh": "拘束扣合",
+      "primary_type": "impact",
+      "subcategory": "mechanical",
+      "sound_type": "oneshot",
+      "family_id": "restraint_metal_click",
+      "character": [
+        "dark",
+        "metallic"
+      ],
+      "tags": [
+        "metal",
+        "click",
+        "mechanical",
+        "dark",
+        "impact",
+        "short"
+      ],
+      "mood": "ominous",
+      "energy": "medium",
+      "duration_sec": 2.0,
+      "use_cases": [
+        "VTuber character action",
+        "game UI",
+        "dark atmosphere"
+      ],
+      "world": "restraint",
+      "score_file": "scores/examples/restraint_metal_click.score.json",
+      "wav_file": "exports/wav/restraint_metal_click_001.wav",
+      "export_filename": "Impact_Dark_OneShot_C2",
+      "engine": "string+plate",
+      "primary_material": "steel",
+      "variant_description": null
+    },
+    {
+      "id": "akashic_transition_001",
+      "name": "Akashic Gate Open",
+      "name_zh": "阿卡西開門",
+      "primary_type": "magic",
+      "subcategory": "bell",
+      "sound_type": "oneshot",
+      "family_id": "akashic_transition",
+      "character": [
+        "metallic",
+        "airy"
+      ],
+      "tags": [
+        "bell",
+        "mystical",
+        "transition",
+        "reverb-heavy",
+        "sacred"
+      ],
+      "mood": "sacred",
+      "energy": "medium",
+      "duration_sec": 8.0,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_transition_001.score.json",
+      "wav_file": "exports/wav/akashic_transition_001.wav",
+      "export_filename": "Magic_Metallic_OneShot_C4",
+      "engine": "plate",
+      "primary_material": "bronze",
+      "variant_description": null
+    },
+    {
+      "id": "akashic_notify_001",
+      "name": "Akashic Record Chime",
+      "name_zh": "紀錄提示",
+      "primary_type": "ui",
+      "subcategory": "chime",
+      "sound_type": "oneshot",
+      "family_id": "akashic_notify",
+      "character": [
+        "bright",
+        "airy"
+      ],
+      "tags": [
+        "chime",
+        "notification",
+        "glass",
+        "sacred",
+        "bright"
+      ],
+      "mood": "sacred",
+      "energy": "medium",
+      "duration_sec": 1.7,
+      "use_cases": [
+        "chat notification",
+        "donation / superchat alert"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_notify_001.score.json",
+      "wav_file": "exports/wav/akashic_notify_001.wav",
+      "export_filename": "UI_Bright_OneShot_E6",
+      "engine": "beam",
+      "primary_material": "glass",
+      "variant_description": null
+    },
+    {
+      "id": "akashic_action_001",
+      "name": "Akashic Page Turn",
+      "name_zh": "翻頁",
+      "primary_type": "foley",
+      "subcategory": "string",
+      "sound_type": "oneshot",
+      "family_id": "akashic_action",
+      "character": [
+        "soft",
+        "airy"
+      ],
+      "tags": [
+        "string",
+        "page-turn",
+        "gentle",
+        "foley"
+      ],
+      "mood": "calm",
+      "energy": "low",
+      "duration_sec": 1.2,
+      "use_cases": [
+        "VTuber character action",
+        "game action feedback"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_action_001.score.json",
+      "wav_file": "exports/wav/akashic_action_001.wav",
+      "export_filename": "Foley_Soft_OneShot_D5",
+      "engine": "string+plate",
+      "primary_material": "brass",
+      "variant_description": null
+    },
+    {
+      "id": "akashic_ambient_001",
+      "name": "Akashic Library Drone",
+      "name_zh": "圖書館低鳴",
+      "primary_type": "ambience",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "akashic_ambient",
+      "character": [
+        "dark",
+        "airy"
+      ],
+      "tags": [
+        "ambient",
+        "drone",
+        "low",
+        "sacred",
+        "reverb-heavy"
+      ],
+      "mood": "mystical",
+      "energy": "very-low",
+      "duration_sec": 17.0,
+      "use_cases": [
+        "ambient background"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_ambient_001.score.json",
+      "wav_file": "exports/wav/akashic_ambient_001.wav",
+      "export_filename": "Ambience_Dark_OneShot_C3",
+      "engine": "plate",
+      "primary_material": "bronze",
+      "variant_description": null
+    },
+    {
+      "id": "akashic_ui_001",
+      "name": "Akashic Light Tap",
+      "name_zh": "確認光點",
+      "primary_type": "ui",
+      "subcategory": "chime",
+      "sound_type": "oneshot",
+      "family_id": "akashic_ui",
+      "character": [
+        "bright",
+        "soft"
+      ],
+      "tags": [
+        "ui",
+        "click",
+        "glass",
+        "short",
+        "bright"
+      ],
+      "mood": "calm",
+      "energy": "low",
+      "duration_sec": 0.4,
+      "use_cases": [
+        "UI button click",
+        "UI confirmation"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_ui_001.score.json",
+      "wav_file": "exports/wav/akashic_ui_001.wav",
+      "export_filename": "UI_Bright_OneShot_C7",
+      "engine": "beam",
+      "primary_material": "glass",
+      "variant_description": null
+    },
+    {
+      "id": "akashic_transition_var01",
+      "name": "Akashic Gate Open (Dark)",
+      "name_zh": "阿卡西開門（暗）",
+      "primary_type": "magic",
+      "subcategory": "bell",
+      "sound_type": "variant",
+      "family_id": "akashic_transition",
+      "character": [
+        "dark",
+        "metallic"
+      ],
+      "tags": [
+        "bell",
+        "mystical",
+        "transition",
+        "dark",
+        "distorted"
+      ],
+      "mood": "ominous",
+      "energy": "medium",
+      "duration_sec": 9.0,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_transition_var01.score.json",
+      "wav_file": "exports/wav/akashic_transition_var01.wav",
+      "export_filename": "Magic_Dark_OneShot_C4",
+      "engine": "plate",
+      "primary_material": "copper",
+      "variant_description": "原版改銅材 + overdrive 微失真，三全音取代純五度"
+    },
+    {
+      "id": "rabbit_transition_001",
+      "name": "Rabbit Hop Transition",
+      "name_zh": "兔跳轉場",
+      "primary_type": "whoosh",
+      "subcategory": "chime",
+      "sound_type": "oneshot",
+      "family_id": "rabbit_transition",
+      "character": [
+        "bright",
+        "punch"
+      ],
+      "tags": [
+        "chime",
+        "transition",
+        "playful",
+        "fast",
+        "bright"
+      ],
+      "mood": "playful",
+      "energy": "high",
+      "duration_sec": 0.8,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_transition_001.score.json",
+      "wav_file": "exports/wav/rabbit_transition_001.wav",
+      "export_filename": "Whoosh_Bright_OneShot_A6",
+      "engine": "beam",
+      "primary_material": "aluminum",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_notify_001",
+      "name": "Rabbit Ding",
+      "name_zh": "兔兔叮",
+      "primary_type": "ui",
+      "subcategory": "chime",
+      "sound_type": "oneshot",
+      "family_id": "rabbit_notify",
+      "character": [
+        "bright",
+        "soft"
+      ],
+      "tags": [
+        "chime",
+        "notification",
+        "cute",
+        "short",
+        "bright"
+      ],
+      "mood": "playful",
+      "energy": "medium",
+      "duration_sec": 0.8,
+      "use_cases": [
+        "chat notification"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_notify_001.score.json",
+      "wav_file": "exports/wav/rabbit_notify_001.wav",
+      "export_filename": "UI_Bright_OneShot_G6",
+      "engine": "beam",
+      "primary_material": "aluminum",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_action_001",
+      "name": "Rabbit Stomp",
+      "name_zh": "暴走踩踏",
+      "primary_type": "impact",
+      "subcategory": "mechanical",
+      "sound_type": "oneshot",
+      "family_id": "rabbit_action",
+      "character": [
+        "stomp",
+        "punch"
+      ],
+      "tags": [
+        "impact",
+        "stomp",
+        "short",
+        "heavy",
+        "angry"
+      ],
+      "mood": "tense",
+      "energy": "high",
+      "duration_sec": 0.4,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_action_001.score.json",
+      "wav_file": "exports/wav/rabbit_action_001.wav",
+      "export_filename": "Impact_Stomp_OneShot_E2",
+      "engine": "string",
+      "primary_material": "steel",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_ambient_001",
+      "name": "Rabbit Wind Chimes",
+      "name_zh": "草地風鈴",
+      "primary_type": "ambience",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "rabbit_ambient",
+      "character": [
+        "airy",
+        "bright"
+      ],
+      "tags": [
+        "chime",
+        "ambient",
+        "gentle",
+        "random",
+        "airy"
+      ],
+      "mood": "calm",
+      "energy": "low",
+      "duration_sec": 5.7,
+      "use_cases": [
+        "ambient background"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_ambient_001.score.json",
+      "wav_file": "exports/wav/rabbit_ambient_001.wav",
+      "export_filename": "Ambience_Airy_OneShot_C6",
+      "engine": "beam",
+      "primary_material": "aluminum",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_ui_001",
+      "name": "Rabbit Carrot Button",
+      "name_zh": "蘿蔔按鈕",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "oneshot",
+      "family_id": "rabbit_ui",
+      "character": [
+        "soft",
+        "punch"
+      ],
+      "tags": [
+        "ui",
+        "click",
+        "wood",
+        "short",
+        "cute"
+      ],
+      "mood": "playful",
+      "energy": "low",
+      "duration_sec": 0.15,
+      "use_cases": [
+        "UI button click"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_ui_001.score.json",
+      "wav_file": "exports/wav/rabbit_ui_001.wav",
+      "export_filename": "UI_Soft_OneShot_A5",
+      "engine": "beam",
+      "primary_material": "wood_maple",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_notify_var01",
+      "name": "Rabbit Ding (Angry)",
+      "name_zh": "兔兔叮（怒）",
+      "primary_type": "ui",
+      "subcategory": "alert",
+      "sound_type": "variant",
+      "family_id": "rabbit_notify",
+      "character": [
+        "metallic",
+        "punch"
+      ],
+      "tags": [
+        "chime",
+        "alert",
+        "angry",
+        "sharp",
+        "metallic"
+      ],
+      "mood": "tense",
+      "energy": "high",
+      "duration_sec": 0.6,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_notify_var01.score.json",
+      "wav_file": "exports/wav/rabbit_notify_var01.wav",
+      "export_filename": "UI_Metallic_OneShot_G6",
+      "engine": "beam",
+      "primary_material": "steel",
+      "variant_description": "鋼材取代鋁，高 velocity，尖銳警告"
+    },
+    {
+      "id": "restraint_transition_001",
+      "name": "Restraint Chain Drag",
+      "name_zh": "鎖鏈拖行",
+      "primary_type": "whoosh",
+      "subcategory": "mechanical",
+      "sound_type": "oneshot",
+      "family_id": "restraint_transition",
+      "character": [
+        "dark",
+        "metallic"
+      ],
+      "tags": [
+        "chain",
+        "metal",
+        "transition",
+        "dark",
+        "industrial"
+      ],
+      "mood": "ominous",
+      "energy": "medium",
+      "duration_sec": 2.3,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_transition_001.score.json",
+      "wav_file": "exports/wav/restraint_transition_001.wav",
+      "export_filename": "Whoosh_Dark_OneShot_C2",
+      "engine": "string+plate",
+      "primary_material": "steel",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_notify_001",
+      "name": "Restraint Lock Click",
+      "name_zh": "上鎖扣合",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "oneshot",
+      "family_id": "restraint_notify",
+      "character": [
+        "dark",
+        "metallic"
+      ],
+      "tags": [
+        "click",
+        "metal",
+        "notification",
+        "short",
+        "dark"
+      ],
+      "mood": "tense",
+      "energy": "medium",
+      "duration_sec": 0.3,
+      "use_cases": [
+        "chat notification"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_notify_001.score.json",
+      "wav_file": "exports/wav/restraint_notify_001.wav",
+      "export_filename": "UI_Dark_OneShot_E4",
+      "engine": "beam",
+      "primary_material": "steel",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_action_001",
+      "name": "Restraint Shackle Slam",
+      "name_zh": "枷鎖重擊",
+      "primary_type": "impact",
+      "subcategory": "mechanical",
+      "sound_type": "oneshot",
+      "family_id": "restraint_action",
+      "character": [
+        "stomp",
+        "dark"
+      ],
+      "tags": [
+        "impact",
+        "slam",
+        "heavy",
+        "metal",
+        "dark"
+      ],
+      "mood": "aggressive",
+      "energy": "very-high",
+      "duration_sec": 0.6,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_action_001.score.json",
+      "wav_file": "exports/wav/restraint_action_001.wav",
+      "export_filename": "Impact_Dark_OneShot_C2",
+      "engine": "plate+string",
+      "primary_material": "iron",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_ambient_001",
+      "name": "Restraint Iron Drone",
+      "name_zh": "鐵牢低鳴",
+      "primary_type": "ambience",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "restraint_ambient",
+      "character": [
+        "dark",
+        "metallic"
+      ],
+      "tags": [
+        "drone",
+        "ambient",
+        "dark",
+        "low",
+        "industrial"
+      ],
+      "mood": "oppressive",
+      "energy": "very-low",
+      "duration_sec": 10.5,
+      "use_cases": [
+        "ambient background"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_ambient_001.score.json",
+      "wav_file": "exports/wav/restraint_ambient_001.wav",
+      "export_filename": "Ambience_Dark_OneShot_D1",
+      "engine": "string+plate",
+      "primary_material": "steel",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_ui_001",
+      "name": "Restraint Bolt Click",
+      "name_zh": "螺栓扣位",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "oneshot",
+      "family_id": "restraint_ui",
+      "character": [
+        "metallic",
+        "dark"
+      ],
+      "tags": [
+        "ui",
+        "click",
+        "metal",
+        "short",
+        "cold"
+      ],
+      "mood": "neutral",
+      "energy": "low",
+      "duration_sec": 0.08,
+      "use_cases": [
+        "UI button click"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_ui_001.score.json",
+      "wav_file": "exports/wav/restraint_ui_001.wav",
+      "export_filename": "UI_Metallic_OneShot_G3",
+      "engine": "beam",
+      "primary_material": "steel",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_notify_var01",
+      "name": "Restraint Lock Click (Distorted)",
+      "name_zh": "上鎖扣合（失真）",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "variant",
+      "family_id": "restraint_notify",
+      "character": [
+        "glitch",
+        "dark"
+      ],
+      "tags": [
+        "click",
+        "metal",
+        "notification",
+        "distorted",
+        "glitch"
+      ],
+      "mood": "aggressive",
+      "energy": "high",
+      "duration_sec": 0.3,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_notify_var01.score.json",
+      "wav_file": "exports/wav/restraint_notify_var01.wav",
+      "export_filename": "UI_Glitch_OneShot_E4",
+      "engine": "beam",
+      "primary_material": "steel",
+      "variant_description": "原版加 bitcrush 數位失真，glitch 質感"
+    },
+    {
+      "id": "forest_transition_001",
+      "name": "Forest Leaf Sweep",
+      "name_zh": "落葉掃過",
+      "primary_type": "whoosh",
+      "subcategory": "organic",
+      "sound_type": "oneshot",
+      "family_id": "forest_transition",
+      "character": [
+        "airy",
+        "soft"
+      ],
+      "tags": [
+        "wood",
+        "sweep",
+        "transition",
+        "organic",
+        "gentle"
+      ],
+      "mood": "calm",
+      "energy": "medium",
+      "duration_sec": 2.2,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_transition_001.score.json",
+      "wav_file": "exports/wav/forest_transition_001.wav",
+      "export_filename": "Whoosh_Airy_OneShot_D5",
+      "engine": "beam",
+      "primary_material": "wood_birch",
+      "variant_description": null
+    },
+    {
+      "id": "forest_notify_001",
+      "name": "Forest Bird Call",
+      "name_zh": "鳥鳴提示",
+      "primary_type": "ui",
+      "subcategory": "chime",
+      "sound_type": "oneshot",
+      "family_id": "forest_notify",
+      "character": [
+        "bright",
+        "airy"
+      ],
+      "tags": [
+        "bamboo",
+        "notification",
+        "bright",
+        "short",
+        "organic"
+      ],
+      "mood": "playful",
+      "energy": "medium",
+      "duration_sec": 0.5,
+      "use_cases": [
+        "chat notification"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_notify_001.score.json",
+      "wav_file": "exports/wav/forest_notify_001.wav",
+      "export_filename": "UI_Bright_OneShot_B6",
+      "engine": "beam",
+      "primary_material": "bamboo",
+      "variant_description": null
+    },
+    {
+      "id": "forest_action_001",
+      "name": "Forest Branch Snap",
+      "name_zh": "斷枝",
+      "primary_type": "impact",
+      "subcategory": "organic",
+      "sound_type": "oneshot",
+      "family_id": "forest_action",
+      "character": [
+        "punch",
+        "soft"
+      ],
+      "tags": [
+        "impact",
+        "wood",
+        "snap",
+        "short",
+        "organic"
+      ],
+      "mood": "neutral",
+      "energy": "high",
+      "duration_sec": 0.12,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_action_001.score.json",
+      "wav_file": "exports/wav/forest_action_001.wav",
+      "export_filename": "Impact_Punch_OneShot_C4",
+      "engine": "beam",
+      "primary_material": "wood_oak",
+      "variant_description": null
+    },
+    {
+      "id": "forest_ambient_001",
+      "name": "Forest Bamboo Rain",
+      "name_zh": "竹林雨滴",
+      "primary_type": "ambience",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "forest_ambient",
+      "character": [
+        "soft",
+        "airy"
+      ],
+      "tags": [
+        "bamboo",
+        "ambient",
+        "rain",
+        "gentle",
+        "random"
+      ],
+      "mood": "calm",
+      "energy": "very-low",
+      "duration_sec": 4.8,
+      "use_cases": [
+        "ambient background"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_ambient_001.score.json",
+      "wav_file": "exports/wav/forest_ambient_001.wav",
+      "export_filename": "Ambience_Soft_OneShot_G5",
+      "engine": "beam",
+      "primary_material": "bamboo",
+      "variant_description": null
+    },
+    {
+      "id": "forest_ui_001",
+      "name": "Forest Acorn Tap",
+      "name_zh": "橡果點擊",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "oneshot",
+      "family_id": "forest_ui",
+      "character": [
+        "soft",
+        "bright"
+      ],
+      "tags": [
+        "ui",
+        "click",
+        "wood",
+        "short",
+        "round"
+      ],
+      "mood": "playful",
+      "energy": "low",
+      "duration_sec": 0.1,
+      "use_cases": [
+        "UI button click"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_ui_001.score.json",
+      "wav_file": "exports/wav/forest_ui_001.wav",
+      "export_filename": "UI_Soft_OneShot_F5",
+      "engine": "beam",
+      "primary_material": "wood_oak",
+      "variant_description": null
+    },
+    {
+      "id": "forest_notify_var01",
+      "name": "Forest Bird Call (Alarm)",
+      "name_zh": "鳥鳴警報",
+      "primary_type": "ui",
+      "subcategory": "alert",
+      "sound_type": "variant",
+      "family_id": "forest_notify",
+      "character": [
+        "bright",
+        "punch"
+      ],
+      "tags": [
+        "bamboo",
+        "alert",
+        "fast",
+        "triple",
+        "tense"
+      ],
+      "mood": "tense",
+      "energy": "high",
+      "duration_sec": 0.46,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_notify_var01.score.json",
+      "wav_file": "exports/wav/forest_notify_var01.wav",
+      "export_filename": "UI_Bright_OneShot_E7",
+      "engine": "beam",
+      "primary_material": "bamboo",
+      "variant_description": "原版改三連急促音，警覺上揚"
+    },
+    {
+      "id": "ocean_transition_001",
+      "name": "Ocean Tide Wash",
+      "name_zh": "潮汐湧入",
+      "primary_type": "whoosh",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "ocean_transition",
+      "character": [
+        "dark",
+        "airy"
+      ],
+      "tags": [
+        "wave",
+        "sweep",
+        "transition",
+        "deep",
+        "liquid"
+      ],
+      "mood": "mystical",
+      "energy": "medium",
+      "duration_sec": 3.5,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_transition_001.score.json",
+      "wav_file": "exports/wav/ocean_transition_001.wav",
+      "export_filename": "Whoosh_Dark_OneShot_C2",
+      "engine": "string+plate+beam",
+      "primary_material": "nylon",
+      "variant_description": null
+    },
+    {
+      "id": "ocean_notify_001",
+      "name": "Ocean Bubble Pop",
+      "name_zh": "氣泡彈出",
+      "primary_type": "ui",
+      "subcategory": "chime",
+      "sound_type": "oneshot",
+      "family_id": "ocean_notify",
+      "character": [
+        "bright",
+        "soft"
+      ],
+      "tags": [
+        "bubble",
+        "notification",
+        "short",
+        "bright",
+        "liquid"
+      ],
+      "mood": "playful",
+      "energy": "medium",
+      "duration_sec": 0.3,
+      "use_cases": [
+        "chat notification"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_notify_001.score.json",
+      "wav_file": "exports/wav/ocean_notify_001.wav",
+      "export_filename": "UI_Bright_OneShot_C6",
+      "engine": "beam",
+      "primary_material": "glass",
+      "variant_description": null
+    },
+    {
+      "id": "ocean_action_001",
+      "name": "Ocean Depth Slam",
+      "name_zh": "深海壓擊",
+      "primary_type": "impact",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "ocean_action",
+      "character": [
+        "stomp",
+        "dark"
+      ],
+      "tags": [
+        "impact",
+        "deep",
+        "heavy",
+        "slam",
+        "underwater"
+      ],
+      "mood": "tense",
+      "energy": "very-high",
+      "duration_sec": 0.8,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_action_001.score.json",
+      "wav_file": "exports/wav/ocean_action_001.wav",
+      "export_filename": "Impact_Dark_OneShot_D1",
+      "engine": "plate+string",
+      "primary_material": "bronze",
+      "variant_description": null
+    },
+    {
+      "id": "ocean_ambient_001",
+      "name": "Ocean Abyss Hum",
+      "name_zh": "深淵低鳴",
+      "primary_type": "ambience",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "ocean_ambient",
+      "character": [
+        "dark",
+        "airy"
+      ],
+      "tags": [
+        "drone",
+        "ambient",
+        "deep",
+        "underwater",
+        "mysterious"
+      ],
+      "mood": "mystical",
+      "energy": "very-low",
+      "duration_sec": 10.0,
+      "use_cases": [
+        "ambient background"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_ambient_001.score.json",
+      "wav_file": "exports/wav/ocean_ambient_001.wav",
+      "export_filename": "Ambience_Dark_OneShot_E1",
+      "engine": "string+plate",
+      "primary_material": "nylon",
+      "variant_description": null
+    },
+    {
+      "id": "ocean_ui_001",
+      "name": "Ocean Droplet Tap",
+      "name_zh": "水滴點擊",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "oneshot",
+      "family_id": "ocean_ui",
+      "character": [
+        "bright",
+        "soft"
+      ],
+      "tags": [
+        "ui",
+        "click",
+        "glass",
+        "short",
+        "liquid"
+      ],
+      "mood": "calm",
+      "energy": "low",
+      "duration_sec": 0.15,
+      "use_cases": [
+        "UI button click"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_ui_001.score.json",
+      "wav_file": "exports/wav/ocean_ui_001.wav",
+      "export_filename": "UI_Bright_OneShot_A5",
+      "engine": "beam",
+      "primary_material": "glass",
+      "variant_description": null
+    },
+    {
+      "id": "ocean_notify_var01",
+      "name": "Ocean Bubble Pop (Deep)",
+      "name_zh": "深水氣泡",
+      "primary_type": "ui",
+      "subcategory": "chime",
+      "sound_type": "variant",
+      "family_id": "ocean_notify",
+      "character": [
+        "dark",
+        "soft"
+      ],
+      "tags": [
+        "bubble",
+        "notification",
+        "deep",
+        "dark",
+        "liquid"
+      ],
+      "mood": "mystical",
+      "energy": "medium",
+      "duration_sec": 0.5,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_notify_var01.score.json",
+      "wav_file": "exports/wav/ocean_notify_var01.wav",
+      "export_filename": "UI_Dark_OneShot_C5",
+      "engine": "beam",
+      "primary_material": "glass",
+      "variant_description": "原版降八度+更長 reverb，深水版"
+    },
+    {
+      "id": "clockwork_transition_001",
+      "name": "Clockwork Gear Shift",
+      "name_zh": "齒輪換檔",
+      "primary_type": "mechanical",
+      "subcategory": "mechanical",
+      "sound_type": "oneshot",
+      "family_id": "clockwork_transition",
+      "character": [
+        "metallic",
+        "pulse"
+      ],
+      "tags": [
+        "gear",
+        "mechanical",
+        "transition",
+        "brass",
+        "precise"
+      ],
+      "mood": "neutral",
+      "energy": "medium",
+      "duration_sec": 0.76,
+      "use_cases": [
+        "VTuber scene transition"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_transition_001.score.json",
+      "wav_file": "exports/wav/clockwork_transition_001.wav",
+      "export_filename": "Mechanical_Metallic_OneShot_C4",
+      "engine": "beam",
+      "primary_material": "brass",
+      "variant_description": null
+    },
+    {
+      "id": "clockwork_notify_001",
+      "name": "Clockwork Bell Strike",
+      "name_zh": "報時敲鐘",
+      "primary_type": "ui",
+      "subcategory": "bell",
+      "sound_type": "oneshot",
+      "family_id": "clockwork_notify",
+      "character": [
+        "metallic",
+        "bright"
+      ],
+      "tags": [
+        "bell",
+        "notification",
+        "brass",
+        "precise",
+        "clear"
+      ],
+      "mood": "neutral",
+      "energy": "medium",
+      "duration_sec": 1.0,
+      "use_cases": [
+        "chat notification"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_notify_001.score.json",
+      "wav_file": "exports/wav/clockwork_notify_001.wav",
+      "export_filename": "UI_Metallic_OneShot_E5",
+      "engine": "beam",
+      "primary_material": "brass",
+      "variant_description": null
+    },
+    {
+      "id": "clockwork_action_001",
+      "name": "Clockwork Spring Release",
+      "name_zh": "發條釋放",
+      "primary_type": "mechanical",
+      "subcategory": "mechanical",
+      "sound_type": "oneshot",
+      "family_id": "clockwork_action",
+      "character": [
+        "metallic",
+        "punch"
+      ],
+      "tags": [
+        "spring",
+        "mechanical",
+        "release",
+        "fast",
+        "tense"
+      ],
+      "mood": "tense",
+      "energy": "high",
+      "duration_sec": 0.4,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_action_001.score.json",
+      "wav_file": "exports/wav/clockwork_action_001.wav",
+      "export_filename": "Mechanical_Punch_OneShot_A3",
+      "engine": "string+beam",
+      "primary_material": "brass",
+      "variant_description": null
+    },
+    {
+      "id": "clockwork_ambient_001",
+      "name": "Clockwork Ticking Room",
+      "name_zh": "鐘錶房",
+      "primary_type": "ambience",
+      "subcategory": "ambient",
+      "sound_type": "oneshot",
+      "family_id": "clockwork_ambient",
+      "character": [
+        "pulse",
+        "metallic"
+      ],
+      "tags": [
+        "tick",
+        "ambient",
+        "mechanical",
+        "rhythm",
+        "precise"
+      ],
+      "mood": "neutral",
+      "energy": "low",
+      "duration_sec": 3.0,
+      "use_cases": [
+        "ambient background"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_ambient_001.score.json",
+      "wav_file": "exports/wav/clockwork_ambient_001.wav",
+      "export_filename": "Ambience_Pulse_OneShot_F5",
+      "engine": "beam+plate",
+      "primary_material": "brass",
+      "variant_description": null
+    },
+    {
+      "id": "clockwork_ui_001",
+      "name": "Clockwork Gear Click",
+      "name_zh": "齒輪咬合",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "oneshot",
+      "family_id": "clockwork_ui",
+      "character": [
+        "metallic",
+        "pulse"
+      ],
+      "tags": [
+        "ui",
+        "click",
+        "brass",
+        "short",
+        "mechanical"
+      ],
+      "mood": "neutral",
+      "energy": "low",
+      "duration_sec": 0.06,
+      "use_cases": [
+        "UI button click"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_ui_001.score.json",
+      "wav_file": "exports/wav/clockwork_ui_001.wav",
+      "export_filename": "UI_Metallic_OneShot_D5",
+      "engine": "beam",
+      "primary_material": "brass",
+      "variant_description": null
+    },
+    {
+      "id": "clockwork_notify_var01",
+      "name": "Clockwork Bell Strike (Wavefold)",
+      "name_zh": "報時敲鐘（波折）",
+      "primary_type": "ui",
+      "subcategory": "bell",
+      "sound_type": "variant",
+      "family_id": "clockwork_notify",
+      "character": [
+        "glitch",
+        "metallic"
+      ],
+      "tags": [
+        "bell",
+        "notification",
+        "distorted",
+        "wavefold",
+        "glitch"
+      ],
+      "mood": "tense",
+      "energy": "high",
+      "duration_sec": 1.0,
+      "use_cases": [
+        "VTuber reaction / emote"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_notify_var01.score.json",
+      "wav_file": "exports/wav/clockwork_notify_var01.wav",
+      "export_filename": "UI_Glitch_OneShot_E5",
+      "engine": "beam",
+      "primary_material": "brass",
+      "variant_description": "原版加 wavefold 失真+短 delay，異常運轉感"
+    },
+    {
+      "id": "akashic_loop_001",
+      "name": "Akashic Meditation Cycle",
+      "name_zh": "阿卡西冥想循環",
+      "primary_type": "ambience",
+      "subcategory": "bell",
+      "sound_type": "loop",
+      "family_id": "akashic_ambient",
+      "character": [
+        "metallic",
+        "soft"
+      ],
+      "tags": [
+        "loop",
+        "meditation",
+        "bronze",
+        "slow",
+        "sacred"
+      ],
+      "mood": "sacred",
+      "energy": "low",
+      "duration_sec": 16.0,
+      "use_cases": [
+        "BGM motif",
+        "loop element",
+        "meditation background"
+      ],
+      "world": "akashic",
+      "score_file": "scores/library/akashic/akashic_loop_001.score.json",
+      "wav_file": "exports/wav/akashic_loop_001.wav",
+      "export_filename": "Ambience_Soft_Loop_C4",
+      "engine": "plate",
+      "primary_material": "bronze",
+      "variant_description": null
+    },
+    {
+      "id": "rabbit_loop_001",
+      "name": "Rabbit Bounce Loop",
+      "name_zh": "兔兔彈跳循環",
+      "primary_type": "ui",
+      "subcategory": "click",
+      "sound_type": "loop",
+      "family_id": "rabbit_ui",
+      "character": [
+        "bright",
+        "pulse"
+      ],
+      "tags": [
+        "loop",
+        "rhythm",
+        "bounce",
+        "playful",
+        "fast"
+      ],
+      "mood": "playful",
+      "energy": "high",
+      "duration_sec": 3.43,
+      "use_cases": [
+        "BGM motif",
+        "loop element",
+        "playful UI rhythm"
+      ],
+      "world": "rabbit",
+      "score_file": "scores/library/rabbit/rabbit_loop_001.score.json",
+      "wav_file": "exports/wav/rabbit_loop_001.wav",
+      "export_filename": "UI_Bright_Loop_C6",
+      "engine": "beam",
+      "primary_material": "aluminum",
+      "variant_description": null
+    },
+    {
+      "id": "restraint_loop_001",
+      "name": "Restraint Industrial Pulse",
+      "name_zh": "束縛工業脈衝",
+      "primary_type": "mechanical",
+      "subcategory": "mechanical",
+      "sound_type": "loop",
+      "family_id": "restraint_ambient",
+      "character": [
+        "pulse",
+        "dark"
+      ],
+      "tags": [
+        "loop",
+        "industrial",
+        "pulse",
+        "heavy",
+        "dark"
+      ],
+      "mood": "oppressive",
+      "energy": "high",
+      "duration_sec": 4.8,
+      "use_cases": [
+        "BGM motif",
+        "loop element",
+        "industrial atmosphere"
+      ],
+      "world": "restraint",
+      "score_file": "scores/library/restraint/restraint_loop_001.score.json",
+      "wav_file": "exports/wav/restraint_loop_001.wav",
+      "export_filename": "Mechanical_Pulse_Loop_C2",
+      "engine": "plate",
+      "primary_material": "iron",
+      "variant_description": null
+    },
+    {
+      "id": "forest_loop_001",
+      "name": "Forest Rain Pattern",
+      "name_zh": "森林雨滴節奏",
+      "primary_type": "ambience",
+      "subcategory": "organic",
+      "sound_type": "loop",
+      "family_id": "forest_ambient",
+      "character": [
+        "soft",
+        "pulse"
+      ],
+      "tags": [
+        "loop",
+        "rain",
+        "bamboo",
+        "gentle",
+        "rhythm"
+      ],
+      "mood": "calm",
+      "energy": "low",
+      "duration_sec": 12.0,
+      "use_cases": [
+        "BGM motif",
+        "loop element",
+        "nature ambience"
+      ],
+      "world": "forest",
+      "score_file": "scores/library/forest/forest_loop_001.score.json",
+      "wav_file": "exports/wav/forest_loop_001.wav",
+      "export_filename": "Ambience_Soft_Loop_G5",
+      "engine": "beam",
+      "primary_material": "bamboo",
+      "variant_description": null
+    },
+    {
+      "id": "ocean_loop_001",
+      "name": "Ocean Wave Cycle",
+      "name_zh": "海洋浪潮循環",
+      "primary_type": "ambience",
+      "subcategory": "organic",
+      "sound_type": "loop",
+      "family_id": "ocean_ambient",
+      "character": [
+        "dark",
+        "pulse"
+      ],
+      "tags": [
+        "loop",
+        "wave",
+        "deep",
+        "liquid",
+        "slow"
+      ],
+      "mood": "mystical",
+      "energy": "low",
+      "duration_sec": 8.0,
+      "use_cases": [
+        "BGM motif",
+        "loop element",
+        "underwater ambience"
+      ],
+      "world": "ocean",
+      "score_file": "scores/library/ocean/ocean_loop_001.score.json",
+      "wav_file": "exports/wav/ocean_loop_001.wav",
+      "export_filename": "Ambience_Dark_Loop_C2",
+      "engine": "string",
+      "primary_material": "nylon",
+      "variant_description": null
+    },
+    {
+      "id": "clockwork_loop_001",
+      "name": "Clockwork Tick Loop",
+      "name_zh": "齒輪鐘擺循環",
+      "primary_type": "mechanical",
+      "subcategory": "mechanical",
+      "sound_type": "loop",
+      "family_id": "clockwork_ambient",
+      "character": [
+        "pulse",
+        "metallic"
+      ],
+      "tags": [
+        "loop",
+        "tick",
+        "precise",
+        "mechanical",
+        "rhythm"
+      ],
+      "mood": "neutral",
+      "energy": "medium",
+      "duration_sec": 4.0,
+      "use_cases": [
+        "BGM motif",
+        "loop element",
+        "clockwork atmosphere"
+      ],
+      "world": "clockwork",
+      "score_file": "scores/library/clockwork/clockwork_loop_001.score.json",
+      "wav_file": "exports/wav/clockwork_loop_001.wav",
+      "export_filename": "Mechanical_Pulse_Loop_F5",
+      "engine": "beam",
+      "primary_material": "brass",
+      "variant_description": null
+    }
+  ]
+}

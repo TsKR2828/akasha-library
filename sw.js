@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-v4';
+const CACHE_NAME = 'akasha-library-v5';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -53,7 +53,6 @@ const LOCAL_ASSETS = [
   './modules/pdf-reader/index.html',
   './modules/reading-room/index.html',
   './modules/daily-report/index.html',
-  './modules/script-editor/index.html',
   './modules/table-forge/index.html',
   './modules/table-forge/exporters.js',
   './modules/table-forge/md-extract.js',
@@ -61,8 +60,9 @@ const LOCAL_ASSETS = [
   './modules/table-forge/table-model.js',
   './modules/table-forge/table-ui.js',
 
-  // Built spreadsheet module
+  // Built Vite modules
   './dist/spreadsheet/index.html',
+  './dist/script-editor/index.html',
 
   // Public library
   './public-library/index.html',

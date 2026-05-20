@@ -323,7 +323,7 @@ function openBook(bookId) {
   const driveUrl = `https://drive.google.com/uc?export=download&id=${book.driveFileId}`;
   // Post message to parent (if in iframe) or navigate
   if (window.parent !== window) {
-    window.parent.postMessage({ type: 'akasha-open-public-pdf', url: driveUrl, book }, '*');
+    window.parent.postMessage({ type: 'akasha-open-public-pdf', url: driveUrl, book }, location.origin);
   } else {
     window.location.href = `../modules/pdf-reader/index.html?url=${encodeURIComponent(driveUrl)}&bookId=${encodeURIComponent(bookId)}&title=${encodeURIComponent(book.title || '')}`;
   }
@@ -356,6 +356,7 @@ document.getElementById('searchInput').addEventListener('input', renderBooks);
 
 // Listen for reading progress from PDF reader
 window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin) return;
   if (event.data?.type === 'akasha-reading-progress') {
     saveProgress(event.data.bookId, event.data.page);
     renderBooks();

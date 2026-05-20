@@ -1,6 +1,174 @@
 # Akasha Library — Dev Log
 
-## 2026-05-16：Phase 15 Private Reading Room + 每日館報 完成（15-A/B/C/D）
+## 2026-05-19：Phase 17 v2 Script Editor — Archive-host merge 完成
+
+### 背景：方向反轉
+
+前一波 Phase 17 嘗試（branch `feature/akasha-4tab-attempt`、PR #2）把 Archive 獨立版 React 程式碼整套**改寫成 Vanilla JS** 塞進 Akasha 內嵌版，產出 5,279 行新增程式碼，merge 進 master 後又被 revert（commit `b51a0c4`）。
+
+本次方向反過來：**讓 Archive 當主機，把 Akasha 速寫器移植進去**。技術棧改 Vite + React build（不再用 React CDN + Babel Standalone），與既有 spreadsheet 模組同一個部署模式。
+
+### 分支 / 起點
+
+- Branch: `feature/archive-host-merge`（從 `master@b51a0c4` 開新）
+- 對應 task: v2-1 ~ v2-9
+
+### v2-1 搬檔 + Vite 設定
+
+新檔：
+- `vite.config.script-editor.js` — root=`modules/script-editor`、outDir=`../../dist/script-editor`
+- `modules/script-editor/index.html` — 改寫為 Vite entry（移除 CDN + Babel scripts）
+- `modules/script-editor/tokens.css` — 從 Archive 搬入
+- `modules/script-editor/src/App.jsx` — 從 Archive `uiux/app.jsx` 改造（3 處：加 `import React`、`DATA_BASE` 改為 `./data`、底部 mount 改為 `export default`）
+- `modules/script-editor/src/main.jsx` — Vite 掛載入口（`loadAllData → ReactDOM.createRoot`）
+- `modules/script-editor/public/data/` — 從 `-Archive_Script_Editor-/data/` 搬入 8 個 JSON/JSONL
+- `modules/script-editor/legacy/index.legacy.html` — Phase 8 Vanilla 版備份（1829 行保留）
+
+`package.json`：加 `dev:script-editor`、`build:script-editor`、`build:spreadsheet`，主 `build` 串接兩個 Vite build；`test` 多檢查 `dist/script-editor/index.html`。
+
+Build 結果：32 modules / 261 KB JS / gzip 78 KB / 892ms。Archive 3-TAB（Search / Editor / Reader）原樣跑起，Lohengrin 47 blocks 載入正常。
+
+### v2-2 SwHeader 加第 4 個 TAB
+
+`SwHeader` tabs 陣列加 `{ id: "write", tc: "速寫", en: "Write", ic: "quill" }` 在最前；`App.useState("write")` 改成預設；routing 加 `{tab === "write" && <WriteTab />}`。新建 `src/components/WriteTab.jsx` 為純 placeholder（120 行）。
+
+### v2-3 WriteTab textarea + Plain Script parser + 預覽
+
+新檔 `src/lib/parser.js`（145 行）：
+- `parsePlainScript(text)` — `#cmd：value` / `旁白：x` / `Speaker：x` / `// 註解` regex
+- `blocksToPlainScript(blocks, characters?)` — round-trip 反向
+- `computeStats(blocks)` — 類型計數 / 角色排名 / 字數
+- `getLineCol(text, idx)` — 游標位置 → Ln/Col
+
+WriteTab 改為 grid 三欄佈局：textarea（左 1fr）+ preview pane（右 360px）。Preview 切分 Blocks / Stats / Layout 三個子 tab。textarea 範例 seed + localStorage `sw_write_draft_v1`（500ms debounce）。底部 status bar 顯示 Ln/Col、格式、blocks 計數、Auto-save。
+
+### v2-4 Alt+N 快捷鍵 + slot badges
+
+WriteTab 加 `dynamicSlots` useMemo 從 parsedBlocks 抽 unique speakers（最多 7 位）填入 slot 3-9；slot 1 固定 `#scene`、slot 2 固定 `旁白`。
+
+`insertSpeakerPrefix(slotN)` — 智能插入/取代：偵測當前行既有前綴（`#cmd：` 或 `Speaker：`）有則取代、沒則前置；游標跳到「：」之後。
+
+`onKeyDown` 監聽 `Alt+1` ~ `Alt+9` + `preventDefault`。Grid 多加一列放 SlotBadge 9 個按鈕（可點擊插入）。
+
+### v2-5 Voice TTS（Web Speech API）
+
+新檔 `src/hooks/useVoiceTTS.js`（167 行）— React hook 包裝 `speechSynthesis`：
+- `hasTTS` 偵測支援
+- `voices` 系統語音清單（含 `voiceschanged` 事件）
+- `settings` voiceId / rate / pitch / includeNarration（localStorage `sw_voice_settings_v1`）
+- `state` speaking / queueActive / queueIdx / queueTotal / currentText
+- `speakOne(text)` 單句
+- `playQueue(blocks)` 序列 await onend
+- `stop()` cancel + reset
+
+WriteTab：
+- preview tabs 加 `voice`
+- BlockCard 每個 dialogue / narration 加 `▶/■` 試聽按鈕（speaking 中閃爍）
+- 新組件 `VoicePanel` — 控制列 + 設定（系統語音下拉、速度滑桿、音調滑桿、包含旁白勾選）+ Queue 清單
+- Status bar 顯示 `▶ Voice X/Y`（隊列）或 `▶ Speaking`（單句）
+
+### v2-6 BGM 占位 + tsuki-synth 整合計畫（改弦更張）
+
+讀過 sibling project `tsuki-synth/` 的 README + ROADMAP 後決定 **不在這裡寫 Web Audio 合成**，原因：
+- tsuki-synth 已用 C++/JUCE 做完整物理建模（弦 / 梁 / 板 modal synthesis）
+- VST3 + Standalone build 已通過（tag `playable-vst3-clean-build-v0`）
+- 兩處實作會音色不一致、雙倍維護
+- 瀏覽器 DSP 精度不如 C++
+
+新檔 `src/components/BgmPanel.jsx`（218 行）— 占位面板：
+- 「Soundscape · Deferred」狀態頭部
+- Cues in Script：即時掃 `#bgm:` / `#sfx:` 偵測，比對 sound library，標 ✓ 或 ⚠
+- Planned Library：tsuki-synth `sound_names.json` 的 8 個 sound 快照
+- Integration Roadmap：Phase A → E
+- Why not Web Audio here：設計決策註腳
+
+新檔 `docs/tsuki-synth-integration.md`（165 行）— 完整整合計畫：兩專案角色分工、cue 語法約定、Phase A-E 詳細路徑、阻塞點（tsuki-synth CLI render 待修）。
+
+WriteTab：preview tabs 加 `bgm`，import + route。
+
+### v2-7 跨 TAB 同步（Write ↔ Editor/Reader）
+
+單一 source of truth = App 的 `blocks` state。Write 通過雙 useEffect 做 ↔ 同步：
+
+**Forward**：textarea → useMemo parsedBlocks → debounce 350ms → `setBlocks(parsedBlocks)`
+**Reverse**：blocks 變動 → `blocksToPlainScript(blocks, characters)` → `setContent`
+
+兩道 loop guard：
+- `syncTokenRef`：自己 push 造成 blocks 變動 → reverse useEffect 偵測 token>0 → 消化跳過
+- `lastReverseRef`：reverse 設進來的 content 不要再 forward echo（避免 round-trip 元數據遺失反過來覆寫 Editor）
+
+Parser 升級：產出時補 Reader/Editor 需要的欄位（`speakerId`、`zh`、`original`、`avg`），`#scene:` 特殊處理為真 scene block。`blocksToPlainScript` 接受 optional `characters[]`，把 `speakerId='lohengrin'` 映射回中文「國王海因里希」顯示名。
+
+Status bar 多顯示同步狀態（`↻ Sync→` / `← Pulled from Editor` / `⇄ Synced`）。
+
+驗證：初始 mount 從 Lohengrin 47 blocks 反向產出 textarea；新增段落 → 切 Reader 立刻看見；切回 Write 內容保留無 loop。
+
+**已知 trade-off**：
+- forward push 後 Lohengrin 的 original 德文 / tags / avg 元數據遺失（未來可加 detach 模式）
+- 註解行 `// xxx` 在 reverse sync 時消失
+
+### v2-8 App Shell 整合 + build.js 修正
+
+`scripts/build.js`：
+- `ALWAYS_EXCLUDE_DIRS` 加 `modules/script-editor`（與 spreadsheet 並列為 Vite source）
+- `ALWAYS_EXCLUDE_FILES` 加 `vite.config.script-editor.js`
+- `critical[]` 把 `modules/script-editor/index.html` 改為 `dist/script-editor/index.html`
+
+`sw.js`：
+- `CACHE_NAME` v4 → v5
+- 移除 `./modules/script-editor/index.html`
+- 「Built Vite modules」區塊新增 `./dist/script-editor/index.html`
+
+App Shell `index.html` line 1949（v2-1 已先改）：`modules/script-editor/index.html` → `dist/script-editor/index.html`
+
+驗證：`npm test` + `npm run build:public` 全過；`_site/dist/script-editor/` 完整、`_site/modules/script-editor/` 不存在；http-server 開 App Shell 點 Script Editor → iframe 載入 dist 版 → 4-TAB + 47 blocks 正常。
+
+### 檔案結構終態
+
+```
+akasha-library/
+├── vite.config.script-editor.js              🆕
+├── docs/
+│   └── tsuki-synth-integration.md            🆕
+├── modules/script-editor/                    ← Vite source，build.js 排除
+│   ├── index.html                            ✏️ Vite entry
+│   ├── tokens.css                            🆕
+│   ├── legacy/index.legacy.html              🆕 Phase 8 備份
+│   ├── public/data/                          🆕 8 個 JSON/JSONL
+│   └── src/
+│       ├── App.jsx                           ✏️ from Archive
+│       ├── main.jsx                          🆕
+│       ├── components/
+│       │   ├── WriteTab.jsx                  🆕
+│       │   └── BgmPanel.jsx                  🆕
+│       ├── hooks/
+│       │   └── useVoiceTTS.js                🆕
+│       └── lib/
+│           └── parser.js                     🆕
+└── dist/script-editor/                       🆕 build 產出
+    ├── index.html (3.8 KB)
+    ├── assets/index-*.js (294 KB / gzip 86 KB)
+    └── data/
+```
+
+### 數字總覽
+
+| 項目 | 數量 |
+|------|------|
+| 新增檔案 | 11 |
+| 修改檔案 | 6（App.jsx、scripts/build.js、sw.js、package.json、akasha-library/index.html、ROADMAP/TODO/README/DEVELOPMENT/dev-log）|
+| Vite build 產物 | 36 modules / 294 KB JS / gzip 86 KB |
+| build 時間 | ~700ms |
+| 對照前次 revert 之嘗試 | 5,279 行 Vanilla 重寫 → 本次 ~1,500 行（保留 React 不重寫業務邏輯）|
+
+### 設計決策摘要
+
+1. **Archive React 不重寫**：保留原 3,844 行 jsx 完整邏輯（力導向關係圖、音效庫、劇本檢查、初稿生成等 overlay 全保留）
+2. **Vite + React build**：與 spreadsheet 同部署模式；GitHub Pages 部署只要靜態檔案
+3. **BGM/SFX 委派 tsuki-synth**：不重複合成器；等 CLI render 修好後預渲染 WAV 接入
+4. **Write 為第 4 TAB 且預設**：使用者打開即進入寫作模式
+5. **單 blocks state + 雙 useEffect 同步**：簡單可靠，loop guard 兩道
+
 
 ### 15-A：談心專區模組（Reading Room）
 

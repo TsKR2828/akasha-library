@@ -196,7 +196,38 @@
 
 已完成
 └─ Phase 15 (談心 + 館報) ✅ — 15-A/B/C/D 全部完成
+
+已完成
+└─ Phase 17 v2 (Script Editor Archive-host merge) ✅ — v2-1 ~ v2-9 全部完成
+   依賴 Phase 8 ✅ + Phase 14 ✅
 ```
+
+---
+
+## Phase 17 v2：Script Editor 4-TAB 整合 — Archive 為主機 ✅ 完成
+
+> 前次嘗試（`feature/akasha-4tab-attempt`、PR #2）方向相反——
+> 把 Archive React 改寫成 Vanilla 塞進 Akasha 內嵌版，5279 行新增後被 revert。
+> 本次方向反過來：**Archive 當主機（保留 React + Vite build），把 Akasha 速寫器移植進來**。
+>
+> Branch: `feature/archive-host-merge`（從 `master@b51a0c4` 起）
+
+| 步驟 | 內容 | 狀態 |
+|------|------|:----:|
+| v2-1 | 搬檔 + Vite 設定 + Archive 原樣跑（從 CDN+Babel 改 Vite+React） | ✅ |
+| v2-2 | SwHeader 4-TAB（Write 放第一位、預設）+ WriteTab placeholder | ✅ |
+| v2-3 | WriteTab textarea + Plain Script parser + Blocks/Stats 預覽 | ✅ |
+| v2-4 | Alt+1~9 角色快捷鍵 + slot badges auto-bind | ✅ |
+| v2-5 | Voice TTS（useVoiceTTS hook，Web Speech API） | ✅ |
+| v2-6 | BGM/SFX 占位面板 + tsuki-synth 整合計畫文件 | ✅ |
+| v2-7 | 跨 TAB 雙向同步（loop guard：syncToken + lastReverse）| ✅ |
+| v2-8 | App Shell 整合 + scripts/build.js / sw.js 修正 | ✅ |
+| v2-9 | 文件更新 + commit | ✅ |
+
+關鍵設計：
+- **Vite + React build**（與 spreadsheet 同部署模式，dist/script-editor/）
+- **不重寫業務邏輯**：保留 Archive 的 3844 行 jsx（力導向關係圖 / 音效庫 / 劇本檢查 / 初稿生成等 overlay 完整保留）
+- **BGM/SFX 委派外部專案**：`tsuki-synth`（C++/JUCE VST3 物理建模合成器）負責，本模組只解析 cue + 顯示 placeholder，等 CLI render 修好後預渲染 WAV 接入。詳見 [`docs/tsuki-synth-integration.md`](docs/tsuki-synth-integration.md)
 
 ---
 

@@ -56,6 +56,8 @@ export function signOut(onAuthChange) {
     google.accounts.oauth2.revoke(accessToken);
     accessToken = null;
     userProfile = null;
+    sessionStorage.removeItem('akasha-session-token');
+    sessionStorage.removeItem('akasha-session-expiry');
     if (onAuthChange) onAuthChange({ signedIn: false, user: null });
   }
 }

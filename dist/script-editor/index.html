@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>劇本工房 v3 · Dramaturgica — Akasha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body, #root { height: 100%; margin: 0; background: var(--navy-deep); }
+  #root { display: flex; flex-direction: column; }
+  @keyframes swFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* slim scrollbar to match reading aesthetic */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(201,168,106,0.18);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(201,168,106,0.32); }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* ========== PDF / PRINT STYLES ========== */
+  @media print {
+    @page {
+      size: A4;
+      margin: 2cm 2.5cm;
+    }
+
+    /* reset to print-friendly */
+    html, body, #root {
+      height: auto !important;
+      background: #fff !important;
+      color: #1a1a1a !important;
+      overflow: visible !important;
+    }
+
+    /* hide everything except reader content */
+    header, .reader-toc, .reader-export-bar {
+      display: none !important;
+    }
+
+    /* hide non-reader tabs entirely — only reader prints */
+    #root > div > div:not(:has(.reader-root)) {
+      display: none !important;
+    }
+
+    /* reader root: remove flex constraints */
+    .reader-root {
+      display: block !important;
+      overflow: visible !important;
+      background: #fff !important;
+    }
+
+    /* reader content: full width, no scroll */
+    .reader-content {
+      overflow: visible !important;
+      background: #fff !important;
+      padding: 0 !important;
+    }
+    .reader-content > div {
+      max-width: 100% !important;
+      padding: 0 !important;
+    }
+
+    /* typography: dark text on white */
+    .reader-content div, .reader-content span {
+      color: #1a1a1a !important;
+    }
+
+    /* title block */
+    .reader-content div[style*="text-align: center"] span,
+    .reader-content div[style*="text-align: center"] div {
+      color: #1a1a1a !important;
+    }
+
+    /* scene headers */
+    .reader-content div[style*="font-variant: small-caps"] {
+      color: #333 !important;
+      border-bottom-color: #ccc !important;
+    }
+
+    /* narration */
+    .reader-content div[style*="border-left: 2px"] {
+      border-left-color: #999 !important;
+      color: #555 !important;
+    }
+
+    /* dialogue speaker name */
+    .reader-content div[style*="font-weight: 700"][style*="letter-spacing"] {
+      color: #1a1a1a !important;
+    }
+
+    /* dialogue text */
+    .reader-content div[style*="font-style: italic"],
+    .reader-content div[style*="opacity: 0.78"] {
+      color: #2a2a2a !important;
+      opacity: 1 !important;
+    }
+
+    /* hide hover-only tags */
+    .reader-content div[style*="opacity: 0"] {
+      display: none !important;
+    }
+
+    /* scene separators */
+    hr {
+      border-top-color: #ccc !important;
+    }
+
+    /* page breaks before each scene (except first) */
+    .reader-content div[data-scene-id] + hr {
+      page-break-before: always;
+    }
+
+    /* footer */
+    .reader-content div:last-child {
+      color: #999 !important;
+    }
+  }
+</style>
+  <script type="module" crossorigin src="./assets/index-CsKqziCi.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-dCo6aRox.css">
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>

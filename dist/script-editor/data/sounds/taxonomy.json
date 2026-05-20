@@ -1,0 +1,80 @@
+{
+  "$schema": "TsukiSynth Tag Taxonomy v2",
+
+  "primary_types": {
+    "ambience": "環境氛圍 — 背景層、空間填充",
+    "creature": "生物 — 怪物、動物、非人類角色",
+    "magic": "魔法 — 施法、精靈、能量",
+    "ui": "介面音效 — 按鈕、通知、系統回饋",
+    "whoosh": "轉場 — 場景切換、劃過、漸入漸出",
+    "impact": "撞擊 — 重擊 boom / 打擊 hit / 爆破 impact",
+    "foley": "動作聲 — 腳步、衣物、物件操作",
+    "mechanical": "機械 — 齒輪、金屬、工業"
+  },
+
+  "subcategories": {
+    "bell": "鐘聲 — 圓板/圓膜模型，長殘響",
+    "chime": "風鈴/琴 — 梁/管模型，清脆短音",
+    "gong": "鑼 — 圓板模型，深沉共鳴",
+    "drum": "鼓類 — 圓膜模型",
+    "string": "弦類 — 弦模型，揚琴/鋼琴",
+    "alert": "警告/提示音 — 短促高頻",
+    "ambient": "氛圍 — 長音、環境填充",
+    "motif": "短旋律片段 — 多音符序列",
+    "click": "點擊 — 極短觸發、UI 回饋",
+    "mechanical": "機械 — 齒輪、彈簧、金屬碰撞",
+    "organic": "有機 — 木質、植物、自然素材"
+  },
+
+  "sound_types": ["oneshot", "loop", "variant"],
+
+  "characters": {
+    "punch": "衝擊 — 短促有力、低頻集中",
+    "soft": "柔和 — 輕觸、圓潤",
+    "dark": "暗沉 — 低頻主導、高頻被削",
+    "bright": "明亮 — 高頻突出、穿透力強",
+    "pulse": "脈衝 — 節奏感、反覆律動",
+    "stomp": "重踏 — 大力撞擊、有重量",
+    "airy": "空氣感 — 輕飄、有呼吸空間",
+    "metallic": "金屬 — 硬質反射、高頻泛音豐富",
+    "glitch": "故障 — 數位錯誤、不穩定碎裂"
+  },
+
+  "moods": {
+    "sacred": "神聖、莊嚴",
+    "mystical": "神秘、魔法感",
+    "tense": "緊張、警戒",
+    "ominous": "不祥、黑暗",
+    "playful": "活潑、可愛",
+    "calm": "平靜、療癒",
+    "epic": "壯闊、史詩",
+    "melancholic": "憂鬱、感傷",
+    "neutral": "中性、無明顯情緒",
+    "aggressive": "激烈、攻擊性",
+    "oppressive": "壓迫、窒息感"
+  },
+
+  "energy_levels": ["very-low", "low", "medium", "high", "very-high"],
+
+  "use_cases": [
+    "VTuber scene transition",
+    "VTuber reaction / emote",
+    "chat notification",
+    "donation / superchat alert",
+    "UI button click",
+    "UI confirmation",
+    "game action feedback",
+    "BGM motif / loop element",
+    "ambient background",
+    "intro / outro jingle"
+  ],
+
+  "worlds": {
+    "akashic": "阿卡西 — 靈性、紀錄、光",
+    "rabbit": "兔兔 — 可愛、活潑、偶爾暴走",
+    "restraint": "拘束 — 暗黑、金屬、束縛",
+    "forest": "森林 — 木質、自然、風",
+    "ocean": "海洋 — 水聲、深沉、波動",
+    "clockwork": "齒輪 — 精密、機械、蒸汽龐克"
+  }
+}
