@@ -7,6 +7,7 @@
 
 import React from "react";
 import WriteTab from "./components/WriteTab.jsx";
+import { useCharactersOfWork } from "./hooks/useCharactersOfWork.js";
 
 // ============= DATA (loaded from ./data/ JSONL via Vite public folder) =============
 const DATA_BASE = "./data";
@@ -606,7 +607,8 @@ function SectionLabel({ latin, zh, accent = "tertiary" }) {
 }
 
 // ============= SEARCH VIEW =============
-function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
+function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
+  const allCharacters = useCharactersOfWork(blocks, characters);
   const [filters, setFilters] = React.useState({
     q: "", work: "", character: "", plot: "", emotion: "", license: "",
   });
@@ -614,7 +616,7 @@ function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
   const dialogues = blocks.filter(b => b.type === "dialogue");
   const filtered = React.useMemo(() => {
     return dialogues.filter(r => {
-      const ch = CHARACTERS.find(c => c.id === r.speakerId);
+      const ch = allCharacters.find(c => c.id === r.speakerId);
       if (filters.q && !((r.original + r.zh + (ch?.name || "")).toLowerCase().includes(filters.q.toLowerCase()))) return false;
       if (filters.work && (r.workId || WORKS[0]?.id) !== filters.work) return false;
       if (filters.character && r.speakerId !== filters.character) return false;
@@ -640,7 +642,7 @@ function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
   const exportMarkdown = () => {
     if (!checkExportLicense()) return;
     const lines = filtered.map(r => {
-      const ch = CHARACTERS.find(c => c.id === r.speakerId);
+      const ch = allCharacters.find(c => c.id === r.speakerId);
       return `### ${ch?.name || r.speakerId}\n> ${r.original}\n\n${r.zh}\n\nTags: ${(r.tags || []).map(([t]) => t).join(", ")}`;
     });
     downloadFile("search-results.md", lines.join("\n\n---\n\n"));
@@ -650,7 +652,7 @@ function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
     if (!checkExportLicense()) return;
     const header = "LineID,Speaker,Original,Translation,Tags";
     const rows = filtered.map(r => {
-      const ch = CHARACTERS.find(c => c.id === r.speakerId);
+      const ch = allCharacters.find(c => c.id === r.speakerId);
       const tags = (r.tags || []).map(([t]) => t).join("; ");
       return `"${r.lineId || ""}","${ch?.name || r.speakerId}","${(r.original || "").replace(/"/g, '""')}","${(r.zh || "").replace(/"/g, '""')}","${tags}"`;
     });
@@ -680,7 +682,7 @@ function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
           <SwSelect value={filters.work} onChange={v => setFilters({ ...filters, work: v })}
             options={[["", "全部作品"], ...WORKS.map(w => [w.id, `${w.title} · ${w.titleEn}`])]} />
           <SwSelect value={filters.character} onChange={v => setFilters({ ...filters, character: v })}
-            options={[["", "全部角色"], ...CHARACTERS.map(c => [c.id, `${c.name} · ${c.nameEn}`])]} />
+            options={[["", "全部角色"], ...allCharacters.map(c => [c.id, `${c.name} · ${c.nameEn}`])]} />
           <SwInput placeholder="劇情 TAG"
             value={filters.plot} onChange={v => setFilters({ ...filters, plot: v })} />
           <SwInput placeholder="情緒 TAG"
@@ -718,7 +720,7 @@ function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
       {/* Results */}
       <div style={{ flex: 1, overflowY: "auto", padding: "8px 28px 80px" }}>
         {filtered.length === 0 ? <EmptyState /> :
-          filtered.map(r => <ResultCard key={r.id} r={r} onClick={() => goToBlock(r.id)} />)}
+          filtered.map(r => <ResultCard key={r.id} r={r} characters={allCharacters} onClick={() => goToBlock(r.id)} />)}
       </div>
 
       {/* Export Bar */}
@@ -740,9 +742,9 @@ function SearchView({ blocks, goToEditor, goToReader, goToBlock }) {
   );
 }
 
-function ResultCard({ r, onClick }) {
+function ResultCard({ r, characters, onClick }) {
   const [hover, setHover] = React.useState(false);
-  const ch = CHARACTERS.find(c => c.id === r.speakerId);
+  const ch = (characters || CHARACTERS).find(c => c.id === r.speakerId);
   const work = WORKS[0]; // simplified
   const charColor = CHAR_COLORS[r.speakerId] || "var(--gold-dim)";
   return (
@@ -3851,7 +3853,7 @@ function App() {
       )}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", animation: "swFade 200ms ease" }} key={tab + currentWork}>
         {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={CHARACTERS} />}
-        {tab === "search" && <SearchView blocks={blocks} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
+        {tab === "search" && <SearchView blocks={blocks} characters={CHARACTERS} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
         {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} />}
         {tab === "reader" && <ReaderView blocks={blocks} goToBlock={goToBlock} />}
       </div>
