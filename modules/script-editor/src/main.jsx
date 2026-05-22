@@ -6,7 +6,8 @@ import ReactDOM from "react-dom/client";
 import App, { loadAllData } from "./App.jsx";
 import "../tokens.css";
 
-loadAllData().then(() => {
+const lastWork = localStorage.getItem("sw_last_work") || "lohengrin";
+loadAllData(lastWork).then(() => {
   ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 }).catch(err => {
   console.error("Data load failed:", err);

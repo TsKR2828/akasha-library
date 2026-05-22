@@ -44,17 +44,49 @@ const GERMAN_ACT_NUMS = { 1: "einem", 2: "zwei", 3: "drei", 4: "vier", 5: "fünf
 
 let WORK_INDEX = []; // [{id, title, titleEn, author}]
 
+// ── Custom works (localStorage) ──
+function getCustomWorks() {
+  try { return JSON.parse(localStorage.getItem("sw_custom_works") || "[]"); }
+  catch { return []; }
+}
+function saveCustomWorks(works) {
+  localStorage.setItem("sw_custom_works", JSON.stringify(works));
+}
+
 async function loadWorkIndex() {
   const base = DATA_BASE;
   try {
     const res = await fetch(`${base}/index.json`);
     WORK_INDEX = await res.json();
   } catch { WORK_INDEX = [{ id: "lohengrin", title: "羅恩格林", titleEn: "Lohengrin", author: "Richard Wagner" }]; }
+  // Merge localStorage custom works
+  const custom = getCustomWorks();
+  custom.forEach(cw => {
+    if (!WORK_INDEX.find(w => w.id === cw.id)) {
+      WORK_INDEX.push({ ...cw, _custom: true });
+    }
+  });
 }
 
 async function loadAllData(workId = "lohengrin") {
   const base = DATA_BASE;
   await loadWorkIndex();
+
+  // Custom (localStorage-only) work — no server data to fetch
+  const isCustomWork = WORK_INDEX.find(w => w.id === workId)?._custom;
+  if (isCustomWork) {
+    const cwMeta = getCustomWorks().find(w => w.id === workId) || { id: workId, title: workId, titleEn: workId, author: "" };
+    WORKS = [{
+      id: cwMeta.id, title: cwMeta.title, titleEn: cwMeta.titleEn,
+      composer: cwMeta.author, license: "unchecked", synopsis: "",
+      premiereYear: "", setting: "", copyrightNote: "", acts: 0,
+      genreLabel: "Custom", actsLabel: "",
+    }];
+    CHARACTERS = [];
+    CHAR_COLORS = {};
+    SCRIPT = [];
+    return;
+  }
 
   const safeFetch = async (url) => {
     const res = await fetch(url);
@@ -202,6 +234,9 @@ const SwIcon = ({ name, size = 16, stroke = 1.6 }) => {
     layers: <><path d="M12 2L2 7l10 5 10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></>,
     network: <><circle cx="5" cy="6" r="2" /><circle cx="19" cy="6" r="2" /><circle cx="12" cy="20" r="2" /><circle cx="19" cy="16" r="2" /><path d="M7 7l5 11M17 7l-5 11M17 7v7" /></>,
     quill: <><path d="M20 2c-2 0-7 1-9 5-1 2-1.5 4-1.5 6H7l-2 4.5L3 22h2l1.5-3H12c0-2 .5-4 1.5-6 2-4 5-5 7-5l1-1c0-2-1-5-1.5-5z" /></>,
+    send: <><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" /></>,
+    check: <><path d="M20 6L9 17l-5-5" /></>,
+    user: <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -356,6 +391,27 @@ function useNotes() {
   return { notes, addNote, updateNote, removeNote };
 }
 
+// ============= AUTO-POPULATE CHARACTERS FROM BLOCKS =============
+function populateCharsFromBlocks(loadedBlocks) {
+  if (CHARACTERS.length > 0 || !loadedBlocks || loadedBlocks.length === 0) return;
+  const seen = new Map();
+  loadedBlocks.forEach(b => {
+    if (b.type === "dialogue" && b.speakerId && !seen.has(b.speakerId)) {
+      seen.set(b.speakerId, {
+        id: b.speakerId, name: b.speaker || b.speakerId,
+        nameEn: b.speaker || b.speakerId,
+        voice: "", role: "", relations: "", tone: "",
+        tags: [], notes: [],
+      });
+    }
+  });
+  CHARACTERS = [...seen.values()];
+  CHAR_COLORS = {};
+  CHARACTERS.forEach((c, i) => {
+    CHAR_COLORS[c.id] = PREDEFINED_COLORS[c.id] || `hsl(${(i * 47) % 360}, 45%, 55%)`;
+  });
+}
+
 // ============= BLOCKS localStorage PERSISTENCE =============
 function loadBlocksFromStorage() {
   try {
@@ -437,7 +493,7 @@ function SwBtn({ children, onClick, variant = "ghost", size = "md", icon, title 
 }
 
 // ============= TOPBAR =============
-function SwHeader({ tab, setTab, onBack }) {
+function SwHeader({ tab, setTab, onBack, onAI }) {
   const tabs = [
     { id: "write",  tc: "速寫", en: "Write",  ic: "quill" },
     { id: "search", tc: "搜尋", en: "Search", ic: "search" },
@@ -528,7 +584,7 @@ function SwHeader({ tab, setTab, onBack }) {
       <div style={{ flex: 1 }} />
 
       <div style={{ display: "flex", gap: 6 }}>
-        <SwBtn icon="moon" size="sm" onClick={() => alert("AI 輔助功能開發中，敬請期待。")}>AI</SwBtn>
+        <SwBtn icon="moon" size="sm" onClick={onAI}>AI</SwBtn>
         <SwBtn icon="info" size="sm" onClick={() => alert("Archive Script Editor — 戲劇文本資料庫與劇本編輯器。\n\n快捷鍵：\n• Tab 切換：搜尋 / 編輯 / 閱讀\n• 編輯器內可匯入 / 匯出 JSONL\n• 閱讀模式支援 PDF 匯出（公共領域作品）")}>說明</SwBtn>
       </div>
     </header>
@@ -613,11 +669,20 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
     q: "", work: "", character: "", plot: "", emotion: "", license: "",
   });
 
-  const dialogues = blocks.filter(b => b.type === "dialogue");
+  const searchable = React.useMemo(() => {
+    return blocks
+      .filter(b => b.type === "dialogue" || b.type === "narration" || b.type === "scene")
+      .map(b => {
+        if (b.type === "narration") return { ...b, speakerId: "__narration__", original: "", zh: b.text || "", tags: b.tags || [], _isNarration: true };
+        if (b.type === "scene") return { ...b, speakerId: "__scene__", original: "", zh: (b.act || "") + (b.subtitle ? " — " + b.subtitle : ""), tags: [], _isScene: true };
+        return b;
+      });
+  }, [blocks]);
   const filtered = React.useMemo(() => {
-    return dialogues.filter(r => {
+    return searchable.filter(r => {
       const ch = allCharacters.find(c => c.id === r.speakerId);
-      if (filters.q && !((r.original + r.zh + (ch?.name || "")).toLowerCase().includes(filters.q.toLowerCase()))) return false;
+      const textPool = (r.original + r.zh + (ch?.name || "") + (r.text || "")).toLowerCase();
+      if (filters.q && !textPool.includes(filters.q.toLowerCase())) return false;
       if (filters.work && (r.workId || WORKS[0]?.id) !== filters.work) return false;
       if (filters.character && r.speakerId !== filters.character) return false;
       if (filters.plot && !(r.tags || []).some(([t, k]) => k === "plot" && t.includes(filters.plot))) return false;
@@ -642,6 +707,8 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
   const exportMarkdown = () => {
     if (!checkExportLicense()) return;
     const lines = filtered.map(r => {
+      if (r._isNarration) return `### 旁白\n*${r.zh}*`;
+      if (r._isScene) return `---\n## ${r.zh}`;
       const ch = allCharacters.find(c => c.id === r.speakerId);
       return `### ${ch?.name || r.speakerId}\n> ${r.original}\n\n${r.zh}\n\nTags: ${(r.tags || []).map(([t]) => t).join(", ")}`;
     });
@@ -650,11 +717,11 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
 
   const exportCsv = () => {
     if (!checkExportLicense()) return;
-    const header = "LineID,Speaker,Original,Translation,Tags";
+    const header = "LineID,Type,Speaker,Original,Translation,Tags";
     const rows = filtered.map(r => {
-      const ch = allCharacters.find(c => c.id === r.speakerId);
+      const speaker = r._isNarration ? "旁白" : r._isScene ? "場景" : ((allCharacters.find(c => c.id === r.speakerId))?.name || r.speakerId);
       const tags = (r.tags || []).map(([t]) => t).join("; ");
-      return `"${r.lineId || ""}","${ch?.name || r.speakerId}","${(r.original || "").replace(/"/g, '""')}","${(r.zh || "").replace(/"/g, '""')}","${tags}"`;
+      return `"${r.lineId || ""}","${r.type}","${speaker}","${(r.original || "").replace(/"/g, '""')}","${(r.zh || "").replace(/"/g, '""')}","${tags}"`;
     });
     downloadFile("search-results.csv", [header, ...rows].join("\n"), "text/csv");
   };
@@ -682,7 +749,7 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
           <SwSelect value={filters.work} onChange={v => setFilters({ ...filters, work: v })}
             options={[["", "全部作品"], ...WORKS.map(w => [w.id, `${w.title} · ${w.titleEn}`])]} />
           <SwSelect value={filters.character} onChange={v => setFilters({ ...filters, character: v })}
-            options={[["", "全部角色"], ...allCharacters.map(c => [c.id, `${c.name} · ${c.nameEn}`])]} />
+            options={[["", "全部角色"], ["__narration__", "旁白 · Narration"], ["__scene__", "場景 · Scene"], ...allCharacters.map(c => [c.id, `${c.name} · ${c.nameEn}`])]} />
           <SwInput placeholder="劇情 TAG"
             value={filters.plot} onChange={v => setFilters({ ...filters, plot: v })} />
           <SwInput placeholder="情緒 TAG"
@@ -744,9 +811,13 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
 
 function ResultCard({ r, characters, onClick }) {
   const [hover, setHover] = React.useState(false);
-  const ch = (characters || CHARACTERS).find(c => c.id === r.speakerId);
+  const isNarr = r._isNarration;
+  const isScene = r._isScene;
+  const ch = (!isNarr && !isScene) ? (characters || CHARACTERS).find(c => c.id === r.speakerId) : null;
   const work = WORKS[0]; // simplified
-  const charColor = CHAR_COLORS[r.speakerId] || "var(--gold-dim)";
+  const charColor = isNarr ? "var(--text-secondary)" : isScene ? "var(--success)" : (CHAR_COLORS[r.speakerId] || "var(--gold-dim)");
+  const speakerLabel = isNarr ? "旁白" : isScene ? "場景" : (ch?.name || r.speakerId);
+  const speakerLabelEn = isNarr ? "Narration" : isScene ? "Scene" : (ch?.nameEn || "");
   return (
     <div
       onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
@@ -754,7 +825,7 @@ function ResultCard({ r, characters, onClick }) {
       style={{
         background: "var(--navy-light)",
         border: "1px solid var(--navy-hover)",
-        borderLeft: `3px solid ${hover ? "var(--gold)" : "var(--gold-dim)"}`,
+        borderLeft: `3px solid ${hover ? charColor : "var(--gold-dim)"}`,
         marginBottom: 12,
         overflow: "hidden", cursor: "pointer",
         transform: hover ? "translateY(-1px)" : "translateY(0)",
@@ -779,12 +850,8 @@ function ResultCard({ r, characters, onClick }) {
         <span style={{ width: 1, height: 14, background: "var(--navy-line)" }} />
         <span style={{
           fontFamily: "var(--font-mono)", fontSize: 11,
-          color: "var(--text-tertiary)", letterSpacing: "0.08em",
-        }}>Akt 1 · Sz 3</span>
-        <span style={{ marginLeft: "auto",
-          fontFamily: "var(--font-mono)", fontSize: 10,
-          color: "var(--text-tertiary)", opacity: 0.7,
-        }}>#{r.lineId}</span>
+          color: isScene ? "var(--success)" : "var(--text-tertiary)", letterSpacing: "0.08em",
+        }}>{isScene ? "SCENE" : isNarr ? "NARRATION" : `#${r.lineId || ""}`}</span>
       </div>
       {/* body */}
       <div style={{ padding: "14px 18px 16px" }}>
@@ -795,12 +862,12 @@ function ResultCard({ r, characters, onClick }) {
           display: "flex", gap: 6, alignItems: "center",
         }}>
           <span style={{ width: 5, height: 5, borderRadius: "50%", background: charColor }} />
-          <span>speaker:</span>
-          <span style={{ color: "var(--gold-dim)" }}>{ch?.nameEn}</span>
+          <span>{isNarr || isScene ? "type:" : "speaker:"}</span>
+          <span style={{ color: "var(--gold-dim)" }}>{speakerLabelEn}</span>
           <span>·</span>
-          <span style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12.5, color: "var(--cream-dim)" }}>{ch?.name}</span>
+          <span style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12.5, color: "var(--cream-dim)" }}>{speakerLabel}</span>
         </div>
-        {r.original && r.original.trim() && (
+        {!isNarr && !isScene && r.original && r.original.trim() && (
           <div style={{
             fontFamily: "var(--font-serif-en)", fontStyle: "italic",
             fontSize: 14.5, lineHeight: 1.7, color: "var(--cream)",
@@ -810,13 +877,16 @@ function ResultCard({ r, characters, onClick }) {
         {r.zh && r.zh.trim() && (
           <div style={{
             fontFamily: "var(--font-body)", fontSize: 13,
-            lineHeight: 1.7, color: "var(--cream)", opacity: 0.85,
+            lineHeight: 1.7, color: "var(--cream)", opacity: isNarr ? 0.7 : 0.85,
             marginBottom: 12, letterSpacing: "0.04em",
-          }}>「{r.zh}」</div>
+            fontStyle: isNarr ? "italic" : "normal",
+            borderLeft: isNarr ? "2px solid var(--gold-dim)" : isScene ? "2px solid var(--success)" : "none",
+            paddingLeft: (isNarr || isScene) ? 12 : 0,
+          }}>{isScene ? r.zh : `「${r.zh}」`}</div>
         )}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        {!isScene && <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {(r.tags || []).map(([t, k], i) => <Tag key={i} kind={k}>{t}</Tag>)}
-        </div>
+        </div>}
       </div>
     </div>
   );
@@ -1324,7 +1394,8 @@ function parseRelationshipEdges(characters) {
   return edges;
 }
 
-function RelationshipGraph({ onClose }) {
+function RelationshipGraph({ onClose, characters: charsProp }) {
+  const chars = charsProp || CHARACTERS;
   const canvasRef = React.useRef(null);
   const [nodes, setNodes] = React.useState([]);
   const [edges, setEdges] = React.useState([]);
@@ -1347,8 +1418,8 @@ function RelationshipGraph({ onClose }) {
     const radius = Math.min(cx, cy) * 0.55;
 
     // Create nodes in a circle
-    const initNodes = CHARACTERS.map((c, i) => {
-      const angle = (2 * Math.PI * i) / CHARACTERS.length - Math.PI / 2;
+    const initNodes = chars.map((c, i) => {
+      const angle = (2 * Math.PI * i) / chars.length - Math.PI / 2;
       return {
         id: c.id,
         name: c.name,
@@ -1362,7 +1433,7 @@ function RelationshipGraph({ onClose }) {
       };
     });
 
-    const parsedEdges = parseRelationshipEdges(CHARACTERS);
+    const parsedEdges = parseRelationshipEdges(chars);
     nodesRef.current = initNodes;
     setNodes(initNodes);
     setEdges(parsedEdges);
@@ -1492,7 +1563,7 @@ function RelationshipGraph({ onClose }) {
     return edge.from === selectedNode || edge.to === selectedNode;
   };
 
-  const hoveredChar = hoveredNode ? CHARACTERS.find(c => c.id === hoveredNode) : null;
+  const hoveredChar = hoveredNode ? chars.find(c => c.id === hoveredNode) : null;
 
   return (
     <div style={{
@@ -1520,7 +1591,7 @@ function RelationshipGraph({ onClose }) {
         <span style={{
           fontFamily: "var(--font-mono)", fontSize: 10.5,
           color: "var(--text-tertiary)", letterSpacing: "0.04em",
-        }}>{CHARACTERS.length} nodes · {edges.length} edges</span>
+        }}>{chars.length} nodes · {edges.length} edges</span>
         <span style={{ flex: 1 }} />
         <span style={{
           fontFamily: "var(--font-body)", fontSize: 11,
@@ -2737,7 +2808,7 @@ function EditorView({ blocks, setBlocks }) {
       {forgeOpen && <TableForge blocks={blocks} onUpdateBlock={updateBlock} onClose={() => setForgeOpen(false)} />}
 
       {/* Relationship Graph overlay (Phase 12-C) */}
-      {graphOpen && <RelationshipGraph onClose={() => setGraphOpen(false)} />}
+      {graphOpen && <RelationshipGraph onClose={() => setGraphOpen(false)} characters={CHARACTERS} />}
 
       {/* Sound Panel overlay (Phase 12-D) */}
       {soundOpen && <SoundPanel
@@ -3783,31 +3854,264 @@ function ReaderDialogue({ block, ch, charNotes = [], goToBlock }) {
   );
 }
 
-// ============= APP =============
-function WorkSwitcher({ currentId, onSwitch }) {
-  if (WORK_INDEX.length <= 1) return null;
+// ============= AI ASSIST PANEL =============
+function AiAssistPanel({ onClose, blocks, characters }) {
+  const [messages, setMessages] = React.useState([]);
+  const [input, setInput] = React.useState("");
+  const [pending, setPending] = React.useState(false);
+  const scrollRef = React.useRef(null);
+  const inIframe = window.parent !== window;
+
+  // Listen for AI response from parent shell
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.type === "akasha-reading-room-response") {
+        setPending(false);
+        if (e.data.error) {
+          setMessages(prev => [...prev, { role: "error", text: e.data.error }]);
+        } else if (e.data.response) {
+          setMessages(prev => [...prev, { role: "ai", text: e.data.response }]);
+        }
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // Auto-scroll
+  React.useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, pending]);
+
+  const buildContext = () => {
+    const charNames = (characters || CHARACTERS).map(c => c.name).join("、") || "(無角色)";
+    const blockCount = (blocks || []).length;
+    const lastBlocks = (blocks || []).slice(-5).map(b => {
+      if (b.type === "scene") return `[場景] ${b.act || ""}`;
+      if (b.type === "narration") return `[旁白] ${b.text || ""}`;
+      if (b.type === "dialogue") return `${b.speaker || b.speakerId || "???"}: ${b.zh || b.text || ""}`;
+      return `[${b.type}]`;
+    }).join("\n");
+    return `--- 劇本工房上下文 ---\n角色：${charNames}\n總 blocks 數：${blockCount}\n最近 5 個 block：\n${lastBlocks}\n---`;
+  };
+
+  const sendMessage = (text) => {
+    if (!text.trim() || pending) return;
+    if (!inIframe) {
+      setMessages(prev => [...prev,
+        { role: "user", text },
+        { role: "error", text: "AI 功能需要在阿卡夏圖書館內使用（iframe 環境）。獨立運行時無法連接 AI 服務。" },
+      ]);
+      return;
+    }
+    setMessages(prev => [...prev, { role: "user", text }]);
+    setPending(true);
+    const contextPrompt = buildContext() + "\n\n用戶提問：" + text;
+    window.parent.postMessage({
+      type: "akasha-reading-room-send",
+      text: contextPrompt,
+      module: "script-editor",
+      noTrace: false,
+    }, "*");
+  };
+
+  const presets = [
+    { label: "格式檢查", icon: "check", prompt: "請檢查目前劇本的格式是否正確，有沒有常見問題（如缺少場景標記、角色名不一致、空白對白等）。" },
+    { label: "劇情摘要", icon: "book", prompt: "請根據目前的劇本內容，用 3-5 句話摘要目前的劇情發展。" },
+    { label: "角色分析", icon: "user", prompt: "請分析目前劇本中各角色的出場次數、台詞量和主要互動關係。" },
+    { label: "續寫建議", icon: "quill", prompt: "根據目前劇本的最後幾個 block，請建議接下來可能的劇情發展方向（2-3 個方案）。" },
+  ];
+
+  const msgBubbleStyle = (role) => ({
+    padding: "8px 12px", borderRadius: 6, marginBottom: 6,
+    fontFamily: "var(--font-body)", fontSize: 13, lineHeight: 1.6,
+    maxWidth: "85%", wordBreak: "break-word", whiteSpace: "pre-wrap",
+    ...(role === "user" ? {
+      background: "rgba(201,168,106,0.15)", color: "var(--gold-bright)",
+      alignSelf: "flex-end", borderBottomRightRadius: 2,
+    } : role === "error" ? {
+      background: "rgba(196,96,79,0.15)", color: "#c4604f",
+      alignSelf: "flex-start", borderBottomLeftRadius: 2,
+    } : {
+      background: "rgba(255,255,255,0.06)", color: "var(--cream)",
+      alignSelf: "flex-start", borderBottomLeftRadius: 2,
+    }),
+  });
+
   return (
-    <select value={currentId} onChange={e => onSwitch(e.target.value)}
-      style={{
-        position: "absolute", top: 10, right: 120, zIndex: 100,
-        background: "var(--navy-deep)", border: "1px solid var(--gold-line)",
-        color: "var(--gold)", padding: "4px 24px 4px 10px",
-        fontFamily: "var(--font-serif-tc)", fontSize: 12,
-        borderRadius: 2, outline: "none", cursor: "pointer", appearance: "none",
-        backgroundImage: "linear-gradient(45deg, transparent 50%, var(--gold-dim) 50%), linear-gradient(135deg, var(--gold-dim) 50%, transparent 50%)",
-        backgroundPosition: "calc(100% - 12px) 50%, calc(100% - 7px) 50%",
-        backgroundSize: "5px 5px", backgroundRepeat: "no-repeat",
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 250,
+      background: "rgba(13,17,25,0.92)", backdropFilter: "blur(6px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      animation: "swFade 120ms ease",
+    }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{
+        width: 520, maxHeight: "80vh", display: "flex", flexDirection: "column",
+        background: "var(--navy-light)", border: "1px solid var(--gold-line)",
+        borderRadius: 6, overflow: "hidden",
       }}>
-      {WORK_INDEX.map(w => <option key={w.id} value={w.id}>{w.title}（{w.titleEn}）</option>)}
-    </select>
+        {/* Header */}
+        <div style={{
+          padding: "12px 16px", borderBottom: "1px solid var(--navy-line)",
+          display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <SwIcon name="moon" size={15} />
+          <span style={{ fontFamily: "var(--font-serif-en)", fontVariant: "small-caps", fontSize: 13, letterSpacing: "0.14em", color: "var(--gold-bright)" }}>AI Dramaturg</span>
+          <span style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12, color: "var(--text-secondary)" }}>劇本顧問</span>
+          <span style={{ flex: 1 }} />
+          <SwBtn icon="close" size="sm" onClick={onClose}>關閉</SwBtn>
+        </div>
+
+        {/* Quick actions */}
+        <div style={{ padding: "8px 12px", display: "flex", gap: 6, flexWrap: "wrap", borderBottom: "1px solid var(--navy-line)" }}>
+          {presets.map(p => (
+            <button key={p.label} onClick={() => sendMessage(p.prompt)} disabled={pending}
+              style={{
+                background: "rgba(201,168,106,0.08)", border: "1px solid var(--gold-line)",
+                color: "var(--gold)", padding: "4px 10px", borderRadius: 3,
+                fontFamily: "var(--font-serif-tc)", fontSize: 11.5, cursor: pending ? "not-allowed" : "pointer",
+                opacity: pending ? 0.5 : 1, display: "flex", alignItems: "center", gap: 4,
+              }}>
+              <SwIcon name={p.icon} size={11} />{p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Chat messages */}
+        <div ref={scrollRef} style={{
+          flex: 1, overflowY: "auto", padding: "12px 16px",
+          display: "flex", flexDirection: "column", gap: 4,
+          minHeight: 200, maxHeight: "50vh",
+        }}>
+          {messages.length === 0 && (
+            <div style={{ textAlign: "center", color: "var(--text-tertiary)", fontFamily: "var(--font-body)", fontSize: 12, paddingTop: 40 }}>
+              點擊上方快速指令，或輸入自由提問
+              {!inIframe && <div style={{ color: "#c4604f", marginTop: 8 }}>（需在阿卡夏圖書館內使用）</div>}
+            </div>
+          )}
+          {messages.map((m, i) => (
+            <div key={i} style={msgBubbleStyle(m.role)}>
+              {m.role === "ai" && <span style={{ fontFamily: "var(--font-serif-en)", fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>AI Dramaturg</span>}
+              {m.text}
+            </div>
+          ))}
+          {pending && (
+            <div style={{ ...msgBubbleStyle("ai"), opacity: 0.6 }}>
+              <span style={{ fontFamily: "var(--font-serif-en)", fontSize: 10, color: "var(--text-tertiary)", display: "block", marginBottom: 2 }}>AI Dramaturg</span>
+              思考中…
+            </div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div style={{
+          padding: "8px 12px", borderTop: "1px solid var(--navy-line)",
+          display: "flex", gap: 6,
+        }}>
+          <input value={input} onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); setInput(""); } }}
+            placeholder="輸入問題…" disabled={pending}
+            style={{
+              flex: 1, background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+              color: "var(--cream)", padding: "7px 10px",
+              fontFamily: "var(--font-body)", fontSize: 13, borderRadius: 3, outline: "none",
+            }} />
+          <SwBtn icon="send" size="sm" onClick={() => { sendMessage(input); setInput(""); }}>送出</SwBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============= APP =============
+function NewWorkModal({ onClose, onCreated }) {
+  const [title, setTitle] = React.useState("");
+  const [titleEn, setTitleEn] = React.useState("");
+  const [author, setAuthor] = React.useState("");
+  const inputSt = {
+    width: "100%", boxSizing: "border-box", marginBottom: 10,
+    background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+    color: "var(--cream)", padding: "7px 10px",
+    fontFamily: "var(--font-body)", fontSize: 13, borderRadius: 2, outline: "none",
+  };
+  const handleCreate = () => {
+    if (!title.trim()) return alert("請輸入作品名稱");
+    const id = "custom_" + Date.now().toString(36);
+    const newWork = { id, title: title.trim(), titleEn: titleEn.trim() || title.trim(), author: author.trim() || "—" };
+    const customs = getCustomWorks();
+    customs.push(newWork);
+    saveCustomWorks(customs);
+    WORK_INDEX.push({ ...newWork, _custom: true });
+    onCreated(id);
+    onClose();
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(13,17,25,0.85)", display: "flex", alignItems: "center", justifyContent: "center", animation: "swFade 120ms ease" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "var(--navy-light)", border: "1px solid var(--gold-line)", borderRadius: 4, padding: "24px 28px", width: 340 }}>
+        <div style={{ fontFamily: "var(--font-serif-tc)", fontSize: 15, color: "var(--gold-bright)", marginBottom: 14, letterSpacing: "0.1em" }}>
+          <SwIcon name="plus" size={13} /> 新增作品
+        </div>
+        <label style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--text-secondary)", display: "block", marginBottom: 3 }}>作品名稱 *</label>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="例：乘風之翼" style={inputSt} autoFocus
+          onKeyDown={e => { if (e.key === "Enter") handleCreate(); }} />
+        <label style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--text-secondary)", display: "block", marginBottom: 3 }}>English Title</label>
+        <input value={titleEn} onChange={e => setTitleEn(e.target.value)} placeholder="e.g. Wings of the Wind" style={inputSt} />
+        <label style={{ fontFamily: "var(--font-body)", fontSize: 11, color: "var(--text-secondary)", display: "block", marginBottom: 3 }}>作者</label>
+        <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="例：匿名" style={inputSt} />
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+          <SwBtn icon="close" size="sm" onClick={onClose}>取消</SwBtn>
+          <SwBtn icon="plus" size="sm" onClick={handleCreate}>建立</SwBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkSwitcher({ currentId, onSwitch, onNewWork, onDeleteWork }) {
+  return (
+    <div style={{ position: "absolute", top: 10, right: 120, zIndex: 100, display: "flex", gap: 4, alignItems: "center" }}>
+      <select value={currentId} onChange={e => onSwitch(e.target.value)}
+        style={{
+          background: "var(--navy-deep)", border: "1px solid var(--gold-line)",
+          color: "var(--gold)", padding: "4px 24px 4px 10px",
+          fontFamily: "var(--font-serif-tc)", fontSize: 12,
+          borderRadius: 2, outline: "none", cursor: "pointer", appearance: "none",
+          backgroundImage: "linear-gradient(45deg, transparent 50%, var(--gold-dim) 50%), linear-gradient(135deg, var(--gold-dim) 50%, transparent 50%)",
+          backgroundPosition: "calc(100% - 12px) 50%, calc(100% - 7px) 50%",
+          backgroundSize: "5px 5px", backgroundRepeat: "no-repeat",
+        }}>
+        {WORK_INDEX.map(w => <option key={w.id} value={w.id}>{w.title}{w.titleEn ? `（${w.titleEn}）` : ""}{w._custom ? " *" : ""}</option>)}
+      </select>
+      <button onClick={onNewWork} title="新增作品" style={{
+        background: "var(--navy-deep)", border: "1px solid var(--gold-line)",
+        color: "var(--gold)", width: 26, height: 26, borderRadius: 2,
+        cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 14, fontFamily: "var(--font-mono)", padding: 0,
+      }}>+</button>
+      {WORK_INDEX.find(w => w.id === currentId)?._custom && (
+        <button onClick={onDeleteWork} title="刪除此自訂作品" style={{
+          background: "transparent", border: "1px solid rgba(196,96,79,0.3)",
+          color: "var(--danger,#c4604f)", width: 26, height: 26, borderRadius: 2,
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 12, fontFamily: "var(--font-mono)", padding: 0,
+        }}>×</button>
+      )}
+    </div>
   );
 }
 
 function App() {
   const [tab, setTab] = React.useState("write"); // Phase 17 v2-2: Write is now the default first TAB
-  const [currentWork, setCurrentWork] = React.useState(WORKS[0]?.id || "lohengrin");
+  const [currentWork, setCurrentWork] = React.useState(() => localStorage.getItem("sw_last_work") || WORKS[0]?.id || "lohengrin");
   const [loading, setLoading] = React.useState(false);
-  const [blocks, setBlocks] = React.useState(() => loadBlocksFromStorage() || SCRIPT);
+  const [blocks, setBlocks] = React.useState(() => {
+    const b = loadBlocksFromStorage() || SCRIPT;
+    populateCharsFromBlocks(b); // For custom works on initial load
+    return b;
+  });
+  const [showNewWork, setShowNewWork] = React.useState(false);
+  const [showAI, setShowAI] = React.useState(false);
   const goBack = () => { window.location.href = "../../index.html"; };
 
   // Persist blocks to localStorage on change (debounced)
@@ -3827,11 +4131,32 @@ function App() {
     saveRef.current.flush(blocks);
     try {
       await loadAllData(workId);
-      setBlocks(loadBlocksFromStorage() || SCRIPT);
+      const loaded = loadBlocksFromStorage() || SCRIPT;
+      populateCharsFromBlocks(loaded);
+      setBlocks(loaded);
       setCurrentWork(workId);
-      setTab("reader");
+      localStorage.setItem("sw_last_work", workId);
+      setTab("write");
     } catch (e) { console.error("Work load failed:", e); }
     setLoading(false);
+  };
+
+  const deleteCurrentWork = () => {
+    const entry = WORK_INDEX.find(w => w.id === currentWork);
+    if (!entry?._custom) return;
+    if (!window.confirm(`確定刪除自訂作品「${entry.title}」？\n草稿與筆記也會一併清除。`)) return;
+    // Remove from localStorage
+    const customs = getCustomWorks().filter(w => w.id !== currentWork);
+    saveCustomWorks(customs);
+    localStorage.removeItem(`blocks_${currentWork}`);
+    localStorage.removeItem(`notes_${currentWork}`);
+    localStorage.removeItem(`archive_write_draft_${currentWork}`);
+    localStorage.removeItem(`archive_write_history_${currentWork}`);
+    // Remove from WORK_INDEX
+    WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
+    // Switch to first remaining work
+    const fallback = WORK_INDEX[0]?.id || "lohengrin";
+    switchWork(fallback);
   };
 
   return (
@@ -3840,8 +4165,11 @@ function App() {
       height: "100vh", overflow: "hidden",
       position: "relative",
     }}>
-      <SwHeader tab={tab} setTab={setTab} onBack={goBack} />
-      <WorkSwitcher currentId={currentWork} onSwitch={switchWork} />
+      <SwHeader tab={tab} setTab={setTab} onBack={goBack} onAI={() => setShowAI(true)} />
+      <WorkSwitcher currentId={currentWork} onSwitch={switchWork}
+        onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />
+      {showNewWork && <NewWorkModal onClose={() => setShowNewWork(false)} onCreated={switchWork} />}
+      {showAI && <AiAssistPanel onClose={() => setShowAI(false)} blocks={blocks} characters={CHARACTERS} />}
       {loading && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 200,
@@ -3852,7 +4180,7 @@ function App() {
         }}>Loading…</div>
       )}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", animation: "swFade 200ms ease" }} key={tab + currentWork}>
-        {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={CHARACTERS} />}
+        {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={CHARACTERS} workId={currentWork} />}
         {tab === "search" && <SearchView blocks={blocks} characters={CHARACTERS} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
         {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} />}
         {tab === "reader" && <ReaderView blocks={blocks} goToBlock={goToBlock} />}

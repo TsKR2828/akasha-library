@@ -16,15 +16,19 @@ import BgmPanel from "./BgmPanel.jsx";
               v2-7 cross-TAB sync (Write ↔ Editor/Reader) — pending
    =========================================================== */
 
-const DRAFT_KEY = "sw_write_draft_v1";
-const LOCKS_KEY = "sw_slot_locks_v1";
+// Draft & locks are now per-work (workId passed as prop)
+const DRAFT_BASE = "sw_write_draft_v1";
+const LOCKS_BASE = "sw_slot_locks_v1";
 
-function loadLocks() {
-  try { return JSON.parse(localStorage.getItem(LOCKS_KEY) || "{}"); }
+function draftKey(workId) { return workId ? `${DRAFT_BASE}_${workId}` : DRAFT_BASE; }
+function locksKey(workId) { return workId ? `${LOCKS_BASE}_${workId}` : LOCKS_BASE; }
+
+function loadLocks(workId) {
+  try { return JSON.parse(localStorage.getItem(locksKey(workId)) || "{}"); }
   catch { return {}; }
 }
-function saveLocks(obj) {
-  try { localStorage.setItem(LOCKS_KEY, JSON.stringify(obj)); } catch {}
+function saveLocks(obj, workId) {
+  try { localStorage.setItem(locksKey(workId), JSON.stringify(obj)); } catch {}
 }
 const SEED = `#scene：第一幕 · 第一場
 旁白：天色將明，舍爾德河畔聚集著布拉班特諸侯。
@@ -42,24 +46,22 @@ const TYPE_COLORS = {
   note:      { fg: "rgb(100,107,120)",     bg: "rgba(100,107,120,0.08)", bd: "rgba(100,107,120,0.20)" },
 };
 
-function loadDraft() {
-  try { return localStorage.getItem(DRAFT_KEY) ?? SEED; }
-  catch { return SEED; }
+function loadDraft(workId) {
+  try { return localStorage.getItem(draftKey(workId)); }
+  catch { return null; }
 }
-function saveDraft(text) {
-  try { localStorage.setItem(DRAFT_KEY, text); } catch {}
+function saveDraft(text, workId) {
+  try { localStorage.setItem(draftKey(workId), text); } catch {}
 }
 
-export default function WriteTab({ blocks, setBlocks, characters }) {
+export default function WriteTab({ blocks, setBlocks, characters, workId }) {
   /* ---------- initial textarea content ----------
      1) localStorage draft 優先（user-authored 不該被 Lohengrin 覆寫）
      2) 否則用 blocks 反向產生（讓 Reader/Editor 載入的劇本能在 Write 看見）
      3) 都沒有 → SEED 範例 */
   const initialContent = React.useMemo(() => {
-    try {
-      const saved = localStorage.getItem(DRAFT_KEY);
-      if (saved != null && saved !== "") return saved;
-    } catch {}
+    const saved = loadDraft(workId);
+    if (saved != null && saved !== "") return saved;
     if (Array.isArray(blocks) && blocks.length > 0) {
       return blocksToPlainScript(blocks, characters);
     }
@@ -128,7 +130,7 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
     if (regenerated && regenerated !== content) {
       lastReverseRef.current = regenerated;
       setContent(regenerated);
-      saveDraft(regenerated);
+      saveDraft(regenerated, workId);
       setSyncStatus("external");
       setTimeout(() => setSyncStatus("idle"), 600);
     }
@@ -138,10 +140,10 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
 
   /* ─── v2-4 + fix5: Alt+N slots with lock/assign ─────────
      1, 2 固定（場景 / 旁白）；3-9 先看 locks 再 auto-bind */
-  const [locks, setLocks] = React.useState(loadLocks);
+  const [locks, setLocks] = React.useState(() => loadLocks(workId));
   const [ctxMenu, setCtxMenu] = React.useState(null); // { slotN, x, y }
 
-  React.useEffect(() => { saveLocks(locks); }, [locks]);
+  React.useEffect(() => { saveLocks(locks, workId); }, [locks, workId]);
 
   // close context menu on any click
   React.useEffect(() => {
@@ -207,7 +209,10 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
   const onSlotContext = React.useCallback((e, n) => {
     if (n <= 2) return; // fixed slots
     e.preventDefault();
-    setCtxMenu({ slotN: n, x: e.clientX, y: e.clientY });
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX || rect.left;
+    const y = e.clientY || rect.bottom + 4;
+    setCtxMenu({ slotN: n, x, y });
   }, []);
 
   const lockSlot = (n) => {
@@ -269,9 +274,9 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
   const saveTimer = React.useRef(null);
   React.useEffect(() => {
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => saveDraft(content), 500);
+    saveTimer.current = setTimeout(() => saveDraft(content, workId), 500);
     return () => clearTimeout(saveTimer.current);
-  }, [content]);
+  }, [content, workId]);
 
   const onTextChange = e => setContent(e.target.value);
   const onCaretMove  = e => setCaret(e.target.selectionStart || 0);
@@ -297,7 +302,7 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
   const onClearDraft = () => {
     if (!confirm("清除草稿？此動作會清除本地儲存的速寫內容。")) return;
     setContent("");
-    saveDraft("");
+    saveDraft("", workId);
   };
   const onResetSeed = () => {
     if (content && !confirm("以範例覆蓋目前草稿？")) return;
@@ -339,7 +344,7 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
             if (content && !confirm("以目前劇本覆蓋草稿？")) return;
             const text = blocksToPlainScript(blocks, characters);
             setContent(text);
-            saveDraft(text);
+            saveDraft(text, workId);
           }}
           disabled={!Array.isArray(blocks) || blocks.length === 0}
           style={tbBtnStyle}
@@ -415,7 +420,10 @@ export default function WriteTab({ blocks, setBlocks, characters }) {
             label={slotLabels[n]}
             fixed={n <= 2}
             locked={isLocked(n)}
-            onClick={() => slotLabels[n] && insertSpeakerPrefix(n)}
+            onClick={(e) => {
+              if (n <= 2) { insertSpeakerPrefix(n); return; }
+              onSlotContext(e, n);
+            }}
             onContextMenu={(e) => onSlotContext(e, n)}
           />
         ))}
