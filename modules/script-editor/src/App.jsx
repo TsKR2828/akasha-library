@@ -493,7 +493,7 @@ function SwBtn({ children, onClick, variant = "ghost", size = "md", icon, title 
 }
 
 // ============= TOPBAR =============
-function SwHeader({ tab, setTab, onBack, onAI }) {
+function SwHeader({ tab, setTab, onBack, onAI, workSwitcher }) {
   const tabs = [
     { id: "write",  tc: "速寫", en: "Write",  ic: "quill" },
     { id: "search", tc: "搜尋", en: "Search", ic: "search" },
@@ -583,9 +583,12 @@ function SwHeader({ tab, setTab, onBack, onAI }) {
 
       <div style={{ flex: 1 }} />
 
+      {/* Work switcher — inline in header */}
+      {workSwitcher}
+
       <div style={{ display: "flex", gap: 6 }}>
         <SwBtn icon="moon" size="sm" onClick={onAI}>AI</SwBtn>
-        <SwBtn icon="info" size="sm" onClick={() => alert("Archive Script Editor — 戲劇文本資料庫與劇本編輯器。\n\n快捷鍵：\n• Tab 切換：搜尋 / 編輯 / 閱讀\n• 編輯器內可匯入 / 匯出 JSONL\n• 閱讀模式支援 PDF 匯出（公共領域作品）")}>說明</SwBtn>
+        <SwBtn icon="info" size="sm" onClick={() => alert("劇本工房 — 戲劇文本資料庫與劇本編輯器。\n\n快捷鍵：\n• Alt+1~9 快速插入角色（單擊 slot 指派）\n• 雙擊 slot 插入前綴\n• 編輯器內可匯入 / 匯出 JSONL\n• 閱讀模式支援 PDF 匯出（公共領域作品）")}>說明</SwBtn>
       </div>
     </header>
   );
@@ -2489,7 +2492,7 @@ function SoundPanel({ onClose, onAssign, currentBlockBgm }) {
 
 // ============= EDITOR VIEW (Phase 11 — three columns) =============
 function EditorView({ blocks, setBlocks }) {
-  const [activeChar, setActiveChar] = React.useState("lohengrin");
+  const [activeChar, setActiveChar] = React.useState(() => CHARACTERS[0]?.id || "");
   const [focusedBlockId, setFocusedBlockId] = React.useState(() => {
     const first = blocks.find(b => b.type === "dialogue");
     return first?.id || null;
@@ -2525,7 +2528,7 @@ function EditorView({ blocks, setBlocks }) {
   const addBlock = (type) => {
     const id = "b_" + Date.now().toString(36);
     const templates = {
-      dialogue: { id, type, speakerId: ch?.id || "lohengrin", original: "", zh: "", tags: [],
+      dialogue: { id, type, speakerId: ch?.id || CHARACTERS[0]?.id || "", original: "", zh: "", tags: [],
                   avg: { sprite: "", position: "center", bg: "", bgm: "", sfx: "" } },
       narration:{ id, type, text: "" },
       scene:    { id, type, act: "Akt _ · Sz _", subtitle: "", note: "" },
@@ -4070,7 +4073,7 @@ function NewWorkModal({ onClose, onCreated }) {
 
 function WorkSwitcher({ currentId, onSwitch, onNewWork, onDeleteWork }) {
   return (
-    <div style={{ position: "absolute", top: 10, right: 120, zIndex: 100, display: "flex", gap: 4, alignItems: "center" }}>
+    <div style={{ display: "flex", gap: 4, alignItems: "center", marginRight: 8 }}>
       <select value={currentId} onChange={e => onSwitch(e.target.value)}
         style={{
           background: "var(--navy-deep)", border: "1px solid var(--gold-line)",
@@ -4150,8 +4153,8 @@ function App() {
     saveCustomWorks(customs);
     localStorage.removeItem(`blocks_${currentWork}`);
     localStorage.removeItem(`notes_${currentWork}`);
-    localStorage.removeItem(`archive_write_draft_${currentWork}`);
-    localStorage.removeItem(`archive_write_history_${currentWork}`);
+    localStorage.removeItem(`sw_write_draft_v1_${currentWork}`);
+    localStorage.removeItem(`sw_slot_locks_v1_${currentWork}`);
     // Remove from WORK_INDEX
     WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
     // Switch to first remaining work
@@ -4165,9 +4168,9 @@ function App() {
       height: "100vh", overflow: "hidden",
       position: "relative",
     }}>
-      <SwHeader tab={tab} setTab={setTab} onBack={goBack} onAI={() => setShowAI(true)} />
-      <WorkSwitcher currentId={currentWork} onSwitch={switchWork}
-        onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />
+      <SwHeader tab={tab} setTab={setTab} onBack={goBack} onAI={() => setShowAI(true)}
+        workSwitcher={<WorkSwitcher currentId={currentWork} onSwitch={switchWork}
+          onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />} />
       {showNewWork && <NewWorkModal onClose={() => setShowNewWork(false)} onCreated={switchWork} />}
       {showAI && <AiAssistPanel onClose={() => setShowAI(false)} blocks={blocks} characters={CHARACTERS} />}
       {loading && (

@@ -31,11 +31,11 @@ function saveLocks(obj, workId) {
   try { localStorage.setItem(locksKey(workId), JSON.stringify(obj)); } catch {}
 }
 const SEED = `#scene：第一幕 · 第一場
-旁白：天色將明，舍爾德河畔聚集著布拉班特諸侯。
-傳令官：聽令！國王海因里希駕臨此地。
-艾爾莎：（顫抖地）我……我並非弒弟之兇手。
-// 此處插入天鵝騎士登場
-#bgm：piano_morning`;
+旁白：（在此描述場景氛圍與舞台指示。）
+角色A：對白範例——直接輸入角色名加冒號。
+角色B：（表情）第二位角色的台詞。
+// 這是註解，不會出現在匯出中
+#bgm：背景音樂標記`;
 
 const TYPE_COLORS = {
   dialogue:  { fg: "var(--gold)",          bg: "rgba(201,168,106,0.10)", bd: "var(--gold-line)" },
@@ -192,22 +192,29 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
 
   const overflow = allSpeakers.filter(s => !dynamicSlots.includes(s));
 
-  const slotLabels = React.useMemo(() => ({
-    1: "#scene",
-    2: "旁白",
-    3: dynamicSlots[0] || null,
-    4: dynamicSlots[1] || null,
-    5: dynamicSlots[2] || null,
-    6: dynamicSlots[3] || null,
-    7: dynamicSlots[4] || null,
-    8: dynamicSlots[5] || null,
-    9: dynamicSlots[6] || null,
-  }), [dynamicSlots]);
+  // All 9 slots are assignable. Defaults: 1=#scene, 2=旁白, 3-9=dynamic speakers.
+  const slotLabels = React.useMemo(() => {
+    const result = {};
+    for (let n = 1; n <= 9; n++) {
+      if (locks[n] && locks[n] !== "__clear__") {
+        // User-assigned override (including #scene / 旁白 if re-assigned)
+        result[n] = locks[n];
+      } else if (locks[n] === "__clear__") {
+        result[n] = null;
+      } else if (n === 1) {
+        result[n] = "#scene";
+      } else if (n === 2) {
+        result[n] = "旁白";
+      } else {
+        result[n] = dynamicSlots[n - 3] || null;
+      }
+    }
+    return result;
+  }, [dynamicSlots, locks]);
 
-  const isLocked = (n) => n >= 3 && !!locks[n] && allSpeakers.includes(locks[n]);
+  const isLocked = (n) => !!locks[n] && locks[n] !== "__clear__";
 
   const onSlotContext = React.useCallback((e, n) => {
-    if (n <= 2) return; // fixed slots
     e.preventDefault();
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX || rect.left;
@@ -418,12 +425,9 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
             key={n}
             n={n}
             label={slotLabels[n]}
-            fixed={n <= 2}
             locked={isLocked(n)}
-            onClick={(e) => {
-              if (n <= 2) { insertSpeakerPrefix(n); return; }
-              onSlotContext(e, n);
-            }}
+            onClick={(e) => onSlotContext(e, n)}
+            onDoubleClick={() => { if (slotLabels[n]) insertSpeakerPrefix(n); }}
             onContextMenu={(e) => onSlotContext(e, n)}
           />
         ))}
@@ -448,6 +452,12 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
             boxShadow: "var(--shadow-lift)",
           }}
         >
+          {/* Insert action */}
+          {slotLabels[ctxMenu.slotN] && (
+            <CtxItem label={`▸ 插入「${slotLabels[ctxMenu.slotN]}：」`} onClick={() => { insertSpeakerPrefix(ctxMenu.slotN); setCtxMenu(null); }} />
+          )}
+          {slotLabels[ctxMenu.slotN] && <div style={{ height: 1, background: "var(--navy-line)", margin: "4px 0" }} />}
+          {/* Lock / Unlock */}
           {slotLabels[ctxMenu.slotN] && !isLocked(ctxMenu.slotN) && (
             <CtxItem label="🔒 鎖定" onClick={() => { lockSlot(ctxMenu.slotN); setCtxMenu(null); }} />
           )}
@@ -458,14 +468,17 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
             <CtxItem label="✕ 清除" danger onClick={() => { clearSlot(ctxMenu.slotN); setCtxMenu(null); }} />
           )}
           <div style={{ height: 1, background: "var(--navy-line)", margin: "4px 0" }} />
+          {/* Assign section — preset commands + character speakers */}
           <div style={{ padding: "2px 10px", fontSize: 9.5, color: "var(--text-tertiary)",
             fontFamily: "var(--font-serif-en)", letterSpacing: "0.14em", textTransform: "uppercase",
           }}>Assign</div>
-          {allSpeakers.filter(s => s !== slotLabels[ctxMenu.slotN]).map(s => (
+          <CtxItem label="#scene（場景）" onClick={() => { assignSlot(ctxMenu.slotN, "#scene"); setCtxMenu(null); }} />
+          <CtxItem label="旁白" onClick={() => { assignSlot(ctxMenu.slotN, "旁白"); setCtxMenu(null); }} />
+          {allSpeakers.filter(s => s !== "#scene" && s !== "旁白" && s !== slotLabels[ctxMenu.slotN]).map(s => (
             <CtxItem key={s} label={s} onClick={() => { assignSlot(ctxMenu.slotN, s); setCtxMenu(null); }} />
           ))}
           {allSpeakers.length === 0 && (
-            <div style={{ padding: "4px 10px", fontSize: 11, color: "var(--text-tertiary)" }}>（無角色）</div>
+            <div style={{ padding: "4px 10px", fontSize: 11, color: "var(--text-tertiary)" }}>（劇本中無角色）</div>
           )}
         </div>
       )}
@@ -585,27 +598,27 @@ const badgeStyle = {
 };
 
 /* ============= Slot Badge (v2-4 + fix5) ============= */
-function SlotBadge({ n, label, fixed, locked, onClick, onContextMenu }) {
+function SlotBadge({ n, label, locked, onClick, onDoubleClick, onContextMenu }) {
   const filled = !!label;
   const color = filled
-    ? (fixed ? "var(--gold-bright)" : locked ? "var(--gold-bright)" : "var(--gold)")
+    ? (locked ? "var(--gold-bright)" : "var(--gold)")
     : "var(--text-tertiary)";
   const border = filled
     ? (locked ? "rgba(227,196,134,0.35)" : "var(--gold-line)")
     : "var(--navy-line)";
   const bg = filled
-    ? (fixed ? "rgba(227,196,134,0.08)" : locked ? "rgba(227,196,134,0.12)" : "rgba(201,168,106,0.06)")
+    ? (locked ? "rgba(227,196,134,0.12)" : "rgba(201,168,106,0.06)")
     : "transparent";
 
   return (
     <button
       type="button"
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       onContextMenu={onContextMenu}
-      disabled={!filled}
       title={filled
-        ? `Alt+${n} 插入「${label}：」${locked ? "（已鎖定）" : ""}　右鍵管理`
-        : `空位 — 右鍵指派角色`}
+        ? `單擊管理 · 雙擊插入「${label}：」· Alt+${n}${locked ? "（已鎖定）" : ""}`
+        : `單擊指派角色到 Alt+${n}`}
       style={{
         display: "inline-flex", alignItems: "center", gap: 5,
         padding: "3px 8px 3px 6px",
@@ -613,12 +626,12 @@ function SlotBadge({ n, label, fixed, locked, onClick, onContextMenu }) {
         border: `1px solid ${border}`,
         borderRadius: 2,
         color,
-        cursor: filled ? "pointer" : "context-menu",
+        cursor: "pointer",
         fontSize: 11.5,
         fontFamily: "var(--font-serif-tc)",
         letterSpacing: "0.04em",
         transition: "background 150ms, border-color 150ms",
-        opacity: filled ? 1 : 0.6,
+        opacity: filled ? 1 : 0.65,
       }}
     >
       <span style={{
