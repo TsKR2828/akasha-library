@@ -62,12 +62,12 @@ $btnParse.addEventListener('click', () => {
   if (s && window.recordOperation) window.recordOperation('已解析文字資料：' + s.columns.length + ' 欄 × ' + s.rows.length + ' 列');
 });
 
-$importFile.addEventListener('change', (e) => {
+$importFile.addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const text = reader.result;
+  try {
+    const { decodeFile } = await import('../../core/text-decode.js');
+    const text = await decodeFile(file);
     const ext = file.name.split('.').pop().toLowerCase();
     let result;
     if (ext === 'json') {
@@ -81,8 +81,9 @@ $importFile.addEventListener('change', (e) => {
     result.title = file.name;
     loadDocument(result);
     if (window.recordOperation) window.recordOperation('已載入檔案：' + file.name);
-  };
-  reader.readAsText(file, 'UTF-8');
+  } catch (err) {
+    showError('檔案讀取失敗：' + err.message);
+  }
   $importFile.value = '';
 });
 
@@ -513,6 +514,8 @@ function checkReaderPayload() {
 
 window.addEventListener('message', (e) => {
   if (!e.data) return;
+  // Security: only accept messages from same origin (parent shell)
+  if (e.origin !== location.origin) return;
   if (e.data.type === 'akasha-reader-payload') {
     const result = parseReaderPayload(e.data.payload);
     if (result.error) { showError(result.error); return; }

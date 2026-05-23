@@ -2121,23 +2121,27 @@
         };
         reader.readAsArrayBuffer(file);
       } else {
-        // Text-based files: existing path
-        const reader = new FileReader();
-        reader.onload = async () => {
-          setFile(file.name, reader.result, file.size);
+        // Text-based files: auto-detect encoding (fixes Big5/Shift-JIS garbled text)
+        (async () => {
           try {
-            const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
-            const fileExt = (getExtension(file.name) || '.txt').replace(/^\./, '');
-            const entry = await saveFileEntry({ name: file.name, type: fileExt, size: file.size });
-            await saveFileBlob(entry.id, new Blob([reader.result], { type: file.type || 'text/plain' }));
-            if (window.parent !== window) {
-              window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+            const { decodeFile } = await import('../../core/text-decode.js');
+            const text = await decodeFile(file);
+            setFile(file.name, text, file.size);
+            try {
+              const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
+              const fileExt = (getExtension(file.name) || '.txt').replace(/^\./, '');
+              const entry = await saveFileEntry({ name: file.name, type: fileExt, size: file.size });
+              await saveFileBlob(entry.id, new Blob([text], { type: file.type || 'text/plain' }));
+              if (window.parent !== window) {
+                window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+              }
+            } catch (e) {
+              console.warn('Failed to persist file to library:', e);
             }
           } catch (e) {
-            console.warn('Failed to persist file to library:', e);
+            console.warn('File read failed:', e);
           }
-        };
-        reader.readAsText(file, "utf-8");
+        })();
       }
     });
 
@@ -2342,7 +2346,7 @@
         window.parent.postMessage({
           type: MSG_TYPES.READER_EXPORT_TO_SPREADSHEET,
           payload,
-        }, "*");
+        }, location.origin);
         statusEl.textContent = "已送出至 Table Forge";
         recordOperation("已送出至 Table Forge");
       } catch (e) {
@@ -2408,9 +2412,15 @@
         };
         reader.readAsArrayBuffer(file);
       } else {
-        const reader = new FileReader();
-        reader.onload = () => setFile(file.name, reader.result, file.size);
-        reader.readAsText(file, "utf-8");
+        (async () => {
+          try {
+            const { decodeFile } = await import('../../core/text-decode.js');
+            const text = await decodeFile(file);
+            setFile(file.name, text, file.size);
+          } catch (e) {
+            console.warn('File read failed:', e);
+          }
+        })();
       }
     });
 

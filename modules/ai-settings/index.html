@@ -374,7 +374,13 @@ function loadSettings() {
       setMode(saved.mode);
     }
     if (saved.provider) document.getElementById('byokProvider').value = saved.provider;
-    const sessionKey = sessionStorage.getItem(KEY_SESSION) || saved.apiKey || '';
+    // Security: migrate legacy plaintext key from localStorage → sessionStorage, then delete
+    if (saved.apiKey) {
+      if (!sessionStorage.getItem(KEY_SESSION)) sessionStorage.setItem(KEY_SESSION, saved.apiKey);
+      delete saved.apiKey;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    }
+    const sessionKey = sessionStorage.getItem(KEY_SESSION) || '';
     if (sessionKey) document.getElementById('byokKey').value = sessionKey;
     if (saved.endpoint) document.getElementById('byokEndpoint').value = saved.endpoint;
     if (saved.model) document.getElementById('byokModel').value = saved.model;
@@ -563,6 +569,8 @@ function loadUsageLog() {
 // === 預估器 ===
 function updateEstimate() {
   const chars = parseInt(document.getElementById('estimateChars').value) || 0;
+  // Sync with core/billing.js estimateTokens(): CJK ~0.6 tok/char, non-CJK ~0.25 tok/char
+  // UI-only estimate assumes mostly CJK text (conservative upper bound)
   const tokens = Math.ceil(chars * 0.6);
   const coins = tokens <= 500 ? 1 : tokens <= 2000 ? 3 : 5;
 

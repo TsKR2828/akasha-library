@@ -359,6 +359,30 @@
 - [x] **v2-8** App Shell 整合 + scripts/build.js / sw.js 修正
 - [x] **v2-9** README / ROADMAP / dev-log 更新 + commit
 
+### 已完成：Phase 18 — Script Editor 品質修正（PR #3 post-merge）
+
+> Commits: `a31e242`（Round 1）+ `fe1eb02`（Round 2），2026-05-23
+
+- [x] **18-A** 搜尋補強 — narration / scene block type filter
+- [x] **18-B** Persona Slots v2 — 全 9 格可指派、空格可點、單擊選單/雙擊插入
+- [x] **18-C** 多作品支援 — custom work CRUD + WorkSwitcher + per-work localStorage
+- [x] **18-D** AI 輔助面板 — 聊天 UI + 4 preset + postMessage bridge
+- [x] **18-E** Codex audit 修正：
+  - [x] SEED 通用化（移除 Lohengrin 角色名）
+  - [x] Editor activeChar / addBlock 去耦合「lohengrin」硬編碼
+  - [x] Delete work 清正確的 localStorage key
+  - [x] WorkSwitcher 從 absolute overlay 改為 inline
+  - [x] SlotBadge 空格可點 + tooltip 更新
+  - [x] 說明 dialog 更新
+
+### 待開：Phase 19 — Script Editor 深度強化（規劃中）
+
+- [ ] **19-A** SCENE_SUBTITLES per-work 化 — 移除硬編碼 Lohengrin 場景名（App.jsx line 19-30）
+- [ ] **19-B** 角色管理 UI — 新增 / 編輯 / 刪除角色（voice / role / tags）
+- [ ] **19-C** 草稿歷史 — 存檔點 + 回溯系統
+- [ ] **19-D** 關係圖編輯 — 新增 / 編輯 / 儲存角色關係
+- [ ] **19-E** JSONL 匯入即建作品 — 匯入時自動建立 custom work metadata
+
 ### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
 
 阻塞條件：tsuki-synth `TsukiSynthCLI` 修好 `ScoreRenderer.h` API mismatch + sound library 鎖版。

@@ -878,7 +878,7 @@ window.addEventListener('message', (e) => {
       content: recentText || '(談心專區已開啟，尚無對話)',
       fileName: '談心專區',
       fileType: 'chat',
-    }, '*');
+    }, location.origin);
   }
 });
 
@@ -897,7 +897,7 @@ async function sendToAI(userText) {
       text: userText,
       module: MODULE_NAME,
       noTrace: state.noTrace,
-    }, '*');
+    }, location.origin);
 
     // Timeout
     setTimeout(() => {
@@ -1099,7 +1099,7 @@ function callParentMemory(action, ...args) {
       action,
       args,
       reqId: id,
-    }, '*');
+    }, location.origin);
     setTimeout(() => {
       if (memoryCallbacks.has(id)) {
         memoryCallbacks.delete(id);

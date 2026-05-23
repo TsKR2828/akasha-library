@@ -205,7 +205,10 @@ export default function SpreadsheetEditor() {
           return typeof v === "number" ? v : isNaN(Number(v)) ? "0" : Number(v);
         });
         expanded = expanded.replace(/>=/g, ">=").replace(/<=/g, "<=").replace(/(?<!=)>(?!=)/g, ">").replace(/(?<!=)<(?!=)/g, "<");
-        const result = new Function(`return (${expanded})`)();
+        // Security: validate expression contains only safe math characters
+        // (digits, operators, parens, whitespace, decimal) — blocks code injection
+        if (!/^[\d\s+\-*/%().><=!&|,?:e]+$/i.test(expanded.trim())) return "#不安全!";
+        const result = new Function(`"use strict"; return (${expanded})`)();
         return typeof result === "boolean" ? result : (isNaN(result) ? "#錯誤!" : result);
       } catch {
         return "#錯誤!";

@@ -198,8 +198,14 @@
 └─ Phase 15 (談心 + 館報) ✅ — 15-A/B/C/D 全部完成
 
 已完成
-└─ Phase 17 v2 (Script Editor Archive-host merge) ✅ — v2-1 ~ v2-9 全部完成
-   依賴 Phase 8 ✅ + Phase 14 ✅
+├─ Phase 17 v2 (Script Editor Archive-host merge) ✅ — v2-1 ~ v2-9 全部完成
+│  依賴 Phase 8 ✅ + Phase 14 ✅
+└─ Phase 18 (Script Editor 品質修正) ✅ — 18-A ~ 18-E 全部完成
+   依賴 Phase 17 v2 ✅
+
+待開
+└─ Phase 19 (Script Editor 深度強化) ⬜ — 規劃中
+   依賴 Phase 18 ✅
 ```
 
 ---
@@ -228,6 +234,31 @@
 - **Vite + React build**（與 spreadsheet 同部署模式，dist/script-editor/）
 - **不重寫業務邏輯**：保留 Archive 的 3844 行 jsx（力導向關係圖 / 音效庫 / 劇本檢查 / 初稿生成等 overlay 完整保留）
 - **BGM/SFX 委派外部專案**：`tsuki-synth`（C++/JUCE VST3 物理建模合成器）負責，本模組只解析 cue + 顯示 placeholder，等 CLI render 修好後預渲染 WAV 接入。詳見 [`docs/tsuki-synth-integration.md`](docs/tsuki-synth-integration.md)
+
+## Phase 18：Script Editor 品質修正（PR #3 post-merge）✅ 完成
+
+> PR #3（`feature/archive-host-merge`）merge 後的功能補強 + Codex audit 修正。
+> Commits: `a31e242`（Round 1）+ `fe1eb02`（Round 2）
+
+| 步驟 | 內容 | 狀態 |
+|------|------|:----:|
+| 18-A | 搜尋補強 — narration / scene block type 篩選加入 Search tab | ✅ |
+| 18-B | Persona Slots v2 — 全 9 格可指派（含 #scene/旁白）、空格可點、單擊選單/雙擊插入 | ✅ |
+| 18-C | 多作品支援 — 自訂作品 CRUD、WorkSwitcher、per-work localStorage 隔離 | ✅ |
+| 18-D | AI 輔助面板 — 聊天 UI + 4 preset + postMessage 橋接 parent iframe | ✅ |
+| 18-E | Codex audit 修正 — SEED 通用化、Editor 預設角色去耦合、delete 鍵修正、WorkSwitcher inline | ✅ |
+
+---
+
+## 待開：Phase 19 Script Editor 深度強化（規劃中）
+
+| 步驟 | 內容 | 狀態 |
+|------|------|:----:|
+| 19-A | SCENE_SUBTITLES per-work 化 — 移除硬編碼 Lohengrin 場景名 | ⬜ |
+| 19-B | 角色管理 UI — 新增 / 編輯 / 刪除角色（含 voice / role / tags） | ⬜ |
+| 19-C | 草稿歷史 — 存檔點 + 回溯（localStorage 或 IndexedDB） | ⬜ |
+| 19-D | 關係圖編輯 — 新增 / 編輯 / 儲存角色關係 | ⬜ |
+| 19-E | JSONL 匯入即建作品 — 匯入時自動建立 custom work metadata | ⬜ |
 
 ---
 

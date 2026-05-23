@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-v5';
+const CACHE_NAME = 'akasha-library-v6';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -45,6 +45,7 @@ const LOCAL_ASSETS = [
   './core/report-voice.js',
   './core/voice.js',
   './core/approved-memory.js',
+  './core/text-decode.js',
 
   // Modules
   './modules/ai-settings/index.html',

@@ -1415,17 +1415,44 @@ function parseRelationshipEdges(characters) {
   return edges;
 }
 
-function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) {
+function loadCustomEdges(workId) {
+  try { const raw = localStorage.getItem(`edges_${workId}`); return raw ? JSON.parse(raw) : []; }
+  catch { return []; }
+}
+function saveCustomEdges(edges, workId) {
+  if (!workId) return;
+  localStorage.setItem(`edges_${workId}`, JSON.stringify(edges));
+}
+
+function RelationshipGraph({ onClose, characters: charsProp, charColors = {}, setCharacters, workId }) {
   const chars = charsProp || [];
   const canvasRef = React.useRef(null);
   const [nodes, setNodes] = React.useState([]);
   const [edges, setEdges] = React.useState([]);
+  const [customEdges, setCustomEdges] = React.useState(() => loadCustomEdges(workId));
   const [hoveredNode, setHoveredNode] = React.useState(null);
   const [selectedNode, setSelectedNode] = React.useState(null);
   const [dragging, setDragging] = React.useState(null);
   const [dim, setDim] = React.useState({ w: 800, h: 600 });
+  const [editMode, setEditMode] = React.useState(false);
+  const [addEdgeOpen, setAddEdgeOpen] = React.useState(false);
+  const [addFrom, setAddFrom] = React.useState("");
+  const [addTo, setAddTo] = React.useState("");
+  const [addLabel, setAddLabel] = React.useState("");
+  const [editingEdge, setEditingEdge] = React.useState(null); // index in allEdges
+  const [editLabel, setEditLabel] = React.useState("");
   const animRef = React.useRef(null);
   const nodesRef = React.useRef([]);
+
+  // Merge parsed + custom edges
+  const allEdges = React.useMemo(() => {
+    const parsed = parseRelationshipEdges(chars).map(e => ({ ...e, _source: "parsed" }));
+    const custom = customEdges.map(e => ({ ...e, _source: "custom" }));
+    return [...parsed, ...custom];
+  }, [chars, customEdges]);
+
+  // Persist custom edges
+  React.useEffect(() => { saveCustomEdges(customEdges, workId); }, [customEdges, workId]);
 
   // Initialize graph
   React.useEffect(() => {
@@ -1438,28 +1465,19 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) 
     const cy = (container?.clientHeight || 600) / 2;
     const radius = Math.min(cx, cy) * 0.55;
 
-    // Create nodes in a circle
     const initNodes = chars.map((c, i) => {
       const angle = (2 * Math.PI * i) / chars.length - Math.PI / 2;
       return {
-        id: c.id,
-        name: c.name,
-        nameEn: c.nameEn,
-        voice: c.voice,
-        role: c.role,
-        x: cx + radius * Math.cos(angle),
-        y: cy + radius * Math.sin(angle),
-        vx: 0, vy: 0,
-        color: charColors[c.id] || "var(--gold)",
+        id: c.id, name: c.name, nameEn: c.nameEn, voice: c.voice, role: c.role,
+        x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle),
+        vx: 0, vy: 0, color: charColors[c.id] || "var(--gold)",
       };
     });
 
-    const parsedEdges = parseRelationshipEdges(chars);
     nodesRef.current = initNodes;
     setNodes(initNodes);
-    setEdges(parsedEdges);
+    setEdges(allEdges);
 
-    // Run force simulation
     let frame = 0;
     const MAX_FRAMES = 200;
     const simulate = () => {
@@ -1469,122 +1487,110 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) 
       const centerX = W / 2, centerY = H / 2;
 
       ns.forEach(n => { n.fx = 0; n.fy = 0; });
-
-      // Repulsion between all nodes
       for (let i = 0; i < ns.length; i++) {
         for (let j = i + 1; j < ns.length; j++) {
-          let dx = ns[j].x - ns[i].x;
-          let dy = ns[j].y - ns[i].y;
+          let dx = ns[j].x - ns[i].x, dy = ns[j].y - ns[i].y;
           let dist = Math.sqrt(dx * dx + dy * dy) || 1;
           const repulse = 18000 / (dist * dist);
-          const fx = (dx / dist) * repulse;
-          const fy = (dy / dist) * repulse;
-          ns[i].fx -= fx; ns[i].fy -= fy;
-          ns[j].fx += fx; ns[j].fy += fy;
+          ns[i].fx -= (dx / dist) * repulse; ns[i].fy -= (dy / dist) * repulse;
+          ns[j].fx += (dx / dist) * repulse; ns[j].fy += (dy / dist) * repulse;
         }
       }
-
-      // Attraction along edges
-      parsedEdges.forEach(e => {
-        const a = ns.find(n => n.id === e.from);
-        const b = ns.find(n => n.id === e.to);
+      allEdges.forEach(e => {
+        const a = ns.find(n => n.id === e.from), b = ns.find(n => n.id === e.to);
         if (!a || !b) return;
-        let dx = b.x - a.x;
-        let dy = b.y - a.y;
-        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let dx = b.x - a.x, dy = b.y - a.y, dist = Math.sqrt(dx * dx + dy * dy) || 1;
         const attract = (dist - 160) * 0.04;
-        const fx = (dx / dist) * attract;
-        const fy = (dy / dist) * attract;
-        a.fx += fx; a.fy += fy;
-        b.fx -= fx; b.fy -= fy;
+        a.fx += (dx / dist) * attract; a.fy += (dy / dist) * attract;
+        b.fx -= (dx / dist) * attract; b.fy -= (dy / dist) * attract;
       });
-
-      // Center gravity
-      ns.forEach(n => {
-        n.fx += (centerX - n.x) * 0.005;
-        n.fy += (centerY - n.y) * 0.005;
-      });
-
-      // Apply velocity with damping
+      ns.forEach(n => { n.fx += (centerX - n.x) * 0.005; n.fy += (centerY - n.y) * 0.005; });
       const damping = 0.88;
       ns.forEach(n => {
         if (n.pinned) return;
-        n.vx = (n.vx + n.fx) * damping;
-        n.vy = (n.vy + n.fy) * damping;
-        n.x += n.vx;
-        n.y += n.vy;
-        // Boundary
-        n.x = Math.max(40, Math.min(W - 40, n.x));
-        n.y = Math.max(40, Math.min(H - 40, n.y));
+        n.vx = (n.vx + n.fx) * damping; n.vy = (n.vy + n.fy) * damping;
+        n.x += n.vx; n.y += n.vy;
+        n.x = Math.max(40, Math.min(W - 40, n.x)); n.y = Math.max(40, Math.min(H - 40, n.y));
       });
-
       frame++;
       setNodes([...ns]);
-      if (frame < MAX_FRAMES) {
-        animRef.current = requestAnimationFrame(simulate);
-      } else {
-        animRef.current = null;
-      }
+      if (frame < MAX_FRAMES) animRef.current = requestAnimationFrame(simulate);
+      else animRef.current = null;
     };
     animRef.current = requestAnimationFrame(simulate);
-
-    return () => {
-      if (animRef.current) {
-        cancelAnimationFrame(animRef.current);
-        animRef.current = null;
-      }
-    };
+    return () => { if (animRef.current) { cancelAnimationFrame(animRef.current); animRef.current = null; } };
   }, []);
+
+  // Update edges when customEdges change (after init)
+  React.useEffect(() => { setEdges(allEdges); }, [allEdges]);
 
   // Drag handlers
   const handleMouseDown = (e, nodeId) => {
     e.preventDefault();
     const node = nodesRef.current.find(n => n.id === nodeId);
-    if (node) {
-      node.pinned = true;
-      setDragging(nodeId);
-      setSelectedNode(nodeId);
-    }
+    if (node) { node.pinned = true; setDragging(nodeId); setSelectedNode(nodeId); }
   };
-
   const handleMouseMove = (e) => {
     if (!dragging) return;
     const svg = canvasRef.current;
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
     const node = nodesRef.current.find(n => n.id === dragging);
-    if (node) {
-      node.x = x; node.y = y;
-      node.vx = 0; node.vy = 0;
-      setNodes([...nodesRef.current]);
-    }
+    if (node) { node.x = e.clientX - rect.left; node.y = e.clientY - rect.top; node.vx = 0; node.vy = 0; setNodes([...nodesRef.current]); }
   };
-
   const handleMouseUp = () => {
-    if (dragging) {
-      const node = nodesRef.current.find(n => n.id === dragging);
-      if (node) node.pinned = false;
-      setDragging(null);
-    }
+    if (dragging) { const node = nodesRef.current.find(n => n.id === dragging); if (node) node.pinned = false; setDragging(null); }
   };
 
   const isConnected = (nodeId) => {
     if (!selectedNode) return true;
     if (nodeId === selectedNode) return true;
-    return edges.some(e =>
-      (e.from === selectedNode && e.to === nodeId) ||
-      (e.to === selectedNode && e.from === nodeId)
-    );
+    return edges.some(e => (e.from === selectedNode && e.to === nodeId) || (e.to === selectedNode && e.from === nodeId));
+  };
+  const isEdgeHighlighted = (edge) => !selectedNode || edge.from === selectedNode || edge.to === selectedNode;
+
+  // ── Edge CRUD ──
+  const handleAddEdge = () => {
+    if (!addFrom || !addTo || addFrom === addTo || !addLabel.trim()) return;
+    setCustomEdges(prev => [...prev, { from: addFrom, to: addTo, label: addLabel.trim() }]);
+    setAddFrom(""); setAddTo(""); setAddLabel(""); setAddEdgeOpen(false);
   };
 
-  const isEdgeHighlighted = (edge) => {
-    if (!selectedNode) return true;
-    return edge.from === selectedNode || edge.to === selectedNode;
+  const handleEditEdgeSave = () => {
+    if (editingEdge == null || !editLabel.trim()) { setEditingEdge(null); return; }
+    const edge = allEdges[editingEdge];
+    if (edge._source === "custom") {
+      // Find index in customEdges
+      const ci = customEdges.findIndex(e => e.from === edge.from && e.to === edge.to && e.label === edge.label);
+      if (ci >= 0) setCustomEdges(prev => { const next = [...prev]; next[ci] = { ...next[ci], label: editLabel.trim() }; return next; });
+    }
+    // For parsed edges: update character relations string
+    if (edge._source === "parsed" && setCharacters) {
+      setCharacters(prev => prev.map(c => {
+        if (c.id !== edge.from && c.id !== edge.to) return c;
+        const rels = (c.relations || "").split("、").map(r => r === edge.label ? editLabel.trim() : r).join("、");
+        return { ...c, relations: rels };
+      }));
+      if (workId) saveCustomCharacters(chars.map(c => {
+        if (c.id !== edge.from && c.id !== edge.to) return c;
+        const rels = (c.relations || "").split("、").map(r => r === edge.label ? editLabel.trim() : r).join("、");
+        return { ...c, relations: rels };
+      }), workId);
+    }
+    setEditingEdge(null);
+  };
+
+  const handleDeleteEdge = (idx) => {
+    const edge = allEdges[idx];
+    if (edge._source === "custom") {
+      const ci = customEdges.findIndex(e => e.from === edge.from && e.to === edge.to && e.label === edge.label);
+      if (ci >= 0) setCustomEdges(prev => prev.filter((_, i) => i !== ci));
+    }
+    setEditingEdge(null);
   };
 
   const hoveredChar = hoveredNode ? chars.find(c => c.id === hoveredNode) : null;
+  const charName = (id) => { const c = chars.find(c => c.id === id); return c ? c.name.replace(/（.*）/, "").split("·")[0].trim() : id; };
 
   return (
     <div style={{
@@ -1614,12 +1620,53 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) 
           color: "var(--text-tertiary)", letterSpacing: "0.04em",
         }}>{chars.length} nodes · {edges.length} edges</span>
         <span style={{ flex: 1 }} />
+        <SwBtn icon={editMode ? "check" : "pen"} size="sm"
+          onClick={() => setEditMode(!editMode)}
+          style={editMode ? { background: "rgba(201,168,106,0.15)", borderColor: "var(--gold)" } : undefined}
+        >{editMode ? "完成" : "編輯"}</SwBtn>
+        {editMode && <SwBtn icon="plus" size="sm" onClick={() => setAddEdgeOpen(true)}>新增關係</SwBtn>}
         <span style={{
           fontFamily: "var(--font-body)", fontSize: 11,
           color: "var(--text-tertiary)", letterSpacing: "0.04em",
-        }}>拖曳移動 · 點擊聚焦 · 再點擊取消</span>
+        }}>{editMode ? "點擊邊標籤可編輯" : "拖曳移動 · 點擊聚焦"}</span>
         <SwBtn icon="close" size="sm" onClick={onClose}>關閉</SwBtn>
       </div>
+
+      {/* Add Edge Dialog */}
+      {addEdgeOpen && (
+        <div style={{
+          position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+          zIndex: 110, background: "var(--navy)", border: "1px solid var(--gold-line)",
+          borderRadius: 4, padding: "20px 24px", minWidth: 320,
+          boxShadow: "var(--shadow-lift)", animation: "swFade 100ms ease",
+        }}>
+          <div style={{ fontFamily: "var(--font-serif-en)", fontSize: 12, letterSpacing: "0.18em",
+            color: "var(--gold)", textTransform: "uppercase", marginBottom: 12 }}>Add Relation</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <select value={addFrom} onChange={e => setAddFrom(e.target.value)}
+              style={{ padding: "6px 8px", background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+                borderRadius: 2, color: "var(--text-primary)", fontFamily: "var(--font-serif-tc)", fontSize: 12 }}>
+              <option value="">— 來源角色 —</option>
+              {chars.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <select value={addTo} onChange={e => setAddTo(e.target.value)}
+              style={{ padding: "6px 8px", background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+                borderRadius: 2, color: "var(--text-primary)", fontFamily: "var(--font-serif-tc)", fontSize: 12 }}>
+              <option value="">— 目標角色 —</option>
+              {chars.filter(c => c.id !== addFrom).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <input type="text" value={addLabel} onChange={e => setAddLabel(e.target.value)}
+              placeholder="關係描述（如：敵對、師徒、戀人）"
+              style={{ padding: "6px 8px", background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+                borderRadius: 2, color: "var(--text-primary)", fontFamily: "var(--font-serif-tc)", fontSize: 12 }}
+              onKeyDown={e => { if (e.key === "Enter") handleAddEdge(); }} />
+            <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+              <SwBtn icon="check" size="sm" onClick={handleAddEdge}>新增</SwBtn>
+              <SwBtn icon="close" size="sm" onClick={() => setAddEdgeOpen(false)}>取消</SwBtn>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Graph */}
       <div style={{ flex: 1, position: "relative", overflow: "hidden" }}
@@ -1636,22 +1683,34 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) 
             const highlighted = isEdgeHighlighted(e);
             const mx = (a.x + b.x) / 2;
             const my = (a.y + b.y) / 2;
+            const isCustom = e._source === "custom";
+            const isEditing = editingEdge === i;
             return (
-              <g key={i} opacity={highlighted ? 1 : 0.15}>
+              <g key={`${e.from}-${e.to}-${i}`} opacity={highlighted ? 1 : 0.15}>
                 <line
                   x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-                  stroke={highlighted ? "var(--gold-dim)" : "var(--navy-line)"}
+                  stroke={isCustom ? "var(--gold)" : (highlighted ? "var(--gold-dim)" : "var(--navy-line)")}
                   strokeWidth={highlighted ? 1.5 : 1}
-                  strokeDasharray={highlighted ? undefined : "4 3"}
+                  strokeDasharray={isCustom ? "6 3" : (highlighted ? undefined : "4 3")}
                 />
+                {/* Edge label — clickable in edit mode */}
                 <text x={mx} y={my - 6}
                   textAnchor="middle"
                   style={{
                     fontFamily: "var(--font-body)", fontSize: 10,
-                    fill: highlighted ? "var(--cream-dim)" : "var(--text-tertiary)",
+                    fill: isEditing ? "var(--gold-bright)" : (highlighted ? "var(--cream-dim)" : "var(--text-tertiary)"),
                     letterSpacing: "0.04em",
-                    pointerEvents: "none",
-                  }}>{e.label}</text>
+                    pointerEvents: editMode ? "auto" : "none",
+                    cursor: editMode ? "pointer" : "default",
+                    textDecoration: isEditing ? "underline" : "none",
+                  }}
+                  onClick={(ev) => {
+                    if (!editMode) return;
+                    ev.stopPropagation();
+                    setEditingEdge(i);
+                    setEditLabel(e.label);
+                  }}
+                >{e.label}</text>
               </g>
             );
           })}
@@ -1660,48 +1719,31 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) 
           {nodes.map(n => {
             const connected = isConnected(n.id);
             const isHover = hoveredNode === n.id;
-            const isSelected = selectedNode === n.id;
-            const r = isSelected ? 26 : (isHover ? 24 : 20);
+            const isSel = selectedNode === n.id;
+            const r = isSel ? 26 : (isHover ? 24 : 20);
             return (
               <g key={n.id}
                 opacity={connected ? 1 : 0.25}
                 style={{ cursor: "grab", transition: "opacity 200ms" }}
-                onMouseDown={(e) => handleMouseDown(e, n.id)}
+                onMouseDown={(ev) => handleMouseDown(ev, n.id)}
                 onMouseEnter={() => setHoveredNode(n.id)}
                 onMouseLeave={() => setHoveredNode(null)}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedNode(prev => prev === n.id ? null : n.id);
-                }}>
-                {/* Glow */}
-                {(isSelected || isHover) && (
-                  <circle cx={n.x} cy={n.y} r={r + 6}
-                    fill="none" stroke={n.color} strokeWidth={1}
-                    opacity={0.3} />
+                onClick={(ev) => { ev.stopPropagation(); setSelectedNode(prev => prev === n.id ? null : n.id); }}>
+                {(isSel || isHover) && (
+                  <circle cx={n.x} cy={n.y} r={r + 6} fill="none" stroke={n.color} strokeWidth={1} opacity={0.3} />
                 )}
-                {/* Node circle */}
                 <circle cx={n.x} cy={n.y} r={r}
-                  fill={n.color} fillOpacity={0.18}
-                  stroke={n.color}
-                  strokeWidth={isSelected ? 2.5 : (isHover ? 2 : 1.5)} />
-                {/* Character name */}
-                <text x={n.x} y={n.y + 1}
-                  textAnchor="middle" dominantBaseline="middle"
-                  style={{
-                    fontFamily: "var(--font-serif-tc)", fontSize: 12,
+                  fill={n.color} fillOpacity={0.18} stroke={n.color}
+                  strokeWidth={isSel ? 2.5 : (isHover ? 2 : 1.5)} />
+                <text x={n.x} y={n.y + 1} textAnchor="middle" dominantBaseline="middle"
+                  style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12,
                     fill: connected ? "var(--cream)" : "var(--text-tertiary)",
-                    letterSpacing: "0.06em",
-                    pointerEvents: "none",
-                    fontWeight: isSelected ? "bold" : "normal",
+                    letterSpacing: "0.06em", pointerEvents: "none",
+                    fontWeight: isSel ? "bold" : "normal",
                   }}>{n.name.replace(/（.*）/, "").split("·")[0].trim()}</text>
-                {/* Voice type below */}
-                <text x={n.x} y={n.y + r + 14}
-                  textAnchor="middle"
-                  style={{
-                    fontFamily: "var(--font-serif-en)", fontStyle: "italic",
-                    fontSize: 9.5, fill: "var(--text-tertiary)",
-                    letterSpacing: "0.06em",
-                    pointerEvents: "none",
+                <text x={n.x} y={n.y + r + 14} textAnchor="middle"
+                  style={{ fontFamily: "var(--font-serif-en)", fontStyle: "italic",
+                    fontSize: 9.5, fill: "var(--text-tertiary)", letterSpacing: "0.06em", pointerEvents: "none",
                   }}>{n.voice}</text>
               </g>
             );
@@ -1709,39 +1751,56 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) 
         </svg>
 
         {/* Hover info panel */}
-        {hoveredChar && (
+        {hoveredChar && !addEdgeOpen && (
           <div style={{
             position: "absolute", top: 16, left: 16,
             background: "rgba(17,21,29,0.92)", backdropFilter: "blur(6px)",
             border: "1px solid var(--navy-line)", borderRadius: 3,
-            padding: "14px 18px", maxWidth: 280,
-            pointerEvents: "none",
+            padding: "14px 18px", maxWidth: 280, pointerEvents: "none",
             animation: "swFade 100ms ease",
           }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
-            }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: charColors[hoveredChar.id] || "var(--gold)",
-              }} />
-              <span style={{
-                fontFamily: "var(--font-serif-tc)", fontSize: 14,
-                color: "var(--cream)", letterSpacing: "0.06em",
-              }}>{hoveredChar.name}</span>
-              <span style={{
-                fontFamily: "var(--font-serif-en)", fontStyle: "italic",
-                fontSize: 11, color: "var(--text-tertiary)",
-              }}>{hoveredChar.nameEn}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: charColors[hoveredChar.id] || "var(--gold)" }} />
+              <span style={{ fontFamily: "var(--font-serif-tc)", fontSize: 14, color: "var(--cream)", letterSpacing: "0.06em" }}>{hoveredChar.name}</span>
+              <span style={{ fontFamily: "var(--font-serif-en)", fontStyle: "italic", fontSize: 11, color: "var(--text-tertiary)" }}>{hoveredChar.nameEn}</span>
             </div>
-            <div style={{
-              fontFamily: "var(--font-body)", fontSize: 11.5,
-              color: "var(--text-secondary)", lineHeight: 1.6,
-              letterSpacing: "0.04em",
-            }}>
+            <div style={{ fontFamily: "var(--font-body)", fontSize: 11.5, color: "var(--text-secondary)", lineHeight: 1.6, letterSpacing: "0.04em" }}>
               <div><span style={{ color: "var(--gold-dim)" }}>聲部</span> {hoveredChar.voice}</div>
               <div><span style={{ color: "var(--gold-dim)" }}>身份</span> {hoveredChar.role}</div>
               <div><span style={{ color: "var(--gold-dim)" }}>關係</span> {hoveredChar.relations}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Edge edit panel (bottom-right) */}
+        {editingEdge != null && allEdges[editingEdge] && (
+          <div style={{
+            position: "absolute", bottom: 16, right: 16,
+            background: "rgba(17,21,29,0.95)", backdropFilter: "blur(6px)",
+            border: "1px solid var(--gold-line)", borderRadius: 4,
+            padding: "14px 18px", minWidth: 260,
+            animation: "swFade 100ms ease",
+          }}>
+            <div style={{ fontFamily: "var(--font-serif-en)", fontSize: 10, letterSpacing: "0.16em",
+              color: "var(--gold-dim)", textTransform: "uppercase", marginBottom: 8 }}>Edit Edge</div>
+            <div style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12, color: "var(--text-secondary)", marginBottom: 8 }}>
+              {charName(allEdges[editingEdge].from)} → {charName(allEdges[editingEdge].to)}
+              {allEdges[editingEdge]._source === "parsed" && (
+                <span style={{ fontSize: 10, color: "var(--text-tertiary)", marginLeft: 6 }}>(from data)</span>
+              )}
+            </div>
+            <input type="text" value={editLabel} onChange={e => setEditLabel(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") handleEditEdgeSave(); if (e.key === "Escape") setEditingEdge(null); }}
+              autoFocus
+              style={{ width: "100%", padding: "6px 8px", background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+                borderRadius: 2, color: "var(--text-primary)", fontFamily: "var(--font-serif-tc)", fontSize: 12, marginBottom: 8, boxSizing: "border-box" }} />
+            <div style={{ display: "flex", gap: 8 }}>
+              <SwBtn icon="check" size="sm" onClick={handleEditEdgeSave}>儲存</SwBtn>
+              {allEdges[editingEdge]._source === "custom" && (
+                <SwBtn icon="trash" size="sm" onClick={() => handleDeleteEdge(editingEdge)}
+                  style={{ color: "var(--danger)", borderColor: "rgba(196,96,79,0.3)" }}>刪除</SwBtn>
+              )}
+              <SwBtn icon="close" size="sm" onClick={() => setEditingEdge(null)}>取消</SwBtn>
             </div>
           </div>
         )}
@@ -2863,7 +2922,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       {forgeOpen && <TableForge blocks={blocks} characters={characters} charColors={charColors} onUpdateBlock={updateBlock} onClose={() => setForgeOpen(false)} />}
 
       {/* Relationship Graph overlay (Phase 12-C) */}
-      {graphOpen && <RelationshipGraph onClose={() => setGraphOpen(false)} characters={characters} charColors={charColors} />}
+      {graphOpen && <RelationshipGraph onClose={() => setGraphOpen(false)} characters={characters} charColors={charColors} setCharacters={setCharacters} workId={workId} />}
 
       {/* Sound Panel overlay (Phase 12-D) */}
       {soundOpen && <SoundPanel
@@ -3923,6 +3982,8 @@ function AiAssistPanel({ onClose, blocks, characters }) {
   // Listen for AI response from parent shell
   React.useEffect(() => {
     const handler = (e) => {
+      // Security: only accept messages from same origin
+      if (e.origin !== location.origin) return;
       if (e.data?.type === "akasha-reading-room-response") {
         setPending(false);
         if (e.data.error) {
@@ -3970,7 +4031,7 @@ function AiAssistPanel({ onClose, blocks, characters }) {
       text: contextPrompt,
       module: "script-editor",
       noTrace: false,
-    }, "*");
+    }, location.origin);
   };
 
   const presets = [

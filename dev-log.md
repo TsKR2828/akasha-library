@@ -1,5 +1,117 @@
 # Akasha Library — Dev Log
 
+## 2026-05-23：Phase 18 Script Editor 品質修正（Round 1 + Round 2）
+
+### 背景
+
+PR #3（`feature/archive-host-merge`）merge 後，月月實測 + Codex audit 回饋 10 項問題。分兩輪修正。
+
+### Round 1（`a31e242`）
+
+四大功能修正一次到位：
+
+#### 18-A 搜尋補強 — narration / scene filter
+
+Search tab 的 block type filter 原本只有 dialogue，新增 narration 和 scene。Lohengrin 資料集無 narration blocks，scene 正確回傳 10 筆。
+
+#### 18-B Persona Slots UX 重構
+
+WriteTab slots 從「固定 1-2 + 右鍵才能管理 3-9」改為全面可操作：
+- `locks` 機制擴展到 9 格
+- `onSlotContext` 移除 `n <= 2` 限制
+- 右鍵選單加入 lock / unlock / clear / assign
+
+#### 18-C 多作品支援
+
+新增自訂作品系統，脫離 Lohengrin 單一作品限制：
+- `getCustomWorks()` / `saveCustomWorks()` — localStorage `sw_custom_works` JSON 陣列
+- `loadWorkIndex()` 合併 server + custom works（`_custom: true` 標記）
+- `loadAllData()` custom work 早期返回（CHARACTERS=[], SCRIPT=[]）
+- `populateCharsFromBlocks()` — 從 dialogue blocks 自動發現角色填入 CHARACTERS + CHAR_COLORS
+- `NewWorkModal` — title / titleEn / author 表單
+- `WorkSwitcher` — `<select>` 切換 + 「＋」新增 + 「✕」刪除
+- per-work localStorage 隔離：`blocks_${workId}` / `notes_${workId}` / `sw_write_draft_v1_${workId}` / `sw_slot_locks_v1_${workId}`
+- `sw_last_work` 跨 session 記憶
+
+WriteTab 對應：
+- `draftKey(workId)` / `locksKey(workId)` 動態 key
+- 所有 `loadDraft` / `saveDraft` / `loadLocks` / `saveLocks` 接受 workId 參數
+- Component 簽名加入 `workId` prop
+
+#### 18-D AI 輔助面板
+
+`AiAssistPanel` 組件：
+- 聊天 UI — 訊息清單 + textarea 輸入 + 送出按鈕
+- 4 presets：潤稿建議 / 角色塑造 / 場景描寫 / 翻譯比對
+- iframe 偵測 + `postMessage`（`akasha-reading-room-send` / `akasha-reading-room-response`）
+- 非 iframe 環境顯示提示文字
+- SwHeader 加 AI 按鈕（moon icon）
+
+### Round 2（`fe1eb02`）
+
+月月回饋 + Codex audit 10 項 → 一次修完：
+
+#### 18-E-1 Persona Slots v2（全面開放）
+
+WriteTab `SlotBadge` + slot 邏輯全面重寫：
+- `slotLabels` 改為：locks 優先 → `__clear__` 清空 → 預設（1=#scene, 2=旁白, 3-9=dynamic）
+- `isLocked(n)` 簡化：`!!locks[n] && locks[n] !== "__clear__"`
+- 空格也可點（移除 `disabled={!filled}`），cursor 始終 `pointer`
+- 左鍵 → `onSlotContext`（開選單），雙擊 → `insertSpeakerPrefix`
+- 右鍵選單新增「▸ 插入」頂部動作 + #scene / 旁白 在 assign 清單
+- tooltip 改為「單擊管理 · 雙擊插入 · Alt+N」
+
+#### 18-E-2 WorkSwitcher 內嵌
+
+從 `position: absolute; top: 10; right: 120` 改為 inline flex：
+- `SwHeader` 接受 `workSwitcher` prop，渲染在 header 右側
+- `App` 把 `<WorkSwitcher>` 作為 JSX prop 傳入
+- 不再擋住底下的文字內容
+
+#### 18-E-3 Editor 去耦合
+
+- `EditorView` `activeChar` 從 `"lohengrin"` 改為 `() => CHARACTERS[0]?.id || ""`
+- `addBlock` dialogue template `speakerId` 從 `"lohengrin"` 改為 `CHARACTERS[0]?.id || ""`
+
+#### 18-E-4 Delete work 修正
+
+`deleteCurrentWork` 清 localStorage 的 key 從錯誤的 `archive_write_draft_${id}` / `archive_write_history_${id}` 修正為 `sw_write_draft_v1_${id}` / `sw_slot_locks_v1_${id}`
+
+#### 18-E-5 SEED 通用化
+
+WriteTab SEED 從 Lohengrin 角色名（天鵝騎士/傳令官/艾爾莎）改為通用範例（角色A/角色B/旁白）。
+
+#### 18-E-6 說明更新
+
+info dialog 從 "Archive Script Editor" 改為 "劇本工房"，加入 slot 用法說明。
+
+### 檔案變更
+
+| 檔案 | Round 1 | Round 2 |
+|------|---------|---------|
+| `modules/script-editor/src/App.jsx` | 新增 custom work 系統 + AI panel + WorkSwitcher + search filter | SwHeader workSwitcher prop + Editor 去耦合 + delete key 修正 + inline switcher |
+| `modules/script-editor/src/components/WriteTab.jsx` | per-work draft/locks key + workId prop | Slots v2 全面重寫 + SEED 通用化 |
+| `dist/script-editor/` | 重建 | 重建 |
+
+### 數字總覽
+
+| 項目 | 數量 |
+|------|------|
+| Commit | 2（`a31e242` + `fe1eb02`） |
+| 修改檔案 | 2 source + 2 dist |
+| Vite build 產物 | 37 modules / 309 KB JS / gzip 91 KB |
+
+### 已知遺留
+
+- `SCENE_SUBTITLES`（App.jsx line 19-30）仍硬編碼 Lohengrin 場景名
+- 角色管理 UI 尚未實作（新增/編輯/刪除角色）
+- 草稿歷史/存檔系統尚未實作
+- `getWorkId()` 仍用 `WORKS[0]?.id`，與 `currentWork` state 可能 desync
+- 關係圖為唯讀，無編輯功能
+- JSONL 匯入不會自動建立 custom work
+
+---
+
 ## 2026-05-19：Phase 17 v2 Script Editor — Archive-host merge 完成
 
 ### 背景：方向反轉

@@ -546,7 +546,7 @@ window.addEventListener('message', (e) => {
       content: summary,
       fileName: '每日館報',
       fileType: 'report',
-    }, '*');
+    }, location.origin);
   }
 });
 
@@ -560,7 +560,7 @@ function generateReport(text, date) {
       type: 'akasha-report-generate',
       text,
       date,
-    }, '*');
+    }, location.origin);
     setTimeout(() => {
       if (pendingAIResolve) {
         pendingAIResolve = null;
@@ -583,7 +583,7 @@ function callParentMemory(action, ...args) {
       action,
       args,
       reqId: id,
-    }, '*');
+    }, location.origin);
     setTimeout(() => {
       if (memoryCallbacks.has(id)) {
         memoryCallbacks.delete(id);
@@ -854,10 +854,10 @@ btnRead.addEventListener('click', () => {
   window.parent.postMessage({
     type: 'akasha-voice-play-report',
     report: state.currentReport,
-  }, '*');
+  }, location.origin);
   const preset = bgmSelect.value;
   if (preset) {
-    window.parent.postMessage({ type: 'akasha-bgm-play', presetId: preset }, '*');
+    window.parent.postMessage({ type: 'akasha-bgm-play', presetId: preset }, location.origin);
   }
   setVoiceUI(true, false);
   showToast('開始朗讀');
@@ -865,17 +865,17 @@ btnRead.addEventListener('click', () => {
 
 btnPause.addEventListener('click', () => {
   if (voicePaused) {
-    window.parent.postMessage({ type: 'akasha-voice-resume' }, '*');
+    window.parent.postMessage({ type: 'akasha-voice-resume' }, location.origin);
     setVoiceUI(true, false);
   } else {
-    window.parent.postMessage({ type: 'akasha-voice-pause' }, '*');
+    window.parent.postMessage({ type: 'akasha-voice-pause' }, location.origin);
     setVoiceUI(true, true);
   }
 });
 
 btnVoiceStop.addEventListener('click', () => {
-  window.parent.postMessage({ type: 'akasha-voice-stop' }, '*');
-  window.parent.postMessage({ type: 'akasha-bgm-stop' }, '*');
+  window.parent.postMessage({ type: 'akasha-voice-stop' }, location.origin);
+  window.parent.postMessage({ type: 'akasha-bgm-stop' }, location.origin);
   setVoiceUI(false, false);
 });
 
@@ -886,7 +886,7 @@ window.addEventListener('message', (e) => {
     if (!d.speaking && !d.paused) {
       setVoiceUI(false, false);
       if (voicePlaying) {
-        window.parent.postMessage({ type: 'akasha-bgm-stop' }, '*');
+        window.parent.postMessage({ type: 'akasha-bgm-stop' }, location.origin);
       }
     } else {
       setVoiceUI(d.speaking || d.paused, d.paused);
