@@ -10,11 +10,24 @@
   "genre": ["opera", "romantische Oper", "music drama"],
   "premiere_year": 1850,
   "acts": 3,
+  "acts_label": "in drei Akten",
   "setting": "Antwerpen, 10世紀前半，德意志國王海因里希一世時代",
   "synopsis_zh": "聖杯騎士羅恩格林乘天鵝之舟而來，為被誣陷的布拉班特公主艾爾莎辯護並與她結婚，但條件是她絕不可以詢問他的姓名與來歷。在女巫奧特魯德的挑撥下，艾爾莎終究問出了禁忌之問，羅恩格林被迫揭露聖杯騎士身分並離去。",
   "copyright_status": "public_domain",
   "copyright_note": "Richard Wagner 卒於 1883 年，劇本文本已進入公共領域。",
   "source_name": "murashev.com (public domain libretto)",
   "source_url": "http://www.murashev.com/opera/Lohengrin_libretto_German_Act_1",
-  "tags": ["聖杯", "禁問", "信任", "身份揭露", "天鵝", "騎士", "異教", "犧牲", "愛情", "命運"]
+  "tags": ["聖杯", "禁問", "信任", "身份揭露", "天鵝", "騎士", "異教", "犧牲", "愛情", "命運"],
+  "scene_subtitles": {
+    "1_1": "安特衛普，舍爾德河畔——國王的審判",
+    "1_2": "艾爾莎的夢境敘述",
+    "1_3": "天鵝騎士降臨——神判與禁問之誓",
+    "2_1": "城堡階梯前——泰拉蒙德夫婦的密謀",
+    "2_2": "艾爾莎的夜曲——奧特魯德的咒詛",
+    "2_4": "大教堂前——奧特魯德的挑釁",
+    "2_5": "泰拉蒙德的公開控訴",
+    "3_1": "婚禮進行曲",
+    "3_2": "新房——禁問的破碎",
+    "3_3": "聖杯敘事——告別與解咒"
+  }
 }

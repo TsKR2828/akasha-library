@@ -16,18 +16,7 @@ let CHAR_COLORS = {};
 let CHARACTERS = [];
 let SCRIPT = [];
 
-const SCENE_SUBTITLES = {
-  "1_1": "安特衛普，舍爾德河畔——國王的審判",
-  "1_2": "艾爾莎的夢境敘述",
-  "1_3": "天鵝騎士降臨——神判與禁問之誓",
-  "2_1": "城堡階梯前——泰拉蒙德夫婦的密謀",
-  "2_2": "艾爾莎的夜曲——奧特魯德的咒詛",
-  "2_4": "大教堂前——奧特魯德的挑釁",
-  "2_5": "泰拉蒙德的公開控訴",
-  "3_1": "婚禮進行曲",
-  "3_2": "新房——禁問的破碎",
-  "3_3": "聖杯敘事——告別與解咒",
-};
+let SCENE_SUBTITLES = {};
 
 const PREDEFINED_COLORS = {
   lohengrin: "#c9a86a",
@@ -40,7 +29,6 @@ const PREDEFINED_COLORS = {
   chor: "#a08550",
 };
 
-const GERMAN_ACT_NUMS = { 1: "einem", 2: "zwei", 3: "drei", 4: "vier", 5: "fünf" };
 
 let WORK_INDEX = []; // [{id, title, titleEn, author}]
 
@@ -85,7 +73,8 @@ async function loadAllData(workId = "lohengrin") {
     CHARACTERS = [];
     CHAR_COLORS = {};
     SCRIPT = [];
-    return;
+    SCENE_SUBTITLES = {};
+    return { works: WORKS, characters: CHARACTERS, charColors: CHAR_COLORS, script: SCRIPT, workIndex: WORK_INDEX };
   }
 
   const safeFetch = async (url) => {
@@ -125,8 +114,10 @@ async function loadAllData(workId = "lohengrin") {
     copyrightNote: work.copyright_note,
     acts: work.acts,
     genreLabel: genreLabel.charAt(0).toUpperCase() + genreLabel.slice(1),
-    actsLabel: `in ${GERMAN_ACT_NUMS[work.acts] || work.acts} Akten`,
+    actsLabel: work.acts_label || (work.acts ? `${work.acts} Acts` : ""),
   }];
+
+  SCENE_SUBTITLES = work.scene_subtitles || {};
 
   // ── Characters ──
   CHARACTERS = chars.map(c => ({
@@ -197,6 +188,8 @@ async function loadAllData(workId = "lohengrin") {
       avg: { sprite: "", position: "center", bg: "", bgm: "", sfx: "" },
     });
   });
+
+  return { works: WORKS, characters: CHARACTERS, charColors: CHAR_COLORS, script: SCRIPT, workIndex: WORK_INDEX };
 }
 
 // ============= ICONS =============
@@ -250,7 +243,7 @@ const SwIcon = ({ name, size = 16, stroke = 1.6 }) => {
 const VALID_BLOCK_TYPES = ["dialogue", "narration", "scene", "note", "choice", "command"];
 const SAFE_ID_RE = /^[a-zA-Z0-9_\-]+$/;
 
-function validateBlock(block) {
+function validateBlock(block, characters = []) {
   const errors = [];
   // Common checks
   if (!block.id) errors.push("缺少 id");
@@ -260,13 +253,12 @@ function validateBlock(block) {
 
   // Type-specific checks
   if (block.type === "dialogue") {
-    // v2-fix4: isUnknown 旗標 → 跳過角色表驗證（user-authored 未綁定角色）
     if (!block.isUnknown) {
       if (!block.speakerId) errors.push("缺少 speakerId");
       if (block.speakerId) {
-        if (CHARACTERS.length === 0) {
+        if (characters.length === 0) {
           errors.push("角色表為空，無法驗證 speakerId");
-        } else if (!CHARACTERS.find(c => c.id === block.speakerId)) {
+        } else if (!characters.find(c => c.id === block.speakerId)) {
           errors.push(`speakerId「${block.speakerId}」不存在於角色表`);
         }
       }
@@ -296,8 +288,7 @@ function validateBlock(block) {
   return errors;
 }
 
-function validateBlocks(blocks) {
-  // Returns { valid: bool, results: [{index, id, errors}] }
+function validateBlocks(blocks, characters = []) {
   if (!Array.isArray(blocks) || blocks.length === 0) {
     return { valid: false, results: [{ index: 0, id: "(file)", errors: ["匯入資料不是有效的 block 陣列"] }] };
   }
@@ -307,7 +298,7 @@ function validateBlocks(blocks) {
       results.push({ index: i, id: `(line ${i + 1})`, errors: [`項目不是有效物件（收到 ${Array.isArray(b) ? "array" : typeof b}）`] });
       return;
     }
-    const errs = validateBlock(b);
+    const errs = validateBlock(b, characters);
     if (errs.length > 0) results.push({ index: i, id: b.id || `(line ${i + 1})`, errors: errs });
   });
   return { valid: results.length === 0, results };
@@ -335,11 +326,9 @@ function debounce(fn, ms) {
 }
 
 // ============= NOTES (localStorage CRUD) =============
-function getWorkId() { return WORKS[0]?.id || "lohengrin"; }
-
-function loadNotes() {
+function loadNotes(workId) {
   try {
-    const raw = localStorage.getItem(`notes_${getWorkId()}`);
+    const raw = localStorage.getItem(`notes_${workId}`);
     return raw ? JSON.parse(raw) : {};
   } catch (e) {
     console.error("[Archive] 筆記資料解析失敗，已重設為空白:", e);
@@ -348,23 +337,23 @@ function loadNotes() {
   }
 }
 
-function saveNotes(notes) {
+function saveNotes(notes, workId) {
   try {
-    localStorage.setItem(`notes_${getWorkId()}`, JSON.stringify(notes));
+    localStorage.setItem(`notes_${workId}`, JSON.stringify(notes));
   } catch (e) {
     console.error("[Archive] 筆記儲存失敗:", e);
     alert("⚠️ 筆記儲存失敗：本機儲存空間不足。\n請清除不需要的立繪或匯出備份後重試。");
   }
 }
 
-function useNotes() {
-  const [notes, setNotes] = React.useState(loadNotes);
+function useNotes(workId) {
+  const [notes, setNotes] = React.useState(() => loadNotes(workId));
 
   const addNote = (charId, text) => {
     setNotes(prev => {
       const arr = prev[charId] || [];
       const next = { ...prev, [charId]: [...arr, { id: Date.now().toString(36), text, ts: Date.now() }] };
-      saveNotes(next);
+      saveNotes(next, workId);
       return next;
     });
   };
@@ -373,7 +362,7 @@ function useNotes() {
     setNotes(prev => {
       const arr = (prev[charId] || []).map(n => n.id === noteId ? { ...n, text } : n);
       const next = { ...prev, [charId]: arr };
-      saveNotes(next);
+      saveNotes(next, workId);
       return next;
     });
   };
@@ -383,7 +372,7 @@ function useNotes() {
     setNotes(prev => {
       const arr = (prev[charId] || []).filter(n => n.id !== noteId);
       const next = { ...prev, [charId]: arr };
-      saveNotes(next);
+      saveNotes(next, workId);
       return next;
     });
   };
@@ -392,8 +381,15 @@ function useNotes() {
 }
 
 // ============= AUTO-POPULATE CHARACTERS FROM BLOCKS =============
-function populateCharsFromBlocks(loadedBlocks) {
-  if (CHARACTERS.length > 0 || !loadedBlocks || loadedBlocks.length === 0) return;
+function populateCharsFromBlocks(loadedBlocks, existingChars = []) {
+  if (existingChars.length > 0 || !loadedBlocks || loadedBlocks.length === 0) {
+    const colors = {};
+    existingChars.forEach((c, i) => {
+      colors[c.id] = PREDEFINED_COLORS[c.id] || `hsl(${(i * 47) % 360}, 45%, 55%)`;
+    });
+    CHARACTERS = existingChars; CHAR_COLORS = colors;
+    return { characters: existingChars, charColors: colors };
+  }
   const seen = new Map();
   loadedBlocks.forEach(b => {
     if (b.type === "dialogue" && b.speakerId && !seen.has(b.speakerId)) {
@@ -405,17 +401,19 @@ function populateCharsFromBlocks(loadedBlocks) {
       });
     }
   });
-  CHARACTERS = [...seen.values()];
-  CHAR_COLORS = {};
-  CHARACTERS.forEach((c, i) => {
-    CHAR_COLORS[c.id] = PREDEFINED_COLORS[c.id] || `hsl(${(i * 47) % 360}, 45%, 55%)`;
+  const chars = [...seen.values()];
+  const colors = {};
+  chars.forEach((c, i) => {
+    colors[c.id] = PREDEFINED_COLORS[c.id] || `hsl(${(i * 47) % 360}, 45%, 55%)`;
   });
+  CHARACTERS = chars; CHAR_COLORS = colors;
+  return { characters: chars, charColors: colors };
 }
 
 // ============= BLOCKS localStorage PERSISTENCE =============
-function loadBlocksFromStorage() {
+function loadBlocksFromStorage(workId) {
   try {
-    const raw = localStorage.getItem(`blocks_${getWorkId()}`);
+    const raw = localStorage.getItem(`blocks_${workId}`);
     return raw ? JSON.parse(raw) : null;
   } catch (e) {
     console.error("[Archive] blocks 資料解析失敗，將使用原始 SCRIPT:", e);
@@ -424,13 +422,26 @@ function loadBlocksFromStorage() {
   }
 }
 
-function saveBlocksToStorage(blocks) {
+function saveBlocksToStorage(blocks, workId) {
+  if (!workId) return;
   try {
-    localStorage.setItem(`blocks_${getWorkId()}`, JSON.stringify(blocks));
+    localStorage.setItem(`blocks_${workId}`, JSON.stringify(blocks));
   } catch (e) {
     console.error("[Archive] localStorage 寫入失敗:", e);
     alert("⚠️ 儲存失敗：本機儲存空間不足。\n請清除不需要的立繪或匯出備份後重試。");
   }
+}
+
+// ============= CHARACTERS localStorage PERSISTENCE =============
+function loadCustomCharacters(workId) {
+  try {
+    const raw = localStorage.getItem(`characters_${workId}`);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveCustomCharacters(characters, workId) {
+  if (!workId) return;
+  localStorage.setItem(`characters_${workId}`, JSON.stringify(characters));
 }
 
 // ============= TAG =============
@@ -666,7 +677,7 @@ function SectionLabel({ latin, zh, accent = "tertiary" }) {
 }
 
 // ============= SEARCH VIEW =============
-function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
+function SearchView({ blocks, characters, charColors, work, goToEditor, goToReader, goToBlock }) {
   const allCharacters = useCharactersOfWork(blocks, characters);
   const [filters, setFilters] = React.useState({
     q: "", work: "", character: "", plot: "", emotion: "", license: "",
@@ -686,20 +697,18 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
       const ch = allCharacters.find(c => c.id === r.speakerId);
       const textPool = (r.original + r.zh + (ch?.name || "") + (r.text || "")).toLowerCase();
       if (filters.q && !textPool.includes(filters.q.toLowerCase())) return false;
-      if (filters.work && (r.workId || WORKS[0]?.id) !== filters.work) return false;
+      if (filters.work && (r.workId || work?.id) !== filters.work) return false;
       if (filters.character && r.speakerId !== filters.character) return false;
       if (filters.plot && !(r.tags || []).some(([t, k]) => k === "plot" && t.includes(filters.plot))) return false;
       if (filters.emotion && !(r.tags || []).some(([t, k]) => k === "emotion" && t.includes(filters.emotion))) return false;
       if (filters.license) {
-        const workObj = WORKS.find(w => w.id === (r.workId || WORKS[0]?.id));
-        if (workObj && workObj.license !== filters.license) return false;
+        if (work && work.license !== filters.license) return false;
       }
       return true;
     });
   }, [filters, blocks]);
 
   const checkExportLicense = () => {
-    const work = WORKS[0];
     if (work && work.license !== "public-domain" && work.license !== "fair-use") {
       alert(`版權狀態「${work.license || "unchecked"}」不允許全文匯出。\n僅 public-domain 與 fair-use 作品可匯出。`);
       return false;
@@ -750,7 +759,7 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
           <SwInput placeholder="關鍵字 · keyword"
             value={filters.q} onChange={v => setFilters({ ...filters, q: v })} icon="search" />
           <SwSelect value={filters.work} onChange={v => setFilters({ ...filters, work: v })}
-            options={[["", "全部作品"], ...WORKS.map(w => [w.id, `${w.title} · ${w.titleEn}`])]} />
+            options={[["", "全部作品"], ...(work ? [[work.id, `${work.title} · ${work.titleEn}`]] : [])]} />
           <SwSelect value={filters.character} onChange={v => setFilters({ ...filters, character: v })}
             options={[["", "全部角色"], ["__narration__", "旁白 · Narration"], ["__scene__", "場景 · Scene"], ...allCharacters.map(c => [c.id, `${c.name} · ${c.nameEn}`])]} />
           <SwInput placeholder="劇情 TAG"
@@ -784,13 +793,13 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
         <span style={{
           fontFamily: "var(--font-mono)", fontSize: 11,
           color: "var(--text-tertiary)", letterSpacing: "0.08em",
-        }}>{filtered.length} matches in {WORKS.length} works</span>
+        }}>{filtered.length} matches in {work?.title || "—"}</span>
       </div>
 
       {/* Results */}
       <div style={{ flex: 1, overflowY: "auto", padding: "8px 28px 80px" }}>
         {filtered.length === 0 ? <EmptyState /> :
-          filtered.map(r => <ResultCard key={r.id} r={r} characters={allCharacters} onClick={() => goToBlock(r.id)} />)}
+          filtered.map(r => <ResultCard key={r.id} r={r} characters={allCharacters} charColors={charColors} work={work} onClick={() => goToBlock(r.id)} />)}
       </div>
 
       {/* Export Bar */}
@@ -812,13 +821,12 @@ function SearchView({ blocks, characters, goToEditor, goToReader, goToBlock }) {
   );
 }
 
-function ResultCard({ r, characters, onClick }) {
+function ResultCard({ r, characters, charColors = {}, work, onClick }) {
   const [hover, setHover] = React.useState(false);
   const isNarr = r._isNarration;
   const isScene = r._isScene;
-  const ch = (!isNarr && !isScene) ? (characters || CHARACTERS).find(c => c.id === r.speakerId) : null;
-  const work = WORKS[0]; // simplified
-  const charColor = isNarr ? "var(--text-secondary)" : isScene ? "var(--success)" : (CHAR_COLORS[r.speakerId] || "var(--gold-dim)");
+  const ch = (!isNarr && !isScene) ? (characters || []).find(c => c.id === r.speakerId) : null;
+  const charColor = isNarr ? "var(--text-secondary)" : isScene ? "var(--success)" : (charColors[r.speakerId] || "var(--gold-dim)");
   const speakerLabel = isNarr ? "旁白" : isScene ? "場景" : (ch?.name || r.speakerId);
   const speakerLabelEn = isNarr ? "Narration" : isScene ? "Scene" : (ch?.nameEn || "");
   return (
@@ -845,11 +853,11 @@ function ResultCard({ r, characters, onClick }) {
         <span style={{
           fontFamily: "var(--font-serif-tc)", fontSize: 13,
           color: "var(--gold)", letterSpacing: "0.14em",
-        }}>{work.title}</span>
+        }}>{work?.title || "—"}</span>
         <span style={{
           fontFamily: "var(--font-serif-en)", fontStyle: "italic",
           fontSize: 11.5, color: "var(--gold-deep)",
-        }}>{work.titleEn}</span>
+        }}>{work?.titleEn || ""}</span>
         <span style={{ width: 1, height: 14, background: "var(--navy-line)" }} />
         <span style={{
           fontFamily: "var(--font-mono)", fontSize: 11,
@@ -959,7 +967,7 @@ function AvgField({ label, en, value, onChange, placeholder }) {
   );
 }
 
-function SpritePreview({ block, characters }) {
+function SpritePreview({ block, characters, charColors = {} }) {
   const ch = characters.find(c => c.id === block?.speakerId);
   const avg = block?.avg || {};
   const posX = { left: "15%", center: "50%", right: "85%" }[avg.position || "center"];
@@ -998,7 +1006,7 @@ function SpritePreview({ block, characters }) {
         ) : (
           <div style={{
             width: 44, height: 44, borderRadius: "50%",
-            background: CHAR_COLORS[block?.speakerId] || "var(--gold-dim)",
+            background: charColors[block?.speakerId] || "var(--gold-dim)",
             border: "2px solid var(--navy-line)",
             display: "flex", alignItems: "center", justifyContent: "center",
             marginBottom: 6,
@@ -1171,7 +1179,7 @@ function JsonPreview({ block }) {
 }
 
 // ============= TABLE FORGE =============
-function TableForge({ blocks, onUpdateBlock, onClose }) {
+function TableForge({ blocks, characters = [], charColors = {}, onUpdateBlock, onClose }) {
   const [filterChar, setFilterChar] = React.useState("");
   const [filterText, setFilterText] = React.useState("");
   const [editCell, setEditCell] = React.useState(null); // { id, field }
@@ -1215,7 +1223,7 @@ function TableForge({ blocks, onUpdateBlock, onClose }) {
       }}>
         <SectionLabel latin="Table Forge" zh="表格鍛造" accent="gold" />
         <SwSelect value={filterChar} onChange={setFilterChar}
-          options={[["", "全部角色"], ...CHARACTERS.map(c => [c.id, c.name])]} />
+          options={[["", "全部角色"], ...characters.map(c => [c.id, c.name])]} />
         <SwInput placeholder="文字搜尋…" value={filterText} onChange={setFilterText} icon="search" />
         <span style={{ flex: 1 }} />
         <span style={{
@@ -1247,7 +1255,7 @@ function TableForge({ blocks, onUpdateBlock, onClose }) {
           </thead>
           <tbody>
             {filtered.map(b => {
-              const ch = CHARACTERS.find(c => c.id === b.speakerId);
+              const ch = characters.find(c => c.id === b.speakerId);
               const isDirty = dirty.has(b.id);
               return (
                 <tr key={b.id} style={{
@@ -1269,7 +1277,7 @@ function TableForge({ blocks, onUpdateBlock, onClose }) {
                           padding: "4px 6px", fontFamily: "var(--font-body)", fontSize: 12,
                           borderRadius: 2, outline: "none",
                         }}>
-                        {CHARACTERS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                        {characters.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                       </select>
                     ) : (
                       <div style={{
@@ -1277,7 +1285,7 @@ function TableForge({ blocks, onUpdateBlock, onClose }) {
                       }}>
                         <span style={{
                           width: 6, height: 6, borderRadius: "50%",
-                          background: CHAR_COLORS[b.speakerId] || "var(--gold-dim)",
+                          background: charColors[b.speakerId] || "var(--gold-dim)",
                         }} />
                         <span style={{
                           fontFamily: "var(--font-serif-tc)", fontSize: 12,
@@ -1397,8 +1405,8 @@ function parseRelationshipEdges(characters) {
   return edges;
 }
 
-function RelationshipGraph({ onClose, characters: charsProp }) {
-  const chars = charsProp || CHARACTERS;
+function RelationshipGraph({ onClose, characters: charsProp, charColors = {} }) {
+  const chars = charsProp || [];
   const canvasRef = React.useRef(null);
   const [nodes, setNodes] = React.useState([]);
   const [edges, setEdges] = React.useState([]);
@@ -1432,7 +1440,7 @@ function RelationshipGraph({ onClose, characters: charsProp }) {
         x: cx + radius * Math.cos(angle),
         y: cy + radius * Math.sin(angle),
         vx: 0, vy: 0,
-        color: CHAR_COLORS[c.id] || "var(--gold)",
+        color: charColors[c.id] || "var(--gold)",
       };
     });
 
@@ -1705,7 +1713,7 @@ function RelationshipGraph({ onClose, characters: charsProp }) {
             }}>
               <span style={{
                 width: 8, height: 8, borderRadius: "50%",
-                background: CHAR_COLORS[hoveredChar.id],
+                background: charColors[hoveredChar.id] || "var(--gold)",
               }} />
               <span style={{
                 fontFamily: "var(--font-serif-tc)", fontSize: 14,
@@ -1961,7 +1969,7 @@ ZeroRhyme.generateDraft = (template, characters, options = {}) => {
   return tmpl.generate(characters, act, scene, mood, count);
 };
 
-function DraftGenerator({ onClose, onInsert, characters }) {
+function DraftGenerator({ onClose, onInsert, characters, charColors = {} }) {
   const [template, setTemplate] = React.useState("opening");
   const [selectedChars, setSelectedChars] = React.useState([]);
   const [mood, setMood] = React.useState("");
@@ -2038,9 +2046,9 @@ function DraftGenerator({ onClose, onInsert, characters }) {
                 {characters.map(c => (
                   <span key={c.id} onClick={() => toggleChar(c.id)}
                     style={{padding:"4px 8px",borderRadius:2,fontSize:11,fontFamily:"var(--font-serif-tc)",cursor:"pointer",
-                      background: selectedChars.includes(c.id) ? (CHAR_COLORS[c.id]||"var(--gold)")+"22" : "transparent",
-                      border: `1px solid ${selectedChars.includes(c.id) ? (CHAR_COLORS[c.id]||"var(--gold)") : "var(--navy-line)"}`,
-                      color: selectedChars.includes(c.id) ? (CHAR_COLORS[c.id]||"var(--gold)") : "var(--text-tertiary)",
+                      background: selectedChars.includes(c.id) ? (charColors[c.id]||"var(--gold)")+"22" : "transparent",
+                      border: `1px solid ${selectedChars.includes(c.id) ? (charColors[c.id]||"var(--gold)") : "var(--navy-line)"}`,
+                      color: selectedChars.includes(c.id) ? (charColors[c.id]||"var(--gold)") : "var(--text-tertiary)",
                     }}>
                     {selectedChars.indexOf(c.id) >= 0 && <span style={{marginRight:3,fontSize:9}}>#{selectedChars.indexOf(c.id)+1}</span>}
                     {(c.name_zh || c.name || c.id).split("·")[0]}
@@ -2104,7 +2112,7 @@ function DraftGenerator({ onClose, onInsert, characters }) {
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
                       <span style={{fontFamily:"var(--font-mono)",fontSize:9,padding:"2px 5px",borderRadius:2,background:"rgba(255,255,255,0.05)",color:"var(--text-tertiary)"}}>{b.type}</span>
                       {b.type === "dialogue" && (
-                        <span style={{fontFamily:"var(--font-serif-tc)",fontSize:11.5,color:CHAR_COLORS[b.speakerId]||"var(--cream)"}}>
+                        <span style={{fontFamily:"var(--font-serif-tc)",fontSize:11.5,color:charColors[b.speakerId]||"var(--cream)"}}>
                           {(c => (c?.name_zh || c?.name || b.speakerId).split("·")[0])(characters.find(c=>c.id===b.speakerId))}
                         </span>
                       )}
@@ -2138,7 +2146,7 @@ function DraftGenerator({ onClose, onInsert, characters }) {
 // ============= SCRIPT LINTER (Phase 12-E) — 零韻劇本顧問 =============
 const TAG_DICT_PATH = `${DATA_BASE}/tags/tag_dictionary.json`;
 
-function ScriptLinter({ blocks, characters, onClose, onGoToBlock }) {
+function ScriptLinter({ blocks, characters, charColors = {}, onClose, onGoToBlock }) {
   const [issues, setIssues] = React.useState([]);
   const [tagDict, setTagDict] = React.useState(null);
   const [filterSev, setFilterSev] = React.useState("all");
@@ -2491,8 +2499,8 @@ function SoundPanel({ onClose, onAssign, currentBlockBgm }) {
 }
 
 // ============= EDITOR VIEW (Phase 11 — three columns) =============
-function EditorView({ blocks, setBlocks }) {
-  const [activeChar, setActiveChar] = React.useState(() => CHARACTERS[0]?.id || "");
+function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, setCharColors, script, workId }) {
+  const [activeChar, setActiveChar] = React.useState(() => characters[0]?.id || "");
   const [focusedBlockId, setFocusedBlockId] = React.useState(() => {
     const first = blocks.find(b => b.type === "dialogue");
     return first?.id || null;
@@ -2504,9 +2512,35 @@ function EditorView({ blocks, setBlocks }) {
   const [soundOpen, setSoundOpen] = React.useState(false);
   const [linterOpen, setLinterOpen] = React.useState(false);
   const [draftOpen, setDraftOpen] = React.useState(false);
-  const { notes, addNote, updateNote, removeNote } = useNotes();
+  const [charModalOpen, setCharModalOpen] = React.useState(false);
+  const [charModalTarget, setCharModalTarget] = React.useState(null);
+
+  const recomputeColors = (chars) => {
+    const colors = {};
+    chars.forEach((c, i) => { colors[c.id] = PREDEFINED_COLORS[c.id] || `hsl(${(i * 47) % 360}, 45%, 55%)`; });
+    return colors;
+  };
+  const persistCharacters = (chars) => {
+    const cc = recomputeColors(chars);
+    setCharacters(chars); setCharColors(cc);
+    CHARACTERS = chars; CHAR_COLORS = cc;
+    saveCustomCharacters(chars, workId);
+  };
+  const handleCharSave = (charData) => {
+    const exists = characters.find(c => c.id === charData.id);
+    const updated = exists ? characters.map(c => c.id === charData.id ? { ...c, ...charData } : c) : [...characters, charData];
+    persistCharacters(updated);
+    setActiveChar(charData.id);
+  };
+  const handleCharDelete = (charId) => {
+    if (!window.confirm("確定刪除此角色？")) return;
+    const updated = characters.filter(c => c.id !== charId);
+    persistCharacters(updated);
+    if (activeChar === charId) setActiveChar(updated[0]?.id || "");
+  };
+  const { notes, addNote, updateNote, removeNote } = useNotes(workId);
   const importFileRef = React.useRef(null);
-  const ch = CHARACTERS.find(c => c.id === activeChar);
+  const ch = characters.find(c => c.id === activeChar);
   const focusedBlock = blocks.find(b => b.id === focusedBlockId);
 
   // Pick up focus request from search → editor bridge (runs on mount; tab switch forces remount via key)
@@ -2528,7 +2562,7 @@ function EditorView({ blocks, setBlocks }) {
   const addBlock = (type) => {
     const id = "b_" + Date.now().toString(36);
     const templates = {
-      dialogue: { id, type, speakerId: ch?.id || CHARACTERS[0]?.id || "", original: "", zh: "", tags: [],
+      dialogue: { id, type, speakerId: ch?.id || characters[0]?.id || "", original: "", zh: "", tags: [],
                   avg: { sprite: "", position: "center", bg: "", bgm: "", sfx: "" } },
       narration:{ id, type, text: "" },
       scene:    { id, type, act: "Akt _ · Sz _", subtitle: "", note: "" },
@@ -2583,7 +2617,7 @@ function EditorView({ blocks, setBlocks }) {
           return;
         }
         // Validate imported blocks
-        const { valid, results } = validateBlocks(imported);
+        const { valid, results } = validateBlocks(imported, characters);
         if (!valid) {
           setImportWarnings(results);
           return; // 有驗證錯誤時不覆蓋目前稿件，等使用者確認
@@ -2604,9 +2638,9 @@ function EditorView({ blocks, setBlocks }) {
   // ── Reset to original data ──
   const resetBlocks = () => {
     if (confirm("確定要重設為原始資料？未存檔的修改將遺失。")) {
-      localStorage.removeItem(`blocks_${getWorkId()}`);
-      setBlocks(SCRIPT);
-      setFocusedBlockId(SCRIPT.find(b => b.type === "dialogue")?.id || null);
+      localStorage.removeItem(`blocks_${workId}`);
+      setBlocks(script);
+      setFocusedBlockId(script.find(b => b.type === "dialogue")?.id || null);
     }
   };
 
@@ -2625,14 +2659,14 @@ function EditorView({ blocks, setBlocks }) {
   const exportNotes = () => {
     const entries = [];
     Object.entries(notes).forEach(([charId, arr]) => {
-      const ch = CHARACTERS.find(c => c.id === charId);
+      const c = characters.find(c => c.id === charId);
       arr.forEach(n => {
-        entries.push({ charId, charName: ch?.name || charId, text: n.text, ts: n.ts });
+        entries.push({ charId, charName: c?.name || charId, text: n.text, ts: n.ts });
       });
     });
     if (entries.length === 0) { alert("目前無筆記可匯出"); return; }
     const lines = entries.map(e => JSON.stringify(e));
-    downloadFile(`notes-${getWorkId()}.jsonl`, lines.join("\n"), "application/jsonl");
+    downloadFile(`notes-${workId}.jsonl`, lines.join("\n"), "application/jsonl");
   };
 
   const leftW = leftOpen ? 280 : 0;
@@ -2649,12 +2683,19 @@ function EditorView({ blocks, setBlocks }) {
           display: "flex", flexDirection: "column",
           overflow: "hidden",
         }}>
-          <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "center" }}>
+          <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "center", gap: 6 }}>
             <SectionLabel latin="Personae" zh="角色" />
+            <span style={{ flex: 1 }} />
+            <button onClick={() => { setCharModalTarget(null); setCharModalOpen(true); }} title="新增角色"
+              style={{ background: "transparent", border: "1px solid var(--navy-line)", color: "var(--gold-dim)", width: 22, height: 22, borderRadius: 2, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, padding: 0 }}>+</button>
+            {ch && <button onClick={() => { setCharModalTarget(ch); setCharModalOpen(true); }} title="編輯角色"
+              style={{ background: "transparent", border: "1px solid var(--navy-line)", color: "var(--gold-dim)", width: 22, height: 22, borderRadius: 2, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, padding: 0 }}>&#9998;</button>}
+            {ch && <button onClick={() => handleCharDelete(ch.id)} title="刪除角色"
+              style={{ background: "transparent", border: "1px solid rgba(196,96,79,0.3)", color: "var(--danger,#c4604f)", width: 22, height: 22, borderRadius: 2, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, padding: 0 }}>&times;</button>}
           </div>
           <div style={{ overflowY: "auto", padding: "0 10px 12px", flex: "0 0 auto", maxHeight: 200 }}>
-            {CHARACTERS.map(c => (
-              <CharRow key={c.id} c={c} active={c.id === activeChar} onClick={() => setActiveChar(c.id)} />
+            {characters.map(c => (
+              <CharRow key={c.id} c={c} active={c.id === activeChar} onClick={() => setActiveChar(c.id)} charColors={charColors} />
             ))}
           </div>
           <div style={{
@@ -2719,7 +2760,7 @@ function EditorView({ blocks, setBlocks }) {
           <span style={{
             fontFamily: "var(--font-mono)", fontSize: 10.5,
             color: "var(--text-tertiary)", letterSpacing: "0.06em",
-          }}>{blocks.length} blocks · {blocks !== SCRIPT ? "已自動存檔" : "原始資料"}</span>
+          }}>{blocks.length} blocks · {blocks !== script ? "已自動存檔" : "原始資料"}</span>
 
           <button onClick={() => setRightOpen(o => !o)} title={rightOpen ? "收合 AVG 欄" : "展開 AVG 欄"}
             style={{
@@ -2733,6 +2774,7 @@ function EditorView({ blocks, setBlocks }) {
         <div style={{ flex: 1, overflowY: "auto", padding: "20px 20px 110px" }}>
           {blocks.map(b => (
             <BlockCard key={b.id} b={b} blocks={blocks}
+              characters={characters} charColors={charColors}
               focused={b.id === focusedBlockId}
               onFocus={() => setFocusedBlockId(b.id)}
               onRemove={() => removeBlock(b.id)}
@@ -2808,10 +2850,10 @@ function EditorView({ blocks, setBlocks }) {
       )}
 
       {/* Table Forge overlay */}
-      {forgeOpen && <TableForge blocks={blocks} onUpdateBlock={updateBlock} onClose={() => setForgeOpen(false)} />}
+      {forgeOpen && <TableForge blocks={blocks} characters={characters} charColors={charColors} onUpdateBlock={updateBlock} onClose={() => setForgeOpen(false)} />}
 
       {/* Relationship Graph overlay (Phase 12-C) */}
-      {graphOpen && <RelationshipGraph onClose={() => setGraphOpen(false)} characters={CHARACTERS} />}
+      {graphOpen && <RelationshipGraph onClose={() => setGraphOpen(false)} characters={characters} charColors={charColors} />}
 
       {/* Sound Panel overlay (Phase 12-D) */}
       {soundOpen && <SoundPanel
@@ -2830,7 +2872,8 @@ function EditorView({ blocks, setBlocks }) {
       {/* Script Linter overlay (Phase 12-E) */}
       {linterOpen && <ScriptLinter
         blocks={blocks}
-        characters={CHARACTERS}
+        characters={characters}
+        charColors={charColors}
         onClose={() => setLinterOpen(false)}
         onGoToBlock={(blockId) => {
           setFocusedBlockId(blockId);
@@ -2843,7 +2886,8 @@ function EditorView({ blocks, setBlocks }) {
 
       {/* Draft Generator overlay (Phase 12-F) */}
       {draftOpen && <DraftGenerator
-        characters={CHARACTERS}
+        characters={characters}
+        charColors={charColors}
         onClose={() => setDraftOpen(false)}
         onInsert={(newBlocks) => {
           setBlocks(prev => [...prev, ...newBlocks]);
@@ -2854,6 +2898,8 @@ function EditorView({ blocks, setBlocks }) {
           }, 200);
         }}
       />}
+
+      {charModalOpen && <CharacterModal character={charModalTarget} onSave={handleCharSave} onClose={() => setCharModalOpen(false)} />}
 
       {/* RIGHT — AVG PANEL (Phase 11) */}
       {rightOpen && (
@@ -2872,7 +2918,7 @@ function EditorView({ blocks, setBlocks }) {
             {focusedBlock?.type === "dialogue" ? (
               <>
                 {/* sprite preview */}
-                <SpritePreview block={focusedBlock} characters={CHARACTERS} />
+                <SpritePreview block={focusedBlock} characters={characters} charColors={charColors} />
 
                 {/* AVG fields */}
                 <AvgPanel block={focusedBlock}
@@ -2921,9 +2967,9 @@ function EditorView({ blocks, setBlocks }) {
   );
 }
 
-function CharRow({ c, active, onClick }) {
+function CharRow({ c, active, onClick, charColors = {} }) {
   const [h, setH] = React.useState(false);
-  const dot = CHAR_COLORS[c.id] || "var(--gold-deep)";
+  const dot = charColors[c.id] || "var(--gold-deep)";
   return (
     <div onClick={onClick}
       onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
@@ -3204,11 +3250,11 @@ function TagAdder({ onAdd }) {
   );
 }
 
-function BlockCard({ b, blocks, onRemove, onUpdate, focused, onFocus }) {
+function BlockCard({ b, blocks, characters = [], charColors = {}, onRemove, onUpdate, focused, onFocus }) {
   const meta = BLOCK_META[b.type];
-  const charDot = b.type === "dialogue" ? (CHAR_COLORS[b.speakerId] || meta.color) : meta.color;
+  const charDot = b.type === "dialogue" ? (charColors[b.speakerId] || meta.color) : meta.color;
   const isFocused = focused && b.type === "dialogue";
-  const blockErrors = React.useMemo(() => validateBlock(b), [b]);
+  const blockErrors = React.useMemo(() => validateBlock(b, characters), [b, characters]);
   return (
     <div data-block-id={b.id}
       onClick={b.type === "dialogue" ? onFocus : undefined}
@@ -3244,7 +3290,7 @@ function BlockCard({ b, blocks, onRemove, onUpdate, focused, onFocus }) {
               backgroundPosition: "calc(100% - 12px) 50%, calc(100% - 7px) 50%",
               backgroundSize: "5px 5px", backgroundRepeat: "no-repeat",
             }}>
-            {CHARACTERS.map(c => <option key={c.id} value={c.id} style={{ background: "var(--navy-deep)" }}>{c.name}（{c.id}）</option>)}
+            {characters.map(c => <option key={c.id} value={c.id} style={{ background: "var(--navy-deep)" }}>{c.name}（{c.id}）</option>)}
           </select>
         )}
 
@@ -3420,15 +3466,14 @@ function BlockTextarea({ value, onChange, placeholder, font = "serif-tc", rows =
 }
 
 // ============= READER VIEW — black-box theater =============
-function ReaderView({ blocks, goToBlock }) {
-  const work = WORKS[0]; // current work
+function ReaderView({ blocks, goToBlock, work, characters, charColors = {}, workId }) {
   const sceneIndices = blocks.map((b, i) => b.type === "scene" ? i : -1).filter(i => i >= 0);
   const scenes = sceneIndices.map(i => blocks[i]);
   const [activeScene, setActiveScene] = React.useState(scenes[0]?.id);
   const [showNotes, setShowNotes] = React.useState(false);
   const containerRef = React.useRef(null);
   const sceneRefs = React.useRef({});
-  const [readerNotes] = React.useState(loadNotes);
+  const [readerNotes] = React.useState(() => loadNotes(workId));
 
   // Track first appearance of each character for note display
   const firstAppearance = React.useMemo(() => {
@@ -3644,7 +3689,7 @@ function ReaderView({ blocks, goToBlock }) {
                   );
                 }
                 if (b.type === "dialogue") {
-                  const ch = CHARACTERS.find(c => c.id === b.speakerId);
+                  const ch = characters.find(c => c.id === b.speakerId);
                   const isFirst = firstAppearance[b.id] === b.speakerId;
                   const charNotes = (isFirst && showNotes) ? (readerNotes[b.speakerId] || []) : [];
                   return <ReaderDialogue key={b.id} block={b} ch={ch} charNotes={charNotes} goToBlock={goToBlock} />;
@@ -3887,7 +3932,7 @@ function AiAssistPanel({ onClose, blocks, characters }) {
   }, [messages, pending]);
 
   const buildContext = () => {
-    const charNames = (characters || CHARACTERS).map(c => c.name).join("、") || "(無角色)";
+    const charNames = (characters || []).map(c => c.name).join("、") || "(無角色)";
     const blockCount = (blocks || []).length;
     const lastBlocks = (blocks || []).slice(-5).map(b => {
       if (b.type === "scene") return `[場景] ${b.act || ""}`;
@@ -4026,6 +4071,61 @@ function AiAssistPanel({ onClose, blocks, characters }) {
   );
 }
 
+// ============= CHARACTER MODAL =============
+function CharacterModal({ character, onSave, onClose }) {
+  const editing = !!character;
+  const [name, setName] = React.useState(character?.name || "");
+  const [nameEn, setNameEn] = React.useState(character?.nameEn || "");
+  const [voice, setVoice] = React.useState(character?.voice || "");
+  const [role, setRole] = React.useState(character?.role || "");
+  const [relations, setRelations] = React.useState(character?.relations || "");
+  const [tone, setTone] = React.useState(character?.tone || "");
+  const [tagInput, setTagInput] = React.useState((character?.tags || []).join("、"));
+  const inputSt = {
+    width: "100%", boxSizing: "border-box", marginBottom: 10,
+    background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+    color: "var(--cream)", padding: "7px 10px",
+    fontFamily: "var(--font-body)", fontSize: 13, borderRadius: 2, outline: "none",
+  };
+  const labelSt = { fontFamily: "var(--font-body)", fontSize: 11, color: "var(--text-secondary)", display: "block", marginBottom: 3 };
+  const handleSave = () => {
+    if (!name.trim()) return alert("請輸入角色名稱");
+    const id = character?.id || name.trim().toLowerCase().replace(/[^a-z0-9一-鿿]+/g, "_") || ("char_" + Date.now().toString(36));
+    const tags = tagInput.split(/[,、\s]+/).map(t => t.trim()).filter(Boolean);
+    onSave({ id, name: name.trim(), nameEn: nameEn.trim() || name.trim(), voice: voice.trim(), role: role.trim(), relations: relations.trim(), tone: tone.trim(), tags, notes: character?.notes || [] });
+    onClose();
+  };
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(13,17,25,0.85)", display: "flex", alignItems: "center", justifyContent: "center", animation: "swFade 120ms ease" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "var(--navy-light)", border: "1px solid var(--gold-line)", borderRadius: 4, padding: "24px 28px", width: 380, maxHeight: "80vh", overflowY: "auto" }}>
+        <div style={{ fontFamily: "var(--font-serif-tc)", fontSize: 15, color: "var(--gold-bright)", marginBottom: 14, letterSpacing: "0.1em" }}>
+          <SwIcon name={editing ? "quill" : "plus"} size={13} /> {editing ? "編輯角色" : "新增角色"}
+        </div>
+        <label style={labelSt}>角色名稱 *</label>
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="例：艾爾莎" style={inputSt} autoFocus
+          onKeyDown={e => { if (e.key === "Enter") handleSave(); }} />
+        <label style={labelSt}>English Name</label>
+        <input value={nameEn} onChange={e => setNameEn(e.target.value)} placeholder="e.g. Elsa" style={inputSt} />
+        <label style={labelSt}>聲部 Voice</label>
+        <input value={voice} onChange={e => setVoice(e.target.value)} placeholder="e.g. Soprano" style={inputSt} />
+        <label style={labelSt}>身份 Role</label>
+        <input value={role} onChange={e => setRole(e.target.value)} placeholder="e.g. protagonist · princess" style={inputSt} />
+        <label style={labelSt}>關係 Relations</label>
+        <input value={relations} onChange={e => setRelations(e.target.value)} placeholder="e.g. 羅恩格林之妻" style={inputSt} />
+        <label style={labelSt}>口吻 Tone</label>
+        <input value={tone} onChange={e => setTone(e.target.value)} placeholder="角色說話風格描述" style={inputSt} />
+        <label style={labelSt}>標籤 Tags（以「、」分隔）</label>
+        <input value={tagInput} onChange={e => setTagInput(e.target.value)} placeholder="例：純潔、夢境、信任" style={inputSt} />
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+          <SwBtn icon="close" size="sm" onClick={onClose}>取消</SwBtn>
+          <SwBtn icon={editing ? "check" : "plus"} size="sm" onClick={handleSave}>{editing ? "儲存" : "新增"}</SwBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============= APP =============
 function NewWorkModal({ onClose, onCreated }) {
   const [title, setTitle] = React.useState("");
@@ -4071,7 +4171,7 @@ function NewWorkModal({ onClose, onCreated }) {
   );
 }
 
-function WorkSwitcher({ currentId, onSwitch, onNewWork, onDeleteWork }) {
+function WorkSwitcher({ currentId, onSwitch, workIndex, onNewWork, onDeleteWork }) {
   return (
     <div style={{ display: "flex", gap: 4, alignItems: "center", marginRight: 8 }}>
       <select value={currentId} onChange={e => onSwitch(e.target.value)}
@@ -4084,7 +4184,7 @@ function WorkSwitcher({ currentId, onSwitch, onNewWork, onDeleteWork }) {
           backgroundPosition: "calc(100% - 12px) 50%, calc(100% - 7px) 50%",
           backgroundSize: "5px 5px", backgroundRepeat: "no-repeat",
         }}>
-        {WORK_INDEX.map(w => <option key={w.id} value={w.id}>{w.title}{w.titleEn ? `（${w.titleEn}）` : ""}{w._custom ? " *" : ""}</option>)}
+        {(workIndex || []).map(w => <option key={w.id} value={w.id}>{w.title}{w.titleEn ? `（${w.titleEn}）` : ""}{w._custom ? " *" : ""}</option>)}
       </select>
       <button onClick={onNewWork} title="新增作品" style={{
         background: "var(--navy-deep)", border: "1px solid var(--gold-line)",
@@ -4092,7 +4192,7 @@ function WorkSwitcher({ currentId, onSwitch, onNewWork, onDeleteWork }) {
         cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 14, fontFamily: "var(--font-mono)", padding: 0,
       }}>+</button>
-      {WORK_INDEX.find(w => w.id === currentId)?._custom && (
+      {(workIndex || []).find(w => w.id === currentId)?._custom && (
         <button onClick={onDeleteWork} title="刪除此自訂作品" style={{
           background: "transparent", border: "1px solid rgba(196,96,79,0.3)",
           color: "var(--danger,#c4604f)", width: 26, height: 26, borderRadius: 2,
@@ -4105,23 +4205,41 @@ function WorkSwitcher({ currentId, onSwitch, onNewWork, onDeleteWork }) {
 }
 
 function App() {
-  const [tab, setTab] = React.useState("write"); // Phase 17 v2-2: Write is now the default first TAB
+  const [tab, setTab] = React.useState("write");
   const [currentWork, setCurrentWork] = React.useState(() => localStorage.getItem("sw_last_work") || WORKS[0]?.id || "lohengrin");
   const [loading, setLoading] = React.useState(false);
+
+  // Per-work React state — initialized from globals set by main.jsx's loadAllData
+  const [workMeta, setWorkMeta] = React.useState(() => WORKS[0] || null);
+  const [characters, setCharacters] = React.useState(() => [...CHARACTERS]);
+  const [charColors, setCharColors] = React.useState(() => ({ ...CHAR_COLORS }));
+  const [script, setScript] = React.useState(() => [...SCRIPT]);
+  const [workIndex, setWorkIndex] = React.useState(() => [...WORK_INDEX]);
+
   const [blocks, setBlocks] = React.useState(() => {
-    const b = loadBlocksFromStorage() || SCRIPT;
-    populateCharsFromBlocks(b); // For custom works on initial load
+    const initWorkId = localStorage.getItem("sw_last_work") || WORKS[0]?.id || "lohengrin";
+    const b = loadBlocksFromStorage(initWorkId) || SCRIPT;
+    const customChars = loadCustomCharacters(initWorkId);
+    const baseChars = customChars || CHARACTERS;
+    const { characters: ch, charColors: cc } = populateCharsFromBlocks(b, baseChars);
     return b;
   });
   const [showNewWork, setShowNewWork] = React.useState(false);
   const [showAI, setShowAI] = React.useState(false);
   const goBack = () => { window.location.href = "../../index.html"; };
 
-  // Persist blocks to localStorage on change (debounced)
-  const saveRef = React.useRef(debounce(saveBlocksToStorage, 800));
+  // Re-sync characters state after initial populateCharsFromBlocks
+  React.useEffect(() => {
+    setCharacters([...CHARACTERS]);
+    setCharColors({ ...CHAR_COLORS });
+  }, []);
+
+  // Persist blocks to localStorage on change (debounced) — uses currentWork via ref
+  const workIdRef = React.useRef(currentWork);
+  React.useEffect(() => { workIdRef.current = currentWork; }, [currentWork]);
+  const saveRef = React.useRef(debounce((b) => saveBlocksToStorage(b, workIdRef.current), 800));
   React.useEffect(() => { saveRef.current(blocks); }, [blocks]);
 
-  // localStorage bridge: search → editor block focus
   const goToBlock = (blockId) => {
     localStorage.setItem("sw_focusBlock", blockId);
     setTab("editor");
@@ -4130,12 +4248,18 @@ function App() {
   const switchWork = async (workId) => {
     if (workId === currentWork) return;
     setLoading(true);
-    // Flush pending debounced save before work switch to prevent writing to wrong key
     saveRef.current.flush(blocks);
     try {
-      await loadAllData(workId);
-      const loaded = loadBlocksFromStorage() || SCRIPT;
-      populateCharsFromBlocks(loaded);
+      const data = await loadAllData(workId);
+      const loaded = loadBlocksFromStorage(workId) || data.script;
+      const customChars = loadCustomCharacters(workId);
+      const baseChars = customChars || data.characters;
+      const { characters: ch, charColors: cc } = populateCharsFromBlocks(loaded, baseChars);
+      setWorkMeta(data.works[0] || null);
+      setCharacters(ch);
+      setCharColors(cc);
+      setScript(data.script);
+      setWorkIndex([...WORK_INDEX]);
       setBlocks(loaded);
       setCurrentWork(workId);
       localStorage.setItem("sw_last_work", workId);
@@ -4145,21 +4269,25 @@ function App() {
   };
 
   const deleteCurrentWork = () => {
-    const entry = WORK_INDEX.find(w => w.id === currentWork);
+    const entry = workIndex.find(w => w.id === currentWork);
     if (!entry?._custom) return;
     if (!window.confirm(`確定刪除自訂作品「${entry.title}」？\n草稿與筆記也會一併清除。`)) return;
-    // Remove from localStorage
     const customs = getCustomWorks().filter(w => w.id !== currentWork);
     saveCustomWorks(customs);
     localStorage.removeItem(`blocks_${currentWork}`);
     localStorage.removeItem(`notes_${currentWork}`);
+    localStorage.removeItem(`characters_${currentWork}`);
     localStorage.removeItem(`sw_write_draft_v1_${currentWork}`);
     localStorage.removeItem(`sw_slot_locks_v1_${currentWork}`);
-    // Remove from WORK_INDEX
     WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
-    // Switch to first remaining work
+    setWorkIndex([...WORK_INDEX]);
     const fallback = WORK_INDEX[0]?.id || "lohengrin";
     switchWork(fallback);
+  };
+
+  const handleWorkCreated = (newWorkId) => {
+    setWorkIndex([...WORK_INDEX]);
+    switchWork(newWorkId);
   };
 
   return (
@@ -4170,9 +4298,10 @@ function App() {
     }}>
       <SwHeader tab={tab} setTab={setTab} onBack={goBack} onAI={() => setShowAI(true)}
         workSwitcher={<WorkSwitcher currentId={currentWork} onSwitch={switchWork}
+          workIndex={workIndex}
           onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />} />
-      {showNewWork && <NewWorkModal onClose={() => setShowNewWork(false)} onCreated={switchWork} />}
-      {showAI && <AiAssistPanel onClose={() => setShowAI(false)} blocks={blocks} characters={CHARACTERS} />}
+      {showNewWork && <NewWorkModal onClose={() => setShowNewWork(false)} onCreated={handleWorkCreated} />}
+      {showAI && <AiAssistPanel onClose={() => setShowAI(false)} blocks={blocks} characters={characters} />}
       {loading && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 200,
@@ -4183,10 +4312,10 @@ function App() {
         }}>Loading…</div>
       )}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", animation: "swFade 200ms ease" }} key={tab + currentWork}>
-        {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={CHARACTERS} workId={currentWork} />}
-        {tab === "search" && <SearchView blocks={blocks} characters={CHARACTERS} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
-        {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} />}
-        {tab === "reader" && <ReaderView blocks={blocks} goToBlock={goToBlock} />}
+        {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={characters} workId={currentWork} />}
+        {tab === "search" && <SearchView blocks={blocks} characters={characters} charColors={charColors} work={workMeta} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
+        {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} characters={characters} charColors={charColors} setCharacters={setCharacters} setCharColors={setCharColors} script={script} workId={currentWork} />}
+        {tab === "reader" && <ReaderView blocks={blocks} goToBlock={goToBlock} work={workMeta} characters={characters} charColors={charColors} workId={currentWork} />}
       </div>
     </div>
   );
