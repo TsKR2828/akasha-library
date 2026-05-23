@@ -8,6 +8,7 @@
 import React from "react";
 import WriteTab from "./components/WriteTab.jsx";
 import { useCharactersOfWork } from "./hooks/useCharactersOfWork.js";
+import { parsePlainScript } from "./lib/parser.js";
 
 // ============= DATA (loaded from ./data/ JSONL via Vite public folder) =============
 const DATA_BASE = "./data";
@@ -17,6 +18,15 @@ let CHARACTERS = [];
 let SCRIPT = [];
 
 let SCENE_SUBTITLES = {};
+
+// Default seed for new custom works — parsed synchronously in switchWork
+// to guarantee blocks persist before any debounce timing race.
+// (Comment line intentionally omitted: it's lost in blocks round-trip anyway.)
+const DEFAULT_SEED = `#scene：第一幕 · 第一場
+旁白：（在此描述場景氛圍與舞台指示。）
+角色A：對白範例——直接輸入角色名加冒號。
+角色B：（表情）第二位角色的台詞。
+#bgm：背景音樂標記`;
 
 const PREDEFINED_COLORS = {
   lohengrin: "#c9a86a",
@@ -4218,9 +4228,18 @@ function App() {
 
   const [blocks, setBlocks] = React.useState(() => {
     const initWorkId = localStorage.getItem("sw_last_work") || WORKS[0]?.id || "lohengrin";
-    const b = loadBlocksFromStorage(initWorkId) || SCRIPT;
+    const fromStorage = loadBlocksFromStorage(initWorkId);
+    let b = fromStorage || SCRIPT;
     const customChars = loadCustomCharacters(initWorkId);
     const baseChars = customChars || CHARACTERS;
+    // Seed: empty blocks (new custom work) → parse DEFAULT_SEED synchronously
+    if (b.length === 0) {
+      b = parsePlainScript(DEFAULT_SEED, baseChars);
+      saveBlocksToStorage(b, initWorkId);
+    } else if (!fromStorage) {
+      // First-time seed for server works
+      saveBlocksToStorage(b, initWorkId);
+    }
     const { characters: ch, charColors: cc } = populateCharsFromBlocks(b, baseChars);
     return b;
   });
@@ -4235,9 +4254,12 @@ function App() {
   }, []);
 
   // Persist blocks to localStorage on change (debounced) — uses currentWork via ref
+  // Guard: skip empty blocks to prevent overwriting seed data with [] during switch transitions
   const workIdRef = React.useRef(currentWork);
   React.useEffect(() => { workIdRef.current = currentWork; }, [currentWork]);
-  const saveRef = React.useRef(debounce((b) => saveBlocksToStorage(b, workIdRef.current), 800));
+  const saveRef = React.useRef(debounce((b) => {
+    if (Array.isArray(b) && b.length > 0) saveBlocksToStorage(b, workIdRef.current);
+  }, 800));
   React.useEffect(() => { saveRef.current(blocks); }, [blocks]);
 
   const goToBlock = (blockId) => {
@@ -4248,12 +4270,24 @@ function App() {
   const switchWork = async (workId) => {
     if (workId === currentWork) return;
     setLoading(true);
-    saveRef.current.flush(blocks);
+    // Synchronously persist current blocks before switching (debounce may not have flushed)
+    saveRef.current.cancel();
+    saveBlocksToStorage(blocks, currentWork);
     try {
       const data = await loadAllData(workId);
-      const loaded = loadBlocksFromStorage(workId) || data.script;
+      const fromStorage = loadBlocksFromStorage(workId);
+      let loaded = fromStorage || data.script;
       const customChars = loadCustomCharacters(workId);
       const baseChars = customChars || data.characters;
+      // Seed: custom work with no data → parse DEFAULT_SEED synchronously
+      // (bypasses the fragile WriteTab forward-sync → debounce chain)
+      if (loaded.length === 0) {
+        loaded = parsePlainScript(DEFAULT_SEED, baseChars);
+        saveBlocksToStorage(loaded, workId);
+      } else if (!fromStorage) {
+        // First-time seed for server works: persist so quick switch-away won't lose data
+        saveBlocksToStorage(loaded, workId);
+      }
       const { characters: ch, charColors: cc } = populateCharsFromBlocks(loaded, baseChars);
       setWorkMeta(data.works[0] || null);
       setCharacters(ch);

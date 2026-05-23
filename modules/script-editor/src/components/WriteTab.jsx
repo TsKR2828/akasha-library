@@ -101,7 +101,9 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     if (!setBlocks) return;
     if (!initializedRef.current) {
       initializedRef.current = true;
-      return; // 首次 mount 跳過：避免 SEED/draft 立刻吞掉 Lohengrin
+      // 首次 mount：blocks 有資料時跳過（避免 SEED/draft 吞掉 server data）
+      // 但 blocks 為空時立即同步（新建作品需要 SEED 寫入 blocks）
+      if (Array.isArray(blocks) && blocks.length > 0) return;
     }
     if (content === lastReverseRef.current) {
       // 這次 content 是 reverse 推進來的，不要 echo 回去
