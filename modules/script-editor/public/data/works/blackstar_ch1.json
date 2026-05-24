@@ -1,0 +1,34 @@
+{
+  "work_id": "blackstar_ch1",
+  "title_original": "Back in the BLACK",
+  "title_zh": "黑星劇場 第一章",
+  "author": "Donuts Co. Ltd.",
+  "author_id": "donuts",
+  "language": "Japanese",
+  "country_or_region": "Japan",
+  "period": "Contemporary",
+  "genre": [
+    "visual novel",
+    "music",
+    "drama",
+    "game script"
+  ],
+  "premiere_year": 2019,
+  "acts": 6,
+  "acts_label": "共通/SideA/SideB + EX + 関係値",
+  "setting": "STARLESS 餐廳劇場",
+  "synopsis_zh": "",
+  "copyright_status": "copyrighted",
+  "copyright_note": "Black Star -Theater Starless- (c) Donuts Co. Ltd.",
+  "source_name": "劇情翻譯 Excel",
+  "source_url": "",
+  "tags": [
+    "劇場",
+    "表演",
+    "團隊",
+    "對立",
+    "成長",
+    "羈絆"
+  ],
+  "scene_subtitles": {}
+}

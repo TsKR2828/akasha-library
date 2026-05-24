@@ -1435,10 +1435,15 @@
     function renderFileInfo(size) {
       const jsonValid = state.mode === "json" ? (state.jsonError ? "格式錯誤" : "有效") : "—";
       const score = state.parsedJson && isScoreJson(state.parsedJson) ? "是" : "—";
+      const text = state.content || "";
+      const charCount = text.replace(/[\s\n]/g, "").length;
+      const lineCount = text ? text.split("\n").length : 0;
+      const readingMin = Math.max(1, Math.round(charCount / 400));
       fileInfo.innerHTML = `
         <div class="key">檔名</div><div>${escapeHtml(state.filename || "尚未開啟")}</div>
         <div class="key">類型</div><div>${escapeHtml(state.extension || "—")}</div>
         <div class="key">大小</div><div>${formatBytes(size ?? state.content.length)}</div>
+        <div class="key">字數</div><div>${charCount.toLocaleString()} 字 · ${lineCount} 行 · ≈${readingMin} 分鐘</div>
         <div class="key">JSON</div><div>${jsonValid}</div>
         <div class="key">Score</div><div>${score}</div>
       `;

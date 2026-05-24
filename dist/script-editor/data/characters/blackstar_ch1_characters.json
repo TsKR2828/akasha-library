@@ -1,0 +1,334 @@
+[
+  {
+    "character_id": "kei",
+    "work_id": "blackstar_ch1",
+    "name_original": "ケイ",
+    "name_zh": "ケイ",
+    "speaker_id": "kei",
+    "role_type": [
+      "protagonist",
+      "leader"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "kei_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "ginsei",
+    "work_id": "blackstar_ch1",
+    "name_original": "銀星",
+    "name_zh": "銀星",
+    "speaker_id": "ginsei",
+    "role_type": [
+      "protagonist",
+      "performer"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "ginsei_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "mizuki",
+    "work_id": "blackstar_ch1",
+    "name_original": "ミズキ",
+    "name_zh": "ミズキ",
+    "speaker_id": "mizuki",
+    "role_type": [
+      "main",
+      "performer"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "mizuki_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "rico",
+    "work_id": "blackstar_ch1",
+    "name_original": "リコ",
+    "name_zh": "リコ",
+    "speaker_id": "rico",
+    "role_type": [
+      "main",
+      "performer"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "rico_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "yoshino",
+    "work_id": "blackstar_ch1",
+    "name_original": "吉野",
+    "name_zh": "吉野",
+    "speaker_id": "yoshino",
+    "role_type": [
+      "main",
+      "singer"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "yoshino_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "sotetsu",
+    "work_id": "blackstar_ch1",
+    "name_original": "ソテツ",
+    "name_zh": "ソテツ",
+    "speaker_id": "sotetsu",
+    "role_type": [
+      "main",
+      "performer"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "sotetsu_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "rindou",
+    "work_id": "blackstar_ch1",
+    "name_original": "リンドウ",
+    "name_zh": "リンドウ",
+    "speaker_id": "rindou",
+    "role_type": [
+      "supporting",
+      "performer"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "rindou_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "kokuyou",
+    "work_id": "blackstar_ch1",
+    "name_original": "黒曜",
+    "name_zh": "黒曜",
+    "speaker_id": "kokuyou",
+    "role_type": [
+      "supporting"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "kokuyou_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "mokuren",
+    "work_id": "blackstar_ch1",
+    "name_original": "モクレン",
+    "name_zh": "モクレン",
+    "speaker_id": "mokuren",
+    "role_type": [
+      "supporting"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "mokuren_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "satsuki",
+    "work_id": "blackstar_ch1",
+    "name_original": "風見咲月",
+    "name_zh": "風見咲月",
+    "speaker_id": "satsuki",
+    "role_type": [
+      "protagonist",
+      "player_character"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "satsuki_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "haseyama",
+    "work_id": "blackstar_ch1",
+    "name_original": "羽瀬山",
+    "name_zh": "羽瀬山",
+    "speaker_id": "haseyama",
+    "role_type": [
+      "supporting",
+      "staff"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "haseyama_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "akira",
+    "work_id": "blackstar_ch1",
+    "name_original": "晶",
+    "name_zh": "晶",
+    "speaker_id": "akira",
+    "role_type": [
+      "supporting"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "akira_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "shinju",
+    "work_id": "blackstar_ch1",
+    "name_original": "真珠",
+    "name_zh": "真珠",
+    "speaker_id": "shinju",
+    "role_type": [
+      "supporting"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "shinju_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "gui",
+    "work_id": "blackstar_ch1",
+    "name_original": "ギィ",
+    "name_zh": "ギィ",
+    "speaker_id": "gui",
+    "role_type": [
+      "supporting"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "gui_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "female_guest_1",
+    "work_id": "blackstar_ch1",
+    "name_original": "女性客1",
+    "name_zh": "女性客1",
+    "speaker_id": "female_guest_1",
+    "role_type": [
+      "minor"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "female_guest_1_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "female_guest_2",
+    "work_id": "blackstar_ch1",
+    "name_original": "女性客2",
+    "name_zh": "女性客2",
+    "speaker_id": "female_guest_2",
+    "role_type": [
+      "minor"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "female_guest_2_neutral",
+      "available_portraits": []
+    }
+  },
+  {
+    "character_id": "mystery",
+    "work_id": "blackstar_ch1",
+    "name_original": "? ? ?",
+    "name_zh": "? ? ?",
+    "speaker_id": "mystery",
+    "role_type": [
+      "minor"
+    ],
+    "voice_type": "",
+    "relationship_tags": [],
+    "plot_function": [],
+    "voice_note": "",
+    "tags": [],
+    "avg_assets": {
+      "default_portrait": "mystery_neutral",
+      "available_portraits": []
+    }
+  }
+]

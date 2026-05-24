@@ -1,5 +1,5 @@
 import React from "react";
-import { parsePlainScript, blocksToPlainScript, computeStats, getLineCol } from "../lib/parser.js";
+import { parsePlainScript, blocksToPlainScript, diffMergeBlocks, computeStats, getLineCol } from "../lib/parser.js";
 import { useVoiceTTS } from "../hooks/useVoiceTTS.js";
 import BgmPanel from "./BgmPanel.jsx";
 
@@ -80,6 +80,49 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
   const stats = React.useMemo(() => computeStats(parsedBlocks), [parsedBlocks]);
   const { line, col } = React.useMemo(() => getLineCol(content, caret), [content, caret]);
 
+  /* ---------- content-level stats (raw textarea) ---------- */
+  const contentStats = React.useMemo(() => {
+    const lines = content.split('\n');
+    const lineCount = lines.length;
+    const charCount = content.replace(/[\s\n]/g, '').length;
+    const readingMin = Math.max(1, Math.round(charCount / 400));
+    return { lineCount, charCount, readingMin };
+  }, [content]);
+
+  /* ---------- scene outline for structure panel ---------- */
+  const sceneOutline = React.useMemo(() => {
+    const sections = [];
+    let cur = { scene: null, dialogues: 0, narrations: 0, commands: 0 };
+    for (const b of parsedBlocks) {
+      if (b.type === 'scene') {
+        if (cur.scene || cur.dialogues + cur.narrations > 0) sections.push({ ...cur });
+        cur = { scene: b, dialogues: 0, narrations: 0, commands: 0 };
+      } else {
+        if (b.type === 'dialogue') cur.dialogues++;
+        else if (b.type === 'narration') cur.narrations++;
+        else if (b.type === 'command') cur.commands++;
+      }
+    }
+    if (cur.scene || cur.dialogues + cur.narrations > 0) sections.push({ ...cur });
+    return sections;
+  }, [parsedBlocks]);
+
+  /* ---------- jump to line (for outline clicks) ---------- */
+  const jumpToLine = React.useCallback((lineNum) => {
+    const ta = taRef.current;
+    if (!ta) return;
+    const lines = content.split('\n');
+    let offset = 0;
+    for (let i = 0; i < Math.min(lineNum - 1, lines.length); i++) {
+      offset += lines[i].length + 1;
+    }
+    ta.focus();
+    ta.setSelectionRange(offset, offset);
+    setCaret(offset);
+    const lh = parseFloat(getComputedStyle(ta).lineHeight) || 27;
+    ta.scrollTop = Math.max(0, (lineNum - 1) * lh - ta.clientHeight / 3);
+  }, [content]);
+
   /* Voice TTS (v2-5) */
   const voice = useVoiceTTS();
 
@@ -115,7 +158,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     setSyncStatus("pushing");
     forwardTimer.current = setTimeout(() => {
       syncTokenRef.current++;
-      setBlocks(parsedBlocks);
+      setBlocks(diffMergeBlocks(blocks, parsedBlocks));
       setSyncStatus("idle");
     }, 350);
     return () => clearTimeout(forwardTimer.current);
@@ -157,12 +200,18 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
 
   const allSpeakers = React.useMemo(() => {
     const seen = [];
+    // Characters from the character table first (stable source)
+    for (const c of (characters || [])) {
+      const name = c.name || c.nameEn || c.id;
+      if (name && !seen.includes(name)) seen.push(name);
+    }
+    // Then speakers from parsed text (catches new/unbound names)
     for (const b of parsedBlocks) {
       if (b.type === "dialogue" && b.speaker && !seen.includes(b.speaker))
         seen.push(b.speaker);
     }
     return seen;
-  }, [parsedBlocks]);
+  }, [parsedBlocks, characters]);
 
   const dynamicSlots = React.useMemo(() => {
     const slots = Array(7).fill(null);
@@ -344,7 +393,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
           fontVariant: "small-caps", textTransform: "uppercase",
         }}>Scriptorium · Calamus</span>
         <span style={{ fontSize: 11, color: "var(--text-tertiary)", letterSpacing: "0.06em" }}>
-          {stats.total} blocks · {stats.speakers.length} speakers · {stats.totalChars} chars
+          {contentStats.charCount.toLocaleString()} 字 · {contentStats.lineCount} 行 · ≈{contentStats.readingMin} 分鐘
         </span>
         <span style={{ flex: 1 }} />
         <button
@@ -380,7 +429,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         borderBottom: "1px solid var(--navy-line)",
         borderLeft: "1px solid var(--navy-line)",
       }}>
-        {["blocks", "stats", "voice", "bgm", "layout"].map(id => {
+        {["blocks", "stats", "outline", "voice", "bgm"].map(id => {
           const active = previewTab === id;
           return (
             <button
@@ -536,7 +585,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         {previewTab === "stats"  && <StatsPreview stats={stats} />}
         {previewTab === "voice"  && <VoicePanel blocks={parsedBlocks} voice={voice} />}
         {previewTab === "bgm"    && <BgmPanel blocks={parsedBlocks} />}
-        {previewTab === "layout" && <LayoutPlaceholder />}
+        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} onJump={jumpToLine} activeLine={line} />}
       </div>
 
       {/* ───── status bar (row 4, spans both cols) ───── */}
@@ -1076,22 +1125,126 @@ function SectionHead({ latin, zh }) {
   );
 }
 
-/* ============= Layout Placeholder ============= */
-function LayoutPlaceholder() {
+/* ============= Scene Outline Panel ============= */
+function OutlinePanel({ outline, onJump, activeLine }) {
+  const sceneCount = outline.filter(s => s.scene).length;
+  const totalDlg = outline.reduce((a, s) => a + s.dialogues, 0);
+  const totalNar = outline.reduce((a, s) => a + s.narrations, 0);
+
+  if (!outline.length || sceneCount === 0) {
+    return (
+      <div style={{ padding: "40px 14px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, lineHeight: 1.7 }}>
+        <div style={{
+          fontFamily: "var(--font-serif-en)", fontSize: 10,
+          letterSpacing: "0.22em", color: "var(--gold-dim)",
+          textTransform: "uppercase", marginBottom: 6,
+        }}>Scene Outline</div>
+        <div>尚無場景結構。</div>
+        <div style={{ marginTop: 12, fontSize: 11 }}>
+          在左側使用 <code style={inlineCode}>#scene：場景名稱</code><br />
+          建立劇本大綱，即可在此導航。
+        </div>
+      </div>
+    );
+  }
+
+  // Find active scene index based on cursor line
+  let activeIdx = -1;
+  for (let i = outline.length - 1; i >= 0; i--) {
+    if (outline[i].scene && outline[i].scene._line <= activeLine) {
+      activeIdx = i;
+      break;
+    }
+  }
+
+  let sceneNum = 0;
   return (
-    <div style={{
-      padding: "40px 14px", textAlign: "center",
-      color: "var(--text-tertiary)", fontSize: 12, lineHeight: 1.7,
-    }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <SectionHead latin="Scene Outline" zh={`場景大綱 · ${sceneCount}`} />
+
+      {/* summary bar */}
       <div style={{
-        fontFamily: "var(--font-serif-en)", fontSize: 10,
-        letterSpacing: "0.22em", color: "var(--gold-dim)",
-        textTransform: "uppercase", marginBottom: 6,
-      }}>Layout Preview</div>
-      <div>v2-5 起逐步上線</div>
-      <div style={{ marginTop: 12, fontSize: 11 }}>
-        排版預覽（A4 預印 + Voice/BGM 註記）<br />
-        將從 Reader TAB 邏輯沿用 + 加上 Voice/BGM badge。
+        display: "flex", gap: 12,
+        padding: "6px 10px",
+        background: "rgba(201,168,106,0.06)",
+        border: "1px solid var(--gold-line)",
+        borderRadius: 3,
+        fontSize: 11, color: "var(--text-tertiary)",
+        fontFamily: "var(--font-serif-en)",
+        letterSpacing: "0.08em",
+      }}>
+        <span>{sceneCount} scenes</span>
+        <span>{totalDlg} dialogues</span>
+        <span>{totalNar} narrations</span>
+      </div>
+
+      {/* scene list */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        {outline.map((section, i) => {
+          if (!section.scene) {
+            // Blocks before the first scene
+            if (section.dialogues + section.narrations > 0) {
+              return (
+                <div key={i} style={{
+                  padding: "4px 10px",
+                  fontSize: 11, color: "var(--text-tertiary)",
+                  fontFamily: "var(--font-serif-tc)",
+                  fontStyle: "italic",
+                }}>
+                  （序 · {section.dialogues} 對白 · {section.narrations} 旁白）
+                </div>
+              );
+            }
+            return null;
+          }
+          sceneNum++;
+          const active = i === activeIdx;
+          return (
+            <button
+              key={i}
+              onClick={() => onJump(section.scene._line)}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "7px 10px",
+                background: active ? "var(--gold-glow)" : "var(--navy-deep)",
+                border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
+                borderLeft: `3px solid ${active ? "var(--gold)" : "var(--gold-line)"}`,
+                borderRadius: 3,
+                cursor: "pointer",
+                textAlign: "left",
+                width: "100%",
+                transition: "background 150ms, border-color 150ms",
+              }}
+            >
+              <span style={{
+                fontFamily: "var(--font-serif-en)", fontSize: 10,
+                color: active ? "var(--gold-bright)" : "var(--gold-dim)",
+                fontVariant: "small-caps", letterSpacing: "0.14em",
+                minWidth: 20,
+              }}>{sceneNum}</span>
+              <span style={{
+                flex: 1,
+                fontFamily: "var(--font-serif-tc)", fontSize: 12.5,
+                color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                fontWeight: active ? 600 : 400,
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>{section.scene.act}{section.scene.subtitle ? ` ${section.scene.subtitle}` : ""}</span>
+              <span style={{
+                fontFamily: "var(--font-serif-en)", fontSize: 10,
+                color: "var(--text-tertiary)", letterSpacing: "0.06em",
+                whiteSpace: "nowrap",
+              }}>
+                {section.dialogues > 0 ? `${section.dialogues}d` : ""}
+                {section.dialogues > 0 && section.narrations > 0 ? " · " : ""}
+                {section.narrations > 0 ? `${section.narrations}n` : ""}
+              </span>
+              <span style={{
+                fontFamily: "var(--font-mono)", fontSize: 9.5,
+                color: "var(--text-tertiary)",
+              }}>:{section.scene._line}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

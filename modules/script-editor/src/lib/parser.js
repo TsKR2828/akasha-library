@@ -170,6 +170,124 @@ export function blocksToPlainScript(blocks, characters = []) {
   return out.join("\n");
 }
 
+/* ---------- diff-merge: preserve metadata across Write ↔ Editor round-trip ----------
+   Given the current rich blocks (old) and freshly-parsed blocks from the textarea (next),
+   produce a merged array that keeps old metadata (lineId, tags, avg, original, id)
+   while adopting text/speaker changes from the parsed version.
+
+   Algorithm: ordered forward-scan with lookahead.
+   For each new block, try to match an old block by type + key content:
+     - dialogue: same speaker name
+     - narration: first 10 chars of text
+     - scene: same act label
+     - command: same command name
+   On match → merge (keep old metadata, update text).
+   No match → insert as new block (no metadata to lose).
+   Old blocks that nobody matched → they were deleted.                          */
+export function diffMergeBlocks(oldBlocks, newBlocks) {
+  if (!Array.isArray(oldBlocks) || oldBlocks.length === 0) return newBlocks;
+  if (!Array.isArray(newBlocks) || newBlocks.length === 0) return newBlocks;
+
+  const LOOKAHEAD = 10; // how far ahead in old[] to search for a match
+  let oldPtr = 0;       // next unmatched position in old[]
+  const used = new Set();
+  const result = [];
+
+  for (const nb of newBlocks) {
+    let matchIdx = -1;
+
+    // 1. Try exact position first
+    if (oldPtr < oldBlocks.length && !used.has(oldPtr) && _isMatch(oldBlocks[oldPtr], nb)) {
+      matchIdx = oldPtr;
+    } else {
+      // 2. Lookahead window: scan forward from oldPtr
+      const end = Math.min(oldPtr + LOOKAHEAD, oldBlocks.length);
+      for (let j = oldPtr; j < end; j++) {
+        if (used.has(j)) continue;
+        if (_isMatch(oldBlocks[j], nb)) {
+          matchIdx = j;
+          break;
+        }
+      }
+      // 3. If still no match, try look-behind (user may have inserted lines above)
+      if (matchIdx < 0 && oldPtr > 0) {
+        const start = Math.max(0, oldPtr - 3);
+        for (let j = start; j < oldPtr; j++) {
+          if (used.has(j)) continue;
+          if (_isMatch(oldBlocks[j], nb)) {
+            matchIdx = j;
+            break;
+          }
+        }
+      }
+    }
+
+    if (matchIdx >= 0) {
+      used.add(matchIdx);
+      result.push(_merge(oldBlocks[matchIdx], nb));
+      // advance pointer past the match
+      if (matchIdx >= oldPtr) oldPtr = matchIdx + 1;
+    } else {
+      result.push(nb); // genuinely new block
+    }
+  }
+
+  return result;
+}
+
+/* Match predicate: same type + key content overlap.
+   IMPORTANT: field priority for text comparison must be text → zh → original,
+   matching the output order of blocksToPlainScript (b.text || b.zh || b.original).
+   This ensures the compared strings are the same text the user sees in the textarea. */
+function _isMatch(old, nw) {
+  if (old.type !== nw.type) return false;
+  switch (old.type) {
+    case "dialogue": {
+      const os = old.speaker || old.speakerId || "";
+      const ns = nw.speaker || nw.speakerId || "";
+      if (!os || !ns) return false;
+      if (os !== ns) return false;
+      // Same speaker — further check text overlap to disambiguate
+      // consecutive lines from the same speaker
+      const ot = (old.text || old.zh || old.original || "").substring(0, 8);
+      const nt = (nw.text || nw.zh || "").substring(0, 8);
+      if (ot && nt && ot !== nt) {
+        // texts diverge — still match if they share ≥ 4 leading chars
+        let common = 0;
+        while (common < ot.length && common < nt.length && ot[common] === nt[common]) common++;
+        if (common < 4 && ot.length >= 4 && nt.length >= 4) return false;
+      }
+      return true;
+    }
+    case "narration": {
+      const ot = (old.text || old.zh || "").substring(0, 10);
+      const nt = (nw.text || nw.zh || "").substring(0, 10);
+      return ot === nt;
+    }
+    case "scene":
+      // subtitle is appended to act during blocksToPlainScript round-trip,
+      // so parsed act may be "Act 1 The Trial" while old act is "Act 1"
+      return (nw.act || "").startsWith(old.act || "") ||
+             (old.act || "") === (nw.act || "");
+    case "command":
+      return (old.command || "") === (nw.command || "");
+    default:
+      return false;
+  }
+}
+
+/* Merge: old metadata + new text content */
+function _merge(old, nw) {
+  return {
+    ...nw,                                       // base: new parsed shape
+    id:       old.id       || nw.id,             // preserve stable ID
+    lineId:   old.lineId   || nw.lineId   || "", // preserve JSONL line ID
+    original: old.original || nw.original || "", // preserve foreign-language source
+    tags:     (old.tags && old.tags.length > 0) ? old.tags : (nw.tags || []),
+    avg:      old.avg      || nw.avg      || { sprite: "", position: "center", bg: "", bgm: "", sfx: "" },
+  };
+}
+
 /* ---------- statistics ---------- */
 export function computeStats(blocks) {
   const counts = { dialogue: 0, narration: 0, scene: 0, choice: 0, note: 0, command: 0 };

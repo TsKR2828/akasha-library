@@ -173,7 +173,7 @@ for (const rel of files) {
   if (rel === 'sw.js') {
     // Bump cache version with build mode + timestamp
     let sw = readFileSync(src, 'utf-8');
-    const buildId = `akasha-library-v4-${MODE}`;
+    const buildId = `akasha-library-v6-${MODE}`;
     sw = sw.replace(/const CACHE_NAME = '[^']+';/, `const CACHE_NAME = '${buildId}';`);
     writeFileSync(dst, sw, 'utf-8');
     transformed++;

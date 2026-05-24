@@ -402,14 +402,15 @@ function populateCharsFromBlocks(loadedBlocks, existingChars = []) {
   }
   const seen = new Map();
   loadedBlocks.forEach(b => {
-    if (b.type === "dialogue" && b.speakerId && !seen.has(b.speakerId)) {
-      seen.set(b.speakerId, {
-        id: b.speakerId, name: b.speaker || b.speakerId,
-        nameEn: b.speaker || b.speakerId,
-        voice: "", role: "", relations: "", tone: "",
-        tags: [], notes: [],
-      });
-    }
+    if (b.type !== "dialogue") return;
+    const id = b.speakerId || b.speaker;
+    if (!id || seen.has(id)) return;
+    seen.set(id, {
+      id, name: b.speaker || b.speakerId || id,
+      nameEn: b.speaker || b.speakerId || id,
+      voice: "", role: "", relations: "", tone: "",
+      tags: [], notes: [],
+    });
   });
   const chars = [...seen.values()];
   const colors = {};
@@ -3894,7 +3895,7 @@ function ReaderDialogue({ block, ch, charNotes = [], goToBlock }) {
         marginBottom: 14,
         cursor: "pointer",
         transition: "color 150ms",
-      }}>{ch?.name}</div>
+      }}>{ch?.name || block.speaker || block.speakerId || "???"}</div>
 
       {/* Notes — shown at character's first appearance when toggled on */}
       {charNotes.length > 0 && (
@@ -4312,6 +4313,46 @@ function App() {
   React.useEffect(() => {
     setCharacters([...CHARACTERS]);
     setCharColors({ ...CHAR_COLORS });
+  }, []);
+
+  // Shell import: receive file from parent via postMessage
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.origin !== location.origin) return;
+      if (e.data?.type !== "akasha-open-script") return;
+      const { filename, content } = e.data;
+      if (!content) return;
+      const ext = (filename || "").split(".").pop().toLowerCase();
+      let imported = [];
+      if (ext === "jsonl" || ext === "json") {
+        const text = content.trim();
+        if (text.startsWith("[")) {
+          try { imported = JSON.parse(text); } catch { /* fall through to plain parse */ }
+        }
+        if (imported.length === 0) {
+          const lines = text.split("\n");
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try { imported.push(JSON.parse(line)); } catch { /* skip bad lines */ }
+          }
+        }
+      }
+      if (imported.length > 0) {
+        const { characters: ch, charColors: cc } = populateCharsFromBlocks(imported, []);
+        setCharacters(ch);
+        setCharColors(cc);
+        setBlocks(imported);
+      } else {
+        const parsed = parsePlainScript(content, []);
+        const { characters: ch, charColors: cc } = populateCharsFromBlocks(parsed, []);
+        setCharacters(ch);
+        setCharColors(cc);
+        setBlocks(parsed);
+      }
+      setTab("editor");
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
   }, []);
 
   // Persist blocks to localStorage on change (debounced) — uses currentWork via ref
