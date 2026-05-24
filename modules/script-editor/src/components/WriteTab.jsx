@@ -46,6 +46,8 @@ const TYPE_COLORS = {
   note:      { fg: "rgb(100,107,120)",     bg: "rgba(100,107,120,0.08)", bd: "rgba(100,107,120,0.20)" },
 };
 
+const MOD_KEY = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform || '') ? '⌥' : 'Alt+';
+
 function loadDraft(workId) {
   try { return localStorage.getItem(draftKey(workId)); }
   catch { return null; }
@@ -78,7 +80,66 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
   /* parse + stats — v2-fix4: 把 characters 傳給 parser 反查 speakerId */
   const parsedBlocks = React.useMemo(() => parsePlainScript(content, characters), [content, characters]);
   const stats = React.useMemo(() => computeStats(parsedBlocks), [parsedBlocks]);
-  const { line, col } = React.useMemo(() => getLineCol(content, caret), [content, caret]);
+  /* ---------- chapter pagination ----------
+     content 是完整原文（source of truth）；chapter 模式下 textarea 只顯示一章。
+     章節由 #scene: 行自動切分。編輯單章時 splice 回完整 content，
+     parsedBlocks / forward sync / stats 全都從完整 content 計算。 */
+  const [activeChapter, setActiveChapter] = React.useState(null); // null=全部, number=index
+
+  const chapters = React.useMemo(() => {
+    if (!content) return [];
+    const lines = content.split('\n');
+    const scenes = [];
+    for (let i = 0; i < lines.length; i++) {
+      if (/^#scene\s*[：:]/i.test(lines[i])) {
+        scenes.push({ lineIdx: i, label: lines[i].replace(/^#scene\s*[：:]\s*/i, '').trim() });
+      }
+    }
+    if (scenes.length === 0) return [];
+    const result = [];
+    if (scenes[0].lineIdx > 0) {
+      result.push({ label: '（序）', startLine: 0, endLine: scenes[0].lineIdx - 1 });
+    }
+    for (let i = 0; i < scenes.length; i++) {
+      const endLine = i + 1 < scenes.length ? scenes[i + 1].lineIdx - 1 : lines.length - 1;
+      result.push({ label: scenes[i].label, startLine: scenes[i].lineIdx, endLine });
+    }
+    return result;
+  }, [content]);
+
+  const chapterView = React.useMemo(() => {
+    if (activeChapter == null || !chapters[activeChapter]) {
+      return { text: content, lineOffset: 0 };
+    }
+    const ch = chapters[activeChapter];
+    const lines = content.split('\n');
+    return { text: lines.slice(ch.startLine, ch.endLine + 1).join('\n'), lineOffset: ch.startLine };
+  }, [content, activeChapter, chapters]);
+
+  // Clamp activeChapter when chapters shrink
+  React.useEffect(() => {
+    if (activeChapter != null && activeChapter >= chapters.length) {
+      setActiveChapter(chapters.length > 0 ? chapters.length - 1 : null);
+    }
+  }, [chapters.length, activeChapter]);
+
+  // Chapter-aware content setter: splices chapter text back into full content
+  const setVisibleContent = React.useCallback((newText) => {
+    if (activeChapter == null || !chapters[activeChapter]) {
+      setContent(newText);
+      return;
+    }
+    const ch = chapters[activeChapter];
+    const allLines = content.split('\n');
+    const before = allLines.slice(0, ch.startLine);
+    const after = allLines.slice(ch.endLine + 1);
+    setContent([...before, ...newText.split('\n'), ...after].join('\n'));
+  }, [content, activeChapter, chapters]);
+
+  // Line/col relative to visible text (chapter slice or full)
+  const { line, col } = React.useMemo(() => getLineCol(chapterView.text, caret), [chapterView.text, caret]);
+  // Global line for outline active-scene tracking
+  const globalLine = line + chapterView.lineOffset;
 
   /* ---------- content-level stats (raw textarea) ---------- */
   const contentStats = React.useMemo(() => {
@@ -109,19 +170,40 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
 
   /* ---------- jump to line (for outline clicks) ---------- */
   const jumpToLine = React.useCallback((lineNum) => {
+    const lineIdx = lineNum - 1; // 0-indexed
+    // In chapter mode, switch to the correct chapter
+    if (chapters.length > 0) {
+      const targetCh = chapters.findIndex(ch => lineIdx >= ch.startLine && lineIdx <= ch.endLine);
+      if (targetCh >= 0) {
+        setActiveChapter(targetCh);
+        const localLine = lineIdx - chapters[targetCh].startLine;
+        requestAnimationFrame(() => {
+          const ta = taRef.current;
+          if (!ta) return;
+          const lines = ta.value.split('\n');
+          let off = 0;
+          for (let i = 0; i < Math.min(localLine, lines.length); i++) off += lines[i].length + 1;
+          ta.focus();
+          ta.setSelectionRange(off, off);
+          setCaret(off);
+          const lh = parseFloat(getComputedStyle(ta).lineHeight) || 27;
+          ta.scrollTop = Math.max(0, localLine * lh - ta.clientHeight / 3);
+        });
+        return;
+      }
+    }
+    // No chapter mode — jump within full content
     const ta = taRef.current;
     if (!ta) return;
     const lines = content.split('\n');
-    let offset = 0;
-    for (let i = 0; i < Math.min(lineNum - 1, lines.length); i++) {
-      offset += lines[i].length + 1;
-    }
+    let off = 0;
+    for (let i = 0; i < Math.min(lineIdx, lines.length); i++) off += lines[i].length + 1;
     ta.focus();
-    ta.setSelectionRange(offset, offset);
-    setCaret(offset);
+    ta.setSelectionRange(off, off);
+    setCaret(off);
     const lh = parseFloat(getComputedStyle(ta).lineHeight) || 27;
-    ta.scrollTop = Math.max(0, (lineNum - 1) * lh - ta.clientHeight / 3);
-  }, [content]);
+    ta.scrollTop = Math.max(0, lineIdx * lh - ta.clientHeight / 3);
+  }, [content, chapters]);
 
   /* Voice TTS (v2-5) */
   const voice = useVoiceTTS();
@@ -311,7 +393,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       : prefix + currentLine;
 
     const newValue = value.slice(0, lineStart) + newLine + value.slice(lineEnd);
-    setContent(newValue);
+    setVisibleContent(newValue);
 
     const caretPos = lineStart + prefix.length;
     requestAnimationFrame(() => {
@@ -336,7 +418,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     return () => clearTimeout(saveTimer.current);
   }, [content, workId]);
 
-  const onTextChange = e => setContent(e.target.value);
+  const onTextChange = e => setVisibleContent(e.target.value);
   const onCaretMove  = e => setCaret(e.target.selectionStart || 0);
 
   /* v2-fix3: 把當前游標所在行卷到視野「下 2/3」附近
@@ -372,7 +454,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       flex: 1,
       display: "grid",
       gridTemplateColumns: "1fr 360px",
-      gridTemplateRows: "auto auto 1fr auto",
+      gridTemplateRows: "auto auto auto 1fr auto",
       overflow: "hidden",
       animation: "swFade 200ms ease",
       background: "var(--navy-deep)",
@@ -531,15 +613,74 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
           {allSpeakers.length === 0 && (
             <div style={{ padding: "4px 10px", fontSize: 11, color: "var(--text-tertiary)" }}>（劇本中無角色）</div>
           )}
+          <div style={{ height: 1, background: "var(--navy-line)", margin: "4px 0" }} />
+          <div style={{ padding: "4px 8px" }}>
+            <input
+              placeholder="輸入新角色名…"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target.value.trim()) {
+                  assignSlot(ctxMenu.slotN, e.target.value.trim());
+                  setCtxMenu(null);
+                }
+                e.stopPropagation();
+              }}
+              onClick={(e) => e.stopPropagation()}
+              autoFocus={false}
+              style={{
+                width: "100%", padding: "4px 6px",
+                background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+                borderRadius: 2, color: "var(--cream)",
+                fontFamily: "var(--font-serif-tc)", fontSize: 11.5,
+                outline: "none",
+              }}
+            />
+          </div>
         </div>
       )}
 
-      {/* ───── textarea (left, row 3)
+      {/* ───── chapter bar (left, row 3) ───── */}
+      {chapters.length > 0 && (
+        <div style={{
+          gridColumn: "1 / 2",
+          gridRow: "3 / 4",
+          display: "flex", alignItems: "center", gap: 4,
+          padding: "4px 16px",
+          background: "var(--navy)",
+          borderBottom: "1px solid var(--navy-line)",
+          overflowX: "auto",
+        }}>
+          <button onClick={() => setActiveChapter(null)} style={chapterBtnStyle(activeChapter == null)}>
+            全部
+          </button>
+          <span style={{ width: 1, height: 16, background: "var(--navy-line)", flexShrink: 0 }} />
+          {chapters.map((ch, i) => (
+            <button key={i} onClick={() => setActiveChapter(i)} style={chapterBtnStyle(activeChapter === i)}
+              title={`${ch.endLine - ch.startLine + 1} 行`}>
+              {ch.label.length > 14 ? ch.label.slice(0, 14) + "…" : ch.label}
+            </button>
+          ))}
+          {activeChapter != null && (
+            <>
+              <span style={{ flex: 1 }} />
+              <button onClick={() => setActiveChapter(Math.max(0, activeChapter - 1))}
+                disabled={activeChapter <= 0} style={chapterNavStyle} title="上一章 (Ctrl+↑)">◂</button>
+              <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-serif-en)",
+                letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
+                {activeChapter + 1}/{chapters.length}
+              </span>
+              <button onClick={() => setActiveChapter(Math.min(chapters.length - 1, activeChapter + 1))}
+                disabled={activeChapter >= chapters.length - 1} style={chapterNavStyle} title="下一章 (Ctrl+↓)">▸</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ───── textarea (left, row 4)
             v2-fix3: 加大 paddingBottom（~40% 容器高），讓游標停在「下 2/3」附近
                      onInput/onKeyDown 後用 scrollIntoView 把當前行對齊視線中段 ───── */}
       <textarea
         ref={taRef}
-        value={content}
+        value={chapterView.text}
         onChange={onTextChange}
         onKeyDown={onKeyDown}
         onKeyUp={(e) => { onCaretMove(e); anchorCaretView(); }}
@@ -550,7 +691,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         placeholder={`輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`}
         style={{
           gridColumn: "1 / 2",
-          gridRow: "3 / 4",
+          gridRow: "4 / 5",
           width: "100%",
           height: "100%",
           /* v2-fix3 寫作視線範圍：
@@ -575,7 +716,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       {/* ───── preview body (right, rows 2-3 — spans the slot-badges row on left) ───── */}
       <div style={{
         gridColumn: "2 / 3",
-        gridRow: "2 / 4",
+        gridRow: "2 / 5",
         overflowY: "auto",
         background: "var(--navy)",
         borderLeft: "1px solid var(--navy-line)",
@@ -585,13 +726,13 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         {previewTab === "stats"  && <StatsPreview stats={stats} />}
         {previewTab === "voice"  && <VoicePanel blocks={parsedBlocks} voice={voice} />}
         {previewTab === "bgm"    && <BgmPanel blocks={parsedBlocks} />}
-        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} onJump={jumpToLine} activeLine={line} />}
+        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} onJump={jumpToLine} activeLine={globalLine} />}
       </div>
 
-      {/* ───── status bar (row 4, spans both cols) ───── */}
+      {/* ───── status bar (row 5, spans both cols) ───── */}
       <div style={{
         gridColumn: "1 / 3",
-        gridRow: "4 / 5",
+        gridRow: "5 / 6",
         display: "flex", alignItems: "center", gap: 14,
         padding: "5px 16px",
         background: "var(--navy)",
@@ -601,6 +742,9 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         fontFamily: "var(--font-serif-en)",
       }}>
         <span>Ln {line} · Col {col}</span>
+        {activeChapter != null && chapters[activeChapter] && (
+          <span style={badgeStyle}>{chapters[activeChapter].label}</span>
+        )}
         <span style={badgeStyle}>Plain Script</span>
         <span>{parsedBlocks.length} blocks parsed</span>
         {syncStatus === "pushing" && (
@@ -637,6 +781,30 @@ const tbBtnStyle = {
   letterSpacing: "0.06em",
   cursor: "pointer",
   fontFamily: "var(--font-serif-tc)",
+};
+const chapterBtnStyle = (active) => ({
+  padding: "3px 10px",
+  background: active ? "var(--gold-glow)" : "transparent",
+  border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
+  borderRadius: 2,
+  color: active ? "var(--gold-bright)" : "var(--text-tertiary)",
+  fontSize: 11,
+  fontFamily: "var(--font-serif-tc)",
+  letterSpacing: "0.06em",
+  cursor: "pointer",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
+  transition: "all 150ms",
+});
+const chapterNavStyle = {
+  padding: "2px 6px",
+  background: "transparent",
+  border: "1px solid var(--navy-line)",
+  borderRadius: 2,
+  color: "var(--text-secondary)",
+  fontSize: 11,
+  cursor: "pointer",
+  flexShrink: 0,
 };
 const badgeStyle = {
   padding: "1px 8px",
@@ -692,7 +860,7 @@ function SlotBadge({ n, label, locked, onClick, onDoubleClick, onContextMenu }) 
         color: filled ? "var(--gold-dim)" : "var(--text-tertiary)",
         fontVariant: "small-caps",
         textTransform: "uppercase",
-      }}>{locked ? "🔒" : "⌥"}{n}</span>
+      }}>{locked ? "🔒" : MOD_KEY}{n}</span>
       <span style={{ maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {label || "—"}
       </span>

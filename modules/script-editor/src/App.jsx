@@ -392,13 +392,33 @@ function useNotes(workId) {
 
 // ============= AUTO-POPULATE CHARACTERS FROM BLOCKS =============
 function populateCharsFromBlocks(loadedBlocks, existingChars = []) {
-  if (existingChars.length > 0 || !loadedBlocks || loadedBlocks.length === 0) {
+  if (existingChars.length > 0) {
+    // Start with existing characters, then add unknown speakers from blocks
+    const existingIds = new Set(existingChars.map(c => c.id));
+    const existingNames = new Set(existingChars.flatMap(c => [c.name, c.nameEn, c.id].filter(Boolean)));
+    const extras = [];
+    for (const b of (loadedBlocks || [])) {
+      if (b.type !== "dialogue") continue;
+      const id = b.speakerId || b.speaker;
+      if (!id || existingIds.has(id) || existingNames.has(id)) continue;
+      existingIds.add(id);
+      extras.push({
+        id, name: b.speaker || id, nameEn: b.speaker || id,
+        voice: "", role: "", relations: "", tone: "",
+        tags: [], notes: [], _auto: true,
+      });
+    }
+    const chars = [...existingChars, ...extras];
     const colors = {};
-    existingChars.forEach((c, i) => {
+    chars.forEach((c, i) => {
       colors[c.id] = PREDEFINED_COLORS[c.id] || `hsl(${(i * 47) % 360}, 45%, 55%)`;
     });
-    CHARACTERS = existingChars; CHAR_COLORS = colors;
-    return { characters: existingChars, charColors: colors };
+    CHARACTERS = chars; CHAR_COLORS = colors;
+    return { characters: chars, charColors: colors };
+  }
+  if (!loadedBlocks || loadedBlocks.length === 0) {
+    CHARACTERS = []; CHAR_COLORS = {};
+    return { characters: [], charColors: {} };
   }
   const seen = new Map();
   loadedBlocks.forEach(b => {
@@ -603,12 +623,14 @@ function SwHeader({ tab, setTab, onBack, onAI, workSwitcher }) {
         })}
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div style={{ flex: "0 1 24px" }} />
 
       {/* Work switcher — inline in header */}
-      {workSwitcher}
+      <div style={{ minWidth: 0, flex: "0 1 auto" }}>
+        {workSwitcher}
+      </div>
 
-      <div style={{ display: "flex", gap: 6 }}>
+      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
         <SwBtn icon="moon" size="sm" onClick={onAI}>AI</SwBtn>
         <SwBtn icon="info" size="sm" onClick={() => alert("劇本工房 — 戲劇文本資料庫與劇本編輯器。\n\n快捷鍵：\n• Alt+1~9 快速插入角色（單擊 slot 指派）\n• 雙擊 slot 插入前綴\n• 編輯器內可匯入 / 匯出 JSONL\n• 閱讀模式支援 PDF 匯出（公共領域作品）")}>說明</SwBtn>
       </div>
@@ -1301,7 +1323,7 @@ function TableForge({ blocks, characters = [], charColors = {}, onUpdateBlock, o
                         <span style={{
                           fontFamily: "var(--font-serif-tc)", fontSize: 12,
                           color: "var(--cream-dim)", letterSpacing: "0.04em",
-                        }}>{ch?.name || b.speakerId}</span>
+                        }}>{ch?.name || b.speaker || b.speakerId || "???"}</span>
                       </div>
                     )}
                   </td>
@@ -4245,13 +4267,14 @@ function NewWorkModal({ onClose, onCreated }) {
 
 function WorkSwitcher({ currentId, onSwitch, workIndex, onNewWork, onDeleteWork }) {
   return (
-    <div style={{ display: "flex", gap: 4, alignItems: "center", marginRight: 8 }}>
+    <div style={{ display: "flex", gap: 4, alignItems: "center", marginRight: 8, minWidth: 0 }}>
       <select value={currentId} onChange={e => onSwitch(e.target.value)}
         style={{
           background: "var(--navy-deep)", border: "1px solid var(--gold-line)",
           color: "var(--gold)", padding: "4px 24px 4px 10px",
           fontFamily: "var(--font-serif-tc)", fontSize: 12,
           borderRadius: 2, outline: "none", cursor: "pointer", appearance: "none",
+          maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis",
           backgroundImage: "linear-gradient(45deg, transparent 50%, var(--gold-dim) 50%), linear-gradient(135deg, var(--gold-dim) 50%, transparent 50%)",
           backgroundPosition: "calc(100% - 12px) 50%, calc(100% - 7px) 50%",
           backgroundSize: "5px 5px", backgroundRepeat: "no-repeat",
