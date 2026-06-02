@@ -168,6 +168,20 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     return sections;
   }, [parsedBlocks]);
 
+  /* ---------- heading outline (H1~H4 from raw content) ---------- */
+  const headingOutline = React.useMemo(() => {
+    const result = [];
+    const lines = content.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const m = lines[i].match(/^(#{1,4})\s+(.+)$/);
+      // Skip #command: lines (they start with #word: not # space)
+      if (m && !/^#\w+[：:]/.test(lines[i])) {
+        result.push({ level: m[1].length, text: m[2].trim(), line: i + 1 });
+      }
+    }
+    return result;
+  }, [content]);
+
   /* ---------- jump to line (for outline clicks) ---------- */
   const jumpToLine = React.useCallback((lineNum) => {
     const lineIdx = lineNum - 1; // 0-indexed
@@ -423,6 +437,8 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
 
   /* v2-fix3: 把當前游標所在行卷到視野「下 2/3」附近
      — 只在游標超過 2/3 視野時才下捲；不會跳回上方。 */
+  /* v2-fix5: 打字機捲動 — 雙向錨定，游標保持在視窗 ~42% 處
+     舒適區 25%–55%：游標在此範圍內不捲動，超出才平滑對齊 */
   const anchorCaretView = React.useCallback(() => {
     const ta = taRef.current;
     if (!ta) return;
@@ -432,10 +448,10 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 27;
     const caretPx = lineIdx * lineHeight + 20; /* 20 = top padding */
     const viewportH = ta.clientHeight;
-    const desiredCaretTop = viewportH * (2 / 3);
-    const currentCaretTop = caretPx - ta.scrollTop;
-    if (currentCaretTop > desiredCaretTop) {
-      ta.scrollTop = caretPx - desiredCaretTop;
+    const anchor = viewportH * 0.42;
+    const currentTop = caretPx - ta.scrollTop;
+    if (currentTop < viewportH * 0.25 || currentTop > viewportH * 0.55) {
+      ta.scrollTop = Math.max(0, caretPx - anchor);
     }
   }, []);
 
@@ -676,8 +692,8 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       )}
 
       {/* ───── textarea (left, row 4)
-            v2-fix3: 加大 paddingBottom（~40% 容器高），讓游標停在「下 2/3」附近
-                     onInput/onKeyDown 後用 scrollIntoView 把當前行對齊視線中段 ───── */}
+            v2-fix5: 打字機捲動 — paddingBottom 60vh 留白 + anchorCaretView 雙向錨定
+                     游標保持在視窗 ~42% 位置，下方大片空白不傷眼 ───── */}
       <textarea
         ref={taRef}
         value={chapterView.text}
@@ -694,10 +710,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
           gridRow: "4 / 5",
           width: "100%",
           height: "100%",
-          /* v2-fix3 寫作視線範圍：
-             top 20px → 大；bottom 40vh → 底部留白讓游標卡在「下 2/3」附近，
-             不會被擠到不可見的卷軸尾端。配合下方 anchorCaretView() 自動置中。 */
-          padding: "20px 28px 40vh",
+          padding: "20px 28px 60vh",
           background: "var(--navy-deep)",
           color: "var(--text-primary)",
           border: "none",
@@ -709,7 +722,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
           letterSpacing: "0.02em",
           tabSize: 4,
           whiteSpace: "pre-wrap",
-          scrollPaddingBottom: "40vh",
+          scrollPaddingBottom: "60vh",
         }}
       />
 
@@ -726,7 +739,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         {previewTab === "stats"  && <StatsPreview stats={stats} />}
         {previewTab === "voice"  && <VoicePanel blocks={parsedBlocks} voice={voice} />}
         {previewTab === "bgm"    && <BgmPanel blocks={parsedBlocks} />}
-        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} onJump={jumpToLine} activeLine={globalLine} />}
+        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} headings={headingOutline} onJump={jumpToLine} activeLine={globalLine} />}
       </div>
 
       {/* ───── status bar (row 5, spans both cols) ───── */}
@@ -1294,126 +1307,191 @@ function SectionHead({ latin, zh }) {
 }
 
 /* ============= Scene Outline Panel ============= */
-function OutlinePanel({ outline, onJump, activeLine }) {
+function OutlinePanel({ outline, headings = [], onJump, activeLine }) {
   const sceneCount = outline.filter(s => s.scene).length;
   const totalDlg = outline.reduce((a, s) => a + s.dialogues, 0);
   const totalNar = outline.reduce((a, s) => a + s.narrations, 0);
+  const hasHeadings = headings.length > 0;
+  const hasScenes = sceneCount > 0;
 
-  if (!outline.length || sceneCount === 0) {
+  // Find active heading based on cursor line
+  let activeHdgIdx = -1;
+  if (hasHeadings) {
+    for (let i = headings.length - 1; i >= 0; i--) {
+      if (headings[i].line <= activeLine) { activeHdgIdx = i; break; }
+    }
+  }
+
+  // Find active scene index based on cursor line
+  let activeScIdx = -1;
+  if (hasScenes) {
+    for (let i = outline.length - 1; i >= 0; i--) {
+      if (outline[i].scene && outline[i].scene._line <= activeLine) { activeScIdx = i; break; }
+    }
+  }
+
+  if (!hasHeadings && !hasScenes) {
     return (
       <div style={{ padding: "40px 14px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, lineHeight: 1.7 }}>
         <div style={{
           fontFamily: "var(--font-serif-en)", fontSize: 10,
           letterSpacing: "0.22em", color: "var(--gold-dim)",
           textTransform: "uppercase", marginBottom: 6,
-        }}>Scene Outline</div>
-        <div>尚無場景結構。</div>
+        }}>Structure</div>
+        <div>尚無結構標記。</div>
         <div style={{ marginTop: 12, fontSize: 11 }}>
-          在左側使用 <code style={inlineCode}>#scene：場景名稱</code><br />
-          建立劇本大綱，即可在此導航。
+          使用 Markdown 標題（<code style={inlineCode}># ~ ####</code>）<br />
+          或場景指令（<code style={inlineCode}>#scene：名稱</code>）<br />
+          建立大綱，即可在此導航。
         </div>
       </div>
     );
   }
 
-  // Find active scene index based on cursor line
-  let activeIdx = -1;
-  for (let i = outline.length - 1; i >= 0; i--) {
-    if (outline[i].scene && outline[i].scene._line <= activeLine) {
-      activeIdx = i;
-      break;
-    }
-  }
+  const LEVEL_INDENT = [0, 0, 14, 26, 36]; // px indent per heading level
+  const LEVEL_SIZE   = [0, 13.5, 12.5, 11.5, 11]; // font size per level
+  const LEVEL_WEIGHT = [0, 600, 500, 400, 400];
 
   let sceneNum = 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <SectionHead latin="Scene Outline" zh={`場景大綱 · ${sceneCount}`} />
-
-      {/* summary bar */}
-      <div style={{
-        display: "flex", gap: 12,
-        padding: "6px 10px",
-        background: "rgba(201,168,106,0.06)",
-        border: "1px solid var(--gold-line)",
-        borderRadius: 3,
-        fontSize: 11, color: "var(--text-tertiary)",
-        fontFamily: "var(--font-serif-en)",
-        letterSpacing: "0.08em",
-      }}>
-        <span>{sceneCount} scenes</span>
-        <span>{totalDlg} dialogues</span>
-        <span>{totalNar} narrations</span>
-      </div>
-
-      {/* scene list */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        {outline.map((section, i) => {
-          if (!section.scene) {
-            // Blocks before the first scene
-            if (section.dialogues + section.narrations > 0) {
+      {/* ── Heading tree ── */}
+      {hasHeadings && (
+        <>
+          <SectionHead latin="Heading Outline" zh={`標題大綱 · ${headings.length}`} />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {headings.map((h, i) => {
+              const active = i === activeHdgIdx;
               return (
-                <div key={i} style={{
-                  padding: "4px 10px",
-                  fontSize: 11, color: "var(--text-tertiary)",
-                  fontFamily: "var(--font-serif-tc)",
-                  fontStyle: "italic",
-                }}>
-                  （序 · {section.dialogues} 對白 · {section.narrations} 旁白）
-                </div>
+                <button
+                  key={i}
+                  onClick={() => onJump(h.line)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: `5px 10px 5px ${10 + LEVEL_INDENT[h.level]}px`,
+                    background: active ? "var(--gold-glow)" : "transparent",
+                    border: "none",
+                    borderLeft: `2px solid ${active ? "var(--gold)" : h.level <= 2 ? "var(--gold-line)" : "transparent"}`,
+                    borderRadius: 2,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "background 120ms",
+                  }}
+                >
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: 9,
+                    color: active ? "var(--gold-bright)" : "var(--text-tertiary)",
+                    minWidth: 18, flexShrink: 0,
+                  }}>H{h.level}</span>
+                  <span style={{
+                    flex: 1,
+                    fontFamily: "var(--font-serif-tc)",
+                    fontSize: LEVEL_SIZE[h.level],
+                    fontWeight: LEVEL_WEIGHT[h.level],
+                    color: active ? "var(--text-primary)" : h.level <= 2 ? "var(--text-secondary)" : "var(--text-tertiary)",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{h.text}</span>
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: 9,
+                    color: "var(--text-tertiary)", flexShrink: 0,
+                  }}>:{h.line}</span>
+                </button>
               );
-            }
-            return null;
-          }
-          sceneNum++;
-          const active = i === activeIdx;
-          return (
-            <button
-              key={i}
-              onClick={() => onJump(section.scene._line)}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "7px 10px",
-                background: active ? "var(--gold-glow)" : "var(--navy-deep)",
-                border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
-                borderLeft: `3px solid ${active ? "var(--gold)" : "var(--gold-line)"}`,
-                borderRadius: 3,
-                cursor: "pointer",
-                textAlign: "left",
-                width: "100%",
-                transition: "background 150ms, border-color 150ms",
-              }}
-            >
-              <span style={{
-                fontFamily: "var(--font-serif-en)", fontSize: 10,
-                color: active ? "var(--gold-bright)" : "var(--gold-dim)",
-                fontVariant: "small-caps", letterSpacing: "0.14em",
-                minWidth: 20,
-              }}>{sceneNum}</span>
-              <span style={{
-                flex: 1,
-                fontFamily: "var(--font-serif-tc)", fontSize: 12.5,
-                color: active ? "var(--text-primary)" : "var(--text-secondary)",
-                fontWeight: active ? 600 : 400,
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>{section.scene.act}{section.scene.subtitle ? ` ${section.scene.subtitle}` : ""}</span>
-              <span style={{
-                fontFamily: "var(--font-serif-en)", fontSize: 10,
-                color: "var(--text-tertiary)", letterSpacing: "0.06em",
-                whiteSpace: "nowrap",
-              }}>
-                {section.dialogues > 0 ? `${section.dialogues}d` : ""}
-                {section.dialogues > 0 && section.narrations > 0 ? " · " : ""}
-                {section.narrations > 0 ? `${section.narrations}n` : ""}
-              </span>
-              <span style={{
-                fontFamily: "var(--font-mono)", fontSize: 9.5,
-                color: "var(--text-tertiary)",
-              }}>:{section.scene._line}</span>
-            </button>
-          );
-        })}
-      </div>
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ── Scene outline ── */}
+      {hasScenes && (
+        <>
+          {hasHeadings && <div style={{ height: 1, background: "var(--navy-line)", margin: "6px 0" }} />}
+          <SectionHead latin="Scene Outline" zh={`場景大綱 · ${sceneCount}`} />
+
+          <div style={{
+            display: "flex", gap: 12,
+            padding: "6px 10px",
+            background: "rgba(201,168,106,0.06)",
+            border: "1px solid var(--gold-line)",
+            borderRadius: 3,
+            fontSize: 11, color: "var(--text-tertiary)",
+            fontFamily: "var(--font-serif-en)",
+            letterSpacing: "0.08em",
+          }}>
+            <span>{sceneCount} scenes</span>
+            <span>{totalDlg} dialogues</span>
+            <span>{totalNar} narrations</span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {outline.map((section, i) => {
+              if (!section.scene) {
+                if (section.dialogues + section.narrations > 0) {
+                  return (
+                    <div key={i} style={{
+                      padding: "4px 10px",
+                      fontSize: 11, color: "var(--text-tertiary)",
+                      fontFamily: "var(--font-serif-tc)",
+                      fontStyle: "italic",
+                    }}>
+                      （序 · {section.dialogues} 對白 · {section.narrations} 旁白）
+                    </div>
+                  );
+                }
+                return null;
+              }
+              sceneNum++;
+              const active = i === activeScIdx;
+              return (
+                <button
+                  key={i}
+                  onClick={() => onJump(section.scene._line)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "7px 10px",
+                    background: active ? "var(--gold-glow)" : "var(--navy-deep)",
+                    border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
+                    borderLeft: `3px solid ${active ? "var(--gold)" : "var(--gold-line)"}`,
+                    borderRadius: 3,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                    transition: "background 150ms, border-color 150ms",
+                  }}
+                >
+                  <span style={{
+                    fontFamily: "var(--font-serif-en)", fontSize: 10,
+                    color: active ? "var(--gold-bright)" : "var(--gold-dim)",
+                    fontVariant: "small-caps", letterSpacing: "0.14em",
+                    minWidth: 20,
+                  }}>{sceneNum}</span>
+                  <span style={{
+                    flex: 1,
+                    fontFamily: "var(--font-serif-tc)", fontSize: 12.5,
+                    color: active ? "var(--text-primary)" : "var(--text-secondary)",
+                    fontWeight: active ? 600 : 400,
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{section.scene.act}{section.scene.subtitle ? ` ${section.scene.subtitle}` : ""}</span>
+                  <span style={{
+                    fontFamily: "var(--font-serif-en)", fontSize: 10,
+                    color: "var(--text-tertiary)", letterSpacing: "0.06em",
+                    whiteSpace: "nowrap",
+                  }}>
+                    {section.dialogues > 0 ? `${section.dialogues}d` : ""}
+                    {section.dialogues > 0 && section.narrations > 0 ? " · " : ""}
+                    {section.narrations > 0 ? `${section.narrations}n` : ""}
+                  </span>
+                  <span style={{
+                    fontFamily: "var(--font-mono)", fontSize: 9.5,
+                    color: "var(--text-tertiary)",
+                  }}>:{section.scene._line}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
