@@ -476,7 +476,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       flex: 1,
       display: "grid",
       gridTemplateColumns: "1fr 360px",
-      gridTemplateRows: "auto auto auto 1fr auto",
+      gridTemplateRows: "auto auto 1fr auto",
       overflow: "hidden",
       animation: "swFade 200ms ease",
       background: "var(--navy-deep)",
@@ -660,42 +660,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         </div>
       )}
 
-      {/* ───── chapter bar (left, row 3) ───── */}
-      {chapters.length > 0 && (
-        <div style={{
-          gridColumn: "1 / 2",
-          gridRow: "3 / 4",
-          display: "flex", alignItems: "center", gap: 4,
-          padding: "4px 16px",
-          background: "var(--navy)",
-          borderBottom: "1px solid var(--navy-line)",
-          overflowX: "auto",
-        }}>
-          <button onClick={() => setActiveChapter(null)} style={chapterBtnStyle(activeChapter == null)}>
-            全部
-          </button>
-          <span style={{ width: 1, height: 16, background: "var(--navy-line)", flexShrink: 0 }} />
-          {chapters.map((ch, i) => (
-            <button key={i} onClick={() => setActiveChapter(i)} style={chapterBtnStyle(activeChapter === i)}
-              title={`${ch.endLine - ch.startLine + 1} 行`}>
-              {ch.label.length > 14 ? ch.label.slice(0, 14) + "…" : ch.label}
-            </button>
-          ))}
-          {activeChapter != null && (
-            <>
-              <span style={{ flex: 1 }} />
-              <button onClick={() => setActiveChapter(Math.max(0, activeChapter - 1))}
-                disabled={activeChapter <= 0} style={chapterNavStyle} title="上一章 (Ctrl+↑)">◂</button>
-              <span style={{ fontSize: 10, color: "var(--text-tertiary)", fontFamily: "var(--font-serif-en)",
-                letterSpacing: "0.08em", whiteSpace: "nowrap" }}>
-                {activeChapter + 1}/{chapters.length}
-              </span>
-              <button onClick={() => setActiveChapter(Math.min(chapters.length - 1, activeChapter + 1))}
-                disabled={activeChapter >= chapters.length - 1} style={chapterNavStyle} title="下一章 (Ctrl+↓)">▸</button>
-            </>
-          )}
-        </div>
-      )}
+      {/* chapter bar removed — scene navigation is in the Outline panel (right) */}
 
       {/* ───── textarea (left, row 4)
             v2-fix5: 打字機捲動 — paddingBottom 60vh 留白 + anchorCaretView 雙向錨定
@@ -713,7 +678,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         placeholder={`輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`}
         style={{
           gridColumn: "1 / 2",
-          gridRow: "4 / 5",
+          gridRow: "3 / 4",
           width: "100%",
           height: "100%",
           padding: "20px 28px 60vh",
@@ -735,7 +700,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       {/* ───── preview body (right, rows 2-3 — spans the slot-badges row on left) ───── */}
       <div style={{
         gridColumn: "2 / 3",
-        gridRow: "2 / 5",
+        gridRow: "2 / 4",
         overflowY: "auto",
         background: "var(--navy)",
         borderLeft: "1px solid var(--navy-line)",
@@ -751,7 +716,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       {/* ───── status bar (row 5, spans both cols) ───── */}
       <div style={{
         gridColumn: "1 / 3",
-        gridRow: "5 / 6",
+        gridRow: "4 / 5",
         display: "flex", alignItems: "center", gap: 14,
         padding: "5px 16px",
         background: "var(--navy)",
@@ -762,7 +727,10 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       }}>
         <span>Ln {line} · Col {col}</span>
         {activeChapter != null && chapters[activeChapter] && (
-          <span style={badgeStyle}>{chapters[activeChapter].label}</span>
+          <span onClick={() => setActiveChapter(null)} title="點擊回到全部"
+            style={{...badgeStyle, cursor: "pointer", borderColor: "var(--gold-dim)"}}>
+            ◂ {chapters[activeChapter].label}
+          </span>
         )}
         <span style={badgeStyle}>Plain Script</span>
         <span>{parsedBlocks.length} blocks parsed</span>
@@ -800,30 +768,6 @@ const tbBtnStyle = {
   letterSpacing: "0.06em",
   cursor: "pointer",
   fontFamily: "var(--font-serif-tc)",
-};
-const chapterBtnStyle = (active) => ({
-  padding: "3px 10px",
-  background: active ? "var(--gold-glow)" : "transparent",
-  border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
-  borderRadius: 2,
-  color: active ? "var(--gold-bright)" : "var(--text-tertiary)",
-  fontSize: 11,
-  fontFamily: "var(--font-serif-tc)",
-  letterSpacing: "0.06em",
-  cursor: "pointer",
-  whiteSpace: "nowrap",
-  flexShrink: 0,
-  transition: "all 150ms",
-});
-const chapterNavStyle = {
-  padding: "2px 6px",
-  background: "transparent",
-  border: "1px solid var(--navy-line)",
-  borderRadius: 2,
-  color: "var(--text-secondary)",
-  fontSize: 11,
-  cursor: "pointer",
-  flexShrink: 0,
 };
 const badgeStyle = {
   padding: "1px 8px",
