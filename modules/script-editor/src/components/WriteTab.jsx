@@ -455,6 +455,12 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     }
   }, []);
 
+  /* After React commits new textarea value to DOM, re-anchor before paint.
+     This defeats the browser's auto-scroll-to-caret that overrides our scrollTop. */
+  React.useLayoutEffect(() => {
+    anchorCaretView();
+  }, [chapterView.text, caret, anchorCaretView]);
+
   const onClearDraft = () => {
     if (!confirm("清除草稿？此動作會清除本地儲存的速寫內容。")) return;
     setContent("");
