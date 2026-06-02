@@ -3,12 +3,12 @@
  *
  * Two-tier retrieval for RAG:
  *   Tier 1: BM25 keyword scoring (always available, no API needed)
- *   Tier 2: Dense vector embedding via API (when BYOK key available)
+ *   Tier 2: Dense vector embedding via API (BYOK direct or Coin via Worker proxy)
  *
  * Flow: indexPDF() on open → queryRelevant() on user question
  */
 
-import { extractPageText } from './ai.js';
+import { extractPageText, getProxyUrl, getSessionToken } from './ai.js';
 import { saveEmbeddings, getEmbeddings } from './storage.js';
 
 // ===== Text Chunking =====
@@ -151,35 +151,89 @@ async function embedGoogle(texts, apiKey, model = 'text-embedding-004') {
 }
 
 /**
- * Generate embeddings via the user's configured provider.
- * Returns null if provider doesn't support embeddings.
+ * Call Worker /v1/rag embed proxy (for coin-mode users without BYOK key).
  */
-async function generateEmbeddings(texts, settings) {
-  if (!settings.apiKey) return null;
+async function embedViaProxy(texts, settings) {
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) return null;
 
-  // Batch in groups of 100 (API limits)
-  const batchSize = 100;
+  // Determine provider: coin-mode may use anthropic for chat but needs openai/google for embeddings
+  const embProvider = (settings.provider === 'openai' || settings.provider === 'google')
+    ? settings.provider : 'openai'; // default to openai for embedding
+
+  const headers = { 'Content-Type': 'application/json' };
+  const sessionToken = await getSessionToken();
+  if (sessionToken) {
+    headers['Authorization'] = `Bearer ${sessionToken}`;
+  }
+
   const allEmbeddings = [];
+  const BATCH = 100;
 
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize);
-    let embeddings;
+  for (let i = 0; i < texts.length; i += BATCH) {
+    const batch = texts.slice(i, i + BATCH);
+    const res = await fetch(`${proxyUrl}/v1/rag`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        action: 'embed',
+        texts: batch,
+        provider: embProvider,
+        mode: 'coin',
+      }),
+    });
 
-    switch (settings.provider) {
-      case 'openai':
-        embeddings = await embedOpenAI(batch, settings.apiKey);
-        break;
-      case 'google':
-        embeddings = await embedGoogle(batch, settings.apiKey);
-        break;
-      default:
-        // Anthropic and custom don't have standard embedding APIs
-        return null;
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Embed proxy ${res.status}: ${err.error || res.statusText}`);
     }
-    allEmbeddings.push(...embeddings);
+
+    const json = await res.json();
+    // Convert arrays back to Float32Array for local cosine similarity
+    allEmbeddings.push(...json.embeddings.map(e => new Float32Array(e)));
   }
 
   return allEmbeddings;
+}
+
+/**
+ * Generate embeddings via the user's configured provider.
+ * Falls back to Worker proxy for coin-mode users.
+ * Returns null if provider doesn't support embeddings and proxy is unavailable.
+ */
+async function generateEmbeddings(texts, settings) {
+  // BYOK: direct API call
+  if (settings.apiKey) {
+    const batchSize = 100;
+    const allEmbeddings = [];
+
+    for (let i = 0; i < texts.length; i += batchSize) {
+      const batch = texts.slice(i, i + batchSize);
+      let embeddings;
+
+      switch (settings.provider) {
+        case 'openai':
+          embeddings = await embedOpenAI(batch, settings.apiKey);
+          break;
+        case 'google':
+          embeddings = await embedGoogle(batch, settings.apiKey);
+          break;
+        default:
+          // Anthropic and custom don't have standard embedding APIs via BYOK
+          return null;
+      }
+      allEmbeddings.push(...embeddings);
+    }
+
+    return allEmbeddings;
+  }
+
+  // Coin mode: proxy through Worker
+  if (settings.mode === 'coin') {
+    return embedViaProxy(texts, settings);
+  }
+
+  return null;
 }
 
 // ===== Cosine Similarity =====
@@ -234,9 +288,12 @@ export async function indexPDF(pdfDoc, fileId, settings, onProgress) {
 
   if (allChunks.length === 0) return { chunkCount: 0, hasEmbeddings: false };
 
-  // 2. Generate dense embeddings (if provider supports it)
+  // 2. Generate dense embeddings (BYOK direct or coin-mode via proxy)
   let hasEmbeddings = false;
-  if (settings?.apiKey && (settings.provider === 'openai' || settings.provider === 'google')) {
+  const canEmbed = settings?.apiKey
+    ? (settings.provider === 'openai' || settings.provider === 'google')
+    : settings?.mode === 'coin';
+  if (canEmbed) {
     try {
       const texts = allChunks.map(c => c.text);
       const embeddings = await generateEmbeddings(texts, settings);
@@ -275,7 +332,10 @@ export async function queryRelevant(fileId, query, settings, topK = 5) {
   // Check if we have dense embeddings
   const hasDense = chunks[0]?.embedding && chunks[0].embedding.length > 0;
 
-  if (hasDense && settings?.apiKey && (settings.provider === 'openai' || settings.provider === 'google')) {
+  const canQueryDense = settings?.apiKey
+    ? (settings.provider === 'openai' || settings.provider === 'google')
+    : settings?.mode === 'coin';
+  if (hasDense && canQueryDense) {
     // Tier 2: Dense vector search
     try {
       const [queryVec] = await generateEmbeddings([query], settings);

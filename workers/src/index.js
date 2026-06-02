@@ -5,7 +5,7 @@
  *   POST /v1/auth/token     — Exchange Google ID token for session token
  *   POST /v1/chat           — LLM proxy (BYOK + Coin mode)
  *   POST /v1/sync           — Sync queue push/pull
- *   POST /v1/rag            — RAG retrieval (stub)
+ *   POST /v1/rag            — RAG embed proxy + BM25 query
  *   POST /v1/coin/balance   — Coin balance query
  *   POST /v1/coin/deduct    — Coin deduction
  *   GET  /health            — Health check
@@ -204,7 +204,7 @@ export default {
             features: {
               chat: true,
               sync: !!env.SYNC_KV,
-              rag: false,        // stub only
+              rag: true,         // embed + query
               coin: !!env.COIN_KV,
               auth: !!env.COIN_SECRET,
             },
@@ -437,7 +437,12 @@ async function handleSync(request, env, respond) {
 
 
 /* ══════════════════════════════════════════
-   /v1/rag — RAG Retrieval (Stub)
+   /v1/rag — RAG Retrieval & Embedding Proxy
+   ══════════════════════════════════════════
+
+   Actions:
+     embed — generate embeddings via provider API (BYOK or Coin)
+     query — stateless BM25 search over client-supplied chunks
    ══════════════════════════════════════════ */
 
 async function handleRag(request, env, respond) {
@@ -448,22 +453,180 @@ async function handleRag(request, env, respond) {
     return respond({ error: 'Invalid JSON' }, 400);
   }
 
-  const { query, collection, topK } = body;
+  const { action } = body;
 
-  if (!query) {
-    return respond({ error: 'query field required' }, 400);
+  switch (action) {
+    case 'embed':
+      return handleRagEmbed(body, request, env, respond);
+    case 'query':
+      return handleRagQuery(body, respond);
+    default:
+      return respond({ error: 'Unknown action. Use: embed, query' }, 400);
+  }
+}
+
+// ── embed: proxy OpenAI / Google embedding API ──
+
+function estimateEmbedCost(texts) {
+  const charCount = texts.reduce((s, t) => s + (t?.length || 0), 0);
+  const tokenEstimate = Math.ceil(charCount / 3);
+  // Embedding is much cheaper than LLM: 0.2 coins per 1K tokens, min 1
+  return Math.max(1, Math.ceil((tokenEstimate / 1000) * 0.2));
+}
+
+async function callEmbedOpenAI(texts, apiKey, model) {
+  const res = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: texts, model }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`OpenAI Embedding ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+  const json = await res.json();
+  return json.data.map(d => d.embedding);
+}
+
+async function callEmbedGoogle(texts, apiKey, model) {
+  const requests = texts.map(t => ({ model: `models/${model}`, content: { parts: [{ text: t }] } }));
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:batchEmbedContents?key=${apiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ requests }) },
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`Google Embedding ${res.status}: ${err.error?.message || res.statusText}`);
+  }
+  const json = await res.json();
+  return json.embeddings.map(e => e.values);
+}
+
+async function handleRagEmbed(body, request, env, respond) {
+  const { texts, provider, model, mode, apiKey } = body;
+
+  if (!texts || !Array.isArray(texts) || texts.length === 0) {
+    return respond({ error: 'texts array required' }, 400);
+  }
+  if (texts.length > 200) {
+    return respond({ error: 'Maximum 200 texts per request' }, 400);
+  }
+  if (!provider || (provider !== 'openai' && provider !== 'google')) {
+    return respond({ error: 'provider required: openai or google' }, 400);
   }
 
-  // Stub — returns empty results with metadata
-  return respond({
-    ok: true,
-    query,
-    collection: collection || 'default',
-    topK: topK || 5,
-    results: [],
-    _stub: true,
-    _message: 'RAG retrieval is not yet implemented. Results will be empty.',
+  let key;
+  let userId = null;
+  const cost = estimateEmbedCost(texts);
+
+  if (mode === 'byok') {
+    if (!apiKey) return respond({ error: 'BYOK mode requires apiKey' }, 400);
+    key = apiKey;
+  } else if (mode === 'coin') {
+    const auth = await requireAuth(request, env);
+    if (auth.error) return respond({ error: auth.error }, auth.status);
+    userId = auth.userId;
+
+    const balance = await getCoinBalance(env, userId);
+    if (balance < cost) {
+      return respond({ error: '月幣不足', balance, required: cost }, 402);
+    }
+
+    key = getServerKey(env, provider);
+    if (!key) return respond({ error: `Server key not configured for: ${provider}` }, 503);
+
+    await deductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`);
+  } else {
+    return respond({ error: 'Invalid mode. Use "byok" or "coin".' }, 400);
+  }
+
+  try {
+    const embModel = model || (provider === 'google' ? 'text-embedding-004' : 'text-embedding-3-small');
+    let embeddings;
+
+    // Batch in groups of 50 to stay within provider limits
+    const BATCH = 50;
+    embeddings = [];
+    for (let i = 0; i < texts.length; i += BATCH) {
+      const batch = texts.slice(i, i + BATCH);
+      const result = provider === 'openai'
+        ? await callEmbedOpenAI(batch, key, embModel)
+        : await callEmbedGoogle(batch, key, embModel);
+      embeddings.push(...result);
+    }
+
+    return respond({ ok: true, embeddings, model: embModel, count: embeddings.length });
+  } catch (err) {
+    // Refund on failure
+    if (mode === 'coin' && userId) {
+      await refundCoins(env, userId, cost, `refund:embed:${err.message.slice(0, 50)}`);
+    }
+    return respond({ error: err.message }, 502);
+  }
+}
+
+// ── query: stateless BM25 search over client-supplied chunks ──
+
+function ragTokenize(text) {
+  if (!text) return [];
+  const tokens = [];
+  const re = /[一-鿿㐀-䶿豈-﫿]|[a-zA-Z0-9À-ɏ]+/g;
+  let m;
+  while ((m = re.exec(text)) !== null) tokens.push(m[0].toLowerCase());
+  return tokens;
+}
+
+function ragBm25(chunks, query, topK) {
+  const N = chunks.length;
+  const queryTokens = ragTokenize(query);
+  if (queryTokens.length === 0) return [];
+
+  // Precompute per-doc tokens and avg doc length
+  const docsTokens = chunks.map(c => ragTokenize(c.text || c));
+  const avgDL = docsTokens.reduce((s, t) => s + t.length, 0) / (N || 1);
+
+  // Document frequency
+  const df = {};
+  for (const dt of docsTokens) {
+    const seen = new Set(dt);
+    for (const t of seen) df[t] = (df[t] || 0) + 1;
+  }
+
+  const k1 = 1.5, b = 0.75;
+  const scored = docsTokens.map((dt, i) => {
+    const dl = dt.length;
+    const tf = {};
+    for (const t of dt) tf[t] = (tf[t] || 0) + 1;
+
+    let score = 0;
+    for (const qt of queryTokens) {
+      const n = df[qt] || 0;
+      if (n === 0) continue;
+      const idf = Math.log((N - n + 0.5) / (n + 0.5) + 1);
+      const termFreq = tf[qt] || 0;
+      score += idf * (termFreq * (k1 + 1)) / (termFreq + k1 * (1 - b + b * dl / avgDL));
+    }
+
+    return { index: i, text: typeof chunks[i] === 'string' ? chunks[i] : chunks[i].text, pageNum: chunks[i].pageNum, score };
   });
+
+  return scored.sort((a, b) => b.score - a.score).slice(0, topK).filter(r => r.score > 0);
+}
+
+async function handleRagQuery(body, respond) {
+  const { query, chunks, topK = 5 } = body;
+
+  if (!query) return respond({ error: 'query required' }, 400);
+  if (!chunks || !Array.isArray(chunks) || chunks.length === 0) {
+    return respond({ error: 'chunks array required (each: string or {text, pageNum?})' }, 400);
+  }
+  if (chunks.length > 5000) {
+    return respond({ error: 'Maximum 5000 chunks per query' }, 400);
+  }
+
+  const results = ragBm25(chunks, query, topK);
+
+  return respond({ ok: true, query, results, count: results.length, method: 'bm25' });
 }
 
 

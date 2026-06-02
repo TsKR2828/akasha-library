@@ -240,6 +240,7 @@ const SwIcon = ({ name, size = 16, stroke = 1.6 }) => {
     send: <><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z" /></>,
     check: <><path d="M20 6L9 17l-5-5" /></>,
     user: <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+    history: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -287,7 +288,7 @@ function validateBlock(block, characters = []) {
   }
   if (block.type === "choice") {
     if (!block.options || !Array.isArray(block.options)) errors.push("缺少 options 陣列");
-    else if (block.options.length === 0) errors.push("選項不可為空（至少���一個）");
+    else if (block.options.length === 0) errors.push("選項不可為空（至少一個）");
     else {
       block.options.forEach((opt, i) => {
         if (!opt.text) errors.push(`選項 ${i + 1} 文字為空`);
@@ -473,6 +474,40 @@ function loadCustomCharacters(workId) {
 function saveCustomCharacters(characters, workId) {
   if (!workId) return;
   localStorage.setItem(`characters_${workId}`, JSON.stringify(characters));
+}
+
+// ============= BLOCK HISTORY (snapshot / rollback) =============
+const HISTORY_MAX = 15;
+function historyKey(workId) { return `sw_history_v1_${workId}`; }
+
+function loadHistory(workId) {
+  try {
+    const raw = localStorage.getItem(historyKey(workId));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function pushHistoryEntry(workId, blocks, label) {
+  try {
+    const entries = loadHistory(workId);
+    entries.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      timestamp: Date.now(),
+      label,
+      blockCount: blocks.length,
+      blocks,
+    });
+    if (entries.length > HISTORY_MAX) entries.length = HISTORY_MAX;
+    localStorage.setItem(historyKey(workId), JSON.stringify(entries));
+    return entries;
+  } catch (e) {
+    console.error("[Archive] 歷史紀錄寫入失敗:", e);
+    return loadHistory(workId);
+  }
+}
+
+function clearHistory(workId) {
+  localStorage.removeItem(historyKey(workId));
 }
 
 // ============= TAG =============
@@ -1403,7 +1438,7 @@ function parseRelationshipEdges(characters) {
   characters.forEach(c => {
     const cleaned = c.name.replace(/（.*）/, "").trim();
     const parts = cleaned.split("·").map(p => p.trim()).filter(Boolean);
-    // Add each name part (e.g. "弗里德里希", "馮", "泰拉���德")
+    // Add each name part (e.g. "弗里德里希", "馮", "泰拉蒙德")
     parts.forEach(p => { if (p.length >= 2) namePairs.push([p, c.id]); });
     // English name first word
     const enFirst = (c.nameEn || "").split(/[\s·]/)[0];
@@ -1898,7 +1933,7 @@ const ZeroRhyme = {
         }
         if (!b.original && !b.zh) issues.push({ ...loc, severity: "error", message: "對白內容為空（原文與中譯皆無）", rule: "empty-dialogue" });
         if (!b.isUnknown && b.speakerId && charIds.length > 0 && !charIds.includes(b.speakerId))
-          issues.push({ ...loc, severity: "error", message: `角色「${b.speakerId}��不在角色表中`, rule: "unknown-speaker" });
+          issues.push({ ...loc, severity: "error", message: `角色「${b.speakerId}」不在角色表中`, rule: "unknown-speaker" });
       }
       if (b.type === "scene" && !b.act && !b.scene)
         issues.push({ ...loc, severity: "error", message: "場次缺少幕場標記（act / scene）", rule: "no-act" });
@@ -2004,7 +2039,7 @@ const DRAFT_TEMPLATES = {
       if (a) blocks.push({ id: draftId("l1"), type: "dialogue", speakerId: a.id, original: "", zh: "【起唱——訴說心意】", tags: [["愛慕","emotion"]] });
       if (b) blocks.push({ id: draftId("l2"), type: "dialogue", speakerId: b.id, original: "", zh: "【回應——接受 / 猶豫】", tags: [["愛慕","emotion"]] });
       if (a) blocks.push({ id: draftId("l3"), type: "dialogue", speakerId: a.id, original: "", zh: "【再詠——加深情感】", tags: mood ? [[mood,"emotion"]] : [["溫柔","emotion"]] });
-      if (b) blocks.push({ id: draftId("l4"), type: "dialogue", speakerId: b.id, original: "", zh: "【合聲——兩人同聲���", tags: [["二重唱","form"]] });
+      if (b) blocks.push({ id: draftId("l4"), type: "dialogue", speakerId: b.id, original: "", zh: "【合聲——兩人同聲】", tags: [["二重唱","form"]] });
       return blocks;
     }},
   farewell: { label: "離別", labelEn: "Farewell", desc: "告別場景（感傷交代 + 離場旁白）",
@@ -2012,7 +2047,7 @@ const DRAFT_TEMPLATES = {
       const [a, b] = chars.length >= 2 ? [chars[0], chars[1]] : [chars[0], chars[0]];
       const blocks = [];
       if (a) blocks.push({ id: draftId("f1"), type: "dialogue", speakerId: a.id, original: "", zh: "【告別宣言——我必須離開】", tags: [["離別","plot"],["哀傷","emotion"]] });
-      if (b) blocks.push({ id: draftId("f2"), type: "dialogue", speakerId: b.id, original: "", zh: "【挽��� / 接受】", tags: [["離別","plot"]] });
+      if (b) blocks.push({ id: draftId("f2"), type: "dialogue", speakerId: b.id, original: "", zh: "【挽留 / 接受】", tags: [["離別","plot"]] });
       if (a) blocks.push({ id: draftId("f3"), type: "dialogue", speakerId: a.id, original: "", zh: "【最後囑咐】", tags: mood ? [[mood,"emotion"]] : [["堅定","emotion"]] });
       blocks.push({ id: draftId("nar2"), type: "narration", text: "【離場描寫——角色退場動作】" });
       return blocks;
@@ -2021,11 +2056,11 @@ const DRAFT_TEMPLATES = {
     generate: (chars, act, scene, mood) => {
       const [judge, accused, witness] = chars.length >= 3 ? chars.slice(0,3) : [chars[0], chars[1] || chars[0], chars[0]];
       const blocks = [];
-      blocks.push({ id: draftId("nar"), type: "narration", text: "【審��場景——莊嚴肅穆】" });
+      blocks.push({ id: draftId("nar"), type: "narration", text: "【審判場景——莊嚴肅穆】" });
       if (judge) blocks.push({ id: draftId("t1"), type: "dialogue", speakerId: judge.id, original: "", zh: "【宣布開庭 / 提出指控】", tags: [["審判","plot"],["冷靜","emotion"]] });
       if (accused) blocks.push({ id: draftId("t2"), type: "dialogue", speakerId: accused.id, original: "", zh: "【被告回應——抗辯 / 沉默】", tags: [["審判","plot"]] });
       if (judge) blocks.push({ id: draftId("t3"), type: "dialogue", speakerId: judge.id, original: "", zh: "【追問 / 質疑】", tags: [["審判","plot"]] });
-      if (accused) blocks.push({ id: draftId("t4"), type: "dialogue", speakerId: accused.id, original: "", zh: "【最終��述】", tags: mood ? [[mood,"emotion"]] : [["掙扎","emotion"]] });
+      if (accused) blocks.push({ id: draftId("t4"), type: "dialogue", speakerId: accused.id, original: "", zh: "【最終陳述】", tags: mood ? [[mood,"emotion"]] : [["掙扎","emotion"]] });
       if (judge) blocks.push({ id: draftId("t5"), type: "dialogue", speakerId: judge.id, original: "", zh: "【宣判】", tags: [["審判","plot"],["崇高","emotion"]] });
       return blocks;
     }},
@@ -2150,7 +2185,7 @@ function DraftGenerator({ onClose, onInsert, characters, charColors = {} }) {
             </div>
             {/* Mood */}
             <div style={{width:120}}>
-              <div style={{fontFamily:"var(--font-body)",fontSize:10.5,color:"var(--text-secondary)",marginBottom:4}}>情緒���調</div>
+              <div style={{fontFamily:"var(--font-body)",fontSize:10.5,color:"var(--text-secondary)",marginBottom:4}}>情緒基調</div>
               <select value={mood} onChange={e => setMood(e.target.value)} style={selectStyle}>
                 <option value="">（無）</option>
                 {MOODS.map(m => <option key={m} value={m}>{m}</option>)}
@@ -2230,6 +2265,72 @@ function DraftGenerator({ onClose, onInsert, characters, charColors = {} }) {
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ============= HISTORY PANEL — 歷史紀錄面板 =============
+
+function HistoryPanel({ workId, onClose, onRestore }) {
+  const [entries, setEntries] = React.useState(() => loadHistory(workId));
+
+  const handleRestore = (entry) => {
+    if (!window.confirm(`確定還原到「${entry.label}」？\n當前稿件會先自動存入歷史。`)) return;
+    onRestore(entry.blocks);
+    setTimeout(() => setEntries(loadHistory(workId)), 100);
+  };
+
+  const handleClear = () => {
+    if (!window.confirm("確定清除全部歷史紀錄？此操作無法復原。")) return;
+    clearHistory(workId);
+    setEntries([]);
+  };
+
+  const fmtTime = (ts) => {
+    const d = new Date(ts);
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:100,background:"rgba(13,17,25,0.96)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
+      {/* Header */}
+      <div style={{padding:"14px 24px",borderBottom:"1px solid var(--navy-line)",display:"flex",alignItems:"center",gap:12}}>
+        <SwIcon name="history" size={16} />
+        <span style={{fontFamily:"var(--font-serif-en)",fontVariant:"small-caps",fontSize:14,letterSpacing:"0.16em",color:"var(--gold-bright)",textTransform:"uppercase"}}>History</span>
+        <span style={{fontFamily:"var(--font-serif-tc)",fontSize:12,color:"var(--text-secondary)",letterSpacing:"0.06em"}}>歷史紀錄</span>
+        <span style={{fontFamily:"var(--font-mono)",fontSize:10.5,color:"var(--text-tertiary)"}}>{entries.length} 筆</span>
+        <span style={{flex:1}} />
+        {entries.length > 0 && <SwBtn icon="trash" size="sm" variant="ghost" onClick={handleClear}>清除全部</SwBtn>}
+        <SwBtn icon="close" size="sm" onClick={onClose}>關閉</SwBtn>
+      </div>
+      {/* List */}
+      <div style={{flex:1,overflowY:"auto",padding:"16px 24px"}}>
+        {entries.length === 0 ? (
+          <div style={{textAlign:"center",padding:"60px 20px"}}>
+            <div style={{fontFamily:"var(--font-serif-tc)",fontSize:15,color:"var(--text-tertiary)",marginBottom:8}}>尚無歷史紀錄</div>
+            <div style={{fontFamily:"var(--font-body)",fontSize:12,color:"var(--text-tertiary)",lineHeight:1.8}}>
+              執行破壞性操作（匯入、重設、初稿插入、刪除 block）時<br/>系統會自動保存當前狀態作為快照。
+            </div>
+          </div>
+        ) : (
+          entries.map((entry, i) => (
+            <div key={entry.id} style={{padding:"12px 16px",marginBottom:6,borderRadius:3,border:"1px solid var(--navy-line)",background:"rgba(255,255,255,0.015)",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{flex:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:10,padding:"2px 6px",borderRadius:2,background:"rgba(201,168,106,0.1)",color:"var(--gold-dim)"}}>#{entries.length - i}</span>
+                  <span style={{fontFamily:"var(--font-serif-tc)",fontSize:12.5,color:"var(--cream)"}}>{entry.label}</span>
+                </div>
+                <div style={{display:"flex",gap:12,marginTop:4}}>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:10,color:"var(--text-tertiary)"}}>{fmtTime(entry.timestamp)}</span>
+                  <span style={{fontFamily:"var(--font-mono)",fontSize:10,color:"var(--text-tertiary)"}}>{entry.blockCount} blocks</span>
+                </div>
+              </div>
+              <SwBtn icon="back" size="sm" variant="gold" onClick={() => handleRestore(entry)}>還原</SwBtn>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
@@ -2604,6 +2705,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
   const [soundOpen, setSoundOpen] = React.useState(false);
   const [linterOpen, setLinterOpen] = React.useState(false);
   const [draftOpen, setDraftOpen] = React.useState(false);
+  const [historyOpen, setHistoryOpen] = React.useState(false);
   const [charModalOpen, setCharModalOpen] = React.useState(false);
   const [charModalTarget, setCharModalTarget] = React.useState(null);
 
@@ -2618,6 +2720,8 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
     CHARACTERS = chars; CHAR_COLORS = cc;
     saveCustomCharacters(chars, workId);
   };
+  const pushSnapshot = (label) => { pushHistoryEntry(workId, blocks, label); };
+
   const handleCharSave = (charData) => {
     const exists = characters.find(c => c.id === charData.id);
     const updated = exists ? characters.map(c => c.id === charData.id ? { ...c, ...charData } : c) : [...characters, charData];
@@ -2669,7 +2773,8 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
     setBlocks(prev => [...prev, tpl]);
   };
   const removeBlock = (id) => {
-    if (!window.confirm("確定刪除此 block？此操作無法復原。")) return;
+    if (!window.confirm("確定刪除此 block？")) return;
+    pushSnapshot("刪除 block");
     setBlocks(blocks.filter(b => b.id !== id));
     if (focusedBlockId === id) setFocusedBlockId(null);
   };
@@ -2716,6 +2821,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
         }
         setImportWarnings(null);
         if (imported.length > 0) {
+          pushSnapshot("匯入 JSONL 前備份");
           setBlocks(imported);
           setFocusedBlockId(imported.find(b => b.type === "dialogue")?.id || null);
         }
@@ -2729,7 +2835,8 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
 
   // ── Reset to original data ──
   const resetBlocks = () => {
-    if (confirm("確定要重設為原始資料？未存檔的修改將遺失。")) {
+    if (confirm("確定要重設為原始資料？")) {
+      pushSnapshot("重設前備份");
       localStorage.removeItem(`blocks_${workId}`);
       setBlocks(script);
       setFocusedBlockId(script.find(b => b.type === "dialogue")?.id || null);
@@ -2840,6 +2947,8 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
             onClick={() => setLinterOpen(true)}>格式檢查</SwBtn>
           <SwBtn icon="quill" size="sm" variant="ghost"
             onClick={() => setDraftOpen(true)}>初稿生成</SwBtn>
+          <SwBtn icon="history" size="sm" variant="ghost"
+            onClick={() => setHistoryOpen(true)}>歷史</SwBtn>
 
           <span style={{ flex: 1 }} />
 
@@ -2982,12 +3091,25 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
         charColors={charColors}
         onClose={() => setDraftOpen(false)}
         onInsert={(newBlocks) => {
+          pushSnapshot("初稿插入前備份");
           setBlocks(prev => [...prev, ...newBlocks]);
           setFocusedBlockId(newBlocks[0]?.id || null);
           setTimeout(() => {
             const el = newBlocks[0]?.id ? document.querySelector(`[data-block-id="${CSS.escape(newBlocks[0].id)}"]`) : null;
             if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
           }, 200);
+        }}
+      />}
+
+      {/* History Panel */}
+      {historyOpen && <HistoryPanel
+        workId={workId}
+        onClose={() => setHistoryOpen(false)}
+        onRestore={(restoredBlocks) => {
+          pushSnapshot("還原前自動備份");
+          setBlocks(restoredBlocks);
+          setFocusedBlockId(restoredBlocks.find(b => b.type === "dialogue")?.id || null);
+          setHistoryOpen(false);
         }}
       />}
 
@@ -4438,6 +4560,7 @@ function App() {
     localStorage.removeItem(`characters_${currentWork}`);
     localStorage.removeItem(`sw_write_draft_v1_${currentWork}`);
     localStorage.removeItem(`sw_slot_locks_v1_${currentWork}`);
+    clearHistory(currentWork);
     WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
     setWorkIndex([...WORK_INDEX]);
     const fallback = WORK_INDEX[0]?.id || "lohengrin";

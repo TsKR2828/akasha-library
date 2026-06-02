@@ -136,7 +136,7 @@ function isPlainScript(content) {
   const lines = content.trim().split('\n').filter(l => l.trim() && !l.trim().startsWith('//'));
   if (lines.length < 2) return false;
   const dlg = /^[^\s#].{0,20}[：:].+/;
-  const cmd = /^#\w+:\s/;
+  const cmd = /^#\w+[：:]\s/;
   let hits = 0;
   for (const l of lines.slice(0, 20)) { if (dlg.test(l.trim()) || cmd.test(l.trim())) hits++; }
   return hits / Math.min(lines.length, 20) >= 0.5;
@@ -252,7 +252,7 @@ function extractPlainScript(content) {
     const tr = raw.trim();
     if (!tr || tr.startsWith('//')) continue;
 
-    const cmd = tr.match(/^#(\w+):\s*(.+)$/);
+    const cmd = tr.match(/^#(\w+)[：:]\s*(.+)$/);
     if (cmd) { blocks.push({ type: 'command', command: cmd[1], value: cmd[2].trim() }); continue; }
 
     const dlg = tr.match(/^([^\s#][^：:]{0,20})[：:](.+)$/);

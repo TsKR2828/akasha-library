@@ -1,32 +1,43 @@
-# Script Editor 交接事項（2026-05-23）
+# Akasha Library 交接事項（2026-06-02）
 
 ## 目前狀態
 
 **Branch:** `master`  
-**最新 commit:** `fe1eb02` — 已 push，Cloudflare Pages 自動部署中  
-**本地伺服器:** `npx http-server . -p 3462 -c-1`（若需測試）  
-**Build 指令:** `npx vite build --config vite.config.script-editor.js`  
-**測試 URL:** `http://127.0.0.1:3462/dist/script-editor/index.html`  
-**線上 URL:** Cloudflare Pages（月月正在 io 上審核 Round 2）
+**本地伺服器:** `npx http-server . -p 3460 -c-1`（若需測試）  
+**Build 指令:** `npm test`（= vite build + file checks）  
+**測試 URL:** `http://127.0.0.1:3460/dist/script-editor/index.html`  
+**線上 URL:** Cloudflare Pages 自動部署
 
 ---
 
-## 已完成（Phase 18，本次 session）
+## 已完成（本次 session，2026-06-02）
 
-| 項目 | commit | 狀態 |
-|------|--------|------|
-| 搜尋 narration/scene filter | `a31e242` | ✅ |
-| Persona Slots v2（全 9 格可指派） | `fe1eb02` | ✅ |
-| 多作品支援（custom work CRUD） | `a31e242` | ✅ |
-| AI 輔助面板（postMessage bridge） | `a31e242` | ✅ |
-| WorkSwitcher inline（不再擋內容） | `fe1eb02` | ✅ |
-| Editor/addBlock 去耦合 "lohengrin" | `fe1eb02` | ✅ |
-| Delete work 正確 localStorage key | `fe1eb02` | ✅ |
-| SEED 通用化 | `fe1eb02` | ✅ |
+| 項目 | 狀態 |
+|------|------|
+| Codex 審查 P2: export-core `b.text` → `blockText(b)` 支援 zh/original | ✅ |
+| Codex 審查 P2: App.jsx 8 處 replacement character 亂碼修復 | ✅ |
+| Codex 審查 P2: translation-core 全形冒號 `：` regex 支援 | ✅ |
+| Codex 審查 P3: iframe sandbox `allow-clipboard-write` → permission policy | ✅ |
+| 草稿歷史 / 回溯（`sw_history_v1_${workId}`，15 筆 FIFO） | ✅ |
+| Worker RAG 實作：embed proxy（BYOK+Coin）+ BM25 query | ✅ |
+| 前端 embedding coin-mode fallback（`embedViaProxy()`） | ✅ |
+
+## 先前完成（Phase 18）
+
+| 項目 | commit |
+|------|--------|
+| 搜尋 narration/scene filter | `a31e242` |
+| Persona Slots v2（全 9 格可指派） | `fe1eb02` |
+| 多作品支援（custom work CRUD） | `a31e242` |
+| AI 輔助面板（postMessage bridge） | `a31e242` |
+| WorkSwitcher inline（不再擋內容） | `fe1eb02` |
+| Editor/addBlock 去耦合 "lohengrin" | `fe1eb02` |
+| Delete work 正確 localStorage key | `fe1eb02` |
+| SEED 通用化 | `fe1eb02` |
 
 ---
 
-## 待處理（Phase 19，月月審後決定優先順序）
+## 待處理
 
 ### 高優先
 
@@ -34,32 +45,26 @@
    `App.jsx` line 19-30，Lohengrin 場景名寫死在全域常數。  
    修法：改為 per-work 或從 data JSON 讀取，custom work 不顯示。
 
-2. **角色管理 UI**  
-   月月回饋「我也不能新增或刪除修改角色」。  
-   目前角色只能從 server data 載入或 `populateCharsFromBlocks()` 自動抽取。  
-   需要：角色 CRUD modal（name / nameEn / voice / role / tags）+ 存入 localStorage。
+2. **JSONL 匯入即建作品**  
+   現在匯入 JSONL 不會自動建立 custom work metadata，blocks 掛在當前作品下。
 
-3. **草稿歷史/存檔系統**  
-   月月回饋「沒有存檔草稿跟歷史紀錄」。  
-   目前 WriteTab 只有 auto-save 到 `sw_write_draft_v1_${workId}`，無版本回溯。  
-   建議：localStorage 存最近 N 筆 snapshot（timestamp + content 前 50 字預覽）。
+3. **Write 多模式（小說/劇本/筆記）+ H1~H4 大綱面板**  
+   Phase A 規劃已完成（見先前 session），尚未開工。
 
 ### 中優先
 
-4. **關係圖編輯**  
-   `RelationshipGraph` 目前只讀顯示。需加 add/edit/save relations 功能。
+4. **TsukiSynth WAV pipeline**  
+   `ZeroRhyme.generateScore` / `renderScore` 仍是空殼。  
+   需等 tsuki-synth CLI render 修好。
 
-5. **JSONL 匯入即建作品**  
-   現在匯入 JSONL 不會自動建立 custom work metadata，blocks 掛在當前作品下。
-
-6. **`getWorkId()` 一致性**  
+5. **`getWorkId()` 一致性**  
    仍用 `WORKS[0]?.id`，與 App 的 `currentWork` state 可能 desync。  
    長期應改為 React context 或統一從 `sw_last_work` 讀。
 
 ### 低優先
 
-7. **SW cache 版號** — `akasha-library-v4-public` 固定，應隨 build 自動 bump
-8. **GERMAN_ACT_NUMS** — 硬編碼歌劇幕號格式，非通用
+6. **SW cache 版號** — `akasha-library-v4-public` 固定，應隨 build 自動 bump
+7. **GERMAN_ACT_NUMS** — 硬編碼歌劇幕號格式，非通用
 
 ---
 

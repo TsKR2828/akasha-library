@@ -7,6 +7,8 @@
  * Each converter: (data, opts) → { blob, filename, mimeType }
  */
 
+function blockText(b) { return b.text || b.zh || b.original || ''; }
+
 // ── Public API ─────────────────────────────────────────────
 
 /**
@@ -214,11 +216,11 @@ function blocksToTyranoScript(blocks) {
     if (b.type === 'dialogue') {
       lines.push(`#${b.speaker || '???'}`);
       if (b.emotion) lines.push(`[emote name="${b.emotion}"]`);
-      lines.push(`${b.text}[p]`);
+      lines.push(`${blockText(b)}[p]`);
       lines.push('');
     } else if (b.type === 'narration') {
       lines.push('[cm]');
-      lines.push(`${b.text}[p]`);
+      lines.push(`${blockText(b)}[p]`);
       lines.push('');
     } else if (b.type === 'command') {
       const cmd = b.command;
@@ -238,9 +240,9 @@ function blocksToMarkdown(blocks, title) {
   if (title) { lines.push(`# ${title}`, ''); }
   for (const b of blocks) {
     if (b.type === 'dialogue') {
-      lines.push(`**${b.speaker || '???'}**：${b.text}`, '');
+      lines.push(`**${b.speaker || '???'}**：${blockText(b)}`, '');
     } else if (b.type === 'narration') {
-      lines.push(`*${b.text}*`, '');
+      lines.push(`*${blockText(b)}*`, '');
     } else if (b.type === 'command') {
       lines.push(`\`[${b.command}: ${b.value}]\``, '');
     }
@@ -252,9 +254,9 @@ function scriptBlocksToHtml(blocks, title) {
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const body = blocks.map(b => {
     if (b.type === 'dialogue')
-      return `<div class="block dialogue"><span class="speaker">${esc(b.speaker || '???')}</span><p class="text">${esc(b.text)}</p></div>`;
+      return `<div class="block dialogue"><span class="speaker">${esc(b.speaker || '???')}</span><p class="text">${esc(blockText(b))}</p></div>`;
     if (b.type === 'narration')
-      return `<div class="block narration"><p>（${esc(b.text)}）</p></div>`;
+      return `<div class="block narration"><p>（${esc(blockText(b))}）</p></div>`;
     if (b.type === 'command')
       return `<div class="block command"><p>[${esc(b.command)}: ${esc(b.value)}]</p></div>`;
     return '';

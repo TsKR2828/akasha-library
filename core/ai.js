@@ -19,13 +19,13 @@ import { getToken } from './auth.js';
 const SESSION_TOKEN_KEY = 'akasha-session-token';
 const SESSION_EXPIRY_KEY = 'akasha-session-expiry';
 
-function getProxyUrl() {
+export function getProxyUrl() {
   const base = CONFIG.API_BASE;
   if (!base || base.includes('your-subdomain')) return null;
   return base;
 }
 
-async function getSessionToken() {
+export async function getSessionToken() {
   const cached = sessionStorage.getItem(SESSION_TOKEN_KEY);
   const expiry = parseInt(sessionStorage.getItem(SESSION_EXPIRY_KEY) || '0', 10);
   if (cached && Date.now() < expiry) return cached;
