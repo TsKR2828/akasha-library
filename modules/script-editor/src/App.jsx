@@ -4514,12 +4514,12 @@ function App() {
     setTab("editor");
   };
 
-  const switchWork = async (workId) => {
+  const switchWork = async (workId, { skipSave = false } = {}) => {
     if (workId === currentWork) return;
     setLoading(true);
     // Synchronously persist current blocks before switching (debounce may not have flushed)
     saveRef.current.cancel();
-    saveBlocksToStorage(blocks, currentWork);
+    if (!skipSave) saveBlocksToStorage(blocks, currentWork);
     try {
       const data = await loadAllData(workId);
       const fromStorage = loadBlocksFromStorage(workId);
@@ -4564,7 +4564,7 @@ function App() {
     WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
     setWorkIndex([...WORK_INDEX]);
     const fallback = WORK_INDEX[0]?.id || "lohengrin";
-    switchWork(fallback);
+    switchWork(fallback, { skipSave: true });
   };
 
   const handleWorkCreated = (newWorkId) => {

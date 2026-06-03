@@ -185,39 +185,21 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
   /* ---------- jump to line (for outline clicks) ---------- */
   const jumpToLine = React.useCallback((lineNum) => {
     const lineIdx = lineNum - 1; // 0-indexed
-    // In chapter mode, switch to the correct chapter
-    if (chapters.length > 0) {
-      const targetCh = chapters.findIndex(ch => lineIdx >= ch.startLine && lineIdx <= ch.endLine);
-      if (targetCh >= 0) {
-        setActiveChapter(targetCh);
-        const localLine = lineIdx - chapters[targetCh].startLine;
-        requestAnimationFrame(() => {
-          const ta = taRef.current;
-          if (!ta) return;
-          const lines = ta.value.split('\n');
-          let off = 0;
-          for (let i = 0; i < Math.min(localLine, lines.length); i++) off += lines[i].length + 1;
-          ta.focus();
-          ta.setSelectionRange(off, off);
-          setCaret(off);
-          const lh = parseFloat(getComputedStyle(ta).lineHeight) || 27;
-          ta.scrollTop = Math.max(0, localLine * lh - ta.clientHeight / 3);
-        });
-        return;
-      }
-    }
-    // No chapter mode — jump within full content
-    const ta = taRef.current;
-    if (!ta) return;
-    const lines = content.split('\n');
-    let off = 0;
-    for (let i = 0; i < Math.min(lineIdx, lines.length); i++) off += lines[i].length + 1;
-    ta.focus();
-    ta.setSelectionRange(off, off);
-    setCaret(off);
-    const lh = parseFloat(getComputedStyle(ta).lineHeight) || 27;
-    ta.scrollTop = Math.max(0, lineIdx * lh - ta.clientHeight / 3);
-  }, [content, chapters]);
+    // Always exit chapter mode — show full content so user can see context
+    if (activeChapter != null) setActiveChapter(null);
+    // Use rAF to wait for React to commit full content after chapter exit
+    requestAnimationFrame(() => {
+      const ta = taRef.current;
+      if (!ta) return;
+      const lines = ta.value.split('\n');
+      let off = 0;
+      for (let i = 0; i < Math.min(lineIdx, lines.length); i++) off += lines[i].length + 1;
+      ta.focus();
+      ta.setSelectionRange(off, off);
+      setCaret(off);
+      // anchorCaretView will handle scroll via useLayoutEffect on caret change
+    });
+  }, [content, activeChapter]);
 
   /* Voice TTS (v2-5) */
   const voice = useVoiceTTS();
@@ -435,18 +417,51 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
   const onTextChange = e => setVisibleContent(e.target.value);
   const onCaretMove  = e => setCaret(e.target.selectionStart || 0);
 
-  /* v2-fix3: 把當前游標所在行卷到視野「下 2/3」附近
-     — 只在游標超過 2/3 視野時才下捲；不會跳回上方。 */
-  /* v2-fix5: 打字機捲動 — 雙向錨定，游標保持在視窗 ~42% 處
-     舒適區 25%–55%：游標在此範圍內不捲動，超出才平滑對齊 */
+  /* v2-fix6: 打字機捲動 — mirror div 量測真實 caret Y 位置
+     解決 pre-wrap 軟換行導致 \n 行數 ≠ 視覺行數的問題。
+     使用隱藏 mirror div 複製 textarea 樣式，插入 marker span 量測 offsetTop。
+     舒適區 25%–55%：游標在此範圍內不捲動，超出才對齊 42%。 */
+  const mirrorRef = React.useRef(null);
+  React.useEffect(() => () => {
+    if (mirrorRef.current?.parentNode) mirrorRef.current.parentNode.removeChild(mirrorRef.current);
+  }, []);
+
   const anchorCaretView = React.useCallback(() => {
     const ta = taRef.current;
     if (!ta) return;
+
+    // Lazy-create mirror div
+    if (!mirrorRef.current) {
+      mirrorRef.current = document.createElement('div');
+      Object.assign(mirrorRef.current.style, {
+        position: 'absolute', top: '-9999px', left: '-9999px',
+        visibility: 'hidden', pointerEvents: 'none', overflow: 'hidden',
+      });
+      document.body.appendChild(mirrorRef.current);
+    }
+
+    const mirror = mirrorRef.current;
+    const cs = getComputedStyle(ta);
+    Object.assign(mirror.style, {
+      whiteSpace: cs.whiteSpace,
+      overflowWrap: cs.overflowWrap || 'break-word',
+      wordBreak: cs.wordBreak,
+      width: ta.clientWidth + 'px',
+      font: cs.font,
+      letterSpacing: cs.letterSpacing,
+      lineHeight: cs.lineHeight,
+      padding: cs.paddingTop + ' ' + cs.paddingRight + ' 0 ' + cs.paddingLeft,
+      boxSizing: 'border-box',
+    });
+
     const pos = ta.selectionStart || 0;
-    const before = ta.value.slice(0, pos);
-    const lineIdx = (before.match(/\n/g) || []).length;
-    const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 27;
-    const caretPx = lineIdx * lineHeight + 20; /* 20 = top padding */
+    mirror.textContent = '';
+    mirror.appendChild(document.createTextNode(ta.value.slice(0, pos)));
+    const marker = document.createElement('span');
+    marker.textContent = '​'; // zero-width space for height
+    mirror.appendChild(marker);
+
+    const caretPx = marker.offsetTop;
     const viewportH = ta.clientHeight;
     const anchor = viewportH * 0.42;
     const currentTop = caretPx - ta.scrollTop;

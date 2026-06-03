@@ -141,7 +141,7 @@ export function blocksToPlainScript(blocks, characters = []) {
         out.push(`#${b.command}：${b.value || ""}`);
         break;
       case "narration":
-        out.push(`旁白：${b.text || b.zh || b.original || ""}`);
+        out.push(`旁白：${b.zh || b.text || b.original || ""}`);
         break;
       case "dialogue": {
         const speaker =
@@ -149,7 +149,8 @@ export function blocksToPlainScript(blocks, characters = []) {
           nameById.get(b.speakerId) ||
           b.speakerId ||
           "???";
-        out.push(`${speaker}：${b.text || b.zh || b.original || ""}`);
+        // Prefer zh (Editor-edited) over text (Write-parsed) to avoid showing stale values
+        out.push(`${speaker}：${b.zh || b.text || b.original || ""}`);
         break;
       }
       case "scene": {
@@ -243,10 +244,18 @@ function _isMatch(old, nw) {
   if (old.type !== nw.type) return false;
   switch (old.type) {
     case "dialogue": {
-      const os = old.speaker || old.speakerId || "";
-      const ns = nw.speaker || nw.speakerId || "";
-      if (!os || !ns) return false;
-      if (os !== ns) return false;
+      // Compare both speaker name AND speakerId — either matching is sufficient.
+      // Lohengrin data has speakerId='lohengrin', Write round-trip produces speaker='羅恩格林'.
+      const oldName = old.speaker || "";
+      const oldId   = old.speakerId || "";
+      const newName = nw.speaker || "";
+      const newId   = nw.speakerId || "";
+      const speakerMatch =
+        (oldId && newId && oldId === newId) ||
+        (oldName && newName && oldName === newName) ||
+        (oldId && newName && oldId === newName) ||
+        (oldName && newId && oldName === newId);
+      if (!speakerMatch) return false;
       // Same speaker — further check text overlap to disambiguate
       // consecutive lines from the same speaker
       const ot = (old.text || old.zh || old.original || "").substring(0, 8);
@@ -276,13 +285,19 @@ function _isMatch(old, nw) {
   }
 }
 
-/* Merge: old metadata + new text content */
+/* Merge: old metadata + new text content.
+   Write produces blocks with `text`; Editor edits `zh`.
+   On merge: sync Write's text → zh so Editor always shows the latest.
+   Preserve old zh only when Write didn't change the text. */
 function _merge(old, nw) {
+  // If parser produced `text`, propagate it to `zh` so Editor stays in sync
+  const mergedZh = nw.text || nw.zh || old.zh || "";
   return {
     ...nw,                                       // base: new parsed shape
     id:       old.id       || nw.id,             // preserve stable ID
     lineId:   old.lineId   || nw.lineId   || "", // preserve JSONL line ID
     original: old.original || nw.original || "", // preserve foreign-language source
+    zh:       mergedZh,                          // keep Editor ↔ Write in sync
     tags:     (old.tags && old.tags.length > 0) ? old.tags : (nw.tags || []),
     avg:      old.avg      || nw.avg      || { sprite: "", position: "center", bg: "", bgm: "", sfx: "" },
   };
