@@ -2429,9 +2429,26 @@ body { display: flex; }
     titleEl.textContent = mod.title;
     subtitleEl.textContent = mod.subtitle ? '· ' + mod.subtitle : '';
     breadcrumbEl.textContent = 'AKASHA LIBRARY \xBB TOOLS \xBB ' + mod.title;
+    // Sync sidebar active state
+    document.querySelectorAll('.nav-item').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.module === name);
+    });
     var prevModule = aiCurrentModule;
     aiCurrentModule = name;
     updateAIContextBadge(prevModule !== name);
+  }
+
+  // Plain Script detection: checks first 30 lines for #scene:, #command:, or 角色名：台詞 patterns
+  function _looksLikePlainScript(text) {
+    var lines = text.trim().split('\n').slice(0, 30);
+    var hits = 0;
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i].trim();
+      if (!l || l.startsWith('//')) continue;
+      if (/^#\w+\s*[：:]/.test(l)) hits++;
+      else if (/^[^\s#].{0,20}[：:].+/.test(l)) hits++;
+    }
+    return lines.length >= 2 && hits / Math.max(lines.length, 1) >= 0.3;
   }
 
   // File import — routes by extension, supports DOCX/DOC (Feature Spec §9)
@@ -2442,10 +2459,18 @@ body { display: flex; }
     if (['md', 'markdown', 'txt', 'py', 'json'].includes(ext)) {
       const { decodeFile } = await import('./core/text-decode.js');
       const text = await decodeFile(file);
+      // Detect Plain Script format → route to Script Editor instead of Code & Data
+      if (ext === 'txt' && _looksLikePlainScript(text)) {
+        openModule('script-editor');
+        frame.addEventListener('load', function() {
+          frame.contentWindow.postMessage({ type: 'akasha-open-script', filename: file.name, content: text, size: file.size }, location.origin);
+        }, { once: true });
+      } else {
       openModule('markdown');
       frame.addEventListener('load', function() {
         frame.contentWindow.postMessage({ type: 'akasha-open-file', filename: file.name, content: text, size: file.size }, location.origin);
       }, { once: true });
+      }
     } else if (ext === 'pdf') {
       const buffer = await file.arrayBuffer();
       openModule('pdf-reader');
