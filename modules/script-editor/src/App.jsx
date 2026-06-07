@@ -17,8 +17,6 @@ let CHAR_COLORS = {};
 let CHARACTERS = [];
 let SCRIPT = [];
 
-let SCENE_SUBTITLES = {};
-
 // Default seed for new custom works — parsed synchronously in switchWork
 // to guarantee blocks persist before any debounce timing race.
 // (Comment line intentionally omitted: it's lost in blocks round-trip anyway.)
@@ -93,7 +91,6 @@ async function loadAllData(workId = "lohengrin") {
     CHARACTERS = [];
     CHAR_COLORS = {};
     SCRIPT = [];
-    SCENE_SUBTITLES = {};
     return { works: WORKS, characters: CHARACTERS, charColors: CHAR_COLORS, script: SCRIPT, workIndex: WORK_INDEX };
   }
 
@@ -137,7 +134,7 @@ async function loadAllData(workId = "lohengrin") {
     actsLabel: work.acts_label || (work.acts ? `${work.acts} Acts` : ""),
   }];
 
-  SCENE_SUBTITLES = work.scene_subtitles || {};
+  const sceneSubtitles = work.scene_subtitles || {};
 
   // ── Characters ──
   CHARACTERS = chars.map(c => ({
@@ -187,7 +184,7 @@ async function loadAllData(workId = "lohengrin") {
         id: `scene_${line.act}_${line.scene}`,
         type: "scene",
         act: `Akt ${line.act} · Sz ${line.scene}`,
-        subtitle: SCENE_SUBTITLES[sceneKey] || "",
+        subtitle: sceneSubtitles[sceneKey] || "",
         note: "",
       });
       lastScene = sceneKey;
