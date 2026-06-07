@@ -106,7 +106,6 @@ info dialog 從 "Archive Script Editor" 改為 "劇本工房"，加入 slot 用�
 - `SCENE_SUBTITLES`（App.jsx line 19-30）仍硬編碼 Lohengrin 場景名
 - 角色管理 UI 尚未實作（新增/編輯/刪除角色）
 - 草稿歷史/存檔系統尚未實作
-- `getWorkId()` 仍用 `WORKS[0]?.id`，與 `currentWork` state 可能 desync
 - 關係圖為唯讀，無編輯功能
 - JSONL 匯入不會自動建立 custom work
 
