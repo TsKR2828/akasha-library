@@ -8,7 +8,7 @@
 import React from "react";
 import WriteTab from "./components/WriteTab.jsx";
 import { useCharactersOfWork } from "./hooks/useCharactersOfWork.js";
-import { parsePlainScript } from "./lib/parser.js";
+import { parsePlainScript, blocksToPlainScript } from "./lib/parser.js";
 
 // ============= DATA (loaded from ./data/ JSONL via Vite public folder) =============
 const DATA_BASE = "./data";
@@ -49,6 +49,16 @@ function getCustomWorks() {
 }
 function saveCustomWorks(works) {
   localStorage.setItem("sw_custom_works", JSON.stringify(works));
+}
+
+function titleFromFilename(filename) {
+  return (filename || "Imported Script").replace(/\.[^.]+$/, "").trim() || "Imported Script";
+}
+
+function createImportedWork(filename) {
+  const title = titleFromFilename(filename);
+  const id = "import_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 6);
+  return { id, title, titleEn: title, author: "Imported" };
 }
 
 async function loadWorkIndex() {
@@ -462,6 +472,13 @@ function saveBlocksToStorage(blocks, workId) {
     console.error("[Archive] localStorage 寫入失敗:", e);
     alert("⚠️ 儲存失敗：本機儲存空間不足。\n請清除不需要的立繪或匯出備份後重試。");
   }
+}
+
+function saveWriteDraft(text, workId) {
+  if (!workId) return;
+  try {
+    localStorage.setItem(`sw_write_draft_v1_${workId}`, text);
+  } catch {}
 }
 
 // ============= CHARACTERS localStorage PERSISTENCE =============
@@ -4453,6 +4470,10 @@ function App() {
   const [showNewWork, setShowNewWork] = React.useState(false);
   const [showAI, setShowAI] = React.useState(false);
   const goBack = () => { window.location.href = "../../index.html"; };
+  const blocksRef = React.useRef(blocks);
+  const workIdRef = React.useRef(currentWork);
+  React.useEffect(() => { blocksRef.current = blocks; }, [blocks]);
+  React.useEffect(() => { workIdRef.current = currentWork; }, [currentWork]);
 
   // Re-sync characters state after initial populateCharsFromBlocks
   React.useEffect(() => {
@@ -4482,18 +4503,47 @@ function App() {
           }
         }
       }
+      let nextBlocks;
       if (imported.length > 0) {
-        const { characters: ch, charColors: cc } = populateCharsFromBlocks(imported, []);
-        setCharacters(ch);
-        setCharColors(cc);
-        setBlocks(imported);
+        nextBlocks = imported;
       } else {
-        const parsed = parsePlainScript(content, []);
-        const { characters: ch, charColors: cc } = populateCharsFromBlocks(parsed, []);
-        setCharacters(ch);
-        setCharColors(cc);
-        setBlocks(parsed);
+        nextBlocks = parsePlainScript(content, []);
       }
+      if (Array.isArray(blocksRef.current) && blocksRef.current.length > 0) {
+        saveBlocksToStorage(blocksRef.current, workIdRef.current);
+      }
+      const importedWork = createImportedWork(filename);
+      const customs = getCustomWorks();
+      customs.push(importedWork);
+      saveCustomWorks(customs);
+      WORK_INDEX = [...WORK_INDEX.filter(w => w.id !== importedWork.id), { ...importedWork, _custom: true }];
+
+      const { characters: ch, charColors: cc } = populateCharsFromBlocks(nextBlocks, []);
+      saveBlocksToStorage(nextBlocks, importedWork.id);
+      saveCustomCharacters(ch, importedWork.id);
+      saveWriteDraft(blocksToPlainScript(nextBlocks, ch), importedWork.id);
+
+      setWorkMeta({
+        id: importedWork.id,
+        title: importedWork.title,
+        titleEn: importedWork.titleEn,
+        composer: importedWork.author,
+        license: "unchecked",
+        synopsis: "",
+        premiereYear: "",
+        setting: "",
+        copyrightNote: "",
+        acts: 0,
+        genreLabel: "Imported",
+        actsLabel: "",
+      });
+      setCharacters(ch);
+      setCharColors(cc);
+      setScript(nextBlocks);
+      setWorkIndex([...WORK_INDEX]);
+      setBlocks(nextBlocks);
+      setCurrentWork(importedWork.id);
+      localStorage.setItem("sw_last_work", importedWork.id);
       setTab("editor");
     };
     window.addEventListener("message", handler);
@@ -4502,8 +4552,6 @@ function App() {
 
   // Persist blocks to localStorage on change (debounced) — uses currentWork via ref
   // Guard: skip empty blocks to prevent overwriting seed data with [] during switch transitions
-  const workIdRef = React.useRef(currentWork);
-  React.useEffect(() => { workIdRef.current = currentWork; }, [currentWork]);
   const saveRef = React.useRef(debounce((b) => {
     if (Array.isArray(b) && b.length > 0) saveBlocksToStorage(b, workIdRef.current);
   }, 800));

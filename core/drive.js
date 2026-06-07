@@ -73,14 +73,29 @@ export async function listFiles() {
 
   const folderId = await getAppFolder();
   const query = `'${folderId}' in parents and trashed=false`;
-  const fields = 'files(id,name,mimeType,size,modifiedTime,createdTime)';
+  const fields = 'nextPageToken,files(id,name,mimeType,size,modifiedTime,createdTime)';
+  const files = [];
+  let pageToken = '';
 
-  const res = await fetch(`${API_BASE}/files?q=${encodeURIComponent(query)}&fields=${fields}&orderBy=modifiedTime desc`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  do {
+    const params = new URLSearchParams({
+      q: query,
+      fields,
+      orderBy: 'modifiedTime desc',
+      pageSize: '1000',
+    });
+    if (pageToken) params.set('pageToken', pageToken);
 
-  const data = await driveJson(res);
-  return data.files || [];
+    const res = await fetch(`${API_BASE}/files?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = await driveJson(res);
+    files.push(...(data.files || []));
+    pageToken = data.nextPageToken || '';
+  } while (pageToken);
+
+  return files;
 }
 
 /**

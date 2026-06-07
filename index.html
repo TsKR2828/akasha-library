@@ -2484,6 +2484,12 @@ body { display: flex; }
       frame.addEventListener('load', function() {
         frame.contentWindow.postMessage({ type: 'akasha-export-to-table-forge', text: text, format: 'csv', title: file.name }, location.origin);
       }, { once: true });
+    } else if (['xlsx', 'xls'].includes(ext)) {
+      const buffer = await file.arrayBuffer();
+      openModule('spreadsheet');
+      frame.addEventListener('load', function() {
+        frame.contentWindow.postMessage({ type: 'akasha-open-spreadsheet', filename: file.name, data: buffer }, location.origin);
+      }, { once: true });
     } else if (ext === 'docx') {
       const { importDocx } = await import('./core/document-bridge.js');
       const buffer = await file.arrayBuffer();
@@ -2516,7 +2522,7 @@ body { display: flex; }
   function importFile() {
     var input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv,.docx,.doc,.jsonl,.ks';
+    input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv,.xlsx,.xls,.docx,.doc,.jsonl,.ks';
     input.onchange = function(e) { handleFile(e.target.files[0]); };
     input.click();
   }
@@ -2654,7 +2660,7 @@ body { display: flex; }
 import { getFileEntries, saveFileEntry, saveFileBlob, getFileBlob } from './core/storage.js';
 import { translate } from './core/translation-core.js';
 import { initAuth, signIn, signOut } from './core/auth.js';
-import { fullSync, setSyncCallback, initOfflineSync } from './core/sync.js';
+import { fullSync, setSyncCallback, initOfflineSync, queueForSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
 import { MSG_TYPES, STORAGE_KEY, blocksToTablePayload } from './core/export/bridge.js';
 
@@ -2767,6 +2773,9 @@ window.openRecentFile = async function(fileId, moduleName) {
       if (typeof blob === 'string') { text = blob; }
       else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }
       frame.contentWindow.postMessage({ type: 'akasha-open-script', filename, content: text, size: text.length }, location.origin);
+    } else if (moduleName === 'spreadsheet') {
+      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+      frame.contentWindow.postMessage({ type: 'akasha-open-spreadsheet', filename, data: buffer }, location.origin);
     }
   }, { once: true });
 };
@@ -2777,7 +2786,8 @@ renderRecent();
 window.addEventListener('message', async (event) => {
   if (event.origin !== location.origin) return;
   if (event.data?.type === 'akasha-file-opened') {
-    await saveFileEntry(event.data.entry);
+    const entry = await saveFileEntry(event.data.entry);
+    await queueForSync(entry.id);
     renderRecent();
   }
   if (event.data?.type === MSG_TYPES.READER_EXPORT_TO_SPREADSHEET) {
@@ -3058,7 +3068,11 @@ window.saveEditedMemory = async function(id) {
   m.title = document.getElementById('mvEditTitle').value.trim();
   m.content = document.getElementById('mvEditContent').value.trim();
   m.tags = document.getElementById('mvEditTags').value.split(/[,，]/).map(t => t.trim()).filter(Boolean);
-  await saveMemory(m);
+  const saved = await saveMemory(m);
+  if (saved.syncTarget === 'notion') {
+    await enqueue({ target: 'memory', action: 'upsert', localId: saved.id, payload: saved });
+    if (isNotionConfigured()) processQueue().catch(() => updateSyncDot('error'));
+  }
   showNoteToast('手札已更新');
   await renderMvList();
 };
@@ -3075,7 +3089,12 @@ window.confirmDeleteMemory = async function(id, e) {
 };
 
 window.doDeleteMemory = async function(id) {
+  const m = await getMemory(id);
   await deleteMemory(id);
+  if (m?.syncTarget === 'notion' || m?.notionPageId) {
+    await enqueue({ target: 'memory', action: 'delete', localId: id });
+    if (isNotionConfigured()) processQueue().catch(() => updateSyncDot('error'));
+  }
   showNoteToast('手札已刪除');
   await renderMvList();
 };
@@ -3201,7 +3220,11 @@ window.testNotionConnection = async function() {
   }
   updateSyncDot('syncing');
   try {
-    await pullLibraryEntries();
+    const s = getNotionSettings();
+    if (s.libraryDbId) await pullLibraryEntries();
+    else if (s.memoryDbId) await pullMemories();
+    else if (s.personaPageId) await pullPersona();
+    else throw new Error('請至少填寫一個 Notion 資料庫或 Persona Page ID');
     updateSyncDot('ok');
     showNoteToast('連線成功！');
   } catch (err) {
@@ -3780,6 +3803,7 @@ window.tpSaveToLibrary = async function() {
 
   await saveFileEntry({ id, name: outName, type: 'json', size: blob.size, lastOpened: Date.now(), updatedAt: Date.now() });
   await saveFileBlob(id, blob);
+  await queueForSync(id);
   renderRecent();
   window.closeTranslationPreview();
   if (window.showToast) window.showToast('已存入書庫：' + outName);

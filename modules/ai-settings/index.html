@@ -383,8 +383,7 @@ function loadSettings() {
     const sessionKey = sessionStorage.getItem(KEY_SESSION) || '';
     if (sessionKey) document.getElementById('byokKey').value = sessionKey;
     if (saved.endpoint) document.getElementById('byokEndpoint').value = saved.endpoint;
-    if (saved.model) document.getElementById('byokModel').value = saved.model;
-    onProviderChange();
+    onProviderChange(saved.model);
     updateByokStatus();
   } catch {}
   loadCoinBalance();
@@ -404,11 +403,12 @@ function setMode(mode) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
 }
 
-function onProviderChange() {
+function onProviderChange(selectedModel) {
   const provider = document.getElementById('byokProvider').value;
   document.getElementById('fieldCustomEndpoint').style.display = provider === 'custom' ? '' : 'none';
 
   const modelSelect = document.getElementById('byokModel');
+  const nextModel = selectedModel || modelSelect.value;
   const models = {
     openai: [['gpt-4o', 'GPT-4o'], ['gpt-4o-mini', 'GPT-4o Mini']],
     anthropic: [['claude-sonnet-4-6', 'Claude Sonnet 4.6'], ['claude-haiku-4-5-20251001', 'Claude Haiku 4.5']],
@@ -419,6 +419,9 @@ function onProviderChange() {
   modelSelect.innerHTML = (models[provider] || models.custom)
     .map(([val, label]) => `<option value="${val}">${label}</option>`)
     .join('');
+  if ([...modelSelect.options].some(o => o.value === nextModel)) {
+    modelSelect.value = nextModel;
+  }
 }
 
 function saveByok() {
@@ -559,9 +562,11 @@ function loadUsageLog() {
 
   container.innerHTML = usage.slice(0, 20).map(item => {
     const date = new Date(item.time).toLocaleDateString('zh-TW');
+    const desc = item.desc ?? item.description ?? '';
+    const cost = item.cost ?? item.amount ?? 0;
     return `<div class="usage-log__item">
-      <span class="usage-log__desc">${date} — ${item.desc}</span>
-      <span class="usage-log__cost">-${item.cost} 幣</span>
+      <span class="usage-log__desc">${date} — ${escapeHtml(desc)}</span>
+      <span class="usage-log__cost">-${escapeHtml(String(cost))} 幣</span>
     </div>`;
   }).join('');
 }
@@ -584,6 +589,15 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('visible');
   setTimeout(() => t.classList.remove('visible'), 2500);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // Export for parent frame communication

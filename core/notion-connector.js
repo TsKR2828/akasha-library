@@ -207,6 +207,13 @@ export async function pushMemory(mem) {
   }
 }
 
+export async function deleteMemoryEntry(localId) {
+  const s = getNotionSettings();
+  if (!s.memoryDbId) return;
+  const existing = await findByLocalId(s.memoryDbId, localId);
+  if (existing) await deletePage(existing.id);
+}
+
 export async function pullMemories() {
   const s = getNotionSettings();
   if (!s.memoryDbId) return [];
@@ -295,7 +302,8 @@ export async function processQueue() {
             await pushScriptBlock(job.payload);
             break;
           case 'memory':
-            await pushMemory(job.payload);
+            if (job.action === 'delete') await deleteMemoryEntry(job.localId);
+            else await pushMemory(job.payload);
             break;
           case 'persona':
             await pushPersona(job.payload);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-v6';
+const CACHE_NAME = 'akasha-library-v7';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -63,7 +63,21 @@ const LOCAL_ASSETS = [
 
   // Built Vite modules
   './dist/spreadsheet/index.html',
+  './dist/spreadsheet/assets/index-CsI1kv0j.js',
   './dist/script-editor/index.html',
+  './dist/script-editor/assets/index-B_LeMeQw.js',
+  './dist/script-editor/assets/index-dCo6aRox.css',
+  './dist/script-editor/data/index.json',
+  './dist/script-editor/data/works/lohengrin.json',
+  './dist/script-editor/data/works/blackstar_ch1.json',
+  './dist/script-editor/data/characters/lohengrin_characters.json',
+  './dist/script-editor/data/characters/blackstar_ch1_characters.json',
+  './dist/script-editor/data/lines/lohengrin_lines.jsonl',
+  './dist/script-editor/data/lines/blackstar_ch1_lines.jsonl',
+  './dist/script-editor/data/tags/tag_dictionary.json',
+  './dist/script-editor/data/authors/richard_wagner.json',
+  './dist/script-editor/data/sounds/library.json',
+  './dist/script-editor/data/sounds/taxonomy.json',
 
   // Public library
   './public-library/index.html',
