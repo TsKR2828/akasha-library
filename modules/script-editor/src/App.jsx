@@ -26,6 +26,16 @@ const DEFAULT_SEED = `#scene：第一幕 · 第一場
 角色B：（表情）第二位角色的台詞。
 #bgm：背景音樂標記`;
 
+const DEFAULT_SCENE_LABEL_TEMPLATE = "Act {act} · Scene {scene}";
+
+function formatSceneLabel(template, fields = {}) {
+  const source = template || DEFAULT_SCENE_LABEL_TEMPLATE;
+  const valueFor = (key) => fields[key] ?? "";
+  const rendered = source.replace(/\{(\w+)\}/g, (_, key) => String(valueFor(key))).trim();
+  if (rendered || !template) return rendered;
+  return DEFAULT_SCENE_LABEL_TEMPLATE.replace(/\{(\w+)\}/g, (_, key) => String(valueFor(key))).trim();
+}
+
 const PREDEFINED_COLORS = {
   lohengrin: "#c9a86a",
   elsa: "#e8d8b8",
@@ -87,6 +97,7 @@ async function loadAllData(workId = "lohengrin") {
       composer: cwMeta.author, license: "unchecked", synopsis: "",
       premiereYear: "", setting: "", copyrightNote: "", acts: 0,
       genreLabel: "Custom", actsLabel: "",
+      sceneLabelTemplate: cwMeta.sceneLabelTemplate || "",
     }];
     CHARACTERS = [];
     CHAR_COLORS = {};
@@ -132,9 +143,11 @@ async function loadAllData(workId = "lohengrin") {
     acts: work.acts,
     genreLabel: genreLabel.charAt(0).toUpperCase() + genreLabel.slice(1),
     actsLabel: work.acts_label || (work.acts ? `${work.acts} Acts` : ""),
+    sceneLabelTemplate: work.scene_label_template || "",
   }];
 
   const sceneSubtitles = work.scene_subtitles || {};
+  const sceneLabelTemplate = work.scene_label_template || "";
 
   // ── Characters ──
   CHARACTERS = chars.map(c => ({
@@ -183,7 +196,7 @@ async function loadAllData(workId = "lohengrin") {
       SCRIPT.push({
         id: `scene_${line.act}_${line.scene}`,
         type: "scene",
-        act: `Akt ${line.act} · Sz ${line.scene}`,
+        act: formatSceneLabel(sceneLabelTemplate, line),
         subtitle: sceneSubtitles[sceneKey] || "",
         note: "",
       });
@@ -2020,10 +2033,16 @@ let _draftSeq = 0;
 function draftId(suffix) { return `draft_${Date.now()}_${_draftSeq++}_${suffix}`; }
 const DRAFT_TEMPLATES = {
   opening: { label: "開場", labelEn: "Opening", desc: "旁白引導 → 場次宣告 → 首句對白",
-    generate: (chars, act, scene, mood) => {
+    generate: (chars, act, scene, mood, count, sceneLabelTemplate) => {
       const blocks = [];
       blocks.push({ id: draftId("nar"), type: "narration", text: `【${mood || ""}開場敘述——請填入場景描寫】` });
-      blocks.push({ id: draftId("sc"), type: "scene", act: `Akt ${act || "1"} · Sz ${scene || "1"}`, subtitle: "【場次標題】", note: "" });
+      blocks.push({
+        id: draftId("sc"),
+        type: "scene",
+        act: formatSceneLabel(sceneLabelTemplate, { act: act || "1", scene: scene || "1" }),
+        subtitle: "【場次標題】",
+        note: "",
+      });
       const c = chars[0];
       if (c) blocks.push({ id: draftId("d1"), type: "dialogue", speakerId: c.id, original: "", zh: "【首句台詞】", tags: mood ? [[mood, "emotion"]] : [] });
       return blocks;
@@ -2106,11 +2125,11 @@ const DRAFT_TEMPLATES = {
 ZeroRhyme.generateDraft = (template, characters, options = {}) => {
   const tmpl = DRAFT_TEMPLATES[template];
   if (!tmpl) return [];
-  const { act, scene, mood, count } = options;
-  return tmpl.generate(characters, act, scene, mood, count);
+  const { act, scene, mood, count, sceneLabelTemplate } = options;
+  return tmpl.generate(characters, act, scene, mood, count, sceneLabelTemplate);
 };
 
-function DraftGenerator({ onClose, onInsert, characters, charColors = {} }) {
+function DraftGenerator({ onClose, onInsert, characters, charColors = {}, sceneLabelTemplate = "" }) {
   const [template, setTemplate] = React.useState("opening");
   const [selectedChars, setSelectedChars] = React.useState([]);
   const [mood, setMood] = React.useState("");
@@ -2129,7 +2148,7 @@ function DraftGenerator({ onClose, onInsert, characters, charColors = {} }) {
   const doGenerate = () => {
     const chars = selectedChars.map(id => characters.find(c => c.id === id)).filter(Boolean);
     if (chars.length === 0 && characters.length > 0) chars.push(characters[0]);
-    const blocks = ZeroRhyme.generateDraft(template, chars, { act, scene, mood, count });
+    const blocks = ZeroRhyme.generateDraft(template, chars, { act, scene, mood, count, sceneLabelTemplate });
     setPreview(blocks);
   };
 
@@ -2706,7 +2725,7 @@ function SoundPanel({ onClose, onAssign, currentBlockBgm }) {
 }
 
 // ============= EDITOR VIEW (Phase 11 — three columns) =============
-function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, setCharColors, script, workId }) {
+function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, setCharColors, script, workId, work }) {
   const [activeChar, setActiveChar] = React.useState(() => characters[0]?.id || "");
   const [focusedBlockId, setFocusedBlockId] = React.useState(() => {
     const first = blocks.find(b => b.type === "dialogue");
@@ -2775,7 +2794,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       dialogue: { id, type, speakerId: ch?.id || characters[0]?.id || "", original: "", zh: "", tags: [],
                   avg: { sprite: "", position: "center", bg: "", bgm: "", sfx: "" } },
       narration:{ id, type, text: "" },
-      scene:    { id, type, act: "Akt _ · Sz _", subtitle: "", note: "" },
+      scene:    { id, type, act: formatSceneLabel(work?.sceneLabelTemplate, { act: "_", scene: "_" }), subtitle: "", note: "" },
       note:     { id, type, text: "" },
       choice:   { id, type, prompt: "", options: [{ text: "選項 1", nextBlockId: "" }] },
     };
@@ -3103,6 +3122,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       {draftOpen && <DraftGenerator
         characters={characters}
         charColors={charColors}
+        sceneLabelTemplate={work?.sceneLabelTemplate || ""}
         onClose={() => setDraftOpen(false)}
         onInsert={(newBlocks) => {
           pushSnapshot("初稿插入前備份");
@@ -4533,6 +4553,7 @@ function App() {
         acts: 0,
         genreLabel: "Imported",
         actsLabel: "",
+        sceneLabelTemplate: "",
       });
       setCharacters(ch);
       setCharColors(cc);
@@ -4604,6 +4625,9 @@ function App() {
     localStorage.removeItem(`notes_${currentWork}`);
     localStorage.removeItem(`characters_${currentWork}`);
     localStorage.removeItem(`sw_write_draft_v1_${currentWork}`);
+    localStorage.removeItem(`sw_write_draft_v1_${currentWork}__novel`);
+    localStorage.removeItem(`sw_write_draft_v1_${currentWork}__notes`);
+    localStorage.removeItem(`sw_write_mode_v1_${currentWork}`);
     localStorage.removeItem(`sw_slot_locks_v1_${currentWork}`);
     clearHistory(currentWork);
     WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
@@ -4641,7 +4665,7 @@ function App() {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", animation: "swFade 200ms ease" }} key={tab + currentWork}>
         {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={characters} workId={currentWork} />}
         {tab === "search" && <SearchView blocks={blocks} characters={characters} charColors={charColors} work={workMeta} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
-        {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} characters={characters} charColors={charColors} setCharacters={setCharacters} setCharColors={setCharColors} script={script} workId={currentWork} />}
+        {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} characters={characters} charColors={charColors} setCharacters={setCharacters} setCharColors={setCharColors} script={script} workId={currentWork} work={workMeta} />}
         {tab === "reader" && <ReaderView blocks={blocks} goToBlock={goToBlock} work={workMeta} characters={characters} charColors={charColors} workId={currentWork} />}
       </div>
     </div>

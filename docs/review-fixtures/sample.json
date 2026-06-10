@@ -1,0 +1,29 @@
+{
+  "library": {
+    "name": "akasha",
+    "modules": [
+      {
+        "id": "reader",
+        "formats": [
+          "md",
+          "json"
+        ]
+      },
+      {
+        "id": "forge",
+        "formats": [
+          "csv"
+        ]
+      }
+    ],
+    "meta": {
+      "nested": {
+        "level": 3,
+        "tags": [
+          "fixture",
+          "stable"
+        ]
+      }
+    }
+  }
+}

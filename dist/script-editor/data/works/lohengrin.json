@@ -18,6 +18,7 @@
   "source_name": "murashev.com (public domain libretto)",
   "source_url": "http://www.murashev.com/opera/Lohengrin_libretto_German_Act_1",
   "tags": ["聖杯", "禁問", "信任", "身份揭露", "天鵝", "騎士", "異教", "犧牲", "愛情", "命運"],
+  "scene_label_template": "Akt {act} · Sz {scene}",
   "scene_subtitles": {
     "1_1": "安特衛普，舍爾德河畔——國王的審判",
     "1_2": "艾爾莎的夢境敘述",
