@@ -2,7 +2,7 @@
 
 ## 目前狀態
 
-**Branch:** `master`  
+**Branch:** `codex/fix-reviewed-bugs`(+3 未推送;工作區有 Write 多模式 + 2026-06-10 審查修復,皆未提交)  
 **本地伺服器:** `npx http-server . -p 3460 -c-1`（若需測試）  
 **Build 指令:** `npm test`（= vite build + file checks）  
 **測試 URL:** `http://127.0.0.1:3460/dist/script-editor/index.html`  
@@ -57,14 +57,10 @@
    `ZeroRhyme.generateScore` / `renderScore` 仍是空殼。  
    需等 tsuki-synth CLI render 修好。
 
-5. **`getWorkId()` 一致性**  
-   仍用 `WORKS[0]?.id`，與 App 的 `currentWork` state 可能 desync。  
-   長期應改為 React context 或統一從 `sw_last_work` 讀。
-
 ### 低優先
 
-6. **SW cache 版號** — `akasha-library-v4-public` 固定，應隨 build 自動 bump
-7. **GERMAN_ACT_NUMS** — 硬編碼歌劇幕號格式，非通用
+5. **SW cache 版號** — `akasha-library-v4-public` 固定，應隨 build 自動 bump
+6. **GERMAN_ACT_NUMS** — 硬編碼歌劇幕號格式，非通用
 
 ---
 

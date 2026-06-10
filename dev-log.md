@@ -1,5 +1,17 @@
 # Akasha Library — Dev Log
 
+## 2026-06-10:審查修復批次(fix-cards)
+
+依 2026-06-10 全量健檢報告執行(詳見 docs/fix-cards-2026-06-10.md):
+- CARD-01 [S0] WriteTab 快速切換丟字:debounce flush + reverse sync blocks-ref gating
+- CARD-02 [S0] `//` 註解行 round-trip:parsePlainScript 改產 note block
+- CARD-03 [S2] dist rebuild + sw.js v7→v8 + precache hash 更新
+- CARD-04/05 [S3] 文件同步 + 審查協議安裝(CLAUDE.md)+ review-fixtures 建立
+
+六月先前 commit 補記:`0624f31` 草稿歷史+Worker RAG、`301bd5a` Codex round2、
+`3dd9d9b`/`4cf6d52` typewriter scroll + H1~H4 大綱、`b0ddcd4` 章節列移除、
+`dec2304`/`49f5992` shell 修正、`b4f8e2d` 上輪審查修復+匯入即建作品、`ab5960b` 場景副標題去硬編碼。
+
 ## 2026-05-23：Phase 18 Script Editor 品質修正（Round 1 + Round 2）
 
 ### 背景
@@ -106,7 +118,6 @@ info dialog 從 "Archive Script Editor" 改為 "劇本工房"，加入 slot 用�
 - `SCENE_SUBTITLES`（App.jsx line 19-30）仍硬編碼 Lohengrin 場景名
 - 角色管理 UI 尚未實作（新增/編輯/刪除角色）
 - 草稿歷史/存檔系統尚未實作
-- `getWorkId()` 仍用 `WORKS[0]?.id`，與 `currentWork` state 可能 desync
 - 關係圖為唯讀，無編輯功能
 - JSONL 匯入不會自動建立 custom work
 

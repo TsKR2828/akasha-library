@@ -30,5 +30,6 @@
     "成長",
     "羈絆"
   ],
+  "scene_label_template": "{episode}",
   "scene_subtitles": {}
 }

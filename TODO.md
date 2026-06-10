@@ -1,7 +1,7 @@
 # 阿卡夏圖書館 — TODO
 
 > Enhancement Phase 1–16 全部完成（含 15 談心+館報 / 8 Script Editor / 12 Security / 16 部署）
-> Branch: `feature/cool-stuff`
+> Branch: `codex/fix-reviewed-bugs`(+3 commits 未推送;工作區另有 Write 多模式未提交)
 
 ---
 
@@ -375,13 +375,13 @@
   - [x] SlotBadge 空格可點 + tooltip 更新
   - [x] 說明 dialog 更新
 
-### 待開：Phase 19 — Script Editor 深度強化（規劃中）
+### Phase 19 — Script Editor 深度強化(進行中)
 
-- [ ] **19-A** SCENE_SUBTITLES per-work 化 — 移除硬編碼 Lohengrin 場景名（App.jsx line 19-30）
-- [ ] **19-B** 角色管理 UI — 新增 / 編輯 / 刪除角色（voice / role / tags）
-- [ ] **19-C** 草稿歷史 — 存檔點 + 回溯系統
-- [ ] **19-D** 關係圖編輯 — 新增 / 編輯 / 儲存角色關係
-- [ ] **19-E** JSONL 匯入即建作品 — 匯入時自動建立 custom work metadata
+- [x] **19-A** SCENE_SUBTITLES per-work 化(`ab5960b` + 工作區 scene_label_template 模板)
+- [x] **19-B** 角色管理 UI(`e78e7c8` per-work character CRUD)
+- [x] **19-C** 草稿歷史(`0624f31`,`sw_history_v1_${workId}` 15 筆 FIFO)
+- [ ] **19-D** 關係圖編輯 — 新增 / 編輯 / 儲存角色關係(唯一未動工)
+- [x] **19-E** JSONL 匯入即建作品(`b4f8e2d`)
 
 ### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
 

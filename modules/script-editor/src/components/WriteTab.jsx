@@ -19,8 +19,20 @@ import BgmPanel from "./BgmPanel.jsx";
 // Draft & locks are now per-work (workId passed as prop)
 const DRAFT_BASE = "sw_write_draft_v1";
 const LOCKS_BASE = "sw_slot_locks_v1";
+const MODE_BASE = "sw_write_mode_v1";
+const WRITE_MODES = ["novel", "script", "notes"];
+const MODE_CONFIG = {
+  novel:  { label: "Novel",  zh: "小說",   badge: "Novel",        defaultPreviewTab: "outline" },
+  script: { label: "Script", zh: "劇本",   badge: "Plain Script", defaultPreviewTab: "blocks" },
+  notes:  { label: "Notes",  zh: "筆記",   badge: "Notes",        defaultPreviewTab: "outline" },
+};
 
-function draftKey(workId) { return workId ? `${DRAFT_BASE}_${workId}` : DRAFT_BASE; }
+function normalizeMode(mode) { return WRITE_MODES.includes(mode) ? mode : "script"; }
+function modeKey(workId) { return workId ? `${MODE_BASE}_${workId}` : MODE_BASE; }
+function draftKey(workId, mode = "script") {
+  const suffix = normalizeMode(mode) === "script" ? "" : `__${normalizeMode(mode)}`;
+  return workId ? `${DRAFT_BASE}_${workId}${suffix}` : `${DRAFT_BASE}${suffix}`;
+}
 function locksKey(workId) { return workId ? `${LOCKS_BASE}_${workId}` : LOCKS_BASE; }
 
 function loadLocks(workId) {
@@ -30,11 +42,18 @@ function loadLocks(workId) {
 function saveLocks(obj, workId) {
   try { localStorage.setItem(locksKey(workId), JSON.stringify(obj)); } catch {}
 }
+function loadMode(workId) {
+  try { return normalizeMode(localStorage.getItem(modeKey(workId)) || "script"); }
+  catch { return "script"; }
+}
+function saveMode(mode, workId) {
+  try { localStorage.setItem(modeKey(workId), normalizeMode(mode)); } catch {}
+}
 const SEED = `#scene：第一幕 · 第一場
 旁白：（在此描述場景氛圍與舞台指示。）
 角色A：對白範例——直接輸入角色名加冒號。
 角色B：（表情）第二位角色的台詞。
-// 這是註解，不會出現在匯出中
+// 這是註解，會以「編註」區塊保留
 #bgm：背景音樂標記`;
 
 const TYPE_COLORS = {
@@ -48,12 +67,24 @@ const TYPE_COLORS = {
 
 const MOD_KEY = typeof navigator !== "undefined" && /Mac|iPod|iPhone|iPad/.test(navigator.platform || '') ? '⌥' : 'Alt+';
 
-function loadDraft(workId) {
-  try { return localStorage.getItem(draftKey(workId)); }
+function loadDraft(workId, mode = "script") {
+  try { return localStorage.getItem(draftKey(workId, mode)); }
   catch { return null; }
 }
-function saveDraft(text, workId) {
-  try { localStorage.setItem(draftKey(workId), text); } catch {}
+function saveDraft(text, workId, mode = "script") {
+  try { localStorage.setItem(draftKey(workId, mode), text); } catch {}
+}
+function initialContentForMode(workId, mode, blocks, characters) {
+  const normalized = normalizeMode(mode);
+  const saved = loadDraft(workId, normalized);
+  if (saved != null && saved !== "") return saved;
+  if (normalized === "script") {
+    if (Array.isArray(blocks) && blocks.length > 0) {
+      return blocksToPlainScript(blocks, characters);
+    }
+    return SEED;
+  }
+  return "";
 }
 
 export default function WriteTab({ blocks, setBlocks, characters, workId }) {
@@ -61,32 +92,45 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
      1) localStorage draft 優先（user-authored 不該被 Lohengrin 覆寫）
      2) 否則用 blocks 反向產生（讓 Reader/Editor 載入的劇本能在 Write 看見）
      3) 都沒有 → SEED 範例 */
+  const initialMode = React.useMemo(() => loadMode(workId), []);
   const initialContent = React.useMemo(() => {
-    const saved = loadDraft(workId);
-    if (saved != null && saved !== "") return saved;
-    if (Array.isArray(blocks) && blocks.length > 0) {
-      return blocksToPlainScript(blocks, characters);
-    }
-    return SEED;
+    return initialContentForMode(workId, initialMode, blocks, characters);
     // 只在 mount 時計算一次（後續同步交給 effect）
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const [writeMode, setWriteMode] = React.useState(initialMode);
   const [content, setContent] = React.useState(initialContent);
-  const [previewTab, setPreviewTab] = React.useState("blocks"); // blocks | stats | voice | bgm | layout
+  const [previewTab, setPreviewTab] = React.useState(() => MODE_CONFIG[initialMode].defaultPreviewTab);
   const [caret, setCaret] = React.useState(0);
   const taRef = React.useRef(null);
+  const isScriptMode = writeMode === "script";
+  const activeModeConfig = MODE_CONFIG[writeMode] || MODE_CONFIG.script;
+  const availablePreviewTabs = React.useMemo(
+    () => isScriptMode ? ["blocks", "stats", "outline", "voice", "bgm"] : ["stats", "outline"],
+    [isScriptMode]
+  );
 
   /* parse + stats — v2-fix4: 把 characters 傳給 parser 反查 speakerId */
-  const parsedBlocks = React.useMemo(() => parsePlainScript(content, characters), [content, characters]);
+  const parsedBlocks = React.useMemo(() => isScriptMode ? parsePlainScript(content, characters) : [], [content, characters, isScriptMode]);
   const stats = React.useMemo(() => computeStats(parsedBlocks), [parsedBlocks]);
+  React.useEffect(() => { saveMode(writeMode, workId); }, [writeMode, workId]);
+  React.useEffect(() => {
+    if (!availablePreviewTabs.includes(previewTab)) {
+      setPreviewTab(activeModeConfig.defaultPreviewTab);
+    }
+  }, [activeModeConfig.defaultPreviewTab, availablePreviewTabs, previewTab]);
   /* ---------- chapter pagination ----------
      content 是完整原文（source of truth）；chapter 模式下 textarea 只顯示一章。
      章節由 #scene: 行自動切分。編輯單章時 splice 回完整 content，
      parsedBlocks / forward sync / stats 全都從完整 content 計算。 */
   const [activeChapter, setActiveChapter] = React.useState(null); // null=全部, number=index
+  React.useEffect(() => {
+    if (!isScriptMode && activeChapter != null) setActiveChapter(null);
+  }, [isScriptMode, activeChapter]);
 
   const chapters = React.useMemo(() => {
+    if (!isScriptMode) return [];
     if (!content) return [];
     const lines = content.split('\n');
     const scenes = [];
@@ -105,7 +149,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       result.push({ label: scenes[i].label, startLine: scenes[i].lineIdx, endLine });
     }
     return result;
-  }, [content]);
+  }, [content, isScriptMode]);
 
   const chapterView = React.useMemo(() => {
     if (activeChapter == null || !chapters[activeChapter]) {
@@ -152,6 +196,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
 
   /* ---------- scene outline for structure panel ---------- */
   const sceneOutline = React.useMemo(() => {
+    if (!isScriptMode) return [];
     const sections = [];
     let cur = { scene: null, dialogues: 0, narrations: 0, commands: 0 };
     for (const b of parsedBlocks) {
@@ -166,7 +211,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     }
     if (cur.scene || cur.dialogues + cur.narrations > 0) sections.push({ ...cur });
     return sections;
-  }, [parsedBlocks]);
+  }, [parsedBlocks, isScriptMode]);
 
   /* ---------- heading outline (H1~H4 from raw content) ---------- */
   const headingOutline = React.useMemo(() => {
@@ -210,15 +255,35 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
      Loop guards:
        - syncTokenRef: 自己 push 造成 blocks 變動 → reverse useEffect 消化跳過
        - lastReverseRef: reverse 設進來的 content 不要再回 forward push
-                         （否則 round-trip 的元數據遺失會回頭覆寫 Editor） */
+                         （否則 round-trip 的元數據遺失會回頭覆寫 Editor）
+       - lastBlocksRef:  reverse sync 只在 blocks 物件真正變動時執行；
+                         模式切換 / workId 變動觸發 effect 但 blocks 沒變時不重生成 */
   const syncTokenRef = React.useRef(0);
   const lastReverseRef = React.useRef(null);
+  const lastBlocksRef = React.useRef(null); // I2: 首次 null → 第一輪 reverse 照常執行
   const initializedRef = React.useRef(false);
   const forwardTimer = React.useRef(null);
   const [syncStatus, setSyncStatus] = React.useState("idle"); // idle | pushing | external
 
+  // 以 ref 追蹤最新值，供 unmount flush 使用（deps [] effect 無法捕捉 closure 最新值）
+  const contentRef = React.useRef(content);
+  const writeModeRef = React.useRef(writeMode);
+  const workIdRef = React.useRef(workId);
+  const blocksRef = React.useRef(blocks);
+  const charactersRef = React.useRef(characters);
+  React.useEffect(() => { contentRef.current = content; });
+  React.useEffect(() => { writeModeRef.current = writeMode; });
+  React.useEffect(() => { workIdRef.current = workId; });
+  React.useEffect(() => { blocksRef.current = blocks; });
+  React.useEffect(() => { charactersRef.current = characters; });
+
   // Forward sync — push parsedBlocks 到 parent blocks
   React.useEffect(() => {
+    if (!isScriptMode) {
+      clearTimeout(forwardTimer.current);
+      setSyncStatus("idle");
+      return;
+    }
     if (!setBlocks) return;
     if (!initializedRef.current) {
       initializedRef.current = true;
@@ -240,26 +305,58 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       setSyncStatus("idle");
     }, 350);
     return () => clearTimeout(forwardTimer.current);
-  }, [parsedBlocks, setBlocks, content]);
+  }, [parsedBlocks, setBlocks, content, isScriptMode]);
 
   // Reverse sync — blocks 從外部變動時，重產 textarea
   React.useEffect(() => {
+    if (!isScriptMode) return;
+    // novel/notes early-return 時不更新 lastBlocksRef：
+    // 切回 script 時要讓 blocks-ref 判斷重新執行，以免漏掉真正的外部變動
     if (syncTokenRef.current > 0) {
       syncTokenRef.current--;
       return; // 自己 push 造成的 echo，跳過
     }
     if (!Array.isArray(blocks)) return;
+    // blocks 物件沒變時不重生成，防止模式切換觸發假覆蓋
+    if (blocks === lastBlocksRef.current) return;
+    lastBlocksRef.current = blocks;
     const regenerated = blocksToPlainScript(blocks, characters);
     if (regenerated && regenerated !== content) {
       lastReverseRef.current = regenerated;
       setContent(regenerated);
-      saveDraft(regenerated, workId);
+      saveDraft(regenerated, workId, writeMode);
       setSyncStatus("external");
       setTimeout(() => setSyncStatus("idle"), 600);
     }
     // 不把 content 加進依賴（避免 setContent → 再觸發）；blocks 變了才同步
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blocks, characters]);
+  }, [blocks, characters, isScriptMode, workId, writeMode]);
+
+  // Unmount flush — 元件卸載前把未到期的 debounce 立即補完
+  React.useEffect(() => {
+    return () => {
+      const mode = writeModeRef.current;
+      const wid = workIdRef.current;
+      const text = contentRef.current;
+      // 換/刪作品時(switchWork 已同步改寫 sw_last_work)不准 flush：
+      // setBlocks 會把舊作品內容灌進新作品；saveDraft 會復活剛刪除作品的 key。
+      // sw_last_work 為 null（首次啟動、從未切換）視為同作品。
+      let last = null;
+      try { last = localStorage.getItem("sw_last_work"); } catch { /* 隱私模式拋錯，視為同作品 */ }
+      if (last !== null && last !== wid) return;
+      // (a) 草稿立即存入 localStorage（補 500ms save debounce）
+      saveDraft(text, wid, mode);
+      // (b) script 模式：若 content 不是 reverse 推進來的，立即 push blocks
+      //     不用 syncTokenRef++：靠 lastBlocksRef gating 防 reverse echo
+      if (mode === "script" && setBlocks && text !== lastReverseRef.current) {
+        const blks = blocksRef.current;
+        const chars = charactersRef.current;
+        setBlocks(diffMergeBlocks(blks, parsePlainScript(text, chars)));
+      }
+    };
+    // deps [] — 只在 unmount 時跑一次；最新值靠 ref 取得
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ─── v2-4 + fix5: Alt+N slots with lock/assign ─────────
      1, 2 固定（場景 / 旁白）；3-9 先看 locks 再 auto-bind */
@@ -277,6 +374,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
   }, [ctxMenu]);
 
   const allSpeakers = React.useMemo(() => {
+    if (!isScriptMode) return [];
     const seen = [];
     // Characters from the character table first (stable source)
     for (const c of (characters || [])) {
@@ -289,7 +387,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         seen.push(b.speaker);
     }
     return seen;
-  }, [parsedBlocks, characters]);
+  }, [parsedBlocks, characters, isScriptMode]);
 
   const dynamicSlots = React.useMemo(() => {
     const slots = Array(7).fill(null);
@@ -369,6 +467,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
      於目前游標所在行的開頭塞入 prefix；若該行已有 speaker：前綴就替換之，
      不論前綴是命令（#xxx：）或對白（X：）。游標跳到「：」之後。 */
   const insertSpeakerPrefix = React.useCallback((slotN) => {
+    if (!isScriptMode) return;
     const ta = taRef.current;
     if (!ta) return;
     const label = slotLabels[slotN];
@@ -397,22 +496,23 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       ta.setSelectionRange(caretPos, caretPos);
       setCaret(caretPos);
     });
-  }, [slotLabels]);
+  }, [slotLabels, isScriptMode]);
 
   const onKeyDown = React.useCallback((e) => {
+    if (!isScriptMode) return;
     if (e.altKey && !e.ctrlKey && !e.metaKey && /^[1-9]$/.test(e.key)) {
       e.preventDefault();
       insertSpeakerPrefix(Number(e.key));
     }
-  }, [insertSpeakerPrefix]);
+  }, [insertSpeakerPrefix, isScriptMode]);
 
   /* debounced auto-save */
   const saveTimer = React.useRef(null);
   React.useEffect(() => {
     clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => saveDraft(content, workId), 500);
+    saveTimer.current = setTimeout(() => saveDraft(content, workId, writeMode), 500);
     return () => clearTimeout(saveTimer.current);
-  }, [content, workId]);
+  }, [content, workId, writeMode]);
 
   const onTextChange = e => setVisibleContent(e.target.value);
   const onCaretMove  = e => setCaret(e.target.selectionStart || 0);
@@ -476,10 +576,32 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     anchorCaretView();
   }, [chapterView.text, caret, anchorCaretView]);
 
+  const switchWriteMode = React.useCallback((nextMode) => {
+    const normalized = normalizeMode(nextMode);
+    if (normalized === writeMode) return;
+    saveDraft(content, workId, writeMode);
+    // script 模式離開前：立即 flush 未到期的 forward debounce（補 350ms）
+    // 不用 syncTokenRef++：依賴 lastBlocksRef gating 防止 reverse echo
+    if (writeMode === "script" && setBlocks && content !== lastReverseRef.current) {
+      clearTimeout(forwardTimer.current);
+      setBlocks(diffMergeBlocks(blocks, parsePlainScript(content, characters)));
+    }
+    saveMode(normalized, workId);
+    const nextContent = initialContentForMode(workId, normalized, blocks, characters);
+    lastReverseRef.current = nextContent;
+    setWriteMode(normalized);
+    setContent(nextContent);
+    setPreviewTab(MODE_CONFIG[normalized].defaultPreviewTab);
+    setActiveChapter(null);
+    setCtxMenu(null);
+    setCaret(0);
+    setSyncStatus("idle");
+  }, [blocks, characters, content, workId, writeMode]);
+
   const onClearDraft = () => {
     if (!confirm("清除草稿？此動作會清除本地儲存的速寫內容。")) return;
     setContent("");
-    saveDraft("", workId);
+    saveDraft("", workId, writeMode);
   };
   const onResetSeed = () => {
     if (content && !confirm("以範例覆蓋目前草稿？")) return;
@@ -511,27 +633,65 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
           color: "var(--gold)",
           fontVariant: "small-caps", textTransform: "uppercase",
         }}>Scriptorium · Calamus</span>
+        <div style={{
+          display: "inline-flex",
+          border: "1px solid var(--navy-line)",
+          borderRadius: 3,
+          overflow: "hidden",
+          flexShrink: 0,
+        }}>
+          {WRITE_MODES.map(mode => {
+            const active = writeMode === mode;
+            const cfg = MODE_CONFIG[mode];
+            return (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => switchWriteMode(mode)}
+                title={cfg.zh}
+                style={{
+                  padding: "3px 9px",
+                  background: active ? "var(--gold-glow)" : "transparent",
+                  border: "none",
+                  borderRight: mode !== WRITE_MODES[WRITE_MODES.length - 1] ? "1px solid var(--navy-line)" : "none",
+                  color: active ? "var(--gold-bright)" : "var(--text-tertiary)",
+                  fontFamily: "var(--font-serif-en)",
+                  fontSize: 10.5,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                {cfg.label}
+              </button>
+            );
+          })}
+        </div>
         <span style={{ fontSize: 11, color: "var(--text-tertiary)", letterSpacing: "0.06em" }}>
           {contentStats.charCount.toLocaleString()} 字 · {contentStats.lineCount} 行 · ≈{contentStats.readingMin} 分鐘
         </span>
         <span style={{ flex: 1 }} />
-        <button
-          onClick={() => {
-            if (!Array.isArray(blocks) || blocks.length === 0) return;
-            if (content && !confirm("以目前劇本覆蓋草稿？")) return;
-            const text = blocksToPlainScript(blocks, characters);
-            setContent(text);
-            saveDraft(text, workId);
-          }}
-          disabled={!Array.isArray(blocks) || blocks.length === 0}
-          style={tbBtnStyle}
-          title="從 Editor/Reader 的劇本載入到速寫區"
-        >↺ 從劇本</button>
-        <button
-          onClick={onResetSeed}
-          style={tbBtnStyle}
-          title="以範例覆蓋"
-        >範例</button>
+        {isScriptMode && (
+          <>
+            <button
+              onClick={() => {
+                if (!Array.isArray(blocks) || blocks.length === 0) return;
+                if (content && !confirm("以目前劇本覆蓋草稿？")) return;
+                const text = blocksToPlainScript(blocks, characters);
+                setContent(text);
+                saveDraft(text, workId, writeMode);
+              }}
+              disabled={!Array.isArray(blocks) || blocks.length === 0}
+              style={tbBtnStyle}
+              title="從 Editor/Reader 的劇本載入到速寫區"
+            >↺ 從劇本</button>
+            <button
+              onClick={onResetSeed}
+              style={tbBtnStyle}
+              title="以範例覆蓋"
+            >範例</button>
+          </>
+        )}
         <button
           onClick={onClearDraft}
           style={{ ...tbBtnStyle, color: "var(--danger)", borderColor: "rgba(196,96,79,0.3)" }}
@@ -548,7 +708,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         borderBottom: "1px solid var(--navy-line)",
         borderLeft: "1px solid var(--navy-line)",
       }}>
-        {["blocks", "stats", "outline", "voice", "bgm"].map(id => {
+        {availablePreviewTabs.map(id => {
           const active = previewTab === id;
           return (
             <button
@@ -576,43 +736,45 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       </div>
 
       {/* ───── slot badges row (left, row 2) — v2-4 ───── */}
-      <div style={{
-        gridColumn: "1 / 2",
-        gridRow: "2 / 3",
-        display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
-        padding: "8px 16px",
-        background: "var(--navy-deep)",
-        borderBottom: "1px solid var(--navy-line)",
-      }}>
-        <span style={{
-          fontFamily: "var(--font-serif-en)", fontSize: 10,
-          letterSpacing: "0.22em", color: "var(--gold-dim)",
-          fontVariant: "small-caps", textTransform: "uppercase",
-          marginRight: 4,
-        }}>Persona Slots ·</span>
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-          <SlotBadge
-            key={n}
-            n={n}
-            label={slotLabels[n]}
-            locked={isLocked(n)}
-            onClick={(e) => onSlotContext(e, n)}
-            onDoubleClick={() => { if (slotLabels[n]) insertSpeakerPrefix(n); }}
-            onContextMenu={(e) => onSlotContext(e, n)}
-          />
-        ))}
-        {overflow.length > 0 && (
+      {isScriptMode && (
+        <div style={{
+          gridColumn: "1 / 2",
+          gridRow: "2 / 3",
+          display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
+          padding: "8px 16px",
+          background: "var(--navy-deep)",
+          borderBottom: "1px solid var(--navy-line)",
+        }}>
           <span style={{
-            fontSize: 10.5, color: "var(--text-tertiary)",
-            fontFamily: "var(--font-serif-en)",
-            letterSpacing: "0.08em",
-            marginLeft: 4,
-          }} title={overflow.join("、")}>⋯ +{overflow.length}</span>
-        )}
-      </div>
+            fontFamily: "var(--font-serif-en)", fontSize: 10,
+            letterSpacing: "0.22em", color: "var(--gold-dim)",
+            fontVariant: "small-caps", textTransform: "uppercase",
+            marginRight: 4,
+          }}>Persona Slots ·</span>
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+            <SlotBadge
+              key={n}
+              n={n}
+              label={slotLabels[n]}
+              locked={isLocked(n)}
+              onClick={(e) => onSlotContext(e, n)}
+              onDoubleClick={() => { if (slotLabels[n]) insertSpeakerPrefix(n); }}
+              onContextMenu={(e) => onSlotContext(e, n)}
+            />
+          ))}
+          {overflow.length > 0 && (
+            <span style={{
+              fontSize: 10.5, color: "var(--text-tertiary)",
+              fontFamily: "var(--font-serif-en)",
+              letterSpacing: "0.08em",
+              marginLeft: 4,
+            }} title={overflow.join("、")}>⋯ +{overflow.length}</span>
+          )}
+        </div>
+      )}
 
       {/* ───── slot context menu ───── */}
-      {ctxMenu && (
+      {isScriptMode && ctxMenu && (
         <div
           onClick={(e) => e.stopPropagation()}
           style={{
@@ -690,7 +852,9 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         onSelect={onCaretMove}
         onInput={() => requestAnimationFrame(anchorCaretView)}
         spellCheck={false}
-        placeholder={`輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`}
+        placeholder={isScriptMode
+          ? `輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`
+          : `${activeModeConfig.zh}模式 — 可使用 Markdown 標題建立大綱\n# 第一章\n## 場景或段落\n\n直接開始書寫內容。`}
         style={{
           gridColumn: "1 / 2",
           gridRow: "3 / 4",
@@ -721,11 +885,11 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         borderLeft: "1px solid var(--navy-line)",
         padding: "12px 14px",
       }}>
-        {previewTab === "blocks" && <BlocksPreview blocks={parsedBlocks} voice={voice} />}
-        {previewTab === "stats"  && <StatsPreview stats={stats} />}
-        {previewTab === "voice"  && <VoicePanel blocks={parsedBlocks} voice={voice} />}
-        {previewTab === "bgm"    && <BgmPanel blocks={parsedBlocks} />}
-        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} headings={headingOutline} onJump={jumpToLine} activeLine={globalLine} />}
+        {previewTab === "blocks" && isScriptMode && <BlocksPreview blocks={parsedBlocks} voice={voice} />}
+        {previewTab === "stats"  && (isScriptMode ? <StatsPreview stats={stats} /> : <TextStatsPreview stats={contentStats} headings={headingOutline} mode={activeModeConfig} />)}
+        {previewTab === "voice"  && isScriptMode && <VoicePanel blocks={parsedBlocks} voice={voice} />}
+        {previewTab === "bgm"    && isScriptMode && <BgmPanel blocks={parsedBlocks} />}
+        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} headings={headingOutline} onJump={jumpToLine} activeLine={globalLine} showSceneHint={isScriptMode} />}
       </div>
 
       {/* ───── status bar (row 5, spans both cols) ───── */}
@@ -747,24 +911,30 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
             ◂ {chapters[activeChapter].label}
           </span>
         )}
-        <span style={badgeStyle}>Plain Script</span>
-        <span>{parsedBlocks.length} blocks parsed</span>
-        {syncStatus === "pushing" && (
-          <span style={{ color: "var(--gold-dim)" }}>↻ Sync→</span>
-        )}
-        {syncStatus === "external" && (
-          <span style={{ color: "rgb(168,156,216)" }}>← Pulled from Editor</span>
-        )}
-        {syncStatus === "idle" && setBlocks && (
-          <span style={{ color: "var(--success)" }} title="Forward & reverse sync 已連通">⇄ Synced</span>
-        )}
-        {voice.state.queueActive && (
-          <span style={{ color: "var(--gold)", animation: "blink 1.2s infinite" }}>
-            ▶ Voice {voice.state.queueIdx + 1}/{voice.state.queueTotal}
-          </span>
-        )}
-        {!voice.state.queueActive && voice.state.speaking && (
-          <span style={{ color: "var(--gold)", animation: "blink 1.2s infinite" }}>▶ Speaking</span>
+        <span style={badgeStyle}>{activeModeConfig.badge}</span>
+        {isScriptMode ? (
+          <>
+            <span>{parsedBlocks.length} blocks parsed</span>
+            {syncStatus === "pushing" && (
+              <span style={{ color: "var(--gold-dim)" }}>↻ Sync→</span>
+            )}
+            {syncStatus === "external" && (
+              <span style={{ color: "rgb(168,156,216)" }}>← Pulled from Editor</span>
+            )}
+            {syncStatus === "idle" && setBlocks && (
+              <span style={{ color: "var(--success)" }} title="Forward & reverse sync 已連通">⇄ Synced</span>
+            )}
+            {voice.state.queueActive && (
+              <span style={{ color: "var(--gold)", animation: "blink 1.2s infinite" }}>
+                ▶ Voice {voice.state.queueIdx + 1}/{voice.state.queueTotal}
+              </span>
+            )}
+            {!voice.state.queueActive && voice.state.speaking && (
+              <span style={{ color: "var(--gold)", animation: "blink 1.2s infinite" }}>▶ Speaking</span>
+            )}
+          </>
+        ) : (
+          <span>{headingOutline.length} headings</span>
         )}
         <span style={{ flex: 1 }} />
         <span style={{ color: "var(--success)" }}>● Auto-save</span>
@@ -1252,6 +1422,61 @@ function StatsPreview({ stats }) {
   );
 }
 
+function TextStatsPreview({ stats, headings, mode }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <section style={{
+        padding: "10px 12px",
+        background: "rgba(201,168,106,0.06)",
+        border: "1px solid var(--gold-line)",
+        borderRadius: 3,
+      }}>
+        <SectionHead latin={`${mode.label} Stats`} zh={`${mode.zh}統計`} />
+        <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+          <span style={{ color: "var(--text-secondary)" }}>Characters</span>
+          <span style={{ color: "var(--gold)", fontFamily: "var(--font-serif-en)", fontWeight: 600 }}>{stats.charCount.toLocaleString()}</span>
+        </div>
+        <div style={{ marginTop: 4, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+          <span style={{ color: "var(--text-secondary)" }}>Lines</span>
+          <span style={{ color: "var(--gold)", fontFamily: "var(--font-serif-en)", fontWeight: 600 }}>{stats.lineCount}</span>
+        </div>
+        <div style={{ marginTop: 4, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
+          <span style={{ color: "var(--text-secondary)" }}>Read Time</span>
+          <span style={{ color: "var(--gold)", fontFamily: "var(--font-serif-en)", fontWeight: 600 }}>≈{stats.readingMin} min</span>
+        </div>
+      </section>
+
+      <section>
+        <SectionHead latin="Outline" zh={`標題 · ${headings.length}`} />
+        {headings.length === 0 ? (
+          <div style={{ padding: "12px 4px", fontSize: 11.5, color: "var(--text-tertiary)", lineHeight: 1.7 }}>
+            可用 <code style={inlineCode}>#</code> 到 <code style={inlineCode}>####</code> 建立 H1-H4 大綱。
+          </div>
+        ) : (
+          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+            {headings.slice(0, 12).map((h, i) => (
+              <div key={i} style={{
+                display: "flex", alignItems: "center", gap: 6,
+                padding: "4px 8px", borderRadius: 2,
+                background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
+              }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)", minWidth: 22 }}>H{h.level}</span>
+                <span style={{ flex: 1, fontFamily: "var(--font-serif-tc)", fontSize: 12.5, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.text}</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>:{h.line}</span>
+              </div>
+            ))}
+            {headings.length > 12 && (
+              <div style={{ padding: "4px 8px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
+                … 還有 {headings.length - 12} 個標題
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 function SectionHead({ latin, zh }) {
   return (
     <div style={{
@@ -1272,7 +1497,7 @@ function SectionHead({ latin, zh }) {
 }
 
 /* ============= Scene Outline Panel ============= */
-function OutlinePanel({ outline, headings = [], onJump, activeLine }) {
+function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHint = true }) {
   const sceneCount = outline.filter(s => s.scene).length;
   const totalDlg = outline.reduce((a, s) => a + s.dialogues, 0);
   const totalNar = outline.reduce((a, s) => a + s.narrations, 0);
@@ -1306,7 +1531,11 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine }) {
         <div>尚無結構標記。</div>
         <div style={{ marginTop: 12, fontSize: 11 }}>
           使用 Markdown 標題（<code style={inlineCode}># ~ ####</code>）<br />
-          或場景指令（<code style={inlineCode}>#scene：名稱</code>）<br />
+          {showSceneHint && (
+            <>
+              或場景指令（<code style={inlineCode}>#scene：名稱</code>）<br />
+            </>
+          )}
           建立大綱，即可在此導航。
         </div>
       </div>

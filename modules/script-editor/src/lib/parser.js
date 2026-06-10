@@ -3,7 +3,9 @@
 
    Grammar (line-based):
      #cmd: value         → command block      e.g. #bgm: piano_morning
-     // comment           → ignored
+     #choice: a / b      → choice block       (options split on "/";
+                            nextBlockId 純文字無法表達，由 diffMergeBlocks 補回)
+     // comment           → note block(round-trip)
      旁白：text           → narration block    (also matches Narrator: in EN)
      speaker：text        → dialogue block
      <anything else>      → narration (fallback)
@@ -50,7 +52,11 @@ export function parsePlainScript(content, characters = []) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trimEnd();
-    if (!line || COMMENT_RE.test(line)) continue;
+    if (!line) continue;
+    if (COMMENT_RE.test(line)) {
+      blocks.push({ id: generateId("note"), type: "note", text: line.replace(/^\s*\/\/\s?/, "") });
+      continue;
+    }
 
     const cmd = line.match(COMMAND_RE);
     if (cmd) {
@@ -63,6 +69,18 @@ export function parsePlainScript(content, characters = []) {
           type: "scene",
           act: val,
           subtitle: "",
+          _line: i + 1,
+        });
+      } else if (/^choice$/i.test(name)) {
+        // #choice 特殊處理：產出 choice block，與 blocksToPlainScript 的
+        // `#choice：a / b` 輸出 round-trip。prompt 與 nextBlockId 純文字無法
+        // 表達 → 留空，文字未變時由 diffMergeBlocks 從原 block 補回。
+        blocks.push({
+          id: generateId("cho"),
+          type: "choice",
+          prompt: "",
+          options: val.split("/").map(s => s.trim()).filter(Boolean)
+            .map(text => ({ text, nextBlockId: "" })),
           _line: i + 1,
         });
       } else {
@@ -182,6 +200,8 @@ export function blocksToPlainScript(blocks, characters = []) {
      - narration: first 10 chars of text
      - scene: same act label
      - command: same command name
+     - choice: same option texts (normalized through the "/" split,
+               so "a/b" and "a / b" compare equal)
    On match → merge (keep old metadata, update text).
    No match → insert as new block (no metadata to lose).
    Old blocks that nobody matched → they were deleted.                          */
@@ -280,9 +300,19 @@ function _isMatch(old, nw) {
              (old.act || "") === (nw.act || "");
     case "command":
       return (old.command || "") === (nw.command || "");
+    case "choice":
+      return _choiceKey(old) === _choiceKey(nw);
     default:
       return false;
   }
+}
+
+/* Canonical compare key for choice options: what the textarea line renders as,
+   normalized through the same "/" split parsePlainScript applies — so an
+   Editor-authored option text containing "/" still matches its own round-trip. */
+function _choiceKey(b) {
+  return (b.options || []).map(o => o.text || "").join("/")
+    .split("/").map(s => s.trim()).filter(Boolean).join(" / ");
 }
 
 /* Merge: old metadata + new text content.
@@ -292,7 +322,7 @@ function _isMatch(old, nw) {
 function _merge(old, nw) {
   // If parser produced `text`, propagate it to `zh` so Editor stays in sync
   const mergedZh = nw.text || nw.zh || old.zh || "";
-  return {
+  const merged = {
     ...nw,                                       // base: new parsed shape
     id:       old.id       || nw.id,             // preserve stable ID
     lineId:   old.lineId   || nw.lineId   || "", // preserve JSONL line ID
@@ -301,6 +331,22 @@ function _merge(old, nw) {
     tags:     (old.tags && old.tags.length > 0) ? old.tags : (nw.tags || []),
     avg:      old.avg      || nw.avg      || { sprite: "", position: "center", bg: "", bgm: "", sfx: "" },
   };
+  // choice: plain text can't carry prompt / nextBlockId — restore them from the
+  // old block. Options pair up by trimmed text (first unused wins); options the
+  // user removed from the line are dropped, new ones keep an empty nextBlockId.
+  if (old.type === "choice" && nw.type === "choice") {
+    merged.prompt = nw.prompt || old.prompt || "";
+    const oldOpts = old.options || [];
+    const taken = new Set();
+    merged.options = (nw.options || []).map((opt) => {
+      const j = oldOpts.findIndex((oo, k) =>
+        !taken.has(k) && (oo.text || "").trim() === (opt.text || "").trim());
+      if (j < 0) return opt;
+      taken.add(j);
+      return oldOpts[j];
+    });
+  }
+  return merged;
 }
 
 /* ---------- statistics ---------- */

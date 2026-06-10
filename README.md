@@ -67,7 +67,7 @@ modules/table-forge/
 
 ## 技術棧
 
-- **前端**：純 HTML / CSS / JS（全模組，無框架）
+- **前端**：無框架 HTML / CSS / JS(例外:Script Editor 為 Vite + React,經 iframe 嵌入)
 - **PDF**：pdf.js（閱讀）+ pdf-lib（切割 / 匯出）
 - **AI**：BM25 + Dense Embedding 雙層 RAG，支援多家 LLM API
 - **儲存**：IndexedDB（本地快取）+ Google Drive API（雲端同步）
@@ -147,6 +147,7 @@ npm test
 | Enhancement Phase 14（Voice / BGM Prototype — Rein-Voice + TsukiSynth + 館報朗讀 + 伴讀 BGM） | ✅ |
 | Enhancement Phase 15（Private Reading Room + 每日館報） | ✅ |
 | Enhancement Phase 17 v2（Script Editor 4-TAB — Archive-host merge：Vite + React + Voice TTS + tsuki-synth integration plan） | ✅ |
+| Phase 18–19(Script Editor 品質修正 + 深度強化;19-D 未完)+ Write 多模式(進行中) | 🔶 |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
