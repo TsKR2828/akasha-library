@@ -1,131 +1,47 @@
-# Akasha Library 交接事項（2026-06-02）
+# Akasha Library 交接事項（2026-06-13）
+
+> 本檔每次重大進度後更新；歷史交接與逐項細節見 `dev-log.md`。
 
 ## 目前狀態
 
-**Branch:** `codex/fix-reviewed-bugs`(+3 未推送;工作區有 Write 多模式 + 2026-06-10 審查修復,皆未提交)  
-**本地伺服器:** `npx http-server . -p 3460 -c-1`（若需測試）  
-**Build 指令:** `npm test`（= vite build + file checks）  
-**測試 URL:** `http://127.0.0.1:3460/dist/script-editor/index.html`  
-**線上 URL:** Cloudflare Pages 自動部署
+**Branch:** `codex/fix-reviewed-bugs`（與 origin 同步；工作區有 2026-06-13 解凍修復批次，**unstaged 待月月審**，未 commit/push）
+**Build / 測試:** `npm test`（= vite build ×2 → `scripts/sync-sw.js` 自動同步 sw.js → SW-INTEGRITY 缺檔檢查 → 關鍵檔存在檢查）
+**本地伺服器:** `npx http-server . -p 3460 -c-1`
+**測試 URL:** `http://127.0.0.1:3460/dist/script-editor/index.html`
+**線上:** Cloudflare Pages 自動部署 / GitHub Pages（`_site/` via `npm run build:public`）
 
 ---
 
-## 已完成（本次 session，2026-06-02）
+## 2026-06-13 解凍修復批次（Dynamic Workflow，unstaged）
 
-| 項目 | 狀態 |
-|------|------|
-| Codex 審查 P2: export-core `b.text` → `blockText(b)` 支援 zh/original | ✅ |
-| Codex 審查 P2: App.jsx 8 處 replacement character 亂碼修復 | ✅ |
-| Codex 審查 P2: translation-core 全形冒號 `：` regex 支援 | ✅ |
-| Codex 審查 P3: iframe sandbox `allow-clipboard-write` → permission policy | ✅ |
-| 草稿歷史 / 回溯（`sw_history_v1_${workId}`，15 筆 FIFO） | ✅ |
-| Worker RAG 實作：embed proxy（BYOK+Coin）+ BM25 query | ✅ |
-| 前端 embedding coin-mode fallback（`embedViaProxy()`） | ✅ |
+Codex 全量健檢 → Opus 二度評估（抓到 2 處不準：SW 快取項當下其實一致、tsuki-synth「已解阻塞」無證據）→ Dynamic Workflow 逐項修復。詳見 `dev-log.md` 同日條目。
 
-## 先前完成（Phase 18）
+| 項目 | 內容 | 檔案 |
+|------|------|------|
+| 活躍 S0 | choice 選項含「/」資料遺失 → escape `\/` | `modules/script-editor/src/lib/parser.js` |
+| 活躍 S2 | 刪作品殘留 `edges_${workId}` → 補清除 | `modules/script-editor/src/App.jsx` |
+| 解凍 A | Reader→Table Forge 無損化 | `modules/table-forge/parsers.js` |
+| 解凍 B | SW precache 自動化 + SW-INTEGRITY 進 npm test | `scripts/sync-sw.js`、`package.json`、`scripts/build.js` |
+| 解凍 C | 月幣未部署提示 | `modules/ai-settings/index.html` |
+| 解凍 D | Vite 5→8（audit 0） | `package.json` |
 
-| 項目 | commit |
-|------|--------|
-| 搜尋 narration/scene filter | `a31e242` |
-| Persona Slots v2（全 9 格可指派） | `fe1eb02` |
-| 多作品支援（custom work CRUD） | `a31e242` |
-| AI 輔助面板（postMessage bridge） | `a31e242` |
-| WorkSwitcher inline（不再擋內容） | `fe1eb02` |
-| Editor/addBlock 去耦合 "lohengrin" | `fe1eb02` |
-| Delete work 正確 localStorage key | `fe1eb02` |
-| SEED 通用化 | `fe1eb02` |
+**SW 快取**：版號改為全資產內容雜湊，由 `scripts/sync-sw.js` 自動產生（不再手寫 v 號）。改任何 precache 檔後跑 `npm run build` 或 `node scripts/sync-sw.js` 即自動 bump；`npm test` 會在 precache 指向缺檔時失敗。
 
 ---
 
 ## 待處理
 
-### 高優先
+### 跨專案阻塞（狀態未驗證）
+- **tsuki-synth v3 音訊整合**：`ZeroRhyme.generateScore` / `renderScore` 仍是空殼；文件記載的 CLI 阻塞（`ScoreRenderer.h` API mismatch）**未經本 repo 驗證**，動工前須回 tsuki-synth repo 取證。見 `docs/tsuki-synth-integration.md`。
 
-1. **SCENE_SUBTITLES 硬編碼**  
-   `App.jsx` line 19-30，Lohengrin 場景名寫死在全域常數。  
-   修法：改為 per-work 或從 data JSON 讀取，custom work 不顯示。
-
-2. **JSONL 匯入即建作品**  
-   現在匯入 JSONL 不會自動建立 custom work metadata，blocks 掛在當前作品下。
-
-3. **Write 多模式（小說/劇本/筆記）+ H1~H4 大綱面板**  
-   Phase A 規劃已完成（見先前 session），尚未開工。
-
-### 中優先
-
-4. **TsukiSynth WAV pipeline**  
-   `ZeroRhyme.generateScore` / `renderScore` 仍是空殼。  
-   需等 tsuki-synth CLI render 修好。
-
-### 低優先
-
-5. **SW cache 版號** — `akasha-library-v4-public` 固定，應隨 build 自動 bump
-6. **GERMAN_ACT_NUMS** — 硬編碼歌劇幕號格式，非通用
+### 部署設定（需月月提供，不進 repo）
+- **月幣模式**：`core/config.js` 的 `API_BASE` 仍為 placeholder；啟用需設定 Cloudflare Worker secrets + KV + 正式 `__AKASHA_API_BASE`。未設定時 UI 已顯示「尚未部署」提示（2026-06-13 加）。
+- **OAuth**：`GOOGLE_CLIENT_ID` 仍為 placeholder。
 
 ---
 
 ## 關鍵技術備忘
 
-### 全域可變狀態（陷阱）
-
-```javascript
-// App.jsx 頂層，非 React state，多處直接讀取
-let WORKS = [];        // loadWorkIndex() 填入
-let CHARACTERS = [];   // loadAllData() 填入，或 populateCharsFromBlocks() 補
-let SCRIPT = [];       // 原始 server script blocks
-let CHAR_COLORS = {};  // speakerId → HSL color
-let WORK_INDEX = [];   // WORKS alias
-```
-
-改這些變數時要注意：很多 component 直接讀全域而非 props。`RelationshipGraph` 已改為接受 `characters` prop，其他尚未。
-
-### Custom Work 流程
-
-```
-新增 → NewWorkModal → saveCustomWorks() → switchWork(newId)
-      → loadAllData(newId) 早期返回 → CHARACTERS=[] SCRIPT=[]
-      → 使用者在 WriteTab 打字 → parsePlainScript → setBlocks
-      → populateCharsFromBlocks(blocks) → 填 CHARACTERS + CHAR_COLORS
-```
-
-### Persona Slots 機制
-
-```
-slotLabels 優先順序：
-1. locks[n] 有值且非 "__clear__" → 使用者指派（最高）
-2. locks[n] === "__clear__" → 明確清空（顯示 null）
-3. n===1 → "#scene"（預設）
-4. n===2 → "旁白"（預設）
-5. n>=3 → dynamicSlots[n-3]（從 blocks 抽取的角色）
-```
-
-### AI 面板通訊
-
-```
-iframe 內 → postMessage({ type: "akasha-reading-room-send", payload: { message, context } })
-parent    → 呼叫 LLM → postMessage({ type: "akasha-reading-room-response", payload: { text } })
-```
-
-非 iframe 環境（直接開 dist/script-editor/）顯示「請從阿卡夏圖書館主頁面開啟」。
-
-### Chrome 測試注意
-
-Script Editor 頁面會讓 Chrome extension `document_idle` timeout。  
-驗證時用 `javascript_tool` 而非 screenshot/find。
-
----
-
-## 檔案位置速查
-
-| 用途 | 路徑 |
-|------|------|
-| 主邏輯（~4200 行） | `modules/script-editor/src/App.jsx` |
-| 速寫 Tab | `modules/script-editor/src/components/WriteTab.jsx` |
-| Vite 入口 | `modules/script-editor/src/main.jsx` |
-| Parser | `modules/script-editor/src/lib/parser.js` |
-| Voice hook | `modules/script-editor/src/hooks/useVoiceTTS.js` |
-| Characters hook | `modules/script-editor/src/hooks/useCharactersOfWork.js` |
-| BGM 占位 | `modules/script-editor/src/components/BgmPanel.jsx` |
-| Vite config | `vite.config.script-editor.js` |
-| Build 產出 | `dist/script-editor/` |
-| Lohengrin data | `modules/script-editor/public/data/` |
+- **混合架構**：App Shell 與多數模組為無框架 HTML/CSS/JS；**Script Editor + Spreadsheet 為 Vite + React**（自 2026-06-13 起 Vite 8 / rolldown 引擎），經 iframe 嵌入，輸出 `dist/<module>/`。
+- **per-work localStorage key（刪作品須對稱清除，共 10 個）**：`blocks_` / `notes_` / `characters_` / `sw_write_draft_v1_`(+`__novel` / `__notes`) / `sw_write_mode_v1_` / `sw_slot_locks_v1_` / `sw_history_v1_`(經 clearHistory) / `edges_`。
+- **choice 純文字格式**：option label 內 `/` 以 `\/` 逃脫（`escapeChoiceOption` / `splitChoiceOptions`），避免與選項分隔符衝突丟跳轉。

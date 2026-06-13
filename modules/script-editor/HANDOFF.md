@@ -1,5 +1,8 @@
 # Script Editor — HANDOFF（給下個窗口）
 
+> ⚠️ **此檔為 2026-05-19 歷史交接，多處已過時**（路徑為他機、Fix-2/3/4 早已提交、Phase 18–19 均已完成）。
+> 最新狀態請見根目錄 `HANDOFF.md` 與 `dev-log.md`（2026-06-13）。以下保留作歷史紀錄。
+
 > 建立時間：2026-05-19（session end）
 > 上一次工作分支：`feature/archive-host-merge`
 > 起點：`master@b51a0c4`（前次 Phase 17 嘗試 PR #2 已被 revert）

@@ -1,5 +1,24 @@
 # Akasha Library — Dev Log
 
+## 2026-06-13:Codex audit 二度評估 + 解凍修復批次（Dynamic Workflow）
+
+月月交來 Codex「全量健檢 BLOCKED」報告，要求 Opus 二度評估 + 用 Dynamic Workflow（Opus 規劃/驗證、Sonnet 執行）逐一修復，最後重跑全面審查。
+
+**二度評估**：複查 Codex 七項，抓到 2 處不準——SW「快取項不存在」在當下 committed 狀態其實一致（rebuild 才失準，降 S1→S2）；「tsuki-synth CLI 阻塞已過時」無證據（跨 repo），未採信、未寫入文件。另把 edges/月幣由 S1 降 S2。結論 PASS WITH ISSUES。
+
+**活躍區修復**（先行）：
+- [S0→fix-first] choice 選項含「/」資料遺失：`parser.js` 加 `escapeChoiceOption`/`splitChoiceOptions`，option label 內 `/`→`\/`，三處共用（parse / serialize / `_choiceKey`）。補 CARD-06 未蓋到的洞（選項數變動→配對失敗丟 nextBlockId）。
+- [S2] 刪自訂作品殘留 `edges_${workId}`：`App.jsx deleteCurrentWork` 補 removeItem（先列舉全 10 個 per-work key 確認唯一遺漏）。
+- [S3] 文件同步：README / ROADMAP / TODO 標 19-D 已實作。
+
+**解凍修復批次**（月月解凍 Phase 1–18 後）：
+- [A] Reader→Table Forge 不再靜默丟內容：`parsers.js parseReaderPayload` 改為無損——有表格時保留原生欄位、非表格內容（標題/段落/程式碼）以標記列接於同 sheet；無表格時建 [類型,內容] sheet。fixture `sample.md` 端到端驗證四型全在。
+- [B] SW precache 自動化 + SW-INTEGRITY 進 npm test：新增 `scripts/sync-sw.js`（重建後自動把 dist hash 寫回 sw.js + 以全資產內容雜湊產生 CACHE_NAME，冪等）；`npm run build` 末端自動執行，`npm test` 加 `--check`（缺檔即失敗，根治「修了沒生效」）；`scripts/build.js` 不再硬編碼 v6，改沿用內容雜湊名 + 附 mode。
+- [C] 月幣模式未部署提示：`ai-settings` 月幣區塊加自包含偵測，placeholder 代理時顯示「尚未部署，請改用 BYOK」。
+- [D] Vite 5→8 升級（@vitejs/plugin-react 4→6）：清除 esbuild dev-server 漏洞，`npm audit` 歸 0；build（rolldown）+ npm test + 源碼測試通過。
+
+全程 unstaged、未 commit/push，每項經 Opus 獨立 gate（含負向測試與真實 fixture）驗證。SW 快取版號自 v9 起改為全資產內容雜湊並自動化。
+
 ## 2026-06-10:審查修復批次(fix-cards)
 
 依 2026-06-10 全量健檢報告執行(詳見 docs/fix-cards-2026-06-10.md):

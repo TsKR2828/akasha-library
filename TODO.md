@@ -1,7 +1,7 @@
 # 阿卡夏圖書館 — TODO
 
 > Enhancement Phase 1–16 全部完成（含 15 談心+館報 / 8 Script Editor / 12 Security / 16 部署）
-> Branch: `codex/fix-reviewed-bugs`(+3 commits 未推送;工作區另有 Write 多模式未提交)
+> Branch: `codex/fix-reviewed-bugs`（與 origin 同步；工作區有 2026-06-13 解凍修復批次，unstaged 待審）
 
 ---
 
@@ -375,13 +375,24 @@
   - [x] SlotBadge 空格可點 + tooltip 更新
   - [x] 說明 dialog 更新
 
-### Phase 19 — Script Editor 深度強化(進行中)
+### Phase 19 — Script Editor 深度強化(完成)
 
 - [x] **19-A** SCENE_SUBTITLES per-work 化(`ab5960b` + 工作區 scene_label_template 模板)
 - [x] **19-B** 角色管理 UI(`e78e7c8` per-work character CRUD)
 - [x] **19-C** 草稿歷史(`0624f31`,`sw_history_v1_${workId}` 15 筆 FIFO)
-- [ ] **19-D** 關係圖編輯 — 新增 / 編輯 / 儲存角色關係(唯一未動工)
+- [x] **19-D** 關係圖編輯 — 新增 / 編輯 / 儲存角色關係(已實作：RelationshipGraph editMode + 新增關係 + per-work saveCustomEdges 持久化)
 - [x] **19-E** JSONL 匯入即建作品(`b4f8e2d`)
+
+### 已完成（2026-06-13 解凍修復批次 · unstaged 待審）
+
+> Codex 全量健檢 → Opus 二度評估（抓到 2 處不準）→ Dynamic Workflow 修復。
+
+- [x] **活躍 S0** choice 選項含「/」資料遺失 — `parser.js` escape `\/`（補 CARD-06 缺口）
+- [x] **活躍 S2** 刪作品殘留 `edges_${workId}` — `App.jsx` 補清除
+- [x] **解凍 A** Reader→Table Forge 無損化 — `parsers.js` 保留四型內容
+- [x] **解凍 B** SW precache 自動化 + SW-INTEGRITY 進 `npm test` — `scripts/sync-sw.js`，缺檔即失敗
+- [x] **解凍 C** 月幣未部署提示 — `ai-settings`
+- [x] **解凍 D** Vite 5→8 升級，esbuild dev 漏洞清零 — `npm audit` 0
 
 ### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
 

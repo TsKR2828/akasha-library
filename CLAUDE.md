@@ -185,10 +185,10 @@ PWA 文件雲端書庫:多格式閱讀/編輯/轉換 + Google Drive 同步 + AI 
 | 地雷 | 狀態 | 備註 |
 |---|---|---|
 | 滾動窗問題(WriteTab 輸入區貼齊視窗底部) | 活躍 | 見 B9 範例 |
-| Service Worker 舊快取造成「修了沒生效」假象 | 長期 | 每次審查必查(B5-1) |
+| Service Worker 舊快取造成「修了沒生效」假象 | 已加自動守衛(2026-06-13) | scripts/sync-sw.js 自動同步 hash + 內容雜湊版號;npm test 缺檔即失敗(B5-1) |
 | iframe sandbox 缺屬性 | 復發兩次 | 每次審查必查(B5-2) |
-| 硬編碼作品/角色名 | 清理中 | 19-A 待開 |
-| localStorage key 清理不對稱 | 已修一次 | 每次審查必查(B5-5) |
+| 硬編碼作品/角色名 | 19-A 已完成 | SCENE_SUBTITLES per-work 化(ab5960b);仍須留意新增碼是否再引入 |
+| localStorage key 清理不對稱 | 已修兩次(edges_ 於 2026-06-13) | 刪作品須對稱清 10 個 per-work key(B5-5) |
 
 ## B9. 報告格式實戰範例(以現役問題示範;審查者輸出須符合此格式)
 

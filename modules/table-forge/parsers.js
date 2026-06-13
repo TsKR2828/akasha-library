@@ -274,30 +274,69 @@ export function parseReaderPayload(payload) {
   }
 
   const tableBlocks = payload.blocks.filter(b => b.type === 'table');
-  if (tableBlocks.length === 0) {
-    return { error: 'Reader payload 中沒有表格資料' };
+  const otherBlocks = payload.blocks.filter(b => b.type !== 'table');
+
+  if (tableBlocks.length === 0 && otherBlocks.length === 0) {
+    return { error: 'Reader payload 中沒有可匯入的內容' };
   }
 
   const doc = createDocument(payload.filename || 'Reader Import', 'markdown');
   const sheet = doc.sheets[0];
 
-  for (const tableBlock of tableBlocks) {
-    for (const name of tableBlock.head) {
-      const colName = name || 'col';
-      if (!sheet.columns.some(c => c.name === colName)) {
-        addColumn(sheet, colName);
-      }
-    }
+  const blockLabel = (b) =>
+    b.type === 'heading'   ? `標題 H${b.level || 1}` :
+    b.type === 'paragraph' ? '段落' :
+    b.type === 'code'      ? `程式碼${b.lang ? ' ' + b.lang : ''}` :
+    b.type;
+  const blockText = (b) => String(b.text ?? '');
 
-    for (const row of tableBlock.body) {
-      const cells = {};
-      for (let j = 0; j < tableBlock.head.length; j++) {
-        const colName = tableBlock.head[j] || 'col';
-        const col = sheet.columns.find(c => c.name === colName);
-        if (col && j < row.length) {
-          cells[col.id] = String(row[j] ?? '');
+  if (tableBlocks.length > 0) {
+    // Native table columns — keeps the "edit this table" use-case intact.
+    for (const tableBlock of tableBlocks) {
+      for (const name of tableBlock.head) {
+        const colName = name || 'col';
+        if (!sheet.columns.some(c => c.name === colName)) {
+          addColumn(sheet, colName);
         }
       }
+      for (const row of tableBlock.body) {
+        const cells = {};
+        for (let j = 0; j < tableBlock.head.length; j++) {
+          const colName = tableBlock.head[j] || 'col';
+          const col = sheet.columns.find(c => c.name === colName);
+          if (col && j < row.length) {
+            cells[col.id] = String(row[j] ?? '');
+          }
+        }
+        addRow(sheet, cells);
+      }
+    }
+    // Preserve non-table content instead of dropping it: append as labelled rows.
+    if (otherBlocks.length > 0) {
+      const cols = sheet.columns;
+      const sep = {};
+      sep[cols[0].id] = '── 文件內容（非表格）──';
+      addRow(sheet, sep);
+      for (const b of otherBlocks) {
+        const cells = {};
+        if (cols.length >= 2) {
+          cells[cols[0].id] = blockLabel(b);
+          cells[cols[1].id] = blockText(b);
+        } else {
+          cells[cols[0].id] = `${blockLabel(b)}: ${blockText(b)}`;
+        }
+        addRow(sheet, cells);
+      }
+    }
+  } else {
+    // No tables — build a [類型, 內容] sheet so headings/paragraphs/code survive.
+    addColumn(sheet, '類型');
+    addColumn(sheet, '內容');
+    const [typeCol, textCol] = sheet.columns;
+    for (const b of otherBlocks) {
+      const cells = {};
+      cells[typeCol.id] = blockLabel(b);
+      cells[textCol.id] = blockText(b);
       addRow(sheet, cells);
     }
   }
