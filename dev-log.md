@@ -17,7 +17,7 @@
 - [C] 月幣模式未部署提示：`ai-settings` 月幣區塊加自包含偵測，placeholder 代理時顯示「尚未部署，請改用 BYOK」。
 - [D] Vite 5→8 升級（@vitejs/plugin-react 4→6）：清除 esbuild dev-server 漏洞，`npm audit` 歸 0；build（rolldown）+ npm test + 源碼測試通過。
 
-全程 unstaged、未 commit/push，每項經 Opus 獨立 gate（含負向測試與真實 fixture）驗證。SW 快取版號自 v9 起改為全資產內容雜湊並自動化。
+每項經 Opus 獨立 gate（含負向測試與真實 fixture）驗證後，commit `a34315e`、經 PR #5 併入 `master`（`b07c181`），Vite 8 render 另以 Chrome MCP 實測（Script Editor + 試算表零 console error）。SW 快取版號自 v9 起改為全資產內容雜湊並自動化。
 
 ## 2026-06-10:審查修復批次(fix-cards)
 

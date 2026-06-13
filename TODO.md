@@ -1,7 +1,7 @@
 # 阿卡夏圖書館 — TODO
 
 > Enhancement Phase 1–16 全部完成（含 15 談心+館報 / 8 Script Editor / 12 Security / 16 部署）
-> Branch: `codex/fix-reviewed-bugs`（與 origin 同步；工作區有 2026-06-13 解凍修復批次，unstaged 待審）
+> Branch: `master`（2026-06-13 解凍修復批次已經 PR #5 併入 master `b07c181`；`codex/fix-reviewed-bugs` 與 5 個舊 feature branch 已清）
 
 ---
 
@@ -383,7 +383,7 @@
 - [x] **19-D** 關係圖編輯 — 新增 / 編輯 / 儲存角色關係(已實作：RelationshipGraph editMode + 新增關係 + per-work saveCustomEdges 持久化)
 - [x] **19-E** JSONL 匯入即建作品(`b4f8e2d`)
 
-### 已完成（2026-06-13 解凍修復批次 · unstaged 待審）
+### 已完成（2026-06-13 解凍修復批次 · 已併入 master，PR #5）
 
 > Codex 全量健檢 → Opus 二度評估（抓到 2 處不準）→ Dynamic Workflow 修復。
 
