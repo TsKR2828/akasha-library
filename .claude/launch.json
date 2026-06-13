@@ -10,8 +10,9 @@
     {
       "name": "akasha",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["http-server", ".", "-c-1", "-p", "3099"],
-      "port": 3099
+      "runtimeArgs": ["http-server", ".", "-c-1"],
+      "port": 3099,
+      "autoPort": true
     }
   ]
 }

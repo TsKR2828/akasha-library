@@ -1,5 +1,25 @@
 # Akasha Library — Dev Log
 
+## 2026-06-13:人類實走測試計畫 + 機器軌驗證（先規劃 → Claude 實跑）
+
+月月要求「先規劃、不執行」一份完整性的人類實走測試，再由 Claude 把「機器能查的」那一軌先跑掉。
+
+**產出**：`docs/walkthrough-test-plan.md` — 約 70 條可勾選 UAT，每條標 🤖機器查 / 👤人走 / 🤝兩者 / ⛔受阻（雲端未部署）。核心觀念：本專案「後端」多為瀏覽器內 IndexedDB/localStorage + iframe postMessage 管線（🤖 可查）；月幣/Drive/Notion 的 Worker 未部署，無後端可對應，只驗未配置守門。
+
+**機器軌（preview 真實瀏覽器，serverId 託管 :3460；真實 fixture + 真實 shipping 程式碼）結果，零 S0/S1**：
+- B8/R1 Reader→Table Forge 無損：`contentToPayload(sample.md)`→`parseReaderPayload` 全鏈，四型內容全在 + 非表格分隔列；傳輸層確認 payload 原封進 sessionStorage（index.html:2798）→ table-ui.js:507，端到端對應。
+- F2 parser：半形/全形冒號都判 dialogue、`//`→note 不被吞（區塊序 scene→narration→dialogue×3→note）。
+- F9/R4 choice 含「/」：序列化 `去A\/B路口`、重解析回原樣、剛好 2 選項。
+- F5 多作品隔離（runtime 端到端，驅動 UI）：建自訂作品→打標記→切 lohengrin textarea 不含標記（零污染）→切回標記還在。
+- R3 刪作品對稱（runtime）：刪後該作品 per-work key leftover=0、sw_custom_works→[]、切回 fallback；程式碼確認清全 10 key 含 edges_。
+- F1/D 兩 React 模組掛載零 console error；8 vanilla 模組 + App Shell 載入冒煙全過、零失敗請求。
+- R7 金鑰不外洩（靜態）：全碼無 console 印金鑰；SECRET 級 session-only/AES-GCM。
+- H2 不留痕（碼）：noTrace 開→maybeSuggestNote return，自動寫記憶被擋。
+- J2 月幣守門（runtime）：預設 BYOK、月幣段隱藏無假餘額；切「月幣制」→警告「此部署尚未啟用…請改用 BYOK」現身。
+
+留給月月親走：視覺/聲音/體感、需真實 PDF/xlsx/docx 的流程、真金鑰 console 抽驗、不留痕 IndexedDB 殘留負向斷言。
+工程備忘：`.claude/launch.json` 的 akasha 設定加 `autoPort`、移除寫死 `-p`（讓 preview 自挑 port，不撞月月手開的 :3460）。
+
 ## 2026-06-13:Codex audit 二度評估 + 解凍修復批次（Dynamic Workflow）
 
 月月交來 Codex「全量健檢 BLOCKED」報告，要求 Opus 二度評估 + 用 Dynamic Workflow（Opus 規劃/驗證、Sonnet 執行）逐一修復，最後重跑全面審查。
