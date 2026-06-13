@@ -4,7 +4,7 @@
 
 ## 目前狀態
 
-**Branch:** `codex/fix-reviewed-bugs`（與 origin 同步；工作區有 2026-06-13 解凍修復批次，**unstaged 待月月審**，未 commit/push）
+**Branch:** `master`（2026-06-13 解凍修復批次已 commit `a34315e`、經 **PR #5 併入 master** `b07c181`；工作樹乾淨。`codex/fix-reviewed-bugs` 與 5 個舊 feature branch 已清，遠端僅剩 `master`）
 **Build / 測試:** `npm test`（= vite build ×2 → `scripts/sync-sw.js` 自動同步 sw.js → SW-INTEGRITY 缺檔檢查 → 關鍵檔存在檢查）
 **本地伺服器:** `npx http-server . -p 3460 -c-1`
 **測試 URL:** `http://127.0.0.1:3460/dist/script-editor/index.html`
@@ -12,7 +12,7 @@
 
 ---
 
-## 2026-06-13 解凍修復批次（Dynamic Workflow，unstaged）
+## 2026-06-13 解凍修復批次（Dynamic Workflow，已併入 master · PR #5）
 
 Codex 全量健檢 → Opus 二度評估（抓到 2 處不準：SW 快取項當下其實一致、tsuki-synth「已解阻塞」無證據）→ Dynamic Workflow 逐項修復。詳見 `dev-log.md` 同日條目。
 

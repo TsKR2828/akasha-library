@@ -265,7 +265,7 @@
 ## 2026-06-13：解凍修復批次 + 工程強化 ✅ 完成
 
 > Codex 全量健檢 → Opus 二度評估 → Dynamic Workflow（Opus 規劃/驗證、Sonnet 執行）。
-> 月月解凍 Phase 1–18 後逐項修復；全程 unstaged 待審。
+> 月月解凍 Phase 1–18 後逐項修復；已 commit `a34315e`、經 PR #5 併入 `master`。
 
 | 項目 | 內容 | 狀態 |
 |------|------|:----:|
