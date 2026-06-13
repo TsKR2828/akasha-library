@@ -25,6 +25,24 @@ export function generateId(prefix = "blk") {
   return `${prefix}_${Date.now().toString(36)}_${_seq.toString(36)}`;
 }
 
+/* choice option <-> text escaping: "/" is the option separator, so a literal
+   "/" inside an option label must be escaped as "\/" to survive round-trip. */
+function escapeChoiceOption(t) {
+  return String(t == null ? "" : t).replace(/\\/g, "\\\\").replace(/\//g, "\\/");
+}
+function splitChoiceOptions(s) {
+  const out = [];
+  let buf = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "\\" && i + 1 < s.length) { buf += s[i + 1]; i++; continue; }
+    if (ch === "/") { out.push(buf); buf = ""; continue; }
+    buf += ch;
+  }
+  out.push(buf);
+  return out.map(x => x.trim()).filter(Boolean);
+}
+
 /* ---------- text → blocks[] ----------
    v2-7: 產出時補上 Reader/Editor 期待的欄位
          - dialogue: speakerId（從 characters 表 reverse lookup；找不到留 ""）/
@@ -79,7 +97,7 @@ export function parsePlainScript(content, characters = []) {
           id: generateId("cho"),
           type: "choice",
           prompt: "",
-          options: val.split("/").map(s => s.trim()).filter(Boolean)
+          options: splitChoiceOptions(val)
             .map(text => ({ text, nextBlockId: "" })),
           _line: i + 1,
         });
@@ -177,7 +195,7 @@ export function blocksToPlainScript(blocks, characters = []) {
         break;
       }
       case "choice":
-        out.push(`#choice：${(b.options || []).map(o => o.text).join(" / ")}`);
+        out.push(`#choice：${(b.options || []).map(o => escapeChoiceOption(o.text)).join(" / ")}`);
         break;
       case "note":
         out.push(`// ${b.text || ""}`);
@@ -311,8 +329,9 @@ function _isMatch(old, nw) {
    normalized through the same "/" split parsePlainScript applies — so an
    Editor-authored option text containing "/" still matches its own round-trip. */
 function _choiceKey(b) {
-  return (b.options || []).map(o => o.text || "").join("/")
-    .split("/").map(s => s.trim()).filter(Boolean).join(" / ");
+  return splitChoiceOptions(
+    (b.options || []).map(o => escapeChoiceOption(o.text || "")).join("/")
+  ).join(" / ");
 }
 
 /* Merge: old metadata + new text content.

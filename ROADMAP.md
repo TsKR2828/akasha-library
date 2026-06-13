@@ -203,8 +203,8 @@
 └─ Phase 18 (Script Editor 品質修正) ✅ — 18-A ~ 18-E 全部完成
    依賴 Phase 17 v2 ✅
 
-待開
-└─ Phase 19 (Script Editor 深度強化) ⬜ — 規劃中
+已完成
+└─ Phase 19 (Script Editor 深度強化) ✅ — 19-A~E 完成
    依賴 Phase 18 ✅
 ```
 
@@ -250,15 +250,31 @@
 
 ---
 
-## 待開：Phase 19 Script Editor 深度強化（規劃中）
+## Phase 19：Script Editor 深度強化 ✅ 完成
 
 | 步驟 | 內容 | 狀態 |
 |------|------|:----:|
-| 19-A | SCENE_SUBTITLES per-work 化 — 移除硬編碼 Lohengrin 場景名 | ⬜ |
-| 19-B | 角色管理 UI — 新增 / 編輯 / 刪除角色（含 voice / role / tags） | ⬜ |
-| 19-C | 草稿歷史 — 存檔點 + 回溯（localStorage 或 IndexedDB） | ⬜ |
-| 19-D | 關係圖編輯 — 新增 / 編輯 / 儲存角色關係 | ⬜ |
-| 19-E | JSONL 匯入即建作品 — 匯入時自動建立 custom work metadata | ⬜ |
+| 19-A | SCENE_SUBTITLES per-work 化 — 移除硬編碼 Lohengrin 場景名（`ab5960b`） | ✅ |
+| 19-B | 角色管理 UI — 新增 / 編輯 / 刪除角色（含 voice / role / tags）（`e78e7c8`） | ✅ |
+| 19-C | 草稿歷史 — 存檔點 + 回溯（`0624f31`，sw_history_v1 per-work，15 筆 FIFO） | ✅ |
+| 19-D | 關係圖編輯 — 新增 / 編輯 / 儲存角色關係（RelationshipGraph editMode + per-work saveCustomEdges 持久化） | ✅ |
+| 19-E | JSONL 匯入即建作品 — 匯入時自動建立 custom work metadata（`b4f8e2d`） | ✅ |
+
+---
+
+## 2026-06-13：解凍修復批次 + 工程強化 ✅ 完成
+
+> Codex 全量健檢 → Opus 二度評估 → Dynamic Workflow（Opus 規劃/驗證、Sonnet 執行）。
+> 月月解凍 Phase 1–18 後逐項修復；全程 unstaged 待審。
+
+| 項目 | 內容 | 狀態 |
+|------|------|:----:|
+| 活躍-S0 | choice 選項含「/」round-trip 資料遺失 → escape `\/`（parser.js） | ✅ |
+| 活躍-S2 | 刪作品殘留 `edges_${workId}` → 補清除（App.jsx） | ✅ |
+| 解凍-A | Reader→Table Forge 無損化（不再丟標題/段落/程式碼） | ✅ |
+| 解凍-B | SW precache 自動化（scripts/sync-sw.js）+ SW-INTEGRITY 進 npm test | ✅ |
+| 解凍-C | 月幣模式未部署提示（ai-settings） | ✅ |
+| 解凍-D | Vite 5→8 升級，清 esbuild dev-server 漏洞（npm audit 0） | ✅ |
 
 ---
 

@@ -4629,6 +4629,7 @@ function App() {
     localStorage.removeItem(`sw_write_draft_v1_${currentWork}__notes`);
     localStorage.removeItem(`sw_write_mode_v1_${currentWork}`);
     localStorage.removeItem(`sw_slot_locks_v1_${currentWork}`);
+    localStorage.removeItem(`edges_${currentWork}`);
     clearHistory(currentWork);
     WORK_INDEX = WORK_INDEX.filter(w => w.id !== currentWork);
     setWorkIndex([...WORK_INDEX]);

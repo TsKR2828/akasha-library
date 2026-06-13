@@ -147,7 +147,8 @@ npm test
 | Enhancement Phase 14（Voice / BGM Prototype — Rein-Voice + TsukiSynth + 館報朗讀 + 伴讀 BGM） | ✅ |
 | Enhancement Phase 15（Private Reading Room + 每日館報） | ✅ |
 | Enhancement Phase 17 v2（Script Editor 4-TAB — Archive-host merge：Vite + React + Voice TTS + tsuki-synth integration plan） | ✅ |
-| Phase 18–19(Script Editor 品質修正 + 深度強化;19-D 未完)+ Write 多模式(進行中) | 🔶 |
+| Phase 18 + 19(Script Editor 品質修正 + 深度強化;19-A~E 完成)+ Write 多模式 | ✅ |
+| 2026-06-13 解凍修復批次（choice 資料安全 / Reader 無損 / SW 自動化 + SW-INTEGRITY / Vite 8） | ✅ |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 

@@ -312,6 +312,8 @@ h1 {
 <div class="section" id="sectionCoin" style="display:none;">
   <div class="section-title">月幣系統</div>
   <div class="section-desc">使用平台提供的 AI 服務，以月幣計費。每月自動補充免費額度。</div>
+  <div id="coinUnavailable" class="section-desc" style="display:none;color:#c9a86a;border:1px solid rgba(201,168,106,.35);border-radius:6px;padding:8px 10px;margin-top:6px;">⚠️ 月幣模式需平台後端代理伺服器；此部署尚未啟用，月幣計費無法使用，請改用上方「BYOK 自帶金鑰」。</div>
+  <script>(function(){var u=window.__AKASHA_API_BASE;if(!u||String(u).indexOf('your-subdomain')>-1){var el=document.getElementById('coinUnavailable');if(el)el.style.display='';}})();</script>
 
   <div class="coin-display">
     <div class="coin-display__icon">&#127942;</div>
