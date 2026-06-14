@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
 import { STORAGE_KEY } from "../../../core/export/bridge.js";
 import { payloadToCells } from "../../../core/export/fromPayload.js";
+import { parseDelimitedText, toNumericValue } from "./lib/spreadsheet-utils.js";
 
 const ROWS = 50;
 const COLS = 26;
@@ -87,75 +88,63 @@ export default function SpreadsheetEditor() {
             if (visited.has(id)) return ["#循環!"];
             visited.add(id);
             const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-            if (typeof v === "number") vals.push(v);
-            else if (typeof v === "string" && v !== "" && !isNaN(Number(v)))
-              vals.push(Number(v));
+            const numeric = toNumericValue(v);
+            if (numeric !== null) vals.push(numeric);
           }
+        }
+        return vals;
+      };
+
+      const expandNumericArgs = (args) => {
+        if (args.includes(":")) return expandRange(args);
+        const vals = [];
+        for (const token of args.split(",")) {
+          const ref = parseCellRef(token.trim());
+          if (!ref) continue;
+          const id = cellId(ref.r, ref.c);
+          if (visited.has(id)) return ["#循環!"];
+          const nextVisited = new Set(visited);
+          nextVisited.add(id);
+          const value = evaluate(cellsRef[id], cellsRef, nextVisited);
+          if (value === "#循環!") return ["#循環!"];
+          const numeric = toNumericValue(value);
+          if (numeric !== null) vals.push(numeric);
         }
         return vals;
       };
 
       let m = formula.match(/^SUM\((.+)\)$/);
       if (m) {
-        const vals = m[1].includes(":")
-          ? expandRange(m[1])
-          : m[1].split(",").map((r) => {
-              const ref = parseCellRef(r.trim());
-              if (!ref) return 0;
-              const id = cellId(ref.r, ref.c);
-              const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-              return typeof v === "number" ? v : Number(v) || 0;
-            });
+        const vals = expandNumericArgs(m[1]);
         if (vals.includes("#循環!")) return "#循環!";
         return vals.reduce((a, b) => a + b, 0);
       }
 
       m = formula.match(/^AVERAGE\((.+)\)$/);
       if (m) {
-        const vals = m[1].includes(":")
-          ? expandRange(m[1])
-          : m[1].split(",").map((r) => {
-              const ref = parseCellRef(r.trim());
-              if (!ref) return 0;
-              const id = cellId(ref.r, ref.c);
-              const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-              return typeof v === "number" ? v : Number(v) || 0;
-            });
+        const vals = expandNumericArgs(m[1]);
         if (vals.includes("#循環!")) return "#循環!";
         return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
       }
 
       m = formula.match(/^COUNT\((.+)\)$/);
       if (m) {
-        const vals = m[1].includes(":") ? expandRange(m[1]) : [];
+        const vals = expandNumericArgs(m[1]);
+        if (vals.includes("#循環!")) return "#循環!";
         return vals.length;
       }
 
       m = formula.match(/^MAX\((.+)\)$/);
       if (m) {
-        const vals = m[1].includes(":")
-          ? expandRange(m[1])
-          : m[1].split(",").map((r) => {
-              const ref = parseCellRef(r.trim());
-              if (!ref) return -Infinity;
-              const id = cellId(ref.r, ref.c);
-              const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-              return typeof v === "number" ? v : Number(v) || -Infinity;
-            });
+        const vals = expandNumericArgs(m[1]);
+        if (vals.includes("#循環!")) return "#循環!";
         return vals.length ? Math.max(...vals) : 0;
       }
 
       m = formula.match(/^MIN\((.+)\)$/);
       if (m) {
-        const vals = m[1].includes(":")
-          ? expandRange(m[1])
-          : m[1].split(",").map((r) => {
-              const ref = parseCellRef(r.trim());
-              if (!ref) return Infinity;
-              const id = cellId(ref.r, ref.c);
-              const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-              return typeof v === "number" ? v : Number(v) || Infinity;
-            });
+        const vals = expandNumericArgs(m[1]);
+        if (vals.includes("#循環!")) return "#循環!";
         return vals.length ? Math.min(...vals) : 0;
       }
 
@@ -384,22 +373,11 @@ export default function SpreadsheetEditor() {
           }
         } else {
           const text = new TextDecoder().decode(data);
-          const sep = text.includes("\t") ? "\t" : ",";
-          const lines = text.split("\n");
+          const rows = parseDelimitedText(text);
           const newCells = {};
-          lines.forEach((line, r) => {
-            if (!line.trim() || r >= ROWS) return;
-            const vals = [];
-            let cur = "", inQuote = false;
-            for (let i = 0; i < line.length; i++) {
-              const ch = line[i];
-              if (ch === '"') inQuote = !inQuote;
-              else if (ch === sep && !inQuote) { vals.push(cur); cur = ""; }
-              else cur += ch;
-            }
-            vals.push(cur);
+          rows.slice(0, ROWS).forEach((vals, r) => {
             vals.forEach((v, c) => {
-              if (c < COLS && v.trim()) newCells[cellId(r, c)] = v.trim();
+              if (c < COLS && v !== "") newCells[cellId(r, c)] = v;
             });
           });
           setSheets((prev) => prev.map((s, i) =>
@@ -666,23 +644,12 @@ export default function SpreadsheetEditor() {
         const reader = new FileReader();
         reader.onload = (ev) => {
           const text = ev.target.result;
-          const sep = text.includes("\t") ? "\t" : ",";
-          const lines = text.split("\n");
+          const rows = parseDelimitedText(text);
           const newCells = {};
-          lines.forEach((line, r) => {
-            if (!line.trim()) return;
-            const vals = [];
-            let cur = "", inQuote = false;
-            for (let i = 0; i < line.length; i++) {
-              const ch = line[i];
-              if (ch === '"') { inQuote = !inQuote; }
-              else if (ch === sep && !inQuote) { vals.push(cur); cur = ""; }
-              else { cur += ch; }
-            }
-            vals.push(cur);
+          rows.slice(0, ROWS).forEach((vals, r) => {
             vals.forEach((v, c) => {
-              if (c < COLS && r < ROWS && v.trim()) {
-                newCells[cellId(r, c)] = v.trim();
+              if (c < COLS && v !== "") {
+                newCells[cellId(r, c)] = v;
               }
             });
           });

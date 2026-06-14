@@ -13,7 +13,7 @@
  * asset changes and never busts when nothing changed (idempotent).
  */
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { createHash } from 'crypto';
 
@@ -26,6 +26,16 @@ function distAsset(mod, ext) {
   if (!existsSync(dir)) return null;
   const f = readdirSync(dir).find(n => n.endsWith(ext));
   return f ? `./dist/${mod}/assets/${f}` : null;
+}
+
+const TEXT_EXTENSIONS = new Set([
+  '.css', '.html', '.js', '.json', '.jsonl', '.md', '.svg', '.txt', '.xml',
+]);
+
+function hashFileContent(filePath) {
+  const bytes = readFileSync(filePath);
+  if (!TEXT_EXTENSIONS.has(extname(filePath).toLowerCase())) return bytes;
+  return Buffer.from(bytes.toString('utf8').replace(/\r\n?/g, '\n'), 'utf8');
 }
 
 let sw = readFileSync(SW, 'utf-8');
@@ -51,7 +61,7 @@ const h = createHash('sha256');
 for (const p of assets) {
   if (p === './sw.js') continue;
   const fp = join(ROOT, p);
-  if (existsSync(fp)) { h.update(p); h.update(readFileSync(fp)); }
+  if (existsSync(fp)) { h.update(p); h.update(hashFileContent(fp)); }
 }
 const cacheName = 'akasha-library-' + h.digest('hex').slice(0, 10);
 sw = sw.replace(/const CACHE_NAME = '[^']+';/, `const CACHE_NAME = '${cacheName}';`);

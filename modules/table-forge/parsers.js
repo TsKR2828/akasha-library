@@ -61,7 +61,28 @@ function parseMdRow(line) {
   let trimmed = line.trim();
   if (trimmed.startsWith('|')) trimmed = trimmed.slice(1);
   if (trimmed.endsWith('|')) trimmed = trimmed.slice(0, -1);
-  return trimmed.split('|').map(cell => cell.trim());
+  const cells = [];
+  let current = '';
+  let inBacktick = false;
+
+  for (let i = 0; i < trimmed.length; i++) {
+    const ch = trimmed[i];
+    if (ch === '\\' && i + 1 < trimmed.length &&
+        (trimmed[i + 1] === '|' || trimmed[i + 1] === '\\')) {
+      current += trimmed[i + 1];
+      i++;
+    } else if (ch === '`') {
+      inBacktick = !inBacktick;
+      current += ch;
+    } else if (ch === '|' && !inBacktick) {
+      cells.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cells.push(current.trim());
+  return cells;
 }
 
 // --- JSON ---

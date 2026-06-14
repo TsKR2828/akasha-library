@@ -103,6 +103,7 @@ export async function saveFileEntry(entry) {
     copyrightProtected: entry.copyrightProtected || false,
     sourceFile: entry.sourceFile || null,
     sourcePage: entry.sourcePage || null,
+    contentHash: entry.contentHash || null,
   };
 
   return new Promise((resolve, reject) => {

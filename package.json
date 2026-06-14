@@ -12,7 +12,8 @@
     "build:public": "npm run build && node scripts/build.js --mode=public",
     "build:private": "npm run build && node scripts/build.js --mode=private",
     "preview": "vite preview --config vite.config.js",
-    "test": "npm run build && node scripts/sync-sw.js --check && node -e \"const fs=require('fs'); const checks=['dist/spreadsheet/index.html','dist/script-editor/index.html','index.html','core/export/bridge.js','core/export/toPayload.js','core/export/fromPayload.js','modules/markdown/index.html','modules/pdf-reader/index.html','public-library/index.html']; let ok=true; checks.forEach(f=>{if(!fs.existsSync(f)){console.error('MISSING: '+f);ok=false;}}); if(ok)console.log('✓ All checks passed');else process.exit(1);\""
+    "test:regression": "node --test tests/regressions.test.mjs",
+    "test": "npm run test:regression && npm run build && node scripts/sync-sw.js --check && node -e \"const fs=require('fs'); const checks=['dist/spreadsheet/index.html','dist/script-editor/index.html','index.html','core/export/bridge.js','core/export/toPayload.js','core/export/fromPayload.js','modules/markdown/index.html','modules/pdf-reader/index.html','public-library/index.html']; let ok=true; checks.forEach(f=>{if(!fs.existsSync(f)){console.error('MISSING: '+f);ok=false;}}); if(ok)console.log('✓ All checks passed');else process.exit(1);\""
   },
   "dependencies": {
     "react": "^18.3.1",

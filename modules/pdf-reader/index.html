@@ -1412,6 +1412,7 @@
 
 <script type="module">
   import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
+  import { hashFileBytes, findLibraryItem, upsertLibraryItem, removeLibraryItem } from './library-store.js';
   import { extractContextPages, extractPageText, getAISettings, callLLM, buildSystemPrompt } from '../../core/ai.js';
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
@@ -1549,7 +1550,7 @@
   }
 
   // ===== Load PDF =====
-  async function loadFile(file) {
+  async function loadFile(file, existingLibraryId = null) {
     if (file.type !== 'application/pdf') {
       showToast('請選擇 PDF 檔案', 'error');
       return;
@@ -1587,7 +1588,7 @@
       updateAIPageBadge();
 
       // Save to library
-      await saveToLibrary(file.name, totalPages, pdfBytes);
+      await saveToLibrary(file.name, totalPages, pdfBytes, existingLibraryId);
 
       // Load bookmarks for this file (migrate localStorage → IndexedDB if needed)
       await migrateBookmarks(currentFileId);
@@ -2165,31 +2166,35 @@
     catch { return []; }
   }
 
-  async function saveToLibrary(name, pages, bytes) {
+  async function saveToLibrary(name, pages, bytes, preferredId = null) {
     const lib = getLibrary();
-    const existingItem = lib.find(b => b.name === name);
+    const contentHash = await hashFileBytes(bytes);
+    const existingItem = findLibraryItem(lib, preferredId, contentHash);
     const entry = await saveFileEntry({
       id: existingItem?.id || undefined,
       name,
       type: 'pdf',
       size: bytes.byteLength,
       pages,
+      contentHash,
     });
     currentFileId = entry.id;
     await saveFileBlob(entry.id, new Blob([bytes], { type: 'application/pdf' }));
 
-    const existingIdx = lib.findIndex(b => b.name === name);
-    const item = { name, pages, lastOpened: Date.now(), id: entry.id };
-    if (existingIdx >= 0) lib[existingIdx] = item;
-    else lib.unshift(item);
-    localStorage.setItem('akasha-library', JSON.stringify(lib.slice(0, 50)));
+    const item = { name, pages, lastOpened: Date.now(), id: entry.id, contentHash };
+    localStorage.setItem('akasha-library', JSON.stringify(upsertLibraryItem(lib, item)));
     renderLibrary();
   }
 
-  async function removeFromLibrary(name) {
+  async function removeFromLibrary(id, name) {
+    // Backward compatibility for callers that passed only a legacy filename.
+    if (name === undefined) {
+      name = id;
+      id = null;
+    }
     const lib = getLibrary();
-    const item = lib.find(b => b.name === name);
-    const remaining = lib.filter(b => b.name !== name);
+    const item = id ? lib.find(b => b.id === id) : lib.find(b => b.name === name);
+    const remaining = removeLibraryItem(lib, id, name);
     localStorage.setItem('akasha-library', JSON.stringify(remaining));
     if (item?.id) {
       try { await deleteFileEntry(item.id); } catch (e) { /* best effort */ }
@@ -2225,7 +2230,7 @@
       el.addEventListener('click', () => openFromLibrary(el.dataset.id, el.dataset.name));
       el.querySelector('.library-item-remove').addEventListener('click', (e) => {
         e.stopPropagation();
-        removeFromLibrary(el.dataset.name);
+        removeFromLibrary(el.dataset.id, el.dataset.name);
       });
     });
   }
@@ -2244,7 +2249,7 @@
         return;
       }
       const file = new File([blob], name, { type: 'application/pdf' });
-      await loadFile(file);
+      await loadFile(file, id);
     } catch (err) {
       hideLoading();
       showToast('載入失敗：' + err.message, 'error');

@@ -232,7 +232,7 @@ export function diffMergeBlocks(oldBlocks, newBlocks) {
   const used = new Set();
   const result = [];
 
-  for (const nb of newBlocks) {
+  for (const [newIdx, nb] of newBlocks.entries()) {
     let matchIdx = -1;
 
     // 1. Try exact position first
@@ -261,6 +261,17 @@ export function diffMergeBlocks(oldBlocks, newBlocks) {
       }
     }
 
+    // A plain-text rewrite carries no block IDs. When the block count and type
+    // at a position are unchanged, treat that line as an edit even if all text
+    // changed. The equal-length guard avoids stealing metadata for insertions.
+    if (matchIdx < 0 &&
+        oldBlocks.length === newBlocks.length &&
+        newIdx < oldBlocks.length &&
+        !used.has(newIdx) &&
+        oldBlocks[newIdx].type === nb.type) {
+      matchIdx = newIdx;
+    }
+
     if (matchIdx >= 0) {
       used.add(matchIdx);
       result.push(_merge(oldBlocks[matchIdx], nb));
@@ -275,8 +286,8 @@ export function diffMergeBlocks(oldBlocks, newBlocks) {
 }
 
 /* Match predicate: same type + key content overlap.
-   IMPORTANT: field priority for text comparison must be text → zh → original,
-   matching the output order of blocksToPlainScript (b.text || b.zh || b.original).
+   IMPORTANT: field priority for text comparison must be zh → text → original,
+   matching the output order of blocksToPlainScript.
    This ensures the compared strings are the same text the user sees in the textarea. */
 function _isMatch(old, nw) {
   if (old.type !== nw.type) return false;
@@ -296,7 +307,7 @@ function _isMatch(old, nw) {
       if (!speakerMatch) return false;
       // Same speaker — further check text overlap to disambiguate
       // consecutive lines from the same speaker
-      const ot = (old.text || old.zh || old.original || "").substring(0, 8);
+      const ot = (old.zh || old.text || old.original || "").substring(0, 8);
       const nt = (nw.text || nw.zh || "").substring(0, 8);
       if (ot && nt && ot !== nt) {
         // texts diverge — still match if they share ≥ 4 leading chars
@@ -307,7 +318,7 @@ function _isMatch(old, nw) {
       return true;
     }
     case "narration": {
-      const ot = (old.text || old.zh || "").substring(0, 10);
+      const ot = (old.zh || old.text || old.original || "").substring(0, 10);
       const nt = (nw.text || nw.zh || "").substring(0, 10);
       return ot === nt;
     }
@@ -342,7 +353,8 @@ function _merge(old, nw) {
   // If parser produced `text`, propagate it to `zh` so Editor stays in sync
   const mergedZh = nw.text || nw.zh || old.zh || "";
   const merged = {
-    ...nw,                                       // base: new parsed shape
+    ...old,                                      // preserve fields plain text cannot represent
+    ...nw,                                       // adopt the newly parsed editable fields
     id:       old.id       || nw.id,             // preserve stable ID
     lineId:   old.lineId   || nw.lineId   || "", // preserve JSONL line ID
     original: old.original || nw.original || "", // preserve foreign-language source
@@ -350,19 +362,46 @@ function _merge(old, nw) {
     tags:     (old.tags && old.tags.length > 0) ? old.tags : (nw.tags || []),
     avg:      old.avg      || nw.avg      || { sprite: "", position: "center", bg: "", bgm: "", sfx: "" },
   };
+  // The plain form renders act + subtitle as one value. Restore the original
+  // split when that rendered value was not changed by the user.
+  if (old.type === "scene" && nw.type === "scene") {
+    const oldRendered = [old.act, old.subtitle].filter(Boolean).join(" ").trim();
+    if ((nw.act || "").trim() === oldRendered) {
+      merged.act = old.act || "";
+      merged.subtitle = old.subtitle || "";
+    } else if (old.act && (nw.act || "").startsWith(`${old.act} `)) {
+      merged.act = old.act;
+      merged.subtitle = (nw.act || "").slice(old.act.length).trim();
+    }
+  }
   // choice: plain text can't carry prompt / nextBlockId — restore them from the
-  // old block. Options pair up by trimmed text (first unused wins); options the
-  // user removed from the line are dropped, new ones keep an empty nextBlockId.
+  // old block. Options pair up by text first. If only labels changed and the
+  // option count is stable, preserve routing by position.
   if (old.type === "choice" && nw.type === "choice") {
     merged.prompt = nw.prompt || old.prompt || "";
     const oldOpts = old.options || [];
     const taken = new Set();
-    merged.options = (nw.options || []).map((opt) => {
+    const newOpts = nw.options || [];
+    merged.options = newOpts.map((opt, optIdx) => {
       const j = oldOpts.findIndex((oo, k) =>
         !taken.has(k) && (oo.text || "").trim() === (opt.text || "").trim());
-      if (j < 0) return opt;
-      taken.add(j);
-      return oldOpts[j];
+      if (j >= 0) {
+        taken.add(j);
+        return {
+          ...oldOpts[j],
+          ...opt,
+          nextBlockId: oldOpts[j].nextBlockId || opt.nextBlockId || "",
+        };
+      }
+      if (oldOpts.length === newOpts.length && oldOpts[optIdx] && !taken.has(optIdx)) {
+        taken.add(optIdx);
+        return {
+          ...oldOpts[optIdx],
+          ...opt,
+          nextBlockId: oldOpts[optIdx].nextBlockId || opt.nextBlockId || "",
+        };
+      }
+      return opt;
     });
   }
   return merged;
