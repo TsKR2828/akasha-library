@@ -597,7 +597,7 @@ function SwBtn({ children, onClick, variant = "ghost", size = "md", icon, title 
 }
 
 // ============= TOPBAR =============
-function SwHeader({ tab, setTab, onBack, onAI, workSwitcher }) {
+function SwHeader({ tab, setTab, onAI, workSwitcher }) {
   const tabs = [
     { id: "write",  tc: "速寫", en: "Write",  ic: "quill" },
     { id: "search", tc: "搜尋", en: "Search", ic: "search" },
@@ -617,14 +617,6 @@ function SwHeader({ tab, setTab, onBack, onAI, workSwitcher }) {
         position: "absolute", left: 24, right: 24, bottom: -1, height: 1,
         background: "linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent)",
       }} />
-
-      <button onClick={onBack} style={{
-        background: "transparent", border: "1px solid var(--navy-line)",
-        borderRadius: 2, color: "var(--text-secondary)",
-        padding: "6px 8px", cursor: "pointer", display: "flex",
-      }} title="返回阿卡夏">
-        <SwIcon name="back" size={14} />
-      </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ color: "var(--gold)" }}><SwIcon name="mask" size={22} stroke={1.4} /></span>
@@ -2927,7 +2919,9 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
           </div>
           <div style={{ overflowY: "auto", padding: "0 10px 12px", flex: "0 0 auto", maxHeight: 200 }}>
             {characters.map(c => (
-              <CharRow key={c.id} c={c} active={c.id === activeChar} onClick={() => setActiveChar(c.id)} charColors={charColors} />
+              <CharRow key={c.id} c={c} active={c.id === activeChar} onClick={() => setActiveChar(c.id)} charColors={charColors}
+                onEdit={(cc) => { setCharModalTarget(cc); setCharModalOpen(true); }}
+                onDelete={(id) => handleCharDelete(id)} />
             ))}
           </div>
           <div style={{
@@ -3215,7 +3209,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
   );
 }
 
-function CharRow({ c, active, onClick, charColors = {} }) {
+function CharRow({ c, active, onClick, charColors = {}, onEdit, onDelete }) {
   const [h, setH] = React.useState(false);
   const dot = charColors[c.id] || "var(--gold-deep)";
   return (
@@ -3244,7 +3238,32 @@ function CharRow({ c, active, onClick, charColors = {} }) {
           letterSpacing: "0.06em", marginTop: 1,
         }}>{c.nameEn} · {c.voice}</div>
       </div>
-      {active && <SwIcon name="chevronRight" size={12} />}
+      {(h || active) ? (
+        <div style={{ display: "flex", gap: 4 }}>
+          <button
+            title="編輯角色"
+            onClick={(e) => { e.stopPropagation(); onEdit && onEdit(c); }}
+            style={{
+              width: 18, height: 18, padding: 0,
+              background: "transparent", border: "1px solid var(--navy-line)",
+              color: "var(--gold-dim)", borderRadius: 2,
+              cursor: "pointer", fontSize: 10, display: "flex",
+              alignItems: "center", justifyContent: "center",
+            }}>&#9998;</button>
+          <button
+            title="刪除角色"
+            onClick={(e) => { e.stopPropagation(); onDelete && onDelete(c.id); }}
+            style={{
+              width: 18, height: 18, padding: 0,
+              background: "transparent", border: "1px solid rgba(196,96,79,0.3)",
+              color: "var(--danger,#c4604f)", borderRadius: 2,
+              cursor: "pointer", fontSize: 10, display: "flex",
+              alignItems: "center", justifyContent: "center",
+            }}>×</button>
+        </div>
+      ) : (
+        <SwIcon name="chevronRight" size={12} />
+      )}
     </div>
   );
 }
@@ -4443,13 +4462,20 @@ function WorkSwitcher({ currentId, onSwitch, workIndex, onNewWork, onDeleteWork 
         cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 14, fontFamily: "var(--font-mono)", padding: 0,
       }}>+</button>
-      {(workIndex || []).find(w => w.id === currentId)?._custom && (
+      {(workIndex || []).find(w => w.id === currentId)?._custom ? (
         <button onClick={onDeleteWork} title="刪除此自訂作品" style={{
-          background: "transparent", border: "1px solid rgba(196,96,79,0.3)",
+          background: "rgba(196,96,79,0.14)", border: "1px solid rgba(196,96,79,0.5)",
           color: "var(--danger,#c4604f)", width: 26, height: 26, borderRadius: 2,
           cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 12, fontFamily: "var(--font-mono)", padding: 0,
-        }}>×</button>
+        }}>🗑</button>
+      ) : (
+        <button disabled title="內建作品不可刪除" style={{
+          background: "transparent", border: "1px solid var(--navy-line)",
+          color: "var(--text-tertiary)", width: 26, height: 26, borderRadius: 2,
+          cursor: "default", display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 12, fontFamily: "var(--font-mono)", padding: 0, opacity: 0.3,
+        }}>🗑</button>
       )}
     </div>
   );
@@ -4486,7 +4512,6 @@ function App() {
   });
   const [showNewWork, setShowNewWork] = React.useState(false);
   const [showAI, setShowAI] = React.useState(false);
-  const goBack = () => { window.location.href = "../../index.html"; };
   const blocksRef = React.useRef(blocks);
   const workIdRef = React.useRef(currentWork);
   React.useEffect(() => { blocksRef.current = blocks; }, [blocks]);
@@ -4648,7 +4673,7 @@ function App() {
       height: "100vh", overflow: "hidden",
       position: "relative",
     }}>
-      <SwHeader tab={tab} setTab={setTab} onBack={goBack} onAI={() => setShowAI(true)}
+      <SwHeader tab={tab} setTab={setTab} onAI={() => setShowAI(true)}
         workSwitcher={<WorkSwitcher currentId={currentWork} onSwitch={switchWork}
           workIndex={workIndex}
           onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />} />

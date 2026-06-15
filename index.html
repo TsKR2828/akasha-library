@@ -2186,6 +2186,13 @@ body { display: flex; }
   var aiCurrentModule = null;
 
   function summonLibrarian() {
+    if (aiCurrentModule === 'pdf-reader') {
+      var frame = document.getElementById('module-frame');
+      if (frame && frame.contentWindow) {
+        frame.contentWindow.postMessage({ type: 'akasha-open-pdf-ai' }, location.origin);
+      }
+      return;
+    }
     toggleAIPanel();
   }
 

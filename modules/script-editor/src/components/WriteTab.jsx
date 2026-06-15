@@ -751,6 +751,7 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
             fontVariant: "small-caps", textTransform: "uppercase",
             marginRight: 4,
           }}>Persona Slots ·</span>
+          <span style={{ fontSize: 9.5, color: "var(--text-tertiary)", letterSpacing: "0.04em", marginRight: 4 }}>（點一下可指派／清除）</span>
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
             <SlotBadge
               key={n}
