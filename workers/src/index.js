@@ -29,13 +29,21 @@
 
 function buildCors(request, env) {
   const origin = request.headers.get('Origin') || '';
-  const allowed = (env.ALLOWED_ORIGINS || '*').trim();
+  const allowed = (env.ALLOWED_ORIGINS || '').trim();
+
+  if (!allowed) {
+    return {
+      'Access-Control-Allow-Origin': '',
+      'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    };
+  }
 
   if (allowed === '*') {
     return {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
   }
 
@@ -43,7 +51,7 @@ function buildCors(request, env) {
   return {
     'Access-Control-Allow-Origin': list.includes(origin) ? origin : '',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Vary': 'Origin',
   };
 }
@@ -111,9 +119,7 @@ async function verifySessionToken(secret, token) {
 
 async function requireAuth(request, env) {
   if (!env.COIN_SECRET) {
-    const userId = request.headers.get('X-User-Id');
-    if (!userId) return { error: 'X-User-Id header required (auth not configured)', status: 401 };
-    return { userId, _devMode: true };
+    return { error: 'Server not configured: COIN_SECRET is required', status: 503 };
   }
 
   const hdr = request.headers.get('Authorization');
