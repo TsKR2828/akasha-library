@@ -17,6 +17,10 @@ import { enqueue, getPending, markDone, markFailed, pendingCount } from './sync-
 
 const SETTINGS_KEY = 'akasha-notion-settings';
 
+let _notionToken = '';
+
+export function setNotionToken(token) { _notionToken = token || ''; }
+
 // ===== Settings =====
 
 export function getNotionSettings() {
@@ -25,7 +29,7 @@ export function getNotionSettings() {
     return {
       enabled: s.enabled || false,
       proxyUrl: s.proxyUrl || '',
-      token: sessionStorage.getItem('akasha-notion-token') || '',
+      token: _notionToken,
       libraryDbId: s.libraryDbId || '',
       scriptDbId: s.scriptDbId || '',
       memoryDbId: s.memoryDbId || '',
@@ -38,7 +42,7 @@ export function saveNotionSettings(settings) {
   const { token, ...persistent } = settings;
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(persistent));
   if (token !== undefined) {
-    sessionStorage.setItem('akasha-notion-token', token);
+    _notionToken = token || '';
   }
 }
 

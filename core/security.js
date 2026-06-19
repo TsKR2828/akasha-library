@@ -8,6 +8,9 @@
  * 12-E  Build-mode gating (public / private)
  */
 
+let _hasApiKeyFn = null;
+export function registerApiKeyCheck(fn) { _hasApiKeyFn = fn; }
+
 /* ══════════════════════════════════════════
    12-A  Data Classification
    ══════════════════════════════════════════ */
@@ -243,7 +246,7 @@ export function clearPersistedApiKey() {
  */
 export function getByokMode() {
   if (hasPersistedApiKey()) return 'encrypted-local';
-  if (sessionStorage.getItem('akasha-ai-apikey')) return 'session';
+  if (_hasApiKeyFn && _hasApiKeyFn()) return 'session';
   return 'none';
 }
 
