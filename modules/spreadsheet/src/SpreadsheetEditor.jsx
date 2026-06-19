@@ -184,18 +184,19 @@ export default function SpreadsheetEditor() {
       }
 
       try {
+        let hasCircular = false;
         let expanded = formula.replace(/[A-Z]\d+/g, (match) => {
           const ref = parseCellRef(match);
           if (!ref) return "0";
           const id = cellId(ref.r, ref.c);
-          if (visited.has(id)) return "0";
+          if (visited.has(id)) { hasCircular = true; return "0"; }
           visited.add(id);
           const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
+          if (typeof v === "string" && v.startsWith("#")) { hasCircular = true; return "0"; }
           return typeof v === "number" ? v : isNaN(Number(v)) ? "0" : Number(v);
         });
+        if (hasCircular) return "#循環!";
         expanded = expanded.replace(/>=/g, ">=").replace(/<=/g, "<=").replace(/(?<!=)>(?!=)/g, ">").replace(/(?<!=)<(?!=)/g, "<");
-        // Security: validate expression contains only safe math characters
-        // (digits, operators, parens, whitespace, decimal) — blocks code injection
         if (!/^[\d\s+\-*/%().><=!&|,?:e]+$/i.test(expanded.trim())) return "#不安全!";
         const result = new Function(`"use strict"; return (${expanded})`)();
         return typeof result === "boolean" ? result : (isNaN(result) ? "#錯誤!" : result);
