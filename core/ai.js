@@ -400,8 +400,12 @@ async function callViaProxy(settings, systemPrompt, msgs) {
   }
 
   const json = await res.json();
+  if (json.balance !== undefined) {
+    const { syncBalance } = await import('./billing.js');
+    syncBalance(json.balance);
+  }
   return json.content;
 }
 
 // ===== Coin System (delegated to billing.js) =====
-export { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog, FREE_ALLOWANCE } from './billing.js';
+export { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog, syncBalance, FREE_ALLOWANCE } from './billing.js';

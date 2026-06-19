@@ -2873,7 +2873,7 @@ window.addEventListener('message', async (event) => {
 
 // ===== AI Context Switch (Phase 3-B) + Chat History (Phase 3-D) =====
 import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt, setApiKey, clearApiKey, hasApiKey } from './core/ai.js';
-import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog } from './core/billing.js';
+import { estimateTokens, coinCost, getBalance, hasSufficientBalance, getUsageLog } from './core/billing.js';
 import { loadPersona, exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride } from './core/persona.js';
 import { getHistory, addMessage, clearHistory, clearAllHistory } from './core/chat-history.js';
 import { matchPrewritten } from './core/prewritten.js';
@@ -2933,12 +2933,7 @@ window.addEventListener('message', (event) => {
         }
         const systemPrompt = buildSystemPrompt(d.context, d.page, d.fileName);
         const response = await callLLM(settings, systemPrompt, d.text);
-        let coinsRemaining;
-        if (settings.mode === 'coin') {
-          const cost = coinCost(totalTokens);
-          deductCoins(cost, `p.${d.page} · ${(d.text || '').slice(0, 20)}`);
-          coinsRemaining = getBalance();
-        }
+        const coinsRemaining = settings.mode === 'coin' ? getBalance() : undefined;
         frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', text: response, tokensUsed: totalTokens, coinsRemaining }, location.origin);
       } catch (err) {
         frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: err.message }, location.origin);
@@ -3565,8 +3560,6 @@ window._aiSendReal = async function() {
       const response = await callLLM(settings, systemPrompt, msgs);
 
       if (settings.mode === 'coin') {
-        const cost = coinCost(totalTokens);
-        deductCoins(cost, '一般 · ' + text.slice(0, 20));
         syncTokenBar(totalTokens);
       }
 
@@ -3639,10 +3632,7 @@ window._aiSendReal = async function() {
     // Call LLM
     const response = await callLLM(settings, systemPrompt, msgs);
 
-    // Coin deduction
     if (settings.mode === 'coin') {
-      const cost = coinCost(totalTokens);
-      deductCoins(cost, moduleName + ' · ' + text.slice(0, 20));
       syncTokenBar(totalTokens);
     }
 
@@ -3701,8 +3691,6 @@ window.addEventListener('message', (event) => {
         const response = await callLLM(settings, systemPrompt, msgs);
 
         if (settings.mode === 'coin') {
-          const cost = coinCost(totalTokens);
-          deductCoins(cost, '談心 · ' + d.text.slice(0, 20));
           syncTokenBar(totalTokens);
         }
 
@@ -3823,8 +3811,6 @@ JSON 格式：
         const raw = await callLLM(settings, reportSystemPrompt, msgs);
 
         if (settings.mode === 'coin') {
-          const cost = coinCost(totalTokens);
-          deductCoins(cost, '館報整理 · ' + reportDate);
           syncTokenBar(totalTokens);
         }
 

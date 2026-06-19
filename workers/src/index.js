@@ -347,7 +347,11 @@ async function handleChat(request, env, respond) {
       default:
         return respond({ error: `Unsupported provider: ${provider}` }, 400);
     }
-    return respond({ content, provider, model });
+    const result = { content, provider, model };
+    if (mode === 'coin' && userId) {
+      result.balance = await getCoinBalance(env, userId);
+    }
+    return respond(result);
   } catch (err) {
     if (mode === 'coin' && userId) {
       const refundAmount = estimateCoinCost(model, system, messages);
@@ -557,7 +561,11 @@ async function handleRagEmbed(body, request, env, respond) {
       embeddings.push(...result);
     }
 
-    return respond({ ok: true, embeddings, model: embModel, count: embeddings.length });
+    const embedResult = { ok: true, embeddings, model: embModel, count: embeddings.length };
+    if (mode === 'coin' && userId) {
+      embedResult.balance = await getCoinBalance(env, userId);
+    }
+    return respond(embedResult);
   } catch (err) {
     // Refund on failure
     if (mode === 'coin' && userId) {

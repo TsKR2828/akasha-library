@@ -77,4 +77,11 @@ export function coinCost(tokens) {
   return 5;
 }
 
+export function syncBalance(serverBalance) {
+  if (typeof serverBalance !== 'number' || isNaN(serverBalance)) return;
+  const data = getCoinData();
+  data.balance = serverBalance;
+  localStorage.setItem(COIN_KEY, JSON.stringify(data));
+}
+
 export const FREE_ALLOWANCE = FREE_MONTHLY;
