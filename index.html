@@ -2995,7 +2995,7 @@ window.saveNote = async function(target) {
     if (target === 'notion' && isNotionConfigured()) {
       await enqueue({ target: 'memory', action: 'upsert', localId: saved.id, payload: saved });
       updateSyncDot('syncing');
-      processQueue().then(() => updateSyncDot('ok')).catch(() => updateSyncDot('error'));
+      processQueue().then(r => updateSyncDot(r.failed ? 'error' : 'ok')).catch(() => updateSyncDot('error'));
     }
   }
 
@@ -3306,8 +3306,12 @@ window.syncNow = async function() {
   updateSyncDot('syncing');
   try {
     const result = await processQueue();
-    updateSyncDot('ok');
-    showNoteToast('同步完成，處理 ' + result.processed + ' 筆');
+    updateSyncDot(result.failed ? 'error' : 'ok');
+    if (result.failed) {
+      showNoteToast(`同步部分失敗：成功 ${result.processed} 筆，失敗 ${result.failed} 筆`);
+    } else {
+      showNoteToast('同步完成，處理 ' + result.processed + ' 筆');
+    }
   } catch (err) {
     updateSyncDot('error');
     showNoteToast('同步失敗：' + err.message);
