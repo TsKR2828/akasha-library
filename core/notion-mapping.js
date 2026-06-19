@@ -45,7 +45,7 @@ export function localToNotionScript(block) {
     'type': { select: { name: block.type || 'dialogue' } },
     'speaker': { rich_text: [{ text: { content: block.speaker || '' } }] },
     'speakerId': { rich_text: [{ text: { content: block.speakerId || '' } }] },
-    'text': { rich_text: [{ text: { content: (block.text || '').slice(0, 2000) } }] },
+    'text': { rich_text: richTextChunks(block.text) },
     'emotion': block.emotion ? { select: { name: block.emotion } } : { select: null },
     'portrait': { rich_text: [{ text: { content: block.portrait || '' } }] },
     'scene': { rich_text: [{ text: { content: block.scene || '' } }] },
@@ -74,7 +74,7 @@ export function localToNotionMemory(mem) {
   return {
     'title': { title: [{ text: { content: mem.title || '' } }] },
     'module': { select: { name: mem.module || '_default' } },
-    'content': { rich_text: [{ text: { content: (mem.content || '').slice(0, 2000) } }] },
+    'content': { rich_text: richTextChunks(mem.content) },
     'tags': { multi_select: (mem.tags || []).map(t => ({ name: t })) },
     'localId': { rich_text: [{ text: { content: mem.id || '' } }] },
     'source': { select: { name: mem.source || 'chat' } },
@@ -135,6 +135,18 @@ export function notionBlocksToPersona(blocks) {
 }
 
 // ===== Helpers =====
+
+const NOTION_TEXT_LIMIT = 2000;
+
+function richTextChunks(str) {
+  const s = str || '';
+  if (s.length <= NOTION_TEXT_LIMIT) return [{ text: { content: s } }];
+  const chunks = [];
+  for (let i = 0; i < s.length; i += NOTION_TEXT_LIMIT) {
+    chunks.push({ text: { content: s.slice(i, i + NOTION_TEXT_LIMIT) } });
+  }
+  return chunks;
+}
 
 function extractTitle(prop) {
   if (!prop?.title) return '';
