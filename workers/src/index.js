@@ -311,25 +311,22 @@ async function handleChat(request, env, respond) {
     if (auth.error) return respond({ error: auth.error }, auth.status);
     userId = auth.userId;
 
-    // Check coin balance
-    const balance = await getCoinBalance(env, userId);
-    const cost = estimateCoinCost(model, messages);
-    if (balance < cost) {
-      return respond({
-        error: '月幣不足',
-        balance,
-        required: cost,
-      }, 402);
-    }
-
     // Select server key
     key = getServerKey(env, provider);
     if (!key) {
       return respond({ error: `Server key not configured for provider: ${provider}` }, 503);
     }
 
-    // Deduct coins before calling to prevent race conditions
-    await deductCoins(env, userId, cost, `chat:${provider}:${model}`);
+    // Check + deduct in one tight sequence to minimize race window
+    const cost = estimateCoinCost(model, system, messages);
+    const deduction = await checkAndDeductCoins(env, userId, cost, `chat:${provider}:${model}`);
+    if (!deduction.ok) {
+      return respond({
+        error: deduction.error,
+        balance: deduction.balance,
+        required: deduction.required,
+      }, 402);
+    }
 
   } else {
     return respond({ error: 'Invalid mode. Use "byok" or "coin".' }, 400);
@@ -352,10 +349,9 @@ async function handleChat(request, env, respond) {
     }
     return respond({ content, provider, model });
   } catch (err) {
-    // If coin mode failed, refund (best-effort)
     if (mode === 'coin' && userId) {
-      const cost = estimateCoinCost(model, messages);
-      await refundCoins(env, userId, cost, `refund:${err.message.slice(0, 50)}`);
+      const refundAmount = estimateCoinCost(model, system, messages);
+      await refundCoins(env, userId, refundAmount, `refund:${err.message.slice(0, 50)}`);
     }
     return respond({ error: err.message }, 502);
   }
@@ -386,7 +382,6 @@ async function handleSync(request, env, respond) {
 
   switch (action) {
     case 'push': {
-      // Push items to sync queue
       const { items } = body;
       if (!Array.isArray(items) || items.length === 0) {
         return respond({ error: 'items array required' }, 400);
@@ -395,45 +390,48 @@ async function handleSync(request, env, respond) {
         return respond({ error: 'Maximum 50 items per push' }, 400);
       }
 
-      const queueKey = `sync:${userId}`;
-      const existing = await env.SYNC_KV.get(queueKey, 'json') || [];
-      const stamped = items.map(item => ({
-        ...item,
-        _pushedAt: Date.now(),
-        _id: crypto.randomUUID(),
-      }));
-      const merged = [...existing, ...stamped].slice(-200); // cap at 200
+      const stamped = [];
+      for (const item of items) {
+        const id = crypto.randomUUID();
+        const entry = { ...item, _pushedAt: Date.now(), _id: id };
+        await env.SYNC_KV.put(`sync:${userId}:item:${id}`, JSON.stringify(entry), {
+          expirationTtl: 86400 * 30,
+        });
+        stamped.push(entry);
+      }
 
-      await env.SYNC_KV.put(queueKey, JSON.stringify(merged), {
-        expirationTtl: 86400 * 30, // 30 days
-      });
-
-      return respond({ ok: true, queued: stamped.length, total: merged.length });
+      return respond({ ok: true, queued: stamped.length });
     }
 
     case 'pull': {
-      // Pull pending items
-      const queueKey = `sync:${userId}`;
-      const items = await env.SYNC_KV.get(queueKey, 'json') || [];
+      const prefix = `sync:${userId}:item:`;
+      const list = await env.SYNC_KV.list({ prefix, limit: 200 });
+      const items = [];
+      for (const key of list.keys) {
+        const val = await env.SYNC_KV.get(key.name, 'json');
+        if (val) items.push(val);
+      }
+      items.sort((a, b) => a._pushedAt - b._pushedAt);
       return respond({ ok: true, items });
     }
 
     case 'ack': {
-      // Acknowledge processed items (remove from queue)
       const { ids } = body;
       if (!Array.isArray(ids)) {
         return respond({ error: 'ids array required' }, 400);
       }
 
-      const queueKey = `sync:${userId}`;
-      const existing = await env.SYNC_KV.get(queueKey, 'json') || [];
-      const remaining = existing.filter(item => !ids.includes(item._id));
+      let removed = 0;
+      for (const id of ids) {
+        const key = `sync:${userId}:item:${id}`;
+        const exists = await env.SYNC_KV.get(key);
+        if (exists !== null) {
+          await env.SYNC_KV.delete(key);
+          removed++;
+        }
+      }
 
-      await env.SYNC_KV.put(queueKey, JSON.stringify(remaining), {
-        expirationTtl: 86400 * 30,
-      });
-
-      return respond({ ok: true, removed: existing.length - remaining.length, remaining: remaining.length });
+      return respond({ ok: true, removed });
     }
 
     default:
@@ -533,15 +531,13 @@ async function handleRagEmbed(body, request, env, respond) {
     if (auth.error) return respond({ error: auth.error }, auth.status);
     userId = auth.userId;
 
-    const balance = await getCoinBalance(env, userId);
-    if (balance < cost) {
-      return respond({ error: '月幣不足', balance, required: cost }, 402);
-    }
-
     key = getServerKey(env, provider);
     if (!key) return respond({ error: `Server key not configured for: ${provider}` }, 503);
 
-    await deductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`);
+    const deduction = await checkAndDeductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`);
+    if (!deduction.ok) {
+      return respond({ error: deduction.error, balance: deduction.balance, required: deduction.required }, 402);
+    }
   } else {
     return respond({ error: 'Invalid mode. Use "byok" or "coin".' }, 400);
   }
@@ -676,15 +672,12 @@ async function handleCoinDeduct(request, env, respond) {
     return respond({ error: 'amount must be a positive number' }, 400);
   }
 
-  const balance = await getCoinBalance(env, userId);
-  if (balance < amount) {
-    return respond({ error: '月幣不足', balance, required: amount }, 402);
+  const deduction = await checkAndDeductCoins(env, userId, amount, reason || 'manual');
+  if (!deduction.ok) {
+    return respond({ error: deduction.error, balance: deduction.balance, required: deduction.required }, 402);
   }
 
-  await deductCoins(env, userId, amount, reason || 'manual');
-  const newBalance = await getCoinBalance(env, userId);
-
-  return respond({ ok: true, deducted: amount, balance: newBalance });
+  return respond({ ok: true, deducted: amount, balance: deduction.balance });
 }
 
 
@@ -706,14 +699,17 @@ async function getCoinHistory(env, userId) {
   return val || [];
 }
 
-async function deductCoins(env, userId, amount, reason) {
-  if (!env.COIN_KV) return;
+async function checkAndDeductCoins(env, userId, amount, reason) {
+  if (!env.COIN_KV) return { ok: false, error: 'COIN_KV not configured' };
 
   const balance = await getCoinBalance(env, userId);
+  if (balance < amount) {
+    return { ok: false, error: '月幣不足', balance, required: amount };
+  }
+
   const newBalance = Math.max(0, balance - amount);
   await env.COIN_KV.put(`coin:${userId}:balance`, String(newBalance));
 
-  // Append to history
   const history = await getCoinHistory(env, userId);
   history.push({
     type: 'deduct',
@@ -722,11 +718,12 @@ async function deductCoins(env, userId, amount, reason) {
     balance: newBalance,
     at: Date.now(),
   });
-  // Keep last 100 entries
   const trimmed = history.slice(-100);
   await env.COIN_KV.put(`coin:${userId}:history`, JSON.stringify(trimmed), {
     expirationTtl: 86400 * 90, // 90 days
   });
+
+  return { ok: true, balance: newBalance };
 }
 
 async function refundCoins(env, userId, amount, reason) {
@@ -750,10 +747,12 @@ async function refundCoins(env, userId, amount, reason) {
   });
 }
 
-/** Estimate coin cost based on model and message length */
-function estimateCoinCost(model, messages) {
-  const charCount = messages.reduce((sum, m) => sum + (m.content?.length || 0), 0);
-  const tokenEstimate = Math.ceil(charCount / 3); // rough: ~3 chars per token
+/** Estimate coin cost based on model, system prompt, and messages */
+function estimateCoinCost(model, system, messages) {
+  const msgChars = messages.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+  const sysChars = (typeof system === 'string') ? system.length : 0;
+  const charCount = msgChars + sysChars;
+  const tokenEstimate = Math.ceil(charCount / 3);
 
   // Cost tiers (coins per 1K tokens)
   const COST_MAP = {
