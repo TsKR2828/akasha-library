@@ -17,6 +17,10 @@ import { enqueue, getPending, markDone, markFailed, pendingCount } from './sync-
 
 const SETTINGS_KEY = 'akasha-notion-settings';
 
+let _notionToken = '';
+
+export function setNotionToken(token) { _notionToken = token || ''; }
+
 // ===== Settings =====
 
 export function getNotionSettings() {
@@ -25,7 +29,7 @@ export function getNotionSettings() {
     return {
       enabled: s.enabled || false,
       proxyUrl: s.proxyUrl || '',
-      token: sessionStorage.getItem('akasha-notion-token') || '',
+      token: _notionToken,
       libraryDbId: s.libraryDbId || '',
       scriptDbId: s.scriptDbId || '',
       memoryDbId: s.memoryDbId || '',
@@ -38,7 +42,7 @@ export function saveNotionSettings(settings) {
   const { token, ...persistent } = settings;
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(persistent));
   if (token !== undefined) {
-    sessionStorage.setItem('akasha-notion-token', token);
+    _notionToken = token || '';
   }
 }
 
@@ -285,10 +289,12 @@ export function buildConflictDiff(local, remote) {
 let _syncing = false;
 
 export async function processQueue() {
-  if (_syncing || !isConfigured()) return { processed: 0 };
+  if (_syncing || !isConfigured()) return { processed: 0, failed: 0, errors: [] };
   _syncing = true;
 
   let processed = 0;
+  let failed = 0;
+  const errors = [];
   try {
     const jobs = await getPending();
     for (const job of jobs) {
@@ -313,12 +319,14 @@ export async function processQueue() {
         processed++;
       } catch (err) {
         await markFailed(job.id, err.message);
+        failed++;
+        errors.push({ jobId: job.id, target: job.target, error: err.message });
       }
     }
   } finally {
     _syncing = false;
   }
-  return { processed };
+  return { processed, failed, errors };
 }
 
 export { pendingCount, enqueue };

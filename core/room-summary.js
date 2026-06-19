@@ -111,7 +111,7 @@ export async function flushSession(module, session) {
 
   const record = {
     module,
-    turnCount: existing.turnCount + session.turns.length,
+    turnCount: existing.turnCount + session.turns.filter(t => t.role === 'user').length,
     topics: unique,
     files: mergedFiles,
     updatedAt: Date.now(),

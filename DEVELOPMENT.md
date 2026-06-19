@@ -237,4 +237,9 @@ Phase 13   ████████████████ 100% (Document Bridg
 Phase 14   ████████████████ 100% (Voice / BGM — 14-A/B/C/D 全部完成)
 Phase 15   ████████████████ 100% (談心 + 館報 — 15-A/B/C/D 全部完成)
 Phase 16   ████████████████ 100% (Export Core + 部署 — 16-A/B/C/D 全部完成)
+Phase 17v2 ████████████████ 100% (Script Editor 4-TAB Archive-host merge — v2-1~9)
+Phase 18   ████████████████ 100% (Script Editor 品質修正 — 18-A~E)
+Phase 19   ████████████████ 100% (Script Editor 深度強化 — 19-A~E)
+
+2026-06-13 ████████████████ 100% (解凍修復批次 — S0+S2+A~D)
 ```

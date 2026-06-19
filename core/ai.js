@@ -10,7 +10,8 @@
 
 // ===== Storage Keys =====
 const SETTINGS_KEY = 'akasha-ai-settings';
-const APIKEY_KEY = 'akasha-ai-apikey';
+
+let _apiKey = '';
 
 import { buildPersonaCore, getModulePersona } from './persona.js';
 import { CONFIG } from './config.js';
@@ -132,17 +133,17 @@ export async function extractContextPages(pdfDoc, currentPage, range = 2) {
 
 // ===== Settings =====
 
-/**
- * Read AI settings from localStorage/sessionStorage.
- * Compatible with modules/ai-settings storage format.
- */
+export function setApiKey(key) { _apiKey = key || ''; }
+export function clearApiKey() { _apiKey = ''; }
+export function hasApiKey() { return !!_apiKey; }
+
 export function getAISettings() {
   let settings = {};
   try {
     settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
   } catch { /* empty */ }
 
-  const apiKey = sessionStorage.getItem(APIKEY_KEY) || '';
+  const apiKey = _apiKey;
 
   const result = {
     mode: settings.mode || 'byok',
@@ -399,8 +400,12 @@ async function callViaProxy(settings, systemPrompt, msgs) {
   }
 
   const json = await res.json();
+  if (json.balance !== undefined) {
+    const { syncBalance } = await import('./billing.js');
+    syncBalance(json.balance);
+  }
   return json.content;
 }
 
 // ===== Coin System (delegated to billing.js) =====
-export { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog, FREE_ALLOWANCE } from './billing.js';
+export { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog, syncBalance, FREE_ALLOWANCE } from './billing.js';

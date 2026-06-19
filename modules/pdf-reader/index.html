@@ -1410,9 +1410,41 @@
 <script type="module">
   import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
   import { hashFileBytes, findLibraryItem, upsertLibraryItem, removeLibraryItem } from './library-store.js';
-  import { extractContextPages, extractPageText, getAISettings, callLLM, buildSystemPrompt } from '../../core/ai.js';
+  import { extractContextPages, extractPageText } from '../../core/ai.js';
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
+
+  function requestParentAISettings() {
+    return new Promise((resolve) => {
+      const handler = (e) => {
+        if (e.origin !== location.origin) return;
+        if (e.data?.type === 'akasha-pdf-settings-response') {
+          window.removeEventListener('message', handler);
+          resolve(e.data.settings || { mode: 'byok', error: 'no-api-key' });
+        }
+      };
+      window.addEventListener('message', handler);
+      window.parent.postMessage({ type: 'akasha-pdf-settings-request' }, location.origin);
+      setTimeout(() => { window.removeEventListener('message', handler); resolve({ mode: 'byok', error: 'no-api-key' }); }, 3000);
+    });
+  }
+
+  function requestParentLLM(text, context, page, fileName) {
+    return new Promise((resolve, reject) => {
+      const reqId = crypto.randomUUID();
+      const handler = (e) => {
+        if (e.origin !== location.origin) return;
+        if (e.data?.type === 'akasha-pdf-ai-response' && e.data._reqId === reqId) {
+          window.removeEventListener('message', handler);
+          if (e.data.error) reject(new Error(e.data.error));
+          else resolve(e.data);
+        }
+      };
+      window.addEventListener('message', handler);
+      window.parent.postMessage({ type: 'akasha-pdf-ai-send', text, context, page, fileName, _reqId: reqId }, location.origin);
+      setTimeout(() => { window.removeEventListener('message', handler); reject(new Error('AI 請求逾時')); }, 60000);
+    });
+  }
 
   // Inherit dark/light mode from parent App Shell
   try {
@@ -2053,7 +2085,7 @@
   window.startOCR = async function() {
     if (!pdfDoc) return;
 
-    const settings = getAISettings();
+    const settings = await requestParentAISettings();
     const isCoin = settings.mode === 'coin';
 
     if (isCoin && !hasSufficientBalance(500)) {
@@ -2091,8 +2123,8 @@
     overlay.id = 'ocrOverlay';
 
     const lines = text.split('\n').map(l => `<p style="margin:0 0 4px">${escapeHtml(l) || '&nbsp;'}</p>`).join('');
-    const settings = getAISettings();
-    const costLabel = settings.mode === 'coin' ? ` · ${coinCost(tokens)} 月幣` : ' · BYOK';
+    const ocrSettings = JSON.parse(localStorage.getItem('akasha-ai-settings') || '{}');
+    const costLabel = ocrSettings.mode === 'coin' ? ` · ${coinCost(tokens)} 月幣` : ' · BYOK';
 
     overlay.innerHTML = `
       <div class="ocr-panel">
@@ -2551,9 +2583,8 @@
     if (alreadyDone) { indexReady = true; return; }
 
     indexReady = false;
-    const settings = getAISettings();
     try {
-      const result = await indexPDF(pdfDoc, currentFileId, settings, (done, total) => {
+      const result = await indexPDF(pdfDoc, currentFileId, {}, (done, total) => {
         // Optional: update UI progress (non-blocking)
         const pct = Math.round(done / total * 100);
         const badge = document.getElementById('aiIndexBadge');
@@ -2584,31 +2615,17 @@
     if (!text) return;
     input.value = '';
 
-    // No PDF loaded
     if (!pdfDoc) {
       startTypewriter('請先開啟一本 PDF，我才能回答關於書籍內容的問題。', '圖書館員 · 月上零韻', 'calm', []);
       return;
     }
 
-    // Check settings
-    const settings = getAISettings();
-    if (settings.error === 'no-api-key') {
-      startTypewriter('尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰，方可向圖書館員提問。', '圖書館員 · 月上零韻', 'thinking', []);
-      return;
-    }
-    if (settings.error === 'no-proxy') {
-      startTypewriter('月幣模式尚未啟用（代理伺服器未部署）。請先切換至 BYOK 模式並設定自己的 API Key。', '圖書館員 · 月上零韻', 'thinking', []);
-      return;
-    }
-
-    // Lock UI
     isAILoading = true;
     const sendBtn = document.getElementById('aiSend');
     if (sendBtn) sendBtn.disabled = true;
     startTypewriter('正在閱讀書頁中…', '圖書館員 · 月上零韻', 'thinking', []);
 
     try {
-      // 1. Extract text from current ± 2 pages
       const pageContext = await extractContextPages(pdfDoc, currentPage, 2);
 
       if (!pageContext.trim()) {
@@ -2616,11 +2633,10 @@
         return;
       }
 
-      // 2. RAG retrieval: find relevant chunks from the whole book
       let fullContext = pageContext;
       if (indexReady && currentFileId) {
         try {
-          const relevant = await queryRelevant(currentFileId, text, settings, 3);
+          const relevant = await queryRelevant(currentFileId, text, {}, 3);
           if (relevant.length > 0) {
             fullContext = formatRetrievalContext(relevant, pageContext);
           }
@@ -2629,24 +2645,17 @@
         }
       }
 
-      // 3. Update token estimate
       const totalTokens = estimateTokens(fullContext) + estimateTokens(text);
       document.getElementById('aiTokenEstimate').textContent = `${totalTokens}`;
 
-      // 4. Build system prompt & call LLM
-      const systemPrompt = buildSystemPrompt(fullContext, currentPage, currentFileName);
-      const response = await callLLM(settings, systemPrompt, text);
+      const result = await requestParentLLM(text, fullContext, currentPage, currentFileName);
 
-      // 4. Coin deduction (if coin mode)
-      if (settings.mode === 'coin') {
-        const cost = coinCost(totalTokens);
-        const remaining = deductCoins(cost, `p.${currentPage} · ${text.slice(0, 20)}`);
-        aiCoins = remaining;
-        document.getElementById('aiCoins').textContent = remaining;
+      if (result.coinsRemaining !== undefined) {
+        aiCoins = result.coinsRemaining;
+        document.getElementById('aiCoins').textContent = result.coinsRemaining;
       }
 
-      // 5. Display response
-      startTypewriter(response, '圖書館員 · 月上零韻', 'calm', []);
+      startTypewriter(result.text, '圖書館員 · 月上零韻', 'calm', []);
 
     } catch (err) {
       console.error('AI call failed:', err);

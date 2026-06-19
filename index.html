@@ -2872,18 +2872,75 @@ window.addEventListener('message', async (event) => {
 });
 
 // ===== AI Context Switch (Phase 3-B) + Chat History (Phase 3-D) =====
-import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt } from './core/ai.js';
-import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance, getUsageLog } from './core/billing.js';
+import { getAISettings, callLLM, buildSystemPrompt, buildCodeSystemPrompt, buildTableSystemPrompt, buildGeneralSystemPrompt, setApiKey, clearApiKey, hasApiKey } from './core/ai.js';
+import { estimateTokens, coinCost, getBalance, hasSufficientBalance, getUsageLog } from './core/billing.js';
 import { loadPersona, exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride } from './core/persona.js';
 import { getHistory, addMessage, clearHistory, clearAllHistory } from './core/chat-history.js';
 import { matchPrewritten } from './core/prewritten.js';
 import { addTurn, setFact, getSession, clearSession, clearAllSessions, getSessionModules, buildMessages, buildFactsBlock } from './core/session-memory.js';
 import { flushSession, buildSummaryBlock, isEnabled as isRoomSummaryEnabled, setEnabled as setRoomSummaryEnabled, getRoomSummary, deleteRoomSummary, getAllRoomSummaries } from './core/room-summary.js';
 import { saveMemory, getMemory, deleteMemory, getAllMemories, getMemoryCount, saveSessionOnly, getSessionNotes, autoTitle, autoTags, searchMemories, buildMemoryContext } from './core/approved-memory.js';
-import { getNotionSettings, saveNotionSettings, isConfigured as isNotionConfigured, processQueue, pendingCount, enqueue, pullLibraryEntries, pullMemories, pullPersona, detectConflict, buildConflictDiff } from './core/notion-connector.js';
+import { getNotionSettings, saveNotionSettings, isConfigured as isNotionConfigured, processQueue, pendingCount, enqueue, pullLibraryEntries, pullMemories, pullPersona, detectConflict, buildConflictDiff, setNotionToken } from './core/notion-connector.js';
+import { registerApiKeyCheck } from './core/security.js';
 
 // Load persona.md (async, caches for prompt builders)
 loadPersona().then(() => console.log('[Akasha] Persona loaded'));
+
+// Wire security.js key check to ai.js (avoids circular import)
+registerApiKeyCheck(hasApiKey);
+
+// API key / Notion token bridge — iframe modules post here instead of sessionStorage
+window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin) return;
+  const d = event.data;
+  if (d?.type === 'akasha-apikey-update') {
+    if (d.apiKey) setApiKey(d.apiKey);
+    else clearApiKey();
+  }
+  if (d?.type === 'akasha-apikey-request') {
+    const frame = document.getElementById('module-frame');
+    if (frame?.contentWindow) {
+      const s = getAISettings();
+      frame.contentWindow.postMessage({ type: 'akasha-apikey-current', apiKey: s.apiKey || '' }, location.origin);
+    }
+  }
+  if (d?.type === 'akasha-notion-token-update') {
+    setNotionToken(d.token || '');
+  }
+  if (d?.type === 'akasha-pdf-settings-request') {
+    const frame = document.getElementById('module-frame');
+    if (frame?.contentWindow) {
+      const s = getAISettings();
+      frame.contentWindow.postMessage({ type: 'akasha-pdf-settings-response', settings: { mode: s.mode, error: s.error || null } }, location.origin);
+    }
+  }
+  if (d?.type === 'akasha-pdf-ai-send') {
+    (async () => {
+      const frame = document.getElementById('module-frame');
+      try {
+        const settings = getAISettings();
+        if (settings.error) {
+          const msg = settings.error === 'no-api-key'
+            ? '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。'
+            : '月幣模式尚未啟用（代理伺服器未部署）。';
+          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: msg, _reqId: d._reqId }, location.origin);
+          return;
+        }
+        const totalTokens = estimateTokens(d.context || '') + estimateTokens(d.text);
+        if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
+          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: '月幣不足，無法送出。', _reqId: d._reqId }, location.origin);
+          return;
+        }
+        const systemPrompt = buildSystemPrompt(d.context, d.page, d.fileName);
+        const response = await callLLM(settings, systemPrompt, d.text);
+        const coinsRemaining = settings.mode === 'coin' ? getBalance() : undefined;
+        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', text: response, tokensUsed: totalTokens, coinsRemaining, _reqId: d._reqId }, location.origin);
+      } catch (err) {
+        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: err.message, _reqId: d._reqId }, location.origin);
+      }
+    })();
+  }
+});
 
 // Expose persona API for settings UI / devtools
 window.akashaPersona = { exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride };
@@ -2938,7 +2995,7 @@ window.saveNote = async function(target) {
     if (target === 'notion' && isNotionConfigured()) {
       await enqueue({ target: 'memory', action: 'upsert', localId: saved.id, payload: saved });
       updateSyncDot('syncing');
-      processQueue().then(() => updateSyncDot('ok')).catch(() => updateSyncDot('error'));
+      processQueue().then(r => updateSyncDot(r.failed ? 'error' : 'ok')).catch(() => updateSyncDot('error'));
     }
   }
 
@@ -3249,8 +3306,12 @@ window.syncNow = async function() {
   updateSyncDot('syncing');
   try {
     const result = await processQueue();
-    updateSyncDot('ok');
-    showNoteToast('同步完成，處理 ' + result.processed + ' 筆');
+    updateSyncDot(result.failed ? 'error' : 'ok');
+    if (result.failed) {
+      showNoteToast(`同步部分失敗：成功 ${result.processed} 筆，失敗 ${result.failed} 筆`);
+    } else {
+      showNoteToast('同步完成，處理 ' + result.processed + ' 筆');
+    }
   } catch (err) {
     updateSyncDot('error');
     showNoteToast('同步失敗：' + err.message);
@@ -3503,8 +3564,6 @@ window._aiSendReal = async function() {
       const response = await callLLM(settings, systemPrompt, msgs);
 
       if (settings.mode === 'coin') {
-        const cost = coinCost(totalTokens);
-        deductCoins(cost, '一般 · ' + text.slice(0, 20));
         syncTokenBar(totalTokens);
       }
 
@@ -3577,10 +3636,7 @@ window._aiSendReal = async function() {
     // Call LLM
     const response = await callLLM(settings, systemPrompt, msgs);
 
-    // Coin deduction
     if (settings.mode === 'coin') {
-      const cost = coinCost(totalTokens);
-      deductCoins(cost, moduleName + ' · ' + text.slice(0, 20));
       syncTokenBar(totalTokens);
     }
 
@@ -3617,6 +3673,7 @@ window.addEventListener('message', (event) => {
           frame.contentWindow.postMessage({
             type: 'akasha-reading-room-response',
             error: '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。',
+            _reqId: d._reqId,
           }, location.origin);
           return;
         }
@@ -3632,6 +3689,7 @@ window.addEventListener('message', (event) => {
           frame.contentWindow.postMessage({
             type: 'akasha-reading-room-response',
             error: '月幣不足，無法送出。請至「AI 設定」查看餘額或切換至 BYOK 模式。',
+            _reqId: d._reqId,
           }, location.origin);
           return;
         }
@@ -3639,8 +3697,6 @@ window.addEventListener('message', (event) => {
         const response = await callLLM(settings, systemPrompt, msgs);
 
         if (settings.mode === 'coin') {
-          const cost = coinCost(totalTokens);
-          deductCoins(cost, '談心 · ' + d.text.slice(0, 20));
           syncTokenBar(totalTokens);
         }
 
@@ -3655,11 +3711,13 @@ window.addEventListener('message', (event) => {
         frame.contentWindow.postMessage({
           type: 'akasha-reading-room-response',
           response,
+          _reqId: d._reqId,
         }, location.origin);
       } catch (err) {
         frame.contentWindow.postMessage({
           type: 'akasha-reading-room-response',
           error: err.message || '未知錯誤',
+          _reqId: d._reqId,
         }, location.origin);
       }
     })();
@@ -3761,8 +3819,6 @@ JSON 格式：
         const raw = await callLLM(settings, reportSystemPrompt, msgs);
 
         if (settings.mode === 'coin') {
-          const cost = coinCost(totalTokens);
-          deductCoins(cost, '館報整理 · ' + reportDate);
           syncTokenBar(totalTokens);
         }
 

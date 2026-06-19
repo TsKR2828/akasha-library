@@ -376,22 +376,32 @@ function loadSettings() {
       setMode(saved.mode);
     }
     if (saved.provider) document.getElementById('byokProvider').value = saved.provider;
-    // Security: migrate legacy plaintext key from localStorage → sessionStorage, then delete
     if (saved.apiKey) {
-      if (!sessionStorage.getItem(KEY_SESSION)) sessionStorage.setItem(KEY_SESSION, saved.apiKey);
+      document.getElementById('byokKey').value = saved.apiKey;
+      try { window.parent.postMessage({ type: 'akasha-apikey-update', apiKey: saved.apiKey }, location.origin); } catch {}
       delete saved.apiKey;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
     }
-    const sessionKey = sessionStorage.getItem(KEY_SESSION) || '';
-    if (sessionKey) document.getElementById('byokKey').value = sessionKey;
     if (saved.endpoint) document.getElementById('byokEndpoint').value = saved.endpoint;
     onProviderChange(saved.model);
     updateByokStatus();
   } catch {}
+  try { window.parent.postMessage({ type: 'akasha-apikey-request' }, location.origin); } catch {}
   loadCoinBalance();
   loadUsageLog();
   updateEstimate();
 }
+
+window.addEventListener('message', function(e) {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-apikey-current') {
+    var k = e.data.apiKey || '';
+    if (k && !document.getElementById('byokKey').value) {
+      document.getElementById('byokKey').value = k;
+      updateByokStatus();
+    }
+  }
+});
 
 function setMode(mode) {
   currentMode = mode;
@@ -435,8 +445,7 @@ function saveByok() {
     model: document.getElementById('byokModel').value,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  if (apiKey) sessionStorage.setItem(KEY_SESSION, apiKey);
-  else sessionStorage.removeItem(KEY_SESSION);
+  try { window.parent.postMessage({ type: 'akasha-apikey-update', apiKey: apiKey || null }, location.origin); } catch {}
   updateByokStatus();
   showToast('設定已儲存');
 }
@@ -445,7 +454,7 @@ function clearByok() {
   if (!confirm('確定要清除 API Key 嗎？')) return;
   document.getElementById('byokKey').value = '';
   document.getElementById('byokEndpoint').value = '';
-  sessionStorage.removeItem(KEY_SESSION);
+  try { window.parent.postMessage({ type: 'akasha-apikey-update', apiKey: null }, location.origin); } catch {}
   const settings = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   delete settings.apiKey;
   delete settings.endpoint;
@@ -606,7 +615,7 @@ function escapeHtml(value) {
 window.akashaAI = {
   getSettings: () => {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    s.apiKey = sessionStorage.getItem(KEY_SESSION) || '';
+    s.apiKey = document.getElementById('byokKey')?.value || '';
     return s;
   },
   getBalance: () => getCoinData().balance,

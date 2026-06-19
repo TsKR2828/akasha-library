@@ -95,8 +95,13 @@ function jsonBlocks(content, parsedJson) {
   const blocks = [{ type: 'heading', level: 2, text: 'JSON Data' }];
 
   if (Array.isArray(data) && data.length && typeof data[0] === 'object' && data[0] !== null) {
-    const keys = [...new Set(data.flatMap(obj => Object.keys(obj)))];
-    const body = data.map(obj => keys.map(k => String(obj[k] ?? '')));
+    const objects = data.filter(obj => typeof obj === 'object' && obj !== null && !Array.isArray(obj));
+    if (objects.length === 0) {
+      blocks.push({ type: 'paragraph', text: JSON.stringify(data, null, 2) });
+      return blocks;
+    }
+    const keys = [...new Set(objects.flatMap(obj => Object.keys(obj)))];
+    const body = objects.map(obj => keys.map(k => String(obj[k] ?? '')));
     blocks.push({ type: 'table', head: keys, body });
   } else if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
     const head = ['Key', 'Value'];
