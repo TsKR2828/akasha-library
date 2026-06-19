@@ -293,8 +293,10 @@ function extractJson(content) {
   try { data = JSON.parse(content); } catch { return [{ type: 'paragraph', text: content }]; }
 
   if (Array.isArray(data) && data.length && typeof data[0] === 'object' && data[0] !== null) {
-    const keys = [...new Set(data.flatMap(o => Object.keys(o)))];
-    const body = data.map(o => keys.map(k => {
+    const objects = data.filter(o => typeof o === 'object' && o !== null && !Array.isArray(o));
+    if (objects.length === 0) return [{ type: 'paragraph', text: JSON.stringify(data, null, 2) }];
+    const keys = [...new Set(objects.flatMap(o => Object.keys(o)))];
+    const body = objects.map(o => keys.map(k => {
       const v = o[k];
       return v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
     }));
