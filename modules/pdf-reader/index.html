@@ -1414,6 +1414,12 @@
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
 
+  // Inherit dark/light mode from parent App Shell
+  try {
+    const parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
+    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
+  } catch(e) {}
+
   // ===== PDF.js Setup =====
   const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
@@ -1532,6 +1538,9 @@
         currentPage,
         content,
       }, location.origin);
+    }
+    if (event.data?.type === 'akasha-mode-change') {
+      document.documentElement.setAttribute('data-mode', event.data.mode);
     }
   });
 

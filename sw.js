@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-eaac1a401c';
+const CACHE_NAME = 'akasha-library-f2cf9a4351';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -66,7 +66,7 @@ const LOCAL_ASSETS = [
   './dist/spreadsheet/index.html',
   './dist/spreadsheet/assets/index-ZAvq0Fku.js',
   './dist/script-editor/index.html',
-  './dist/script-editor/assets/index-g9Y_Hzdk.js',
+  './dist/script-editor/assets/index-B1fuyTKq.js',
   './dist/script-editor/assets/index-dpyRvhxh.css',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',

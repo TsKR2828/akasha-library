@@ -556,6 +556,20 @@ window.addEventListener('message', (e) => {
   }
 });
 
+// Dark/light mode sync from App Shell
+(function() {
+  try {
+    var parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
+    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
+  } catch(e) {}
+})();
+window.addEventListener('message', function(e) {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-mode-change') {
+    document.documentElement.setAttribute('data-mode', e.data.mode);
+  }
+});
+
 // --- Init ---
 
 highlightExportBtn();

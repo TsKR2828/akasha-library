@@ -618,7 +618,7 @@ function SwHeader({ tab, setTab, onAI, workSwitcher }) {
         background: "linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent)",
       }} />
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
         <span style={{ color: "var(--gold)" }}><SwIcon name="mask" size={22} stroke={1.4} /></span>
         <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
           <div style={{
@@ -630,6 +630,7 @@ function SwHeader({ tab, setTab, onAI, workSwitcher }) {
             display: "flex", gap: 8, alignItems: "baseline",
             fontFamily: "var(--font-serif-tc)", fontSize: 16,
             color: "var(--text-primary)", letterSpacing: "0.16em",
+            whiteSpace: "nowrap",
           }}>
             劇本工房
             <span style={{
@@ -649,6 +650,9 @@ function SwHeader({ tab, setTab, onAI, workSwitcher }) {
         background: "rgba(0,0,0,0.28)",
         border: "1px solid var(--navy-line)",
         borderRadius: 2,
+        overflow: "auto",
+        flexShrink: 1,
+        minWidth: 0,
       }}>
         {tabs.map(t => {
           const active = tab === t.id;
@@ -657,7 +661,7 @@ function SwHeader({ tab, setTab, onAI, workSwitcher }) {
               style={{
                 background: active ? "var(--gold-glow)" : "transparent",
                 border: "none",
-                padding: "7px 16px",
+                padding: "7px 12px",
                 color: active ? "var(--gold-bright)" : "var(--text-secondary)",
                 fontFamily: "var(--font-serif-tc)", fontSize: 12.5,
                 letterSpacing: "0.16em",
@@ -4588,6 +4592,46 @@ function App() {
       setCurrentWork(importedWork.id);
       localStorage.setItem("sw_last_work", importedWork.id);
       setTab("editor");
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // Shell AI: respond to context request from App Shell's AI panel
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.origin !== location.origin) return;
+      if (e.data?.type !== "akasha-ai-get-context") return;
+      const plainText = blocksToPlainScript(blocksRef.current, CHARACTERS);
+      const truncated = plainText.length > 12000 ? plainText.slice(0, 12000) + "\n…（內容已截斷）" : plainText;
+      window.parent.postMessage({
+        type: "akasha-ai-context-response",
+        module: "script-editor",
+        fileName: workMeta?.title || currentWork,
+        fileType: "script",
+        content: truncated,
+        blockCount: blocksRef.current.length,
+        characters: CHARACTERS.map(c => c.name),
+      }, location.origin);
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [workMeta, currentWork]);
+
+  // Inherit dark/light mode from parent on mount
+  React.useEffect(() => {
+    try {
+      const parentMode = window.parent?.document?.documentElement?.getAttribute("data-mode");
+      if (parentMode) document.documentElement.setAttribute("data-mode", parentMode);
+    } catch {}
+  }, []);
+
+  // Shell: dark/light mode sync from App Shell
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (e.origin !== location.origin) return;
+      if (e.data?.type !== "akasha-mode-change") return;
+      document.documentElement.setAttribute("data-mode", e.data.mode);
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
