@@ -2923,20 +2923,20 @@ window.addEventListener('message', (event) => {
           const msg = settings.error === 'no-api-key'
             ? '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。'
             : '月幣模式尚未啟用（代理伺服器未部署）。';
-          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: msg }, location.origin);
+          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: msg, _reqId: d._reqId }, location.origin);
           return;
         }
         const totalTokens = estimateTokens(d.context || '') + estimateTokens(d.text);
         if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
-          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: '月幣不足，無法送出。' }, location.origin);
+          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: '月幣不足，無法送出。', _reqId: d._reqId }, location.origin);
           return;
         }
         const systemPrompt = buildSystemPrompt(d.context, d.page, d.fileName);
         const response = await callLLM(settings, systemPrompt, d.text);
         const coinsRemaining = settings.mode === 'coin' ? getBalance() : undefined;
-        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', text: response, tokensUsed: totalTokens, coinsRemaining }, location.origin);
+        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', text: response, tokensUsed: totalTokens, coinsRemaining, _reqId: d._reqId }, location.origin);
       } catch (err) {
-        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: err.message }, location.origin);
+        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: err.message, _reqId: d._reqId }, location.origin);
       }
     })();
   }
@@ -3669,6 +3669,7 @@ window.addEventListener('message', (event) => {
           frame.contentWindow.postMessage({
             type: 'akasha-reading-room-response',
             error: '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。',
+            _reqId: d._reqId,
           }, location.origin);
           return;
         }
@@ -3684,6 +3685,7 @@ window.addEventListener('message', (event) => {
           frame.contentWindow.postMessage({
             type: 'akasha-reading-room-response',
             error: '月幣不足，無法送出。請至「AI 設定」查看餘額或切換至 BYOK 模式。',
+            _reqId: d._reqId,
           }, location.origin);
           return;
         }
@@ -3705,11 +3707,13 @@ window.addEventListener('message', (event) => {
         frame.contentWindow.postMessage({
           type: 'akasha-reading-room-response',
           response,
+          _reqId: d._reqId,
         }, location.origin);
       } catch (err) {
         frame.contentWindow.postMessage({
           type: 'akasha-reading-room-response',
           error: err.message || '未知錯誤',
+          _reqId: d._reqId,
         }, location.origin);
       }
     })();

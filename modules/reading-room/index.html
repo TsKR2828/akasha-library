@@ -856,19 +856,18 @@ function typewrite(text, bubble, onDone) {
 // ===== AI Communication =====
 // The Reading Room talks to App Shell's AI infrastructure via PostMessage
 
-let pendingAIResolve = null;
+const _pendingAI = new Map();
 
 window.addEventListener('message', (e) => {
   if (e.origin !== location.origin) return;
   const d = e.data;
 
-  // AI response from App Shell
-  if (d?.type === 'akasha-reading-room-response' && pendingAIResolve) {
-    pendingAIResolve(d);
-    pendingAIResolve = null;
+  if (d?.type === 'akasha-reading-room-response' && d._reqId && _pendingAI.has(d._reqId)) {
+    const cb = _pendingAI.get(d._reqId);
+    _pendingAI.delete(d._reqId);
+    cb(d);
   }
 
-  // Context request from App Shell AI panel
   if (d?.type === 'akasha-ai-get-context') {
     const recentText = state.messages.slice(-6).map(m =>
       `[${m.role === 'user' ? '使用者' : '零韻'}] ${m.text}`
@@ -882,27 +881,24 @@ window.addEventListener('message', (e) => {
   }
 });
 
-/**
- * Send a message to the LLM via App Shell.
- * App Shell handles: settings check, memory injection, LLM call, coin deduction.
- */
 async function sendToAI(userText) {
   return new Promise((resolve, reject) => {
-    pendingAIResolve = (data) => {
+    const reqId = crypto.randomUUID();
+    _pendingAI.set(reqId, (data) => {
       if (data.error) reject(new Error(data.error));
       else resolve(data.response || '');
-    };
+    });
     window.parent.postMessage({
       type: 'akasha-reading-room-send',
       text: userText,
       module: MODULE_NAME,
       noTrace: state.noTrace,
+      _reqId: reqId,
     }, location.origin);
 
-    // Timeout
     setTimeout(() => {
-      if (pendingAIResolve) {
-        pendingAIResolve = null;
+      if (_pendingAI.has(reqId)) {
+        _pendingAI.delete(reqId);
         reject(new Error('AI 回應逾時'));
       }
     }, 60000);
