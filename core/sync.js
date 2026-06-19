@@ -160,12 +160,12 @@ async function flushOfflineQueue() {
   if (offlineQueue.length === 0) return;
 
   emitStatus('syncing', `同步 ${offlineQueue.length} 個待處理檔案...`);
-  const queue = [...offlineQueue];
-  offlineQueue = [];
-  await persistQueue();
 
+  const queue = [...offlineQueue];
   for (const fileId of queue) {
     await syncFile(fileId);
+    offlineQueue = offlineQueue.filter(id => id !== fileId);
+    await persistQueue();
   }
 
   emitStatus('synced', '離線佇列已同步');
