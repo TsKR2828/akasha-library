@@ -351,7 +351,17 @@ function inlineFormat(text) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code>$1</code>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+      // Strip quotes and anything after whitespace (kills attribute injection)
+      const cleaned = url.replace(/["']/g, '').replace(/\s+.*/g, '').trim();
+      // Only allow safe protocols
+      if (!/^(https?:\/\/|mailto:|#|\/)/i.test(cleaned) && cleaned.includes(':')) {
+        return text; // reject javascript: and other dangerous protocols
+      }
+      // Encode for safe attribute value
+      const safeUrl = cleaned.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+      return '<a href="' + safeUrl + '">' + text + '</a>';
+    });
 }
 
 function memoryToMarkdown(record) {

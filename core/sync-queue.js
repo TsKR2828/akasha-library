@@ -65,6 +65,7 @@ export async function markDone(id) {
       if (!r) { resolve(); return; }
       r.status = 'done';
       r.completedAt = Date.now();
+      r.payload = null; // strip sensitive payload after completion
       store.put(r);
       tx.oncomplete = () => resolve();
     };

@@ -313,7 +313,7 @@ async function callAnthropic(settings, systemPrompt, msgs) {
 }
 
 async function callGoogle(settings, systemPrompt, msgs) {
-  const model = settings.model || 'gemini-2.0-flash';
+  const model = settings.model || 'gemini-2.5-flash';
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${settings.apiKey}`;
   const contents = msgs.map(m => ({
     role: m.role === 'assistant' ? 'model' : 'user',
@@ -396,6 +396,10 @@ async function callViaProxy(settings, systemPrompt, msgs) {
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     if (res.status === 401) clearSessionToken();
+    if (res.status === 402 && err.balance !== undefined) {
+      const { syncBalance } = await import('./billing.js');
+      syncBalance(err.balance);
+    }
     throw new Error(`Proxy ${res.status}: ${err.error || res.statusText}`);
   }
 

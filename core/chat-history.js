@@ -18,7 +18,11 @@ export function getHistory(module) {
 export function addMessage(module, role, text) {
   const key = CHAT_PREFIX + (module || '_default');
   const history = getHistory(module);
-  history.push({ role, text, time: Date.now() });
+  // Store only essential fields; truncate text to limit sensitive data exposure
+  const truncated = typeof text === 'string' && text.length > 200
+    ? text.slice(0, 200) + '…'
+    : text;
+  history.push({ role, text: truncated, time: Date.now() });
   if (history.length > MAX_MESSAGES) history.splice(0, history.length - MAX_MESSAGES);
   localStorage.setItem(key, JSON.stringify(history));
   return history;

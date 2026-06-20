@@ -350,8 +350,11 @@ function _choiceKey(b) {
    On merge: sync Write's text → zh so Editor always shows the latest.
    Preserve old zh only when Write didn't change the text. */
 function _merge(old, nw) {
-  // If parser produced `text`, propagate it to `zh` so Editor stays in sync
-  const mergedZh = nw.text || nw.zh || old.zh || "";
+  // What blocksToPlainScript would have rendered from the OLD block
+  const oldDisplayText = old.zh || old.text || old.original || "";
+  // If the newly parsed text is identical to what was displayed, the user didn't change it → keep old zh
+  const userActuallyEdited = nw.text && nw.text !== oldDisplayText;
+  const mergedZh = userActuallyEdited ? nw.text : (nw.zh || old.zh || "");
   const merged = {
     ...old,                                      // preserve fields plain text cannot represent
     ...nw,                                       // adopt the newly parsed editable fields

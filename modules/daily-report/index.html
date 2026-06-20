@@ -493,8 +493,12 @@ const voiceProgress = $('voiceProgress');
 const voiceText = $('voiceText');
 const toastEl = $('toast');
 
-// Set default date to today
-reportDate.value = new Date().toISOString().slice(0, 10);
+// Set default date to today (local time, not UTC)
+function localDateStr(date) {
+  var d = date || new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+reportDate.value = localDateStr();
 
 // ===== Toast =====
 let toastTimer = null;
@@ -619,7 +623,7 @@ btnGenerate.addEventListener('click', async () => {
   toggleReportActions(false);
 
   try {
-    const date = reportDate.value || new Date().toISOString().slice(0, 10);
+    const date = reportDate.value || localDateStr();
     const report = await generateReport(text, date);
     state.currentReport = report;
     state.currentReportId = null;
@@ -713,7 +717,7 @@ btnSave.addEventListener('click', async () => {
 function exportReport(fmt) {
   if (!state.currentReport) return;
   const report = state.currentReport;
-  const date = report.date || new Date().toISOString().slice(0, 10);
+  const date = report.date || localDateStr();
   let blob, filename;
 
   if (fmt === 'md') {

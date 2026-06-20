@@ -99,17 +99,48 @@ async function deletePage(pageId) {
 }
 
 async function getPageBlocks(pageId) {
-  const res = await notionAPI('GET', `/v1/blocks/${pageId}/children`);
-  return res.results || [];
+  const all = [];
+  let cursor;
+  do {
+    const url = '/v1/blocks/' + pageId + '/children' + (cursor ? '?start_cursor=' + cursor : '');
+    const res = await notionAPI('GET', url);
+    all.push(...(res.results || []));
+    cursor = res.has_more ? res.next_cursor : null;
+  } while (cursor);
+  return all;
 }
 
 async function replacePageBlocks(pageId, blocks) {
-  const existing = await getPageBlocks(pageId);
-  for (const b of existing) {
-    await notionAPI('DELETE', `/v1/blocks/${b.id}`);
+  // Batch blocks into chunks of 100 (Notion API limit)
+  const BATCH = 100;
+  const batches = [];
+  for (let i = 0; i < blocks.length; i += BATCH) {
+    batches.push(blocks.slice(i, i + BATCH));
   }
-  if (blocks.length > 0) {
-    await notionAPI('PATCH', `/v1/blocks/${pageId}/children`, { children: blocks });
+
+  // First, append all new content (before deleting old)
+  // This ensures old content survives if append fails
+  const appendedIds = [];
+  try {
+    for (const batch of batches) {
+      const res = await notionAPI('PATCH', '/v1/blocks/' + pageId + '/children', { children: batch });
+      if (res.results) appendedIds.push(...res.results.map(r => r.id));
+    }
+  } catch (err) {
+    // Append failed — clean up any partially appended blocks
+    for (const id of appendedIds) {
+      try { await notionAPI('DELETE', '/v1/blocks/' + id); } catch {}
+    }
+    throw new Error('Notion append failed (old content preserved): ' + err.message);
+  }
+
+  // All new content appended successfully — now delete old blocks
+  const existing = await getPageBlocks(pageId);
+  const newIds = new Set(appendedIds);
+  for (const b of existing) {
+    if (!newIds.has(b.id)) {
+      await notionAPI('DELETE', '/v1/blocks/' + b.id);
+    }
   }
 }
 

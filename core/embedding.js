@@ -127,7 +127,7 @@ async function embedOpenAI(texts, apiKey, model = 'text-embedding-3-small') {
 /**
  * Call Google embedding API.
  */
-async function embedGoogle(texts, apiKey, model = 'text-embedding-004') {
+async function embedGoogle(texts, apiKey, model = 'text-embedding-005') {
   // Google's batch embedding endpoint
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:batchEmbedContents?key=${apiKey}`;
   const res = await fetch(endpoint, {

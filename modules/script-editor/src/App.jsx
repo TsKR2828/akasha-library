@@ -4539,13 +4539,34 @@ function App() {
       if (ext === "jsonl" || ext === "json") {
         const text = content.trim();
         if (text.startsWith("[")) {
-          try { imported = JSON.parse(text); } catch { /* fall through to plain parse */ }
+          try { imported = JSON.parse(text); } catch { /* fall through to line parse */ }
         }
         if (imported.length === 0) {
           const lines = text.split("\n");
-          for (const line of lines) {
+          const errors = [];
+          for (let lineNum = 0; lineNum < lines.length; lineNum++) {
+            const line = lines[lineNum];
             if (!line.trim()) continue;
-            try { imported.push(JSON.parse(line)); } catch { /* skip bad lines */ }
+            try {
+              imported.push(JSON.parse(line));
+            } catch (err) {
+              errors.push({ line: lineNum + 1, text: line.slice(0, 60), error: err.message });
+            }
+          }
+          if (errors.length > 0) {
+            const errorMsg = errors.slice(0, 5).map(e =>
+              '第 ' + e.line + ' 行: ' + e.error
+            ).join('\n');
+            const total = errors.length;
+            const msg = '解析失敗：' + total + ' 行無法讀取\n\n' + errorMsg +
+              (total > 5 ? '\n...及其他 ' + (total - 5) + ' 行' : '') +
+              '\n\n已略過錯誤行，僅匯入 ' + imported.length + ' 筆有效資料。' +
+              '\n\n確定要以部分資料建立作品嗎？';
+            if (imported.length === 0) {
+              alert('匯入失敗：所有 ' + total + ' 行均無法解析。\n\n' + errorMsg);
+              return;
+            }
+            if (!confirm(msg)) return;
           }
         }
       }

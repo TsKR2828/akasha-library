@@ -10,8 +10,8 @@ function splitRow(line) {
   return line
     .replace(/^\s*\|/, '')
     .replace(/\|\s*$/, '')
-    .split('|')
-    .map(c => c.trim());
+    .split(/(?<!\\)\|/)
+    .map(c => c.trim().replace(/\\\|/g, '|'));
 }
 
 function parseTable(lines, start) {
@@ -101,7 +101,12 @@ function jsonBlocks(content, parsedJson) {
       return blocks;
     }
     const keys = [...new Set(objects.flatMap(obj => Object.keys(obj)))];
-    const body = objects.map(obj => keys.map(k => String(obj[k] ?? '')));
+    const body = objects.map(obj => keys.map(k => {
+      const v = obj[k];
+      if (v === null || v === undefined) return '';
+      if (typeof v === 'object') return JSON.stringify(v);
+      return String(v);
+    }));
     blocks.push({ type: 'table', head: keys, body });
   } else if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
     const head = ['Key', 'Value'];

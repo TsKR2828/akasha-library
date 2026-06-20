@@ -1408,7 +1408,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
+  import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry, deleteEmbeddings, deleteBookmarksByFile, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
   import { hashFileBytes, findLibraryItem, upsertLibraryItem, removeLibraryItem } from './library-store.js';
   import { extractContextPages, extractPageText } from '../../core/ai.js';
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
@@ -2239,6 +2239,11 @@
     localStorage.setItem('akasha-library', JSON.stringify(remaining));
     if (item?.id) {
       try { await deleteFileEntry(item.id); } catch (e) { /* best effort */ }
+      // Clean up derived data (embeddings, bookmarks) to avoid orphaned residue
+      try { await deleteEmbeddings(item.id); } catch (e) { /* best effort */ }
+      try { await deleteBookmarksByFile(item.id); } catch (e) { /* best effort */ }
+      // NOTE: Drive sync may resurrect a deleted PDF if no tombstone exists.
+      // A proper soft-delete/tombstone system is needed to fully prevent this.
     }
     renderLibrary();
   }

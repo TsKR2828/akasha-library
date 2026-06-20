@@ -4,14 +4,26 @@ import { STORAGE_KEY } from "../../../core/export/bridge.js";
 import { payloadToCells } from "../../../core/export/fromPayload.js";
 import { parseDelimitedText, toNumericValue } from "./lib/spreadsheet-utils.js";
 
-const ROWS = 50;
-const COLS = 26;
-const colLabel = (i) => String.fromCharCode(65 + i);
+const DEFAULT_ROWS = 50;
+const DEFAULT_COLS = 26;
+const MAX_ROWS = 10000;
+const MAX_COLS = 200;
+const colLabel = (i) => {
+  let label = '';
+  let n = i;
+  while (n >= 0) {
+    label = String.fromCharCode(65 + (n % 26)) + label;
+    n = Math.floor(n / 26) - 1;
+  }
+  return label;
+};
 const cellId = (r, c) => `${colLabel(c)}${r + 1}`;
 const parseCellRef = (ref) => {
-  const m = ref.match(/^([A-Z])(\d+)$/);
+  const m = ref.match(/^([A-Z]+)(\d+)$/);
   if (!m) return null;
-  return { r: parseInt(m[2]) - 1, c: m[1].charCodeAt(0) - 65 };
+  let c = 0;
+  for (const ch of m[1]) c = c * 26 + (ch.charCodeAt(0) - 64);
+  return { r: parseInt(m[2]) - 1, c: c - 1 };
 };
 
 const DEFAULT_COL_WIDTH = 100;
@@ -43,6 +55,8 @@ export default function SpreadsheetEditor() {
   const [dragStartX, setDragStartX] = useState(0);
   const [dragStartWidth, setDragStartWidth] = useState(0);
   const [notification, setNotification] = useState(null);
+  const [gridRows, setGridRows] = useState(DEFAULT_ROWS);
+  const [gridCols, setGridCols] = useState(DEFAULT_COLS);
   const inputRef = useRef(null);
   const formulaRef = useRef(null);
   const tableRef = useRef(null);
@@ -55,6 +69,16 @@ export default function SpreadsheetEditor() {
   const showNotif = (msg) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 2500);
+  };
+
+  const recalcGrid = (cellsObj) => {
+    let maxR = 0, maxC = 0;
+    Object.keys(cellsObj).forEach((id) => {
+      const ref = parseCellRef(id);
+      if (ref) { maxR = Math.max(maxR, ref.r + 1); maxC = Math.max(maxC, ref.c + 1); }
+    });
+    setGridRows(Math.max(DEFAULT_ROWS, maxR));
+    setGridCols(Math.max(DEFAULT_COLS, maxC));
   };
 
   const updateSheet = (key, val) => {
@@ -185,7 +209,7 @@ export default function SpreadsheetEditor() {
 
       try {
         let hasCircular = false;
-        let expanded = formula.replace(/[A-Z]\d+/g, (match) => {
+        let expanded = formula.replace(/[A-Z]+\d+/g, (match) => {
           const ref = parseCellRef(match);
           if (!ref) return "0";
           const id = cellId(ref.r, ref.c);
@@ -272,20 +296,20 @@ export default function SpreadsheetEditor() {
     if (editing) {
       if (e.key === "Enter") {
         commitEdit();
-        setSelection((s) => ({ r: Math.min(s.r + 1, ROWS - 1), c: s.c }));
+        setSelection((s) => ({ r: Math.min(s.r + 1, gridRows - 1), c: s.c }));
       } else if (e.key === "Escape") {
         setEditing(null);
       } else if (e.key === "Tab") {
         e.preventDefault();
         commitEdit();
-        setSelection((s) => ({ r: s.r, c: Math.min(s.c + 1, COLS - 1) }));
+        setSelection((s) => ({ r: s.r, c: Math.min(s.c + 1, gridCols - 1) }));
       }
       return;
     }
     const { r, c } = selection;
-    if (e.key === "ArrowDown") { e.preventDefault(); setSelection({ r: Math.min(r + 1, ROWS - 1), c }); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelection({ r: Math.min(r + 1, gridRows - 1), c }); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setSelection({ r: Math.max(r - 1, 0), c }); }
-    else if (e.key === "ArrowRight" || e.key === "Tab") { e.preventDefault(); setSelection({ r, c: Math.min(c + 1, COLS - 1) }); }
+    else if (e.key === "ArrowRight" || e.key === "Tab") { e.preventDefault(); setSelection({ r, c: Math.min(c + 1, gridCols - 1) }); }
     else if (e.key === "ArrowLeft") { e.preventDefault(); setSelection({ r, c: Math.max(c - 1, 0) }); }
     else if (e.key === "Enter") { startEdit(r, c); }
     else if (e.key === "Delete" || e.key === "Backspace") {
@@ -309,7 +333,7 @@ export default function SpreadsheetEditor() {
         rows.forEach((rowData, ri) => {
           rowData.forEach((val, ci) => {
             const id = cellId(r + ri, c + ci);
-            if (r + ri < ROWS && c + ci < COLS) {
+            if (r + ri < gridRows && c + ci < gridCols) {
               newCells[id] = val;
             }
           });
@@ -318,6 +342,10 @@ export default function SpreadsheetEditor() {
       });
     }
   };
+
+  useEffect(() => {
+    recalcGrid(cells);
+  }, [cells]);
 
   useEffect(() => {
     const id = cellId(selection.r, selection.c);
@@ -352,12 +380,18 @@ export default function SpreadsheetEditor() {
         const ext = filename.split(".").pop().toLowerCase();
         if (ext === "xlsx" || ext === "xls") {
           const wb = XLSX.read(data, { type: "array" });
+          let oversize = false;
           const newSheets = wb.SheetNames.map((name) => {
             const ws = wb.Sheets[name];
             const newCells = {};
             const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
-            for (let r = range.s.r; r <= Math.min(range.e.r, ROWS - 1); r++) {
-              for (let c = range.s.c; c <= Math.min(range.e.c, COLS - 1); c++) {
+            const dataRows = range.e.r - range.s.r + 1;
+            const dataCols = range.e.c - range.s.c + 1;
+            if (dataRows > MAX_ROWS || dataCols > MAX_COLS) { oversize = true; }
+            const limitR = Math.min(range.e.r, range.s.r + MAX_ROWS - 1);
+            const limitC = Math.min(range.e.c, range.s.c + MAX_COLS - 1);
+            for (let r = range.s.r; r <= limitR; r++) {
+              for (let c = range.s.c; c <= limitC; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
                 const cell = ws[addr];
                 if (cell && cell.v !== undefined && cell.v !== null && cell.v !== "") {
@@ -367,6 +401,9 @@ export default function SpreadsheetEditor() {
             }
             return { name, cells: newCells, styles: {}, colWidths: {} };
           });
+          if (oversize) {
+            showNotif('檔案過大，已截斷至 ' + MAX_ROWS + '×' + MAX_COLS);
+          }
           if (newSheets.length > 0) {
             setSheets(newSheets);
             setActiveSheet(0);
@@ -375,10 +412,16 @@ export default function SpreadsheetEditor() {
         } else {
           const text = new TextDecoder().decode(data);
           const rows = parseDelimitedText(text);
+          const dataRows = rows.length;
+          const dataCols = rows.reduce((max, r) => Math.max(max, r.length), 0);
+          if (dataRows > MAX_ROWS || dataCols > MAX_COLS) {
+            showNotif('檔案過大（' + dataRows + '×' + dataCols + '），最多支援 ' + MAX_ROWS + '×' + MAX_COLS);
+            return;
+          }
           const newCells = {};
-          rows.slice(0, ROWS).forEach((vals, r) => {
+          rows.forEach((vals, r) => {
             vals.forEach((v, c) => {
-              if (c < COLS && v !== "") newCells[cellId(r, c)] = v;
+              if (v !== "") newCells[cellId(r, c)] = v;
             });
           });
           setSheets((prev) => prev.map((s, i) =>
@@ -441,55 +484,51 @@ export default function SpreadsheetEditor() {
 
   const shiftRefs = (val, rowDelta, colDelta, fromRow, fromCol) => {
     if (typeof val !== "string" || !val.startsWith("=")) return val;
-    return val.replace(/([A-Z])(\d+)/g, (match, col, row) => {
-      let c = col.charCodeAt(0) - 65;
+    return val.replace(/([A-Z]+)(\d+)/g, (match, colStr, row) => {
+      let c = 0;
+      for (const ch of colStr) c = c * 26 + (ch.charCodeAt(0) - 64);
+      c -= 1;
       let r = parseInt(row) - 1;
       if (rowDelta !== 0 && r >= fromRow) r += rowDelta;
       if (colDelta !== 0 && c >= fromCol) c += colDelta;
-      if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return "#REF!";
+      if (r < 0 || r >= gridRows || c < 0 || c >= gridCols) return "#REF!";
       return colLabel(c) + (r + 1);
     });
   };
 
   const insertRow = (at) => {
-    const wouldOverflow = Object.keys(cells).some((id) => {
-      const ref = parseCellRef(id);
-      return ref && ref.r === ROWS - 1 && cells[id] !== "";
-    });
-    if (wouldOverflow) { showNotif("最後一列有資料，無法插入"); setContextMenu(null); return; }
+    if (gridRows >= MAX_ROWS) { showNotif("已達列數上限 " + MAX_ROWS); setContextMenu(null); return; }
     const newCells = {};
     const newStyles = {};
     Object.entries(cells).forEach(([id, val]) => {
       const ref = parseCellRef(id);
       if (ref) {
-        const newR = ref.r >= at ? Math.min(ref.r + 1, ROWS - 1) : ref.r;
+        const newR = ref.r >= at ? ref.r + 1 : ref.r;
         newCells[cellId(newR, ref.c)] = shiftRefs(val, 1, 0, at, 0);
         if (styles[id]) newStyles[cellId(newR, ref.c)] = styles[id];
       }
     });
     updateSheet("cells", newCells);
     updateSheet("styles", newStyles);
+    setGridRows((prev) => prev + 1);
     setContextMenu(null);
   };
 
   const insertCol = (at) => {
-    const wouldOverflow = Object.keys(cells).some((id) => {
-      const ref = parseCellRef(id);
-      return ref && ref.c === COLS - 1 && cells[id] !== "";
-    });
-    if (wouldOverflow) { showNotif("最後一欄有資料，無法插入"); setContextMenu(null); return; }
+    if (gridCols >= MAX_COLS) { showNotif("已達欄數上限 " + MAX_COLS); setContextMenu(null); return; }
     const newCells = {};
     const newStyles = {};
     Object.entries(cells).forEach(([id, val]) => {
       const ref = parseCellRef(id);
       if (ref) {
-        const newC = ref.c >= at ? Math.min(ref.c + 1, COLS - 1) : ref.c;
+        const newC = ref.c >= at ? ref.c + 1 : ref.c;
         newCells[cellId(ref.r, newC)] = shiftRefs(val, 0, 1, 0, at);
         if (styles[id]) newStyles[cellId(ref.r, newC)] = styles[id];
       }
     });
     updateSheet("cells", newCells);
     updateSheet("styles", newStyles);
+    setGridCols((prev) => prev + 1);
     setContextMenu(null);
   };
 
@@ -615,12 +654,18 @@ export default function SpreadsheetEditor() {
           try {
             const data = new Uint8Array(ev.target.result);
             const wb = XLSX.read(data, { type: "array" });
+            let fileOversize = false;
             const newSheets = wb.SheetNames.map((name) => {
               const ws = wb.Sheets[name];
               const newCells = {};
               const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
-              for (let r = range.s.r; r <= Math.min(range.e.r, ROWS - 1); r++) {
-                for (let c = range.s.c; c <= Math.min(range.e.c, COLS - 1); c++) {
+              const dRows = range.e.r - range.s.r + 1;
+              const dCols = range.e.c - range.s.c + 1;
+              if (dRows > MAX_ROWS || dCols > MAX_COLS) { fileOversize = true; }
+              const limitR = Math.min(range.e.r, range.s.r + MAX_ROWS - 1);
+              const limitC = Math.min(range.e.c, range.s.c + MAX_COLS - 1);
+              for (let r = range.s.r; r <= limitR; r++) {
+                for (let c = range.s.c; c <= limitC; c++) {
                   const addr = XLSX.utils.encode_cell({ r, c });
                   const cell = ws[addr];
                   if (cell && cell.v !== undefined && cell.v !== null && cell.v !== "") {
@@ -630,6 +675,9 @@ export default function SpreadsheetEditor() {
               }
               return { name, cells: newCells, styles: {}, colWidths: {} };
             });
+            if (fileOversize) {
+              showNotif('檔案過大，已截斷至 ' + MAX_ROWS + '×' + MAX_COLS);
+            }
             if (newSheets.length > 0) {
               setSheets(newSheets);
               setActiveSheet(0);
@@ -646,10 +694,16 @@ export default function SpreadsheetEditor() {
         reader.onload = (ev) => {
           const text = ev.target.result;
           const rows = parseDelimitedText(text);
+          const fDataRows = rows.length;
+          const fDataCols = rows.reduce((max, r) => Math.max(max, r.length), 0);
+          if (fDataRows > MAX_ROWS || fDataCols > MAX_COLS) {
+            showNotif('檔案過大（' + fDataRows + '×' + fDataCols + '），最多支援 ' + MAX_ROWS + '×' + MAX_COLS);
+            return;
+          }
           const newCells = {};
-          rows.slice(0, ROWS).forEach((vals, r) => {
+          rows.forEach((vals, r) => {
             vals.forEach((v, c) => {
-              if (c < COLS && v !== "") {
+              if (v !== "") {
                 newCells[cellId(r, c)] = v;
               }
             });
@@ -816,7 +870,7 @@ export default function SpreadsheetEditor() {
                 width: 45, minWidth: 45, background: "#e8e8f0",
                 border: "1px solid #ccc", position: "sticky", top: 0, left: 0, zIndex: 3,
               }} />
-              {Array.from({ length: COLS }, (_, c) => (
+              {Array.from({ length: gridCols }, (_, c) => (
                 <th key={c} style={{
                   width: getColWidth(c), minWidth: getColWidth(c), maxWidth: getColWidth(c),
                   background: "#e8e8f0", border: "1px solid #ccc", padding: "4px 0",
@@ -835,7 +889,7 @@ export default function SpreadsheetEditor() {
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: ROWS }, (_, r) => (
+            {Array.from({ length: gridRows }, (_, r) => (
               <tr key={r}>
                 <td style={{
                   background: "#e8e8f0", border: "1px solid #ccc", textAlign: "center",
@@ -844,7 +898,7 @@ export default function SpreadsheetEditor() {
                 }}>
                   {r + 1}
                 </td>
-                {Array.from({ length: COLS }, (_, c) => {
+                {Array.from({ length: gridCols }, (_, c) => {
                   const id = cellId(r, c);
                   const st = getCellStyle(id);
                   const inRange = isInRange(r, c);

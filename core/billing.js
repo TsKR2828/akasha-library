@@ -11,19 +11,16 @@ const FREE_MONTHLY = 100;
 const MAX_LOG = 50;
 
 function currentMonth() {
-  return new Date().toISOString().slice(0, 7);
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 }
 
 function getCoinData() {
-  const defaults = { balance: FREE_MONTHLY, lastReset: currentMonth() };
+  const defaults = { balance: FREE_MONTHLY, lastReset: null, serverAuthoritative: false };
   try {
     const saved = JSON.parse(localStorage.getItem(COIN_KEY));
     if (!saved) { localStorage.setItem(COIN_KEY, JSON.stringify(defaults)); return defaults; }
-    if (saved.lastReset !== currentMonth()) {
-      saved.balance = FREE_MONTHLY;
-      saved.lastReset = currentMonth();
-      localStorage.setItem(COIN_KEY, JSON.stringify(saved));
-    }
+    // Do NOT auto-reset monthly — server is the authority
     return saved;
   } catch { localStorage.setItem(COIN_KEY, JSON.stringify(defaults)); return defaults; }
 }
@@ -81,6 +78,8 @@ export function syncBalance(serverBalance) {
   if (typeof serverBalance !== 'number' || isNaN(serverBalance)) return;
   const data = getCoinData();
   data.balance = serverBalance;
+  data.serverAuthoritative = true;
+  data.lastSync = Date.now();
   localStorage.setItem(COIN_KEY, JSON.stringify(data));
 }
 

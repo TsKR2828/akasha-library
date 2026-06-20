@@ -44,6 +44,19 @@ export function exportJSON(doc) {
   return JSON.stringify(result, null, 2);
 }
 
+// --- CSV formula neutralization ---
+
+function neutralizeFormula(value) {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trimStart();
+  if (/^[=+\-@]/.test(trimmed)) {
+    // Prefix with single quote to prevent formula interpretation
+    // and wrap in quotes to preserve the leading quote as visible text
+    return "'" + value;
+  }
+  return value;
+}
+
 // --- CSV (PapaParse) ---
 
 export function exportCSV(doc, Papa) {
@@ -57,7 +70,7 @@ export function exportCSV(doc, Papa) {
   const cols = sheet.columns;
   const fields = cols.map(c => c.name);
   const data = sheet.rows.map(row =>
-    cols.map(c => String(row.cells[c.id] ?? ''))
+    cols.map(c => neutralizeFormula(String(row.cells[c.id] ?? '')))
   );
 
   return Papa.unparse({ fields, data });
@@ -76,7 +89,7 @@ function exportCSVFallback(sheet) {
 
   const header = cols.map(c => escapeCSV(c.name)).join(',');
   const rows = sheet.rows.map(row =>
-    cols.map(c => escapeCSV(row.cells[c.id] ?? '')).join(',')
+    cols.map(c => escapeCSV(neutralizeFormula(String(row.cells[c.id] ?? '')))).join(',')
   );
 
   return [header, ...rows].join('\n') + '\n';

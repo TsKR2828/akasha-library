@@ -177,7 +177,10 @@ function parseJsonAoA(data) {
       addRow(sheet, cells);
     }
   } else {
-    const maxCols = Math.max(...data.map(r => r.length));
+    let maxCols = 0;
+    for (const r of data) {
+      if (r.length > maxCols) maxCols = r.length;
+    }
     for (let j = 0; j < maxCols; j++) {
       addColumn(sheet, 'col_' + (j + 1));
     }

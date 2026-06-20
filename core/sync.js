@@ -41,6 +41,31 @@ function emitStatus(status, detail = '') {
 }
 
 /**
+ * Merge two index arrays: union by id, newer timestamp wins for same id.
+ * Used by the optimistic-concurrency guard in fullSync to reconcile
+ * concurrent updates from multiple devices.
+ */
+function mergeIndices(localEntries, remoteEntries) {
+  const merged = new Map();
+  for (const entry of localEntries) {
+    merged.set(entry.id, entry);
+  }
+  for (const entry of remoteEntries) {
+    const existing = merged.get(entry.id);
+    if (!existing) {
+      merged.set(entry.id, entry);
+    } else {
+      const existingTime = existing.updatedAt || existing.lastOpened || 0;
+      const entryTime = entry.updatedAt || entry.lastOpened || 0;
+      if (entryTime > existingTime) {
+        merged.set(entry.id, entry);
+      }
+    }
+  }
+  return Array.from(merged.values());
+}
+
+/**
  * Full sync: compare local and remote, upload/download as needed
  */
 export async function fullSync() {
@@ -54,6 +79,11 @@ export async function fullSync() {
     // 1. Get remote file list
     const remoteFiles = await listFiles();
     const remoteIndex = remoteFiles.find(f => f.name === INDEX_FILENAME);
+
+    // Store the remote index revision for optimistic-concurrency check later.
+    // This is NOT a true transaction — it is an optimistic-concurrency guard
+    // that detects (but cannot fully prevent) lost updates from concurrent devices.
+    let remoteIndexRevision = remoteIndex ? remoteIndex.modifiedTime : null;
 
     // 2. Get local entries
     const localEntries = await getFileEntries();
@@ -70,15 +100,25 @@ export async function fullSync() {
         const remoteTime = remote.updatedAt || remote.lastOpened || 0;
         const localTime = local ? (local.updatedAt || local.lastOpened || 0) : 0;
         if (!local || remoteTime > localTime) {
-          await saveFileEntry(remote);
-          // If remote has a driveId and we don't have the blob locally, download it
+          // S0-2 FIX: Download blob BEFORE committing metadata.
+          // If blob download fails, we skip the metadata update so the next
+          // sync will retry this entry instead of silently treating it as current.
           if (remote.driveId) {
             const remoteFile = remoteFiles.find(f => f.id === remote.driveId);
             if (remoteFile) {
-              const fileBlob = await downloadFile(remote.driveId);
-              const arrayBuffer = await fileBlob.arrayBuffer();
-              await saveFileBlob(remote.id, new Uint8Array(arrayBuffer));
+              try {
+                const fileBlob = await downloadFile(remote.driveId);
+                const arrayBuffer = await fileBlob.arrayBuffer();
+                await saveFileBlob(remote.id, new Uint8Array(arrayBuffer));
+                await saveFileEntry(remote); // only after blob succeeds
+              } catch (err) {
+                // blob download failed — skip this entry, will retry next sync
+                console.warn('Sync: blob download failed for', remote.name, err);
+                continue;
+              }
             }
+          } else {
+            await saveFileEntry(remote); // no blob needed, metadata-only update is safe
           }
         }
       }
@@ -99,10 +139,39 @@ export async function fullSync() {
       }
     }
 
-    // 5. Upload updated index
-    const indexJson = await exportIndex();
-    await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
-      remoteIndex ? remoteIndex.id : null);
+    // 5. Upload updated index with optimistic-concurrency guard.
+    // Re-check the remote index revision before uploading; if another device
+    // updated the index since we read it, re-download, merge, and retry
+    // (up to 3 attempts). This is NOT a true transaction — a narrow race
+    // window still exists between the re-check and the upload.
+    const MAX_INDEX_UPLOAD_RETRIES = 3;
+    for (let attempt = 0; attempt < MAX_INDEX_UPLOAD_RETRIES; attempt++) {
+      // Re-fetch remote file list to get current modifiedTime
+      const currentRemoteFiles = await listFiles();
+      const currentRemoteIndex = currentRemoteFiles.find(f => f.name === INDEX_FILENAME);
+      const currentRevision = currentRemoteIndex ? currentRemoteIndex.modifiedTime : null;
+
+      if (remoteIndexRevision && currentRevision && currentRevision !== remoteIndexRevision) {
+        // Remote index was updated by another device — re-download and merge
+        console.warn(`Sync: index conflict detected (attempt ${attempt + 1}/${MAX_INDEX_UPLOAD_RETRIES}), re-merging...`);
+        const conflictBlob = await downloadFile(currentRemoteIndex.id);
+        const conflictText = await conflictBlob.text();
+        const conflictEntries = JSON.parse(conflictText);
+        const freshLocal = await getFileEntries();
+        const merged = mergeIndices(freshLocal, conflictEntries);
+        await importIndex(JSON.stringify(merged));
+        // Update revision to the one we just read so the next iteration
+        // can detect if yet another change happened
+        remoteIndexRevision = currentRevision;
+        continue;
+      }
+
+      // No conflict (or first upload with no prior remote index) — upload
+      const indexJson = await exportIndex();
+      await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
+        currentRemoteIndex ? currentRemoteIndex.id : null);
+      break;
+    }
 
     emitStatus('synced', '同步完成');
   } catch (err) {
@@ -117,14 +186,14 @@ export async function fullSync() {
  * Upload a single file to Drive
  */
 export async function syncFile(fileId) {
-  if (!isSignedIn()) return;
+  if (!isSignedIn()) return false;
 
   const entries = await getFileEntries();
   const entry = entries.find(e => e.id === fileId);
-  if (!entry) return;
+  if (!entry) return false;
 
   const blob = await getFileBlob(fileId);
-  if (!blob) return;
+  if (!blob) return false;
 
   emitStatus('syncing', `上傳 ${entry.name}...`);
 
@@ -135,10 +204,12 @@ export async function syncFile(fileId) {
     entry.syncStatus = 'synced';
     await saveFileEntry(entry);
     emitStatus('synced');
+    return true;
   } catch (err) {
     entry.syncStatus = 'pending';
     await saveFileEntry(entry);
     emitStatus('error', '上傳失敗');
+    return false;
   }
 }
 
@@ -162,13 +233,22 @@ async function flushOfflineQueue() {
   emitStatus('syncing', `同步 ${offlineQueue.length} 個待處理檔案...`);
 
   const queue = [...offlineQueue];
+  let failCount = 0;
   for (const fileId of queue) {
-    await syncFile(fileId);
-    offlineQueue = offlineQueue.filter(id => id !== fileId);
-    await persistQueue();
+    const ok = await syncFile(fileId);
+    if (ok) {
+      offlineQueue = offlineQueue.filter(id => id !== fileId);
+      await persistQueue();
+    } else {
+      failCount++;
+    }
   }
 
-  emitStatus('synced', '離線佇列已同步');
+  if (failCount > 0) {
+    emitStatus('error', failCount + ' 個檔案同步失敗，將在下次連線時重試');
+  } else {
+    emitStatus('synced', '離線佇列已同步');
+  }
 }
 
 /**

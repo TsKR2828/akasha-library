@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-f2cf9a4351';
+const CACHE_NAME = 'akasha-library-9e55306844';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -64,9 +64,9 @@ const LOCAL_ASSETS = [
 
   // Built Vite modules
   './dist/spreadsheet/index.html',
-  './dist/spreadsheet/assets/index-ZAvq0Fku.js',
+  './dist/spreadsheet/assets/index-BZDlzQKB.js',
   './dist/script-editor/index.html',
-  './dist/script-editor/assets/index-B1fuyTKq.js',
+  './dist/script-editor/assets/index-DsxswIV8.js',
   './dist/script-editor/assets/index-dpyRvhxh.css',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',
@@ -161,19 +161,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate for local JS/CSS/HTML
+  // Network-first for local assets (ensures JS matches HTML version)
   if (url.origin === self.location.origin) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        const networkFetch = fetch(event.request).then((response) => {
+      fetch(event.request)
+        .then((response) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        });
-        return cached || networkFetch;
-      })
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }

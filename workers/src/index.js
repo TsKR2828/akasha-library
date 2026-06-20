@@ -253,17 +253,8 @@ async function handleAuthToken(request, env, respond) {
     if (!info.sub) return respond({ error: 'Token missing subject' }, 401);
     userId = info.sub;
     email = info.email || null;
-  } else if (accessToken) {
-    const gRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-    });
-    if (!gRes.ok) return respond({ error: 'Invalid Google access token' }, 401);
-    const info = await gRes.json();
-    if (!info.id) return respond({ error: 'Token missing user ID' }, 401);
-    userId = info.id;
-    email = info.email || null;
   } else {
-    return respond({ error: 'idToken or accessToken field required' }, 400);
+    return respond({ error: 'ID token required. Access token login is not supported.' }, 400);
   }
 
   const token = await createSessionToken(env.COIN_SECRET, userId);
@@ -547,7 +538,7 @@ async function handleRagEmbed(body, request, env, respond) {
   }
 
   try {
-    const embModel = model || (provider === 'google' ? 'text-embedding-004' : 'text-embedding-3-small');
+    const embModel = model || (provider === 'google' ? 'text-embedding-005' : 'text-embedding-3-small');
     let embeddings;
 
     // Batch in groups of 50 to stay within provider limits
@@ -627,15 +618,33 @@ async function handleRagQuery(body, respond) {
   const { query, chunks, topK = 5 } = body;
 
   if (!query) return respond({ error: 'query required' }, 400);
+  if (typeof query !== 'string' || query.length > 2000) {
+    return respond({ error: 'query must be a string under 2000 characters' }, 400);
+  }
   if (!chunks || !Array.isArray(chunks) || chunks.length === 0) {
-    return respond({ error: 'chunks array required (each: string or {text, pageNum?})' }, 400);
+    return respond({ error: 'chunks array required' }, 400);
   }
   if (chunks.length > 5000) {
     return respond({ error: 'Maximum 5000 chunks per query' }, 400);
   }
 
-  const results = ragBm25(chunks, query, topK);
+  // Limit total input size (10MB max) and per-chunk size (50KB max)
+  const MAX_TOTAL = 10 * 1024 * 1024;
+  const MAX_CHUNK = 50 * 1024;
+  let totalBytes = 0;
+  for (const c of chunks) {
+    const text = typeof c === 'string' ? c : (c && c.text) || '';
+    const len = new TextEncoder().encode(text).length;
+    if (len > MAX_CHUNK) {
+      return respond({ error: 'Individual chunk exceeds 50KB limit' }, 400);
+    }
+    totalBytes += len;
+    if (totalBytes > MAX_TOTAL) {
+      return respond({ error: 'Total input exceeds 10MB limit' }, 413);
+    }
+  }
 
+  const results = ragBm25(chunks, query, topK);
   return respond({ ok: true, query, results, count: results.length, method: 'bm25' });
 }
 
@@ -710,28 +719,41 @@ async function getCoinHistory(env, userId) {
 async function checkAndDeductCoins(env, userId, amount, reason) {
   if (!env.COIN_KV) return { ok: false, error: 'COIN_KV not configured' };
 
-  const balance = await getCoinBalance(env, userId);
-  if (balance < amount) {
-    return { ok: false, error: '月幣不足', balance, required: amount };
+  // Simple KV lock to prevent concurrent deductions (double-spend).
+  // NOTE: For true atomicity, migrate to Durable Objects.
+  const lockKey = `coin:${userId}:lock`;
+  const existingLock = await env.COIN_KV.get(lockKey);
+  if (existingLock) {
+    return { ok: false, error: 'Concurrent deduction in progress, please retry' };
   }
+  await env.COIN_KV.put(lockKey, '1', { expirationTtl: 5 });
 
-  const newBalance = Math.max(0, balance - amount);
-  await env.COIN_KV.put(`coin:${userId}:balance`, String(newBalance));
+  try {
+    const balance = await getCoinBalance(env, userId);
+    if (balance < amount) {
+      return { ok: false, error: '月幣不足', balance, required: amount };
+    }
 
-  const history = await getCoinHistory(env, userId);
-  history.push({
-    type: 'deduct',
-    amount,
-    reason,
-    balance: newBalance,
-    at: Date.now(),
-  });
-  const trimmed = history.slice(-100);
-  await env.COIN_KV.put(`coin:${userId}:history`, JSON.stringify(trimmed), {
-    expirationTtl: 86400 * 90, // 90 days
-  });
+    const newBalance = Math.max(0, balance - amount);
+    await env.COIN_KV.put(`coin:${userId}:balance`, String(newBalance));
 
-  return { ok: true, balance: newBalance };
+    const history = await getCoinHistory(env, userId);
+    history.push({
+      type: 'deduct',
+      amount,
+      reason,
+      balance: newBalance,
+      at: Date.now(),
+    });
+    const trimmed = history.slice(-100);
+    await env.COIN_KV.put(`coin:${userId}:history`, JSON.stringify(trimmed), {
+      expirationTtl: 86400 * 90, // 90 days
+    });
+
+    return { ok: true, balance: newBalance };
+  } finally {
+    await env.COIN_KV.delete(lockKey);
+  }
 }
 
 async function refundCoins(env, userId, amount, reason) {
@@ -848,11 +870,14 @@ async function proxyAnthropic(apiKey, model, system, messages) {
 }
 
 async function proxyGoogle(apiKey, model, system, messages) {
-  const userText = messages.map(m => m.content).join('\n');
+  const contents = messages.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }],
+  }));
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const reqBody = {
-    contents: [{ parts: [{ text: userText }] }],
+    contents,
     generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
   };
   if (system) {
