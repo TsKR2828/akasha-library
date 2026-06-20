@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-9e55306844';
+const CACHE_NAME = 'akasha-library-1ab8d98888';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -47,6 +47,9 @@ const LOCAL_ASSETS = [
   './core/approved-memory.js',
   './core/text-decode.js',
 
+  // Persona data (must be precached for offline AI)
+  './persona.md',
+
   // Modules
   './modules/ai-settings/index.html',
   './modules/book-editor/index.html',
@@ -64,7 +67,7 @@ const LOCAL_ASSETS = [
 
   // Built Vite modules
   './dist/spreadsheet/index.html',
-  './dist/spreadsheet/assets/index-BZDlzQKB.js',
+  './dist/spreadsheet/assets/index-CI3OT-ae.js',
   './dist/script-editor/index.html',
   './dist/script-editor/assets/index-DsxswIV8.js',
   './dist/script-editor/assets/index-dpyRvhxh.css',

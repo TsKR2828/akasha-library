@@ -1408,7 +1408,7 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { saveFileEntry, saveFileBlob, getFileBlob, deleteFileEntry, deleteEmbeddings, deleteBookmarksByFile, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
+  import { saveFileEntry, saveFileBlob, getFileBlob, getFileEntries, deleteFileEntry, deleteEmbeddings, deleteBookmarksByFile, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
   import { hashFileBytes, findLibraryItem, upsertLibraryItem, removeLibraryItem } from './library-store.js';
   import { extractContextPages, extractPageText } from '../../core/ai.js';
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
@@ -2211,6 +2211,16 @@
     const lib = getLibrary();
     const contentHash = await hashFileBytes(bytes);
     const existingItem = findLibraryItem(lib, preferredId, contentHash);
+
+    // Preserve sync fields from existing entry
+    let existingEntry = null;
+    if (existingItem?.id) {
+      try {
+        const entries = await getFileEntries();
+        existingEntry = entries.find(e => e.id === existingItem.id);
+      } catch {}
+    }
+
     const entry = await saveFileEntry({
       id: existingItem?.id || undefined,
       name,
@@ -2218,6 +2228,11 @@
       size: bytes.byteLength,
       pages,
       contentHash,
+      // Preserve sync state from existing entry
+      ...(existingEntry ? {
+        driveId: existingEntry.driveId,
+        syncStatus: existingEntry.syncStatus,
+      } : {}),
     });
     currentFileId = entry.id;
     await saveFileBlob(entry.id, new Blob([bytes], { type: 'application/pdf' }));
@@ -2238,12 +2253,30 @@
     const remaining = removeLibraryItem(lib, id, name);
     localStorage.setItem('akasha-library', JSON.stringify(remaining));
     if (item?.id) {
+      // Delete remote Drive file if it was synced (must read entry before deleting it)
+      try {
+        const entries = await getFileEntries();
+        const entry = entries.find(e => e.id === item.id);
+        if (entry?.driveId) {
+          const { deleteFile } = await import('../../core/drive.js');
+          await deleteFile(entry.driveId);
+        }
+      } catch (err) {
+        console.warn('Failed to delete remote file:', err);
+      }
+
       try { await deleteFileEntry(item.id); } catch (e) { /* best effort */ }
       // Clean up derived data (embeddings, bookmarks) to avoid orphaned residue
       try { await deleteEmbeddings(item.id); } catch (e) { /* best effort */ }
       try { await deleteBookmarksByFile(item.id); } catch (e) { /* best effort */ }
-      // NOTE: Drive sync may resurrect a deleted PDF if no tombstone exists.
-      // A proper soft-delete/tombstone system is needed to fully prevent this.
+
+      // Create tombstone to prevent sync resurrection
+      try {
+        localStorage.setItem(
+          'akasha-tombstone:' + item.id,
+          JSON.stringify({ deletedAt: Date.now(), name: item.name || name })
+        );
+      } catch {}
     }
     renderLibrary();
   }

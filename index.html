@@ -2691,6 +2691,21 @@ body { display: flex; }
       var rrCard = document.getElementById('card-reading-room');
       if (rrCard) rrCard.style.display = 'none';
     }
+
+    // Gate AI features in public build
+    if (!sec.isFeatureEnabled('ai_panel')) {
+      var aiPanel = document.getElementById('aiPanel');
+      if (aiPanel) aiPanel.style.display = 'none';
+      var btnSummon = document.getElementById('btn-summon');
+      if (btnSummon) btnSummon.style.display = 'none';
+      var aiNav = document.querySelector('.nav-item[data-module="ai-settings"]');
+      if (aiNav) aiNav.style.display = 'none';
+    }
+    // Gate Google Drive login in public build
+    if (!sec.isFeatureEnabled('drive_sync')) {
+      var authBlock = document.getElementById('auth-block');
+      if (authBlock) authBlock.style.display = 'none';
+    }
   }).catch(function() {});
 
   // Listen for reading progress (no import needed)
@@ -2821,14 +2836,42 @@ window.openRecentFile = async function(fileId, moduleName) {
   const entries = await getFileEntries();
   const entry = entries.find(e => e.id === fileId);
   if (entry && (entry.copyrightProtected || COPYRIGHT_TYPES.has(entry.type))) {
-    alert('可以做筆記，為保護智慧財產權，不可以帶出館藏喔');
+    // Allow viewing but prevent export — send read-only flag to module
+    const filename = entry?.name || 'file';
+    openModule(moduleName);
+    if (!blob) return;
+    frame.addEventListener('load', async () => {
+      let text;
+      if (typeof blob === 'string') { text = blob; }
+      else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }
+      frame.contentWindow.postMessage({
+        type: 'akasha-open-file',
+        filename,
+        content: text,
+        size: text.length,
+        readOnly: true,
+        copyrightProtected: true,
+      }, location.origin);
+    }, { once: true });
     return;
   }
   const filename = entry?.name || 'file';
   openModule(moduleName);
   if (!blob) return;
   frame.addEventListener('load', async () => {
-    if (moduleName === 'markdown') {
+    if (moduleName === 'markdown' && /\.docx$/i.test(filename)) {
+      // DOCX: re-run document-bridge conversion to get markdown from the binary
+      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+      const { importDocx } = await import('./core/document-bridge.js');
+      const result = await importDocx(buffer, filename);
+      frame.contentWindow.postMessage({ type: 'akasha-open-file', filename: result.outName, content: result.markdown, size: result.markdown.length }, location.origin);
+    } else if (moduleName === 'markdown' && /\.doc$/i.test(filename)) {
+      // DOC: extract plain text from the binary
+      const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
+      const { extractDocText } = await import('./core/document-bridge.js');
+      const text = extractDocText(buffer);
+      frame.contentWindow.postMessage({ type: 'akasha-open-file', filename: filename.replace(/\.doc$/i, '.txt'), content: text, size: text.length }, location.origin);
+    } else if (moduleName === 'markdown') {
       let text;
       if (typeof blob === 'string') { text = blob; }
       else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }

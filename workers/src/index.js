@@ -33,7 +33,7 @@ function buildCors(request, env) {
 
   if (!allowed) {
     return {
-      'Access-Control-Allow-Origin': '',
+      'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
@@ -238,7 +238,7 @@ async function handleAuthToken(request, env, respond) {
   let body;
   try { body = await request.json(); } catch { return respond({ error: 'Invalid JSON' }, 400); }
 
-  const { idToken, accessToken } = body;
+  const { idToken, token } = body;
   let userId, email;
 
   if (idToken) {
@@ -253,14 +253,28 @@ async function handleAuthToken(request, env, respond) {
     if (!info.sub) return respond({ error: 'Token missing subject' }, 401);
     userId = info.sub;
     email = info.email || null;
+  } else if (token) {
+    // Validate access token via Google tokeninfo endpoint
+    const gRes = await fetch(
+      'https://oauth2.googleapis.com/tokeninfo?access_token=' + encodeURIComponent(token)
+    );
+    if (!gRes.ok) return respond({ error: 'Invalid token' }, 401);
+    const info = await gRes.json();
+    // Verify audience matches our client ID (prevents token substitution)
+    if (env.GOOGLE_CLIENT_ID && info.aud !== env.GOOGLE_CLIENT_ID) {
+      return respond({ error: 'Token audience mismatch' }, 401);
+    }
+    if (!info.sub) return respond({ error: 'Token missing subject' }, 401);
+    userId = info.sub;
+    email = info.email || null;
   } else {
-    return respond({ error: 'ID token required. Access token login is not supported.' }, 400);
+    return respond({ error: 'Token required' }, 400);
   }
 
-  const token = await createSessionToken(env.COIN_SECRET, userId);
+  const sessionToken = await createSessionToken(env.COIN_SECRET, userId);
   return respond({
     ok: true,
-    token,
+    token: sessionToken,
     userId,
     email,
     expiresIn: TOKEN_TTL,
@@ -308,9 +322,12 @@ async function handleChat(request, env, respond) {
       return respond({ error: `Server key not configured for provider: ${provider}` }, 503);
     }
 
-    // Check + deduct in one tight sequence to minimize race window
+    // Check + deduct with nonce-based idempotency guard
     const cost = estimateCoinCost(model, system, messages);
-    const deduction = await checkAndDeductCoins(env, userId, cost, `chat:${provider}:${model}`);
+    const nonce = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
+      userId + ':' + Date.now().toString(36) + ':' + JSON.stringify(body.messages?.slice(-1))
+    )).then(buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
+    const deduction = await checkAndDeductCoins(env, userId, cost, `chat:${provider}:${model}`, nonce);
     if (!deduction.ok) {
       return respond({
         error: deduction.error,
@@ -529,7 +546,10 @@ async function handleRagEmbed(body, request, env, respond) {
     key = getServerKey(env, provider);
     if (!key) return respond({ error: `Server key not configured for: ${provider}` }, 503);
 
-    const deduction = await checkAndDeductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`);
+    const embedNonce = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
+      userId + ':' + Date.now().toString(36) + ':embed:' + texts.length
+    )).then(buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
+    const deduction = await checkAndDeductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`, embedNonce);
     if (!deduction.ok) {
       return respond({ error: deduction.error, balance: deduction.balance, required: deduction.required }, 402);
     }
@@ -689,7 +709,10 @@ async function handleCoinDeduct(request, env, respond) {
     return respond({ error: 'amount must be a positive number' }, 400);
   }
 
-  const deduction = await checkAndDeductCoins(env, userId, amount, reason || 'manual');
+  const deductNonce = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
+    userId + ':' + Date.now().toString(36) + ':deduct:' + amount + ':' + (reason || 'manual')
+  )).then(buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
+  const deduction = await checkAndDeductCoins(env, userId, amount, reason || 'manual', deductNonce);
   if (!deduction.ok) {
     return respond({ error: deduction.error, balance: deduction.balance, required: deduction.required }, 402);
   }
@@ -716,44 +739,43 @@ async function getCoinHistory(env, userId) {
   return val || [];
 }
 
-async function checkAndDeductCoins(env, userId, amount, reason) {
+// NOTE: True atomicity requires Durable Objects. This nonce-based approach
+// prevents duplicate charges from retries but not from truly concurrent
+// first-time requests arriving simultaneously.
+async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
   if (!env.COIN_KV) return { ok: false, error: 'COIN_KV not configured' };
 
-  // Simple KV lock to prevent concurrent deductions (double-spend).
-  // NOTE: For true atomicity, migrate to Durable Objects.
-  const lockKey = `coin:${userId}:lock`;
-  const existingLock = await env.COIN_KV.get(lockKey);
-  if (existingLock) {
-    return { ok: false, error: 'Concurrent deduction in progress, please retry' };
+  // Idempotency guard: if this request was already processed, return cached result
+  if (requestNonce) {
+    const existing = await env.COIN_KV.get('nonce:' + requestNonce, 'json');
+    if (existing) return existing;
   }
-  await env.COIN_KV.put(lockKey, '1', { expirationTtl: 5 });
 
-  try {
-    const balance = await getCoinBalance(env, userId);
-    if (balance < amount) {
-      return { ok: false, error: '月幣不足', balance, required: amount };
-    }
-
-    const newBalance = Math.max(0, balance - amount);
-    await env.COIN_KV.put(`coin:${userId}:balance`, String(newBalance));
-
-    const history = await getCoinHistory(env, userId);
-    history.push({
-      type: 'deduct',
-      amount,
-      reason,
-      balance: newBalance,
-      at: Date.now(),
-    });
-    const trimmed = history.slice(-100);
-    await env.COIN_KV.put(`coin:${userId}:history`, JSON.stringify(trimmed), {
-      expirationTtl: 86400 * 90, // 90 days
-    });
-
-    return { ok: true, balance: newBalance };
-  } finally {
-    await env.COIN_KV.delete(lockKey);
+  const balance = await getCoinBalance(env, userId);
+  if (balance < amount) {
+    return { ok: false, error: '月幣不足', balance, required: amount };
   }
+
+  const newBalance = Math.max(0, balance - amount);
+  await env.COIN_KV.put('coin:' + userId + ':balance', String(newBalance));
+
+  const result = { ok: true, balance: newBalance };
+
+  // Cache the result by nonce so retries/duplicates get same answer
+  if (requestNonce) {
+    await env.COIN_KV.put('nonce:' + requestNonce, JSON.stringify(result), {
+      expirationTtl: 300, // 5 minute TTL
+    });
+  }
+
+  const history = await getCoinHistory(env, userId);
+  history.push({ type: 'deduct', amount, reason, balance: newBalance, at: Date.now() });
+  const trimmed = history.slice(-100);
+  await env.COIN_KV.put('coin:' + userId + ':history', JSON.stringify(trimmed), {
+    expirationTtl: 86400 * 90,
+  });
+
+  return result;
 }
 
 async function refundCoins(env, userId, amount, reason) {

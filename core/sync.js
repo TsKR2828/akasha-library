@@ -223,7 +223,12 @@ export async function queueForSync(fileId) {
   }
 
   if (navigator.onLine && isSignedIn()) {
-    flushOfflineQueue();
+    await flushOfflineQueue();
+    // S1-5 FIX: After uploading file blobs, also update the Drive index
+    // so other devices can discover the new/changed file immediately.
+    // Without this, the index only updates on fullSync (auth change or
+    // coming back online), leaving other devices blind to the change.
+    await updateDriveIndex();
   }
 }
 
@@ -248,6 +253,26 @@ async function flushOfflineQueue() {
     emitStatus('error', failCount + ' 個檔案同步失敗，將在下次連線時重試');
   } else {
     emitStatus('synced', '離線佇列已同步');
+  }
+}
+
+/**
+ * Upload the local index to Drive so other devices can see changes.
+ * Uses the same INDEX_FILENAME and exportIndex() mechanism as fullSync step 5,
+ * but without the optimistic-concurrency retry loop (single-file save doesn't
+ * warrant the complexity; the next fullSync will reconcile if needed).
+ * Non-fatal: errors are logged but don't break the save flow.
+ */
+async function updateDriveIndex() {
+  try {
+    const remoteFiles = await listFiles();
+    const remoteIndex = remoteFiles.find(f => f.name === INDEX_FILENAME);
+    const indexJson = await exportIndex();
+    await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
+      remoteIndex ? remoteIndex.id : null);
+  } catch (err) {
+    console.warn('Failed to update Drive index:', err);
+    // Non-fatal — index will be reconciled on next fullSync
   }
 }
 

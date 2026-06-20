@@ -273,6 +273,10 @@ h1 {
 let catalog = { version: 1, updated: '', categories: ['文學','哲學','歷史','科學','童話'], books: [] };
 let editingId = null;
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 function generateId() {
   return 'book-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
@@ -323,16 +327,24 @@ function renderList() {
   list.innerHTML = catalog.books.map(book => `
     <div class="book-list-item">
       <div class="book-list-item__info">
-        <div class="book-list-item__title">${book.title}</div>
-        <div class="book-list-item__meta">${book.author} · ${book.category} · ${book.pages} 頁</div>
+        <div class="book-list-item__title">${escapeHtml(book.title)}</div>
+        <div class="book-list-item__meta">${escapeHtml(book.author)} · ${escapeHtml(book.category)} · ${book.pages} 頁</div>
       </div>
       <div class="book-list-item__actions">
-        <button class="btn" onclick="editBook('${book.id}')">編輯</button>
-        <button class="btn btn-danger" onclick="deleteBook('${book.id}')">刪除</button>
+        <button class="btn" data-action="edit" data-id="${escapeHtml(book.id)}">編輯</button>
+        <button class="btn btn-danger" data-action="delete" data-id="${escapeHtml(book.id)}">刪除</button>
       </div>
     </div>
   `).join('');
 }
+
+document.getElementById('bookList').addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (btn.dataset.action === 'edit') editBook(id);
+  else if (btn.dataset.action === 'delete') deleteBook(id);
+});
 
 function addNewBook() {
   editingId = null;

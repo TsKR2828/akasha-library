@@ -142,7 +142,8 @@ export async function loadPersona() {
     }
   } catch { /* fetch fails on file:// */ }
 
-  // 3. Hardcoded fallback
+  // 3. Hardcoded fallback (degraded mode — persona.md not available)
+  console.warn('[Persona] persona.md unavailable; using hardcoded fallback (degraded persona mode)');
   cachedPersona = parsePersonaMd(DEFAULT_MD);
   return cachedPersona;
 }

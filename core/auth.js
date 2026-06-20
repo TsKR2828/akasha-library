@@ -9,7 +9,7 @@ let tokenClient = null;
 let accessToken = null;
 let userProfile = null;
 
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file openid profile email';
 
 /**
  * Initialize Google auth. Must be called after config is loaded.

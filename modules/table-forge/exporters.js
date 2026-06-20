@@ -33,10 +33,18 @@ export function exportJSON(doc) {
   if (!sheet || sheet.columns.length === 0) return '[]';
 
   const cols = sheet.columns;
+  // De-duplicate column names for JSON keys
+  const nameCount = {};
+  const colKeys = cols.map(col => {
+    const base = col.name;
+    nameCount[base] = (nameCount[base] || 0) + 1;
+    return nameCount[base] > 1 ? base + '_' + nameCount[base] : base;
+  });
+
   const result = sheet.rows.map(row => {
     const obj = {};
-    for (const col of cols) {
-      obj[col.name] = row.cells[col.id] ?? '';
+    for (let i = 0; i < cols.length; i++) {
+      obj[colKeys[i]] = row.cells[cols[i].id] ?? '';
     }
     return obj;
   });

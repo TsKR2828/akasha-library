@@ -39,7 +39,7 @@ export async function getSessionToken() {
     const res = await fetch(`${proxyUrl}/v1/auth/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accessToken: googleToken }),
+      body: JSON.stringify({ token: googleToken }),
     });
     if (!res.ok) return null;
     const data = await res.json();

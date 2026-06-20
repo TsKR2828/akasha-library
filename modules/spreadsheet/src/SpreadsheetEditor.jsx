@@ -99,7 +99,24 @@ export default function SpreadsheetEditor() {
         return s === "" ? "" : isNaN(n) ? s : n;
       }
 
-      const formula = s.slice(1).trim().toUpperCase();
+      // Uppercase function names and refs but preserve string literals
+      let formula = '';
+      let inString = false;
+      let stringChar = '';
+      const raw = s.slice(1).trim();
+      for (let ci = 0; ci < raw.length; ci++) {
+        const ch = raw[ci];
+        if (inString) {
+          formula += ch;
+          if (ch === stringChar) inString = false;
+        } else if (ch === '"' || ch === "'") {
+          inString = true;
+          stringChar = ch;
+          formula += ch;
+        } else {
+          formula += ch.toUpperCase();
+        }
+      }
 
       const expandRange = (rangeStr) => {
         const [startRef, endRef] = rangeStr.split(":");
@@ -394,8 +411,15 @@ export default function SpreadsheetEditor() {
               for (let c = range.s.c; c <= limitC; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
                 const cell = ws[addr];
-                if (cell && cell.v !== undefined && cell.v !== null && cell.v !== "") {
-                  newCells[cellId(r, c)] = String(cell.v);
+                if (cell) {
+                  let cellValue;
+                  if (cell.f) {
+                    // Preserve formula: prefix with = so the evaluator processes it
+                    cellValue = '=' + cell.f;
+                  } else if (cell.v !== undefined && cell.v !== null && cell.v !== '') {
+                    cellValue = String(cell.v);
+                  }
+                  if (cellValue) newCells[cellId(r, c)] = cellValue;
                 }
               }
             }
@@ -668,8 +692,15 @@ export default function SpreadsheetEditor() {
                 for (let c = range.s.c; c <= limitC; c++) {
                   const addr = XLSX.utils.encode_cell({ r, c });
                   const cell = ws[addr];
-                  if (cell && cell.v !== undefined && cell.v !== null && cell.v !== "") {
-                    newCells[cellId(r, c)] = String(cell.v);
+                  if (cell) {
+                    let cellValue;
+                    if (cell.f) {
+                      // Preserve formula: prefix with = so the evaluator processes it
+                      cellValue = '=' + cell.f;
+                    } else if (cell.v !== undefined && cell.v !== null && cell.v !== '') {
+                      cellValue = String(cell.v);
+                    }
+                    if (cellValue) newCells[cellId(r, c)] = cellValue;
                   }
                 }
               }

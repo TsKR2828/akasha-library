@@ -192,7 +192,7 @@ function extractMarkdown(content) {
 function parseTable(lines, start) {
   const isRow = l => /^\s*\|/.test(l) && /\|\s*$/.test(l);
   const isSep = l => /^\s*\|[\s:]*-{2,}[\s:|-]*\|\s*$/.test(l);
-  const split = l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+  const split = l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split(/(?<!\\)\|/).map(c => c.replace(/\\\|/g, '|').trim());
   if (!isRow(lines[start]) || start + 1 >= lines.length || !isSep(lines[start + 1])) return null;
   const head = split(lines[start]);
   const body = [];
@@ -208,7 +208,7 @@ export function extractMarkdownMeta(content) {
 
   const isRow = l => /^\s*\|/.test(l) && /\|\s*$/.test(l);
   const isSep = l => /^\s*\|[\s:]*-{2,}[\s:|-]*\|\s*$/.test(l);
-  const split = l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|').map(c => c.trim());
+  const split = l => l.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split(/(?<!\\)\|/).map(c => c.replace(/\\\|/g, '|').trim());
 
   for (let i = 0; i < lines.length; i++) {
     const tr = lines[i].trim();
@@ -293,10 +293,15 @@ function extractJson(content) {
   try { data = JSON.parse(content); } catch { return [{ type: 'paragraph', text: content }]; }
 
   if (Array.isArray(data) && data.length && typeof data[0] === 'object' && data[0] !== null) {
-    const objects = data.filter(o => typeof o === 'object' && o !== null && !Array.isArray(o));
-    if (objects.length === 0) return [{ type: 'paragraph', text: JSON.stringify(data, null, 2) }];
-    const keys = [...new Set(objects.flatMap(o => Object.keys(o)))];
-    const body = objects.map(o => keys.map(k => {
+    // Convert mixed arrays: wrap non-object elements so nothing is silently dropped
+    const normalized = data.map((item, idx) => {
+      if (item === null || item === undefined) return { _index: idx, _value: String(item) };
+      if (typeof item !== 'object') return { _index: idx, _value: String(item) };
+      if (Array.isArray(item)) return { _index: idx, _value: JSON.stringify(item) };
+      return item;
+    });
+    const keys = [...new Set(normalized.flatMap(o => Object.keys(o)))];
+    const body = normalized.map(o => keys.map(k => {
       const v = o[k];
       return v == null ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
     }));
