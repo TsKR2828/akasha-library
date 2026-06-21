@@ -75,6 +75,17 @@ const ALWAYS_EXCLUDE_PATTERNS = [
   /^DESIGN-BRIEF\.md$/,
 ];
 
+/**
+ * Private module directories — excluded from public builds.
+ * Derived from FEATURE_GATES in core/security.js:
+ *   reading_room: false  → modules/reading-room/
+ *   ai_panel/byok/encryption: false → modules/ai-settings/
+ */
+const PRIVATE_PATHS = [
+  join('modules', 'ai-settings'),
+  join('modules', 'reading-room'),
+];
+
 /** Public mode: additional exclusions */
 const PUBLIC_EXCLUDE_DIRS = new Set([
   'workers',                // backend source
@@ -146,8 +157,22 @@ mkdirSync(OUT, { recursive: true });
 const files = walk(ROOT);
 let copied = 0;
 let transformed = 0;
+let privateSkipped = 0;
 
 for (const rel of files) {
+  // Public build: skip private module files
+  if (MODE === 'public') {
+    const relNorm = rel.replace(/\\/g, '/');
+    const skip = PRIVATE_PATHS.some(p => {
+      const pNorm = p.replace(/\\/g, '/');
+      return relNorm === pNorm || relNorm.startsWith(pNorm + '/');
+    });
+    if (skip) {
+      privateSkipped++;
+      continue;
+    }
+  }
+
   const src = join(ROOT, rel);
   const dst = join(OUT, rel);
 
@@ -222,6 +247,9 @@ for (const rel of files) {
 
 console.log(`  Copied:      ${copied} files`);
 console.log(`  Transformed: ${transformed} files`);
+if (privateSkipped > 0) {
+  console.log(`  Skipped:     ${privateSkipped} private module files`);
+}
 console.log(`  Output:      ${OUT}`);
 
 /* ── Verify ──────────────────────────────────────── */
@@ -238,9 +266,12 @@ const critical = [
   join('modules', 'table-forge', 'index.html'),
   join('dist', 'script-editor', 'index.html'),
   join('modules', 'book-editor', 'index.html'),
-  join('modules', 'reading-room', 'index.html'),
   join('modules', 'daily-report', 'index.html'),
-  join('modules', 'ai-settings', 'index.html'),
+  // Private modules — only critical in private builds
+  ...(MODE === 'private' ? [
+    join('modules', 'reading-room', 'index.html'),
+    join('modules', 'ai-settings', 'index.html'),
+  ] : []),
 ];
 
 let missing = 0;

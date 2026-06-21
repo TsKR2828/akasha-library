@@ -13,6 +13,13 @@ const FOLDER_NAME = 'Akasha Library';
 
 let appFolderId = null;
 
+/**
+ * Reset cached Drive folder ID (call on sign-out / account switch)
+ */
+export function resetDriveCache() {
+  appFolderId = null;
+}
+
 async function driveJson(res) {
   const data = await res.json();
   if (!res.ok) {
@@ -170,7 +177,7 @@ export async function deleteFile(fileId) {
     headers: { Authorization: `Bearer ${token}` }
   });
 
-  if (!res.ok && res.status !== 204) {
+  if (!res.ok && res.status !== 204 && res.status !== 404) {
     throw new Error(`Drive API delete failed: ${res.status}`);
   }
 }

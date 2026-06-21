@@ -533,13 +533,18 @@ window.addEventListener('message', (e) => {
 });
 
 // ===== AI Bridge =====
-let pendingAIResolve = null;
+var pendingResolvers = new Map();
+var reportRequestId = 0;
 
 window.addEventListener('message', (e) => {
   if (e.origin !== location.origin) return;
-  if (e.data?.type === 'akasha-report-response' && pendingAIResolve) {
-    pendingAIResolve(e.data);
-    pendingAIResolve = null;
+  if (e.data?.type === 'akasha-report-response') {
+    var id = e.data.requestId;
+    var resolver = pendingResolvers.get(id);
+    if (resolver) {
+      resolver(e.data);
+      pendingResolvers.delete(id);
+    }
   }
   if (e.data?.type === 'akasha-ai-get-context') {
     const summary = state.currentReport
@@ -556,18 +561,20 @@ window.addEventListener('message', (e) => {
 
 function generateReport(text, date) {
   return new Promise((resolve, reject) => {
-    pendingAIResolve = (data) => {
+    var id = ++reportRequestId;
+    pendingResolvers.set(id, (data) => {
       if (data.error) reject(new Error(data.error));
       else resolve(data.report);
-    };
+    });
     window.parent.postMessage({
       type: 'akasha-report-generate',
       text,
       date,
+      requestId: id,
     }, location.origin);
     setTimeout(() => {
-      if (pendingAIResolve) {
-        pendingAIResolve = null;
+      if (pendingResolvers.has(id)) {
+        pendingResolvers.delete(id);
         reject(new Error('報告生成逾時'));
       }
     }, 90000);

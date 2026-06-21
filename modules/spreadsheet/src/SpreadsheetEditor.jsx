@@ -619,18 +619,26 @@ export default function SpreadsheetEditor() {
         if (ref) { maxR = Math.max(maxR, ref.r); maxC = Math.max(maxC, ref.c); }
       });
       const aoa = [];
+      const formulas = [];
       for (let r = 0; r <= maxR; r++) {
         const row = [];
         for (let c = 0; c <= maxC; c++) {
           const id = cellId(r, c);
           const raw = sh.cells[id];
           if (raw === undefined || raw === "") { row.push(""); continue; }
+          if (typeof raw === "string" && raw.startsWith("=")) {
+            formulas.push({ r: r, c: c, f: raw.slice(1) });
+          }
           const display = evaluate(raw, sh.cells);
           row.push(display);
         }
         aoa.push(row);
       }
       const ws = XLSX.utils.aoa_to_sheet(aoa);
+      for (let fi = 0; fi < formulas.length; fi++) {
+        const addr = XLSX.utils.encode_cell({ r: formulas[fi].r, c: formulas[fi].c });
+        if (ws[addr]) ws[addr].f = formulas[fi].f;
+      }
       XLSX.utils.book_append_sheet(wb, ws, sh.name);
     });
     XLSX.writeFile(wb, "試算表.xlsx");

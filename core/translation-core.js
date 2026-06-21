@@ -292,7 +292,7 @@ function extractJson(content) {
   let data;
   try { data = JSON.parse(content); } catch { return [{ type: 'paragraph', text: content }]; }
 
-  if (Array.isArray(data) && data.length && typeof data[0] === 'object' && data[0] !== null) {
+  if (Array.isArray(data) && data.length && data.some(function(item) { return typeof item === 'object' && item !== null && !Array.isArray(item); })) {
     // Convert mixed arrays: wrap non-object elements so nothing is silently dropped
     const normalized = data.map((item, idx) => {
       if (item === null || item === undefined) return { _index: idx, _value: String(item) };

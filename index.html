@@ -2804,7 +2804,7 @@ const TYPE_ICONS = {
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
 const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT', 'ocr-note': 'OCR', 'crop-screenshot': 'CROP', jsonl: 'JSONL', ks: 'KS' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', xlsx: 'spreadsheet', xls: 'spreadsheet', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'pdf-reader', jsonl: 'script-editor', ks: 'script-editor' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', xlsx: 'spreadsheet', xls: 'spreadsheet', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'markdown', jsonl: 'script-editor', ks: 'script-editor' };
 const COPYRIGHT_TYPES = new Set(['ocr-note', 'crop-screenshot']);
 
 async function renderRecent() {
@@ -2878,7 +2878,7 @@ window.openRecentFile = async function(fileId, moduleName) {
       frame.contentWindow.postMessage({ type: 'akasha-open-file', filename, content: text, size: text.length }, location.origin);
     } else if (moduleName === 'pdf-reader') {
       const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
-      frame.contentWindow.postMessage({ type: 'akasha-open-pdf', filename, data: buffer }, location.origin);
+      frame.contentWindow.postMessage({ type: 'akasha-open-pdf', filename, data: buffer, fileId: entry.id }, location.origin);
     } else if (moduleName === 'table-forge') {
       let text;
       if (typeof blob === 'string') { text = blob; }
@@ -3458,8 +3458,8 @@ function startBgSync() {
     if (count > 0) {
       updateSyncDot('syncing');
       try {
-        await processQueue();
-        updateSyncDot('ok');
+        var result = await processQueue();
+        if (result && result.failed > 0) { updateSyncDot('error'); } else { updateSyncDot('ok'); }
       } catch { updateSyncDot('error'); }
     }
   }, 5 * 60 * 1000);
@@ -3836,7 +3836,7 @@ window.addEventListener('message', (event) => {
       try {
         const settings = getAISettings();
         if (settings.error === 'no-api-key') {
-          replyTarget.postMessage({ type: 'akasha-report-response', error: '尚未設定 API Key。' }, location.origin);
+          replyTarget.postMessage({ type: 'akasha-report-response', error: '尚未設定 API Key。', requestId: d.requestId }, location.origin);
           return;
         }
 
@@ -3870,7 +3870,7 @@ JSON 格式：
         const totalTokens = estimateTokens(reportSystemPrompt) + estimateTokens(d.text);
 
         if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
-          replyTarget.postMessage({ type: 'akasha-report-response', error: '月幣不足。' }, location.origin);
+          replyTarget.postMessage({ type: 'akasha-report-response', error: '月幣不足。', requestId: d.requestId }, location.origin);
           return;
         }
 
@@ -3889,9 +3889,9 @@ JSON 格式：
           throw new Error('LLM 未回傳有效 JSON');
         }
 
-        replyTarget.postMessage({ type: 'akasha-report-response', report }, location.origin);
+        replyTarget.postMessage({ type: 'akasha-report-response', report, requestId: d.requestId }, location.origin);
       } catch (err) {
-        replyTarget.postMessage({ type: 'akasha-report-response', error: err.message || '未知錯誤' }, location.origin);
+        replyTarget.postMessage({ type: 'akasha-report-response', error: err.message || '未知錯誤', requestId: d.requestId }, location.origin);
       }
     })();
   }

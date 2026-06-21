@@ -228,9 +228,7 @@ let catalog = null;
 let activeFilter = 'all';
 
 function escapeHtml(str) {
-  const el = document.createElement('span');
-  el.textContent = str;
-  return el.innerHTML;
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 }
 
 async function loadCatalog() {

@@ -91,6 +91,10 @@ export async function flushSession(module, session) {
   if (!isEnabled()) return null;
   if (!session || !session.turns || session.turns.length === 0) return null;
 
+  const lastFlushed = session._lastFlushedIndex || 0;
+  const newTurns = session.turns.slice(lastFlushed);
+  if (newTurns.length === 0) return null;
+
   const existing = await getRoomSummary(module) || {
     module,
     turnCount: 0,
@@ -99,7 +103,7 @@ export async function flushSession(module, session) {
     updatedAt: 0,
   };
 
-  const newTopics = extractTopics(session.turns);
+  const newTopics = extractTopics(newTurns);
   const merged = [...existing.topics, ...newTopics];
   const unique = [...new Set(merged)].slice(-MAX_TOPICS);
 
@@ -111,13 +115,14 @@ export async function flushSession(module, session) {
 
   const record = {
     module,
-    turnCount: existing.turnCount + session.turns.filter(t => t.role === 'user').length,
+    turnCount: existing.turnCount + newTurns.filter(t => t.role === 'user').length,
     topics: unique,
     files: mergedFiles,
     updatedAt: Date.now(),
   };
 
   await saveRoomSummary(record);
+  session._lastFlushedIndex = session.turns.length;
   return record;
 }
 

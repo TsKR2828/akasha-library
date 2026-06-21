@@ -739,9 +739,8 @@ async function getCoinHistory(env, userId) {
   return val || [];
 }
 
-// NOTE: True atomicity requires Durable Objects. This nonce-based approach
-// prevents duplicate charges from retries but not from truly concurrent
-// first-time requests arriving simultaneously.
+// NOTE: KV is eventually consistent. Lock+nonce prevents most double-spend
+// but not all. For guaranteed atomicity, migrate to Durable Objects.
 async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
   if (!env.COIN_KV) return { ok: false, error: 'COIN_KV not configured' };
 
@@ -751,31 +750,56 @@ async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
     if (existing) return existing;
   }
 
-  const balance = await getCoinBalance(env, userId);
-  if (balance < amount) {
-    return { ok: false, error: '月幣不足', balance, required: amount };
+  // Per-user lock to serialize concurrent deductions
+  const lockKey = `deduct-lock:${userId}`;
+  const MAX_LOCK_ATTEMPTS = 3;
+  const LOCK_RETRY_MS = 200;
+
+  for (let attempt = 0; attempt < MAX_LOCK_ATTEMPTS; attempt++) {
+    const lockHolder = await env.COIN_KV.get(lockKey);
+    if (!lockHolder) break;
+    if (attempt === MAX_LOCK_ATTEMPTS - 1) {
+      return { ok: false, error: '扣款處理中，請稍後重試' };
+    }
+    await new Promise(r => setTimeout(r, LOCK_RETRY_MS));
   }
 
-  const newBalance = Math.max(0, balance - amount);
-  await env.COIN_KV.put('coin:' + userId + ':balance', String(newBalance));
+  // Acquire lock with short TTL (auto-expires if worker crashes)
+  await env.COIN_KV.put(lockKey, '1', { expirationTtl: 10 });
 
-  const result = { ok: true, balance: newBalance };
+  try {
+    const balance = await getCoinBalance(env, userId);
+    if (balance < amount) {
+      await env.COIN_KV.delete(lockKey);
+      return { ok: false, error: '月幣不足', balance, required: amount };
+    }
 
-  // Cache the result by nonce so retries/duplicates get same answer
-  if (requestNonce) {
-    await env.COIN_KV.put('nonce:' + requestNonce, JSON.stringify(result), {
-      expirationTtl: 300, // 5 minute TTL
+    const newBalance = Math.max(0, balance - amount);
+    await env.COIN_KV.put('coin:' + userId + ':balance', String(newBalance));
+
+    const result = { ok: true, balance: newBalance };
+
+    // Cache the result by nonce so retries/duplicates get same answer
+    if (requestNonce) {
+      await env.COIN_KV.put('nonce:' + requestNonce, JSON.stringify(result), {
+        expirationTtl: 300, // 5 minute TTL
+      });
+    }
+
+    const history = await getCoinHistory(env, userId);
+    history.push({ type: 'deduct', amount, reason, balance: newBalance, at: Date.now() });
+    const trimmed = history.slice(-100);
+    await env.COIN_KV.put('coin:' + userId + ':history', JSON.stringify(trimmed), {
+      expirationTtl: 86400 * 90,
     });
+
+    await env.COIN_KV.delete(lockKey);
+    return result;
+  } catch (err) {
+    // Release lock on any error so the user isn't stuck
+    await env.COIN_KV.delete(lockKey).catch(() => {});
+    throw err;
   }
-
-  const history = await getCoinHistory(env, userId);
-  history.push({ type: 'deduct', amount, reason, balance: newBalance, at: Date.now() });
-  const trimmed = history.slice(-100);
-  await env.COIN_KV.put('coin:' + userId + ':history', JSON.stringify(trimmed), {
-    expirationTtl: 86400 * 90,
-  });
-
-  return result;
 }
 
 async function refundCoins(env, userId, amount, reason) {

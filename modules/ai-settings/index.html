@@ -523,19 +523,12 @@ function loadCoinBalance() {
 }
 
 function getCoinData() {
-  const defaultData = { balance: 100, lastReset: new Date().toISOString().slice(0, 7) };
+  var defaultData = { balance: 100 };
   try {
-    const saved = JSON.parse(localStorage.getItem(COIN_KEY));
+    var saved = JSON.parse(localStorage.getItem(COIN_KEY));
     if (!saved) return defaultData;
-
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    if (saved.lastReset !== currentMonth) {
-      saved.balance = 100;
-      saved.lastReset = currentMonth;
-      localStorage.setItem(COIN_KEY, JSON.stringify(saved));
-    }
     return saved;
-  } catch { return defaultData; }
+  } catch(e) { return defaultData; }
 }
 
 function deductCoins(amount, description) {

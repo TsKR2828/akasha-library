@@ -2460,6 +2460,23 @@
           return;
         }
         setFile(fname, event.data.content, event.data.size);
+        // S1-10A: Respect readOnly flag from copyright-protected items
+        if (event.data.readOnly) {
+          rawEditor.readOnly = true;
+          rawEditor.style.opacity = '0.7';
+          rawEditor.style.cursor = 'default';
+          // Hide edit/save/export buttons
+          document.getElementById("btnEditToggle").style.display = "none";
+          document.getElementById("btnDownloadEdited").style.display = "none";
+          document.getElementById("btnSaveToLibrary").style.display = "none";
+          document.getElementById("exportDocx").style.display = "none";
+          document.getElementById("exportScriptDocx").style.display = "none";
+          document.getElementById("exportScriptPdf").style.display = "none";
+          document.getElementById("exportSummary").style.display = "none";
+          document.getElementById("btnSaveSummaryToLibrary").style.display = "none";
+          document.getElementById("downloadText").style.display = "none";
+          statusEl.textContent = "唯讀模式：此為受保護的館藏摘錄";
+        }
       }
       // AI context request from App Shell
       if (event.data?.type === "akasha-ai-get-context") {

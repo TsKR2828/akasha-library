@@ -96,6 +96,12 @@ export async function fullSync() {
 
       // Merge: for each remote entry not in local (or newer), pull it
       for (const remote of remoteEntries) {
+        // S1-5 FIX: Skip entries the user intentionally deleted (tombstone).
+        // pdf-reader writes "akasha-tombstone:<id>" to localStorage on delete;
+        // without this check, deleted PDFs reappear after every sync.
+        var tombstone = localStorage.getItem("akasha-tombstone:" + remote.id);
+        if (tombstone) continue;
+
         const local = localEntries.find(l => l.id === remote.id);
         const remoteTime = remote.updatedAt || remote.lastOpened || 0;
         const localTime = local ? (local.updatedAt || local.lastOpened || 0) : 0;
@@ -144,7 +150,10 @@ export async function fullSync() {
     // updated the index since we read it, re-download, merge, and retry
     // (up to 3 attempts). This is NOT a true transaction — a narrow race
     // window still exists between the re-check and the upload.
+    // S1-6B FIX: Track whether index upload succeeded. If all retry attempts
+    // are exhausted by conflicts, report warning instead of false success.
     const MAX_INDEX_UPLOAD_RETRIES = 3;
+    let indexUploadSucceeded = false;
     for (let attempt = 0; attempt < MAX_INDEX_UPLOAD_RETRIES; attempt++) {
       // Re-fetch remote file list to get current modifiedTime
       const currentRemoteFiles = await listFiles();
@@ -170,10 +179,15 @@ export async function fullSync() {
       const indexJson = await exportIndex();
       await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
         currentRemoteIndex ? currentRemoteIndex.id : null);
+      indexUploadSucceeded = true;
       break;
     }
 
-    emitStatus('synced', '同步完成');
+    if (indexUploadSucceeded) {
+      emitStatus('synced', '同步完成');
+    } else {
+      emitStatus('error', '索引上傳衝突未解決，將在下次同步重試');
+    }
   } catch (err) {
     console.error('Sync failed:', err);
     emitStatus('error', '同步失敗: ' + err.message);
@@ -228,7 +242,11 @@ export async function queueForSync(fileId) {
     // so other devices can discover the new/changed file immediately.
     // Without this, the index only updates on fullSync (auth change or
     // coming back online), leaving other devices blind to the change.
-    await updateDriveIndex();
+    // S1-6A FIX: Check return value — warn user if index update failed.
+    const indexOk = await updateDriveIndex();
+    if (!indexOk) {
+      emitStatus('error', '檔案已上傳，但索引更新失敗');
+    }
   }
 }
 
@@ -270,9 +288,11 @@ async function updateDriveIndex() {
     const indexJson = await exportIndex();
     await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
       remoteIndex ? remoteIndex.id : null);
+    return true;
   } catch (err) {
     console.warn('Failed to update Drive index:', err);
     // Non-fatal — index will be reconciled on next fullSync
+    return false;
   }
 }
 

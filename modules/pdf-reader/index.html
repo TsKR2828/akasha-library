@@ -1537,7 +1537,7 @@
     if (event.data?.type === 'akasha-open-pdf' && event.data.data) {
       const blob = new Blob([event.data.data], { type: 'application/pdf' });
       const file = new File([blob], event.data.filename || 'document.pdf', { type: 'application/pdf' });
-      loadFile(file);
+      loadFile(file, event.data.fileId || null);
     }
     if (event.data?.type === 'akasha-open-pdf-url' && event.data.url) {
       currentBookId = event.data.bookId || null;

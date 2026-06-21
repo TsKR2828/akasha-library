@@ -8,8 +8,9 @@
 let tokenClient = null;
 let accessToken = null;
 let userProfile = null;
+let tokenExpiry = 0;
 
-const SCOPES = 'https://www.googleapis.com/auth/drive.file openid profile email';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
 /**
  * Initialize Google auth. Must be called after config is loaded.
@@ -27,6 +28,7 @@ export function initAuth(clientId, onAuthChange) {
         callback: (response) => {
           if (response.access_token) {
             accessToken = response.access_token;
+            tokenExpiry = Date.now() + ((response.expires_in || 3600) - 60) * 1000;
             fetchUserProfile().then(() => {
               if (onAuthChange) onAuthChange({ signedIn: true, user: userProfile });
             });
@@ -56,8 +58,10 @@ export function signOut(onAuthChange) {
     google.accounts.oauth2.revoke(accessToken);
     accessToken = null;
     userProfile = null;
+    tokenExpiry = 0;
     sessionStorage.removeItem('akasha-session-token');
     sessionStorage.removeItem('akasha-session-expiry');
+    import("./drive.js").then(function(m) { if (m.resetDriveCache) m.resetDriveCache(); });
     if (onAuthChange) onAuthChange({ signedIn: false, user: null });
   }
 }
@@ -73,6 +77,10 @@ export function getToken() {
  * Check if user is signed in
  */
 export function isSignedIn() {
+  if (accessToken && Date.now() >= tokenExpiry) {
+    accessToken = null;
+    tokenExpiry = 0;
+  }
   return !!accessToken;
 }
 
@@ -89,11 +97,16 @@ export function getUser() {
 async function fetchUserProfile() {
   if (!accessToken) return;
   try {
-    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+    const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     if (res.ok) {
-      userProfile = await res.json();
+      const data = await res.json();
+      userProfile = {
+        name: data.user.displayName,
+        email: data.user.emailAddress,
+        picture: data.user.photoLink,
+      };
     }
   } catch (e) {
     console.warn('Failed to fetch user profile:', e);
