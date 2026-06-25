@@ -12,7 +12,7 @@ export function blocksToTablePayload(blocks, filename) {
       '#': i + 1,
       type: b.type || 'dialogue',
       speaker: b.speaker || b.speakerId || '',
-      text: b.text || b.original || b.zh || '',
+      text: b.zh || b.text || b.original || '',
       ...(b.emotion ? { emotion: b.emotion } : {}),
       ...(b.voice ? { voice: b.voice } : {}),
     }));

@@ -1841,7 +1841,7 @@
       const bytes = await newDoc.save();
       downloadBlob(bytes, `${stripExt(currentFileName)}_p${from}-${to}.pdf`);
       if (document.getElementById('syncToLibrary').checked) {
-        await saveToLibrary(`${stripExt(currentFileName)}_p${from}-${to}.pdf`, to - from + 1, bytes);
+        await saveToLibrary(`${stripExt(currentFileName)}_p${from}-${to}.pdf`, to - from + 1, bytes, null, false);
       }
       hideLoading();
       showToast(`已下載第 ${from}–${to} 頁` + (document.getElementById('syncToLibrary').checked ? '（已加入書庫）' : ''), 'success');
@@ -1871,7 +1871,7 @@
         const partName = `${stripExt(currentFileName)}_part${fileNum}.pdf`;
         downloadBlob(bytes, partName);
         if (document.getElementById('syncToLibrary').checked) {
-          await saveToLibrary(partName, end - start, bytes);
+          await saveToLibrary(partName, end - start, bytes, null, false);
         }
         fileNum++;
         await new Promise(r => setTimeout(r, 300));
@@ -1932,7 +1932,7 @@
       const outName = `${stripExt(currentFileName)}_custom_${label}.pdf`;
       downloadBlob(bytes, outName);
       if (document.getElementById('syncToLibrary').checked) {
-        await saveToLibrary(outName, pages.length, bytes);
+        await saveToLibrary(outName, pages.length, bytes, null, false);
       }
       hideLoading();
       showToast(`已下載 ${pages.length} 頁` + (document.getElementById('syncToLibrary').checked ? '（已加入書庫）' : ''), 'success');
@@ -2210,7 +2210,7 @@
     catch { return []; }
   }
 
-  async function saveToLibrary(name, pages, bytes, preferredId = null) {
+  async function saveToLibrary(name, pages, bytes, preferredId = null, setCurrent = true) {
     const lib = getLibrary();
     const contentHash = await hashFileBytes(bytes);
     const existingItem = findLibraryItem(lib, preferredId, contentHash);
@@ -2237,7 +2237,7 @@
         syncStatus: existingEntry.syncStatus,
       } : {}),
     });
-    currentFileId = entry.id;
+    if (setCurrent) currentFileId = entry.id;
     await saveFileBlob(entry.id, new Blob([bytes], { type: 'application/pdf' }));
 
     const item = { name, pages, lastOpened: Date.now(), id: entry.id, contentHash };

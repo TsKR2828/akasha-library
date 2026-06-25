@@ -7,7 +7,7 @@
  * Each converter: (data, opts) → { blob, filename, mimeType }
  */
 
-function blockText(b) { return b.text || b.zh || b.original || ''; }
+function blockText(b) { return b.zh || b.text || b.original || ''; }
 
 // ── Public API ─────────────────────────────────────────────
 

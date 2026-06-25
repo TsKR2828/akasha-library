@@ -388,18 +388,14 @@ export function autoDetectAndParse(text, Papa) {
 
   if (looksLikeTSV(trimmed)) {
     detected.push('TSV');
-    if (Papa) {
-      const result = parseCSV(trimmed, Papa, '\t');
-      if (!result.error) return result;
-    }
+    const tsvResult = parseCSV(trimmed, Papa, '\t');
+    if (!tsvResult.error) return tsvResult;
   }
 
   if (looksLikeCSV(trimmed)) {
     detected.push('CSV');
-    if (Papa) {
-      const result = parseCSV(trimmed, Papa);
-      if (!result.error) return result;
-    }
+    const csvResult = parseCSV(trimmed, Papa);
+    if (!csvResult.error) return csvResult;
   }
 
   let msg = '無法解析為表格。';
