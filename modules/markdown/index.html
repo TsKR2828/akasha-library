@@ -1837,7 +1837,10 @@
       if (!term) return html;
       const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const re = new RegExp(`(${escaped})`, "gi");
-      return html.replace(re, '<span class="search-hit">$1</span>');
+      return html.replace(/(<[^>]*>)|([^<]+)/g, function(match, tag, text) {
+        if (tag) return tag;
+        return text.replace(re, '<span class="search-hit">$1</span>');
+      });
     }
 
     function renderViews() {
@@ -2475,6 +2478,8 @@
           document.getElementById("exportSummary").style.display = "none";
           document.getElementById("btnSaveSummaryToLibrary").style.display = "none";
           document.getElementById("downloadText").style.display = "none";
+          document.getElementById("copyRaw").style.display = "none";
+          document.getElementById("copyView").style.display = "none";
           statusEl.textContent = "唯讀模式：此為受保護的館藏摘錄";
         }
       }

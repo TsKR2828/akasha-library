@@ -253,7 +253,7 @@ function renderFilters() {
     const safeCat = escapeHtml(String(cat));
     const label = cat === 'all' ? '全部' : safeCat;
     const active = cat === activeFilter ? ' filter-btn--active' : '';
-    return `<button class="filter-btn${active}" onclick="setFilter('${safeCat}')">${label}</button>`;
+    return `<button class="filter-btn${active}" data-filter="${safeCat}" onclick="setFilter(this.dataset.filter)">${label}</button>`;
   }).join('');
 }
 
@@ -299,12 +299,12 @@ function renderBooks() {
       ? `<img src="${safeUrl}" alt="${safeTitle}">`
       : '&#128214;';
     const progressBadge = getProgressBadge(book.id, book.pages);
-    return `<div class="book-card" onclick="openBook('${safeId}')">
+    return `<div class="book-card" data-bookid="${safeId}" onclick="openBook(this.dataset.bookid)">
       <div class="book-card__cover">${cover}</div>
       <div class="book-card__title">${safeTitle}</div>
       <div class="book-card__author">${safeAuthor}</div>
       <div class="book-card__meta">
-        <span class="book-card__pages">${book.pages} 頁${progressBadge}</span>
+        <span class="book-card__pages">${parseInt(book.pages, 10) || 0} 頁${progressBadge}</span>
         <span class="book-card__category">${safeCat}</span>
       </div>
     </div>`;

@@ -236,7 +236,7 @@ function renderPage(page, side, pageNumber) {
 
   if (page.type === 'cover') {
     const imgHtml = page.imgData
-      ? `<img class="cover-img" src="${page.imgData}" style="position:relative;z-index:2"/>`
+      ? `<img class="cover-img" src="${sanitizeImgSrc(page.imgData)}" style="position:relative;z-index:2"/>`
       : `<div style="width:55%;height:38%;background:rgba(201,168,76,.08);border:1px dashed rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;color:rgba(201,168,76,.3);font-size:10px;position:relative;z-index:2;border-radius:2px">封面圖片</div>`;
     return `<div class="page-face cover-page">
       ${imgHtml}
@@ -254,7 +254,7 @@ function renderPage(page, side, pageNumber) {
   if (page.layout !== 'text-only') {
     if (page.imgData) {
       const sz = page.imgSize || 'half';
-      imgBlock = `<img class="img-slot ${sz}" src="${page.imgData}" style="margin-bottom:10px"/>`;
+      imgBlock = `<img class="img-slot ${sz}" src="${sanitizeImgSrc(page.imgData)}" style="margin-bottom:10px"/>`;
     } else {
       const sz = page.imgSize || 'half';
       imgBlock = `<div class="img-placeholder ${sz}" style="margin-bottom:10px">圖片區域</div>`;
@@ -273,6 +273,7 @@ function renderPage(page, side, pageNumber) {
 }
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function sanitizeImgSrc(s){if(!s)return'';if(typeof s!=='string')return'';if(!s.startsWith('data:image/')&&!s.startsWith('https://'))return'';return s.replace(/"/g,'&quot;')}
 
 /* ── RENDER SPREAD ── */
 function getSpread(idx) {
@@ -314,7 +315,7 @@ function renderPageList() {
       <div class="page-num-badge">${i+1}</div>
       <div class="page-info">
         <div class="page-info-title">${esc(p.title||'（無標題）')}</div>
-        <div class="page-info-sub">${p.type==='cover'?'封面':((p.chapter||'')+'  '+toRoman(i))}</div>
+        <div class="page-info-sub">${p.type==='cover'?'封面':(esc(p.chapter||'')+'  '+toRoman(i))}</div>
       </div>
       <button class="page-del" onclick="deletePage(event,'${p.id}')">✕</button>
     </div>

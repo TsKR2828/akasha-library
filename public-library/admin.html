@@ -328,7 +328,7 @@ function renderList() {
     <div class="book-list-item">
       <div class="book-list-item__info">
         <div class="book-list-item__title">${escapeHtml(book.title)}</div>
-        <div class="book-list-item__meta">${escapeHtml(book.author)} · ${escapeHtml(book.category)} · ${book.pages} 頁</div>
+        <div class="book-list-item__meta">${escapeHtml(book.author)} · ${escapeHtml(book.category)} · ${parseInt(book.pages, 10) || 0} 頁</div>
       </div>
       <div class="book-list-item__actions">
         <button class="btn" data-action="edit" data-id="${escapeHtml(book.id)}">編輯</button>

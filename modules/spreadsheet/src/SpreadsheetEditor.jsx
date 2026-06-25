@@ -192,12 +192,26 @@ export default function SpreadsheetEditor() {
       m = formula.match(/^IF\((.+)\)$/);
       if (m) {
         const args = [];
-        let depth = 0, cur = "";
+        let depth = 0, cur = "", inQuote = false;
         for (const ch of m[1]) {
-          if (ch === "(") depth++;
-          if (ch === ")") depth--;
-          if (ch === "," && depth === 0) { args.push(cur.trim()); cur = ""; }
-          else cur += ch;
+          if (inQuote) {
+            cur += ch;
+            if (ch === '"') inQuote = false;
+          } else if (ch === '"') {
+            inQuote = true;
+            cur += ch;
+          } else if (ch === "(") {
+            depth++;
+            cur += ch;
+          } else if (ch === ")") {
+            depth--;
+            cur += ch;
+          } else if (ch === "," && depth === 0) {
+            args.push(cur.trim());
+            cur = "";
+          } else {
+            cur += ch;
+          }
         }
         args.push(cur.trim());
         if (args.length === 3) {

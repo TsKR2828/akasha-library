@@ -235,6 +235,12 @@ async function handleAuthToken(request, env, respond) {
     return respond({ error: 'Auth not configured (COIN_SECRET not set)' }, 503);
   }
 
+  // Fail-closed: GOOGLE_CLIENT_ID must be configured to verify token audience.
+  // Without it, any valid Google token would be accepted regardless of origin.
+  if (!env.GOOGLE_CLIENT_ID) {
+    return respond({ error: 'Server misconfigured: GOOGLE_CLIENT_ID required' }, 500);
+  }
+
   let body;
   try { body = await request.json(); } catch { return respond({ error: 'Invalid JSON' }, 400); }
 
@@ -247,7 +253,7 @@ async function handleAuthToken(request, env, respond) {
     );
     if (!gRes.ok) return respond({ error: 'Invalid Google ID token' }, 401);
     const info = await gRes.json();
-    if (env.GOOGLE_CLIENT_ID && info.aud !== env.GOOGLE_CLIENT_ID) {
+    if (info.aud !== env.GOOGLE_CLIENT_ID) {
       return respond({ error: 'Token audience mismatch' }, 401);
     }
     if (!info.sub) return respond({ error: 'Token missing subject' }, 401);
@@ -261,7 +267,7 @@ async function handleAuthToken(request, env, respond) {
     if (!gRes.ok) return respond({ error: 'Invalid token' }, 401);
     const info = await gRes.json();
     // Verify audience matches our client ID (prevents token substitution)
-    if (env.GOOGLE_CLIENT_ID && info.aud !== env.GOOGLE_CLIENT_ID) {
+    if (info.aud !== env.GOOGLE_CLIENT_ID) {
       return respond({ error: 'Token audience mismatch' }, 401);
     }
     if (!info.sub) return respond({ error: 'Token missing subject' }, 401);
@@ -727,10 +733,29 @@ async function handleCoinDeduct(request, env, respond) {
 
 const DEFAULT_BALANCE = 100; // New users start with 100 coins
 
+/**
+ * Read the versioned balance record for a user.
+ * Backward compat: if the stored value is a plain number string (pre-versioning),
+ * treat it as { balance: n, version: 0 }.
+ */
+async function getCoinBalanceRecord(env, userId) {
+  if (!env.COIN_KV) return { balance: 0, version: 0 };
+  const raw = await env.COIN_KV.get(`coin:${userId}:balance`);
+  if (raw === null) return { balance: DEFAULT_BALANCE, version: 0 };
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === 'object' && parsed !== null && 'balance' in parsed && 'version' in parsed) {
+      return parsed;
+    }
+  } catch { /* not JSON — fall through to legacy parse */ }
+  // Legacy plain number format
+  const num = parseFloat(raw);
+  return { balance: isNaN(num) ? DEFAULT_BALANCE : num, version: 0 };
+}
+
 async function getCoinBalance(env, userId) {
-  if (!env.COIN_KV) return 0;
-  const val = await env.COIN_KV.get(`coin:${userId}:balance`);
-  return val !== null ? parseFloat(val) : DEFAULT_BALANCE;
+  const record = await getCoinBalanceRecord(env, userId);
+  return record.balance;
 }
 
 async function getCoinHistory(env, userId) {
@@ -739,8 +764,11 @@ async function getCoinHistory(env, userId) {
   return val || [];
 }
 
-// NOTE: KV is eventually consistent. Lock+nonce prevents most double-spend
-// but not all. For guaranteed atomicity, migrate to Durable Objects.
+// NOTE: KV is eventually consistent. Versioned balance with optimistic
+// concurrency detects most double-spend races, but for guaranteed atomicity
+// in production, migrate to Cloudflare Durable Objects.
+const DEDUCT_MAX_RETRIES = 2;
+
 async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
   if (!env.COIN_KV) return { ok: false, error: 'COIN_KV not configured' };
 
@@ -750,33 +778,32 @@ async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
     if (existing) return existing;
   }
 
-  // Per-user lock to serialize concurrent deductions
-  const lockKey = `deduct-lock:${userId}`;
-  const MAX_LOCK_ATTEMPTS = 3;
-  const LOCK_RETRY_MS = 200;
+  const balanceKey = `coin:${userId}:balance`;
 
-  for (let attempt = 0; attempt < MAX_LOCK_ATTEMPTS; attempt++) {
-    const lockHolder = await env.COIN_KV.get(lockKey);
-    if (!lockHolder) break;
-    if (attempt === MAX_LOCK_ATTEMPTS - 1) {
-      return { ok: false, error: '扣款處理中，請稍後重試' };
-    }
-    await new Promise(r => setTimeout(r, LOCK_RETRY_MS));
-  }
+  for (let attempt = 0; attempt <= DEDUCT_MAX_RETRIES; attempt++) {
+    // 1. Read current balance + version
+    const record = await getCoinBalanceRecord(env, userId);
+    const { balance, version } = record;
 
-  // Acquire lock with short TTL (auto-expires if worker crashes)
-  await env.COIN_KV.put(lockKey, '1', { expirationTtl: 10 });
-
-  try {
-    const balance = await getCoinBalance(env, userId);
     if (balance < amount) {
-      await env.COIN_KV.delete(lockKey);
       return { ok: false, error: '月幣不足', balance, required: amount };
     }
 
     const newBalance = Math.max(0, balance - amount);
-    await env.COIN_KV.put('coin:' + userId + ':balance', String(newBalance));
+    const newVersion = version + 1;
 
+    // 2. Write new balance with incremented version
+    await env.COIN_KV.put(balanceKey, JSON.stringify({ balance: newBalance, version: newVersion }));
+
+    // 3. Re-read to verify no concurrent write changed the version
+    const verification = await getCoinBalanceRecord(env, userId);
+    if (verification.version !== newVersion) {
+      // Concurrent write detected — retry
+      if (attempt < DEDUCT_MAX_RETRIES) continue;
+      return { ok: false, error: '扣款處理中，請稍後重試' };
+    }
+
+    // 4. Success — record result
     const result = { ok: true, balance: newBalance };
 
     // Cache the result by nonce so retries/duplicates get same answer
@@ -793,21 +820,19 @@ async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
       expirationTtl: 86400 * 90,
     });
 
-    await env.COIN_KV.delete(lockKey);
     return result;
-  } catch (err) {
-    // Release lock on any error so the user isn't stuck
-    await env.COIN_KV.delete(lockKey).catch(() => {});
-    throw err;
   }
+
+  return { ok: false, error: '扣款處理中，請稍後重試' };
 }
 
 async function refundCoins(env, userId, amount, reason) {
   if (!env.COIN_KV) return;
 
-  const balance = await getCoinBalance(env, userId);
-  const newBalance = balance + amount;
-  await env.COIN_KV.put(`coin:${userId}:balance`, String(newBalance));
+  const record = await getCoinBalanceRecord(env, userId);
+  const newBalance = record.balance + amount;
+  const newVersion = record.version + 1;
+  await env.COIN_KV.put(`coin:${userId}:balance`, JSON.stringify({ balance: newBalance, version: newVersion }));
 
   const history = await getCoinHistory(env, userId);
   history.push({

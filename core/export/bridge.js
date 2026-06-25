@@ -7,12 +7,12 @@ export const STORAGE_KEY = 'reader_export_payload';
 
 export function blocksToTablePayload(blocks, filename) {
   const rows = blocks
-    .filter(b => b.speaker || b.type === 'dialogue' || b.type === 'narration')
+    .filter(b => b.speaker || b.speakerId || b.type === 'dialogue' || b.type === 'narration')
     .map((b, i) => ({
       '#': i + 1,
       type: b.type || 'dialogue',
-      speaker: b.speaker || '',
-      text: b.text || '',
+      speaker: b.speaker || b.speakerId || '',
+      text: b.text || b.original || b.zh || '',
       ...(b.emotion ? { emotion: b.emotion } : {}),
       ...(b.voice ? { voice: b.voice } : {}),
     }));

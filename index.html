@@ -2701,10 +2701,27 @@ body { display: flex; }
       var aiNav = document.querySelector('.nav-item[data-module="ai-settings"]');
       if (aiNav) aiNav.style.display = 'none';
     }
+    // Gate Daily Report in public build (S2-13: always fails without AI)
+    if (!sec.isFeatureEnabled('ai_panel')) {
+      var drNav = document.querySelector('.nav-item[data-module="daily-report"]');
+      if (drNav) drNav.style.display = 'none';
+      var drCard = document.getElementById('card-daily-report');
+      if (drCard) drCard.style.display = 'none';
+    }
     // Gate Google Drive login in public build
     if (!sec.isFeatureEnabled('drive_sync')) {
       var authBlock = document.getElementById('auth-block');
       if (authBlock) authBlock.style.display = 'none';
+    }
+    // Gate memory system in public build (S1-8)
+    if (!sec.isFeatureEnabled('memory_system')) {
+      var memNav = document.querySelector('.nav-item[onclick*="openMemoryViewer"]');
+      if (memNav) memNav.style.display = 'none';
+    }
+    // Gate Notion sync in public build (S1-8)
+    if (!sec.isFeatureEnabled('notion_sync')) {
+      var notionTab = document.querySelector('.mv-tab[data-mv-tab="notion"]');
+      if (notionTab) notionTab.style.display = 'none';
     }
   }).catch(function() {});
 
@@ -2747,7 +2764,7 @@ body { display: flex; }
 <script type="module">
 import { getFileEntries, saveFileEntry, saveFileBlob, getFileBlob } from './core/storage.js';
 import { translate } from './core/translation-core.js';
-import { initAuth, signIn, signOut } from './core/auth.js';
+import { initAuth, signIn, signOut, onAuthExpired } from './core/auth.js';
 import { fullSync, setSyncCallback, initOfflineSync, queueForSync } from './core/sync.js';
 import { CONFIG } from './core/config.js';
 import { MSG_TYPES, STORAGE_KEY, blocksToTablePayload } from './core/export/bridge.js';
@@ -2785,6 +2802,7 @@ window.handleAuth = function() {
 
 if (CONFIG.GOOGLE_CLIENT_ID !== 'YOUR_CLIENT_ID.apps.googleusercontent.com') {
   initAuth(CONFIG.GOOGLE_CLIENT_ID, onAuthChange);
+  onAuthExpired(function() { isAuthed = false; onAuthChange({ signedIn: false, user: null }); });
 }
 
 setSyncCallback(({ status }) => {
@@ -3606,7 +3624,6 @@ window._aiSendReal = async function() {
       const memBlock = await buildMemoryContext(text, moduleName);
       const systemPrompt = buildGeneralSystemPrompt() + roomBlock + memBlock + buildFactsBlock(moduleName);
       const msgs = buildMessages(moduleName, text);
-      addTurn(moduleName, 'user', text);
       const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
       syncTokenBar(totalTokens);
 
@@ -3627,6 +3644,7 @@ window._aiSendReal = async function() {
       removeThinking();
       window.startTypewriter(response, speakerLabel, 'calm', []);
       addMessage(moduleName, 'assistant', response);
+      addTurn(moduleName, 'user', text);
       addTurn(moduleName, 'assistant', response);
     } catch (err) {
       removeThinking();
@@ -3677,7 +3695,6 @@ window._aiSendReal = async function() {
 
     // Build multi-turn messages from session memory
     const msgs = buildMessages(moduleName, text);
-    addTurn(moduleName, 'user', text);
 
     // Token estimate + balance check
     const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
@@ -3701,6 +3718,7 @@ window._aiSendReal = async function() {
     removeThinking();
     window.startTypewriter(response, speakerLabel, 'calm', []);
     addMessage(moduleName, 'assistant', response);
+    addTurn(moduleName, 'user', text);
     addTurn(moduleName, 'assistant', response);
   } catch (err) {
     console.error('AI call failed:', err);

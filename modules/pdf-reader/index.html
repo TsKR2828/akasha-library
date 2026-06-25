@@ -2189,6 +2189,9 @@
         sourcePage: parseInt(page),
       });
       await saveFileBlob(entry.id, blob);
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'akasha-file-opened', id: entry.id, name: noteName, fileType: 'ocr-note' }, location.origin);
+      }
       showToast('摘錄文字已存入書庫', 'success');
       closeOCRPanel();
     } catch (err) {

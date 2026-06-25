@@ -9,6 +9,7 @@ let tokenClient = null;
 let accessToken = null;
 let userProfile = null;
 let tokenExpiry = 0;
+let _onAuthExpired = null;
 
 const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 
@@ -80,8 +81,17 @@ export function isSignedIn() {
   if (accessToken && Date.now() >= tokenExpiry) {
     accessToken = null;
     tokenExpiry = 0;
+    if (_onAuthExpired) _onAuthExpired();
   }
   return !!accessToken;
+}
+
+/**
+ * Register a callback to be invoked when the OAuth token expires silently.
+ * @param {function} cb - Callback (no arguments)
+ */
+export function onAuthExpired(cb) {
+  _onAuthExpired = cb;
 }
 
 /**

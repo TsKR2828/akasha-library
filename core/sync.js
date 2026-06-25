@@ -10,7 +10,7 @@
  * 3. Conflicts → newer wins (by timestamp)
  */
 
-import { getFileEntries, saveFileEntry, getFileBlob, saveFileBlob, exportIndex, importIndex, getSetting, setSetting } from './storage.js';
+import { getFileEntries, saveFileEntry, deleteFileEntry, getFileBlob, saveFileBlob, exportIndex, importIndex, getSetting, setSetting } from './storage.js';
 import { uploadFile, downloadFile, listFiles } from './drive.js';
 import { isSignedIn } from './auth.js';
 
@@ -92,7 +92,28 @@ export async function fullSync() {
     if (remoteIndex) {
       const blob = await downloadFile(remoteIndex.id);
       const text = await blob.text();
-      const remoteEntries = JSON.parse(text);
+      const remoteData = JSON.parse(text);
+      // Backwards-compatible: support both flat array (old format)
+      // and {entries, tombstones} object (new format from Fix A).
+      const remoteEntries = Array.isArray(remoteData) ? remoteData : (remoteData.entries || []);
+
+      // Fix A: Process remote tombstones — delete matching local entries
+      // so deletions on one device propagate to all others.
+      if (remoteData.tombstones && Array.isArray(remoteData.tombstones)) {
+        for (const tombstoneId of remoteData.tombstones) {
+          // Record tombstone locally so we don't re-download the entry
+          localStorage.setItem('akasha-tombstone:' + tombstoneId, Date.now().toString());
+          // Remove from local IndexedDB if present
+          const localMatch = localEntries.find(l => l.id === tombstoneId);
+          if (localMatch) {
+            try {
+              await deleteFileEntry(tombstoneId);
+            } catch (err) {
+              console.warn('Sync: failed to process tombstone for', tombstoneId, err);
+            }
+          }
+        }
+      }
 
       // Merge: for each remote entry not in local (or newer), pull it
       for (const remote of remoteEntries) {
@@ -165,7 +186,9 @@ export async function fullSync() {
         console.warn(`Sync: index conflict detected (attempt ${attempt + 1}/${MAX_INDEX_UPLOAD_RETRIES}), re-merging...`);
         const conflictBlob = await downloadFile(currentRemoteIndex.id);
         const conflictText = await conflictBlob.text();
-        const conflictEntries = JSON.parse(conflictText);
+        const conflictData = JSON.parse(conflictText);
+        // Handle both old flat-array and new {entries, tombstones} format
+        const conflictEntries = Array.isArray(conflictData) ? conflictData : (conflictData.entries || []);
         const freshLocal = await getFileEntries();
         const merged = mergeIndices(freshLocal, conflictEntries);
         await importIndex(JSON.stringify(merged));
@@ -176,8 +199,20 @@ export async function fullSync() {
       }
 
       // No conflict (or first upload with no prior remote index) — upload
-      const indexJson = await exportIndex();
-      await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
+      // Include tombstones so other devices can process deletions (Fix A).
+      const localEntriesForUpload = JSON.parse(await exportIndex());
+      const tombstoneIds = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('akasha-tombstone:')) {
+          tombstoneIds.push(key.replace('akasha-tombstone:', ''));
+        }
+      }
+      const indexPayload = JSON.stringify({
+        entries: localEntriesForUpload,
+        tombstones: tombstoneIds
+      });
+      await uploadFile(INDEX_FILENAME, indexPayload, 'application/json',
         currentRemoteIndex ? currentRemoteIndex.id : null);
       indexUploadSucceeded = true;
       break;
@@ -238,14 +273,16 @@ export async function queueForSync(fileId) {
 
   if (navigator.onLine && isSignedIn()) {
     await flushOfflineQueue();
-    // S1-5 FIX: After uploading file blobs, also update the Drive index
-    // so other devices can discover the new/changed file immediately.
-    // Without this, the index only updates on fullSync (auth change or
-    // coming back online), leaving other devices blind to the change.
-    // S1-6A FIX: Check return value — warn user if index update failed.
-    const indexOk = await updateDriveIndex();
-    if (!indexOk) {
-      emitStatus('error', '檔案已上傳，但索引更新失敗');
+    // Fix B: Only update the Drive index if ALL queued files uploaded
+    // successfully. If some uploads failed (offlineQueue still has items),
+    // skip the index update to avoid advertising entries whose blobs
+    // aren't on Drive yet. The next fullSync will reconcile.
+    if (offlineQueue.length === 0) {
+      // S1-6A FIX: Check return value — warn user if index update failed.
+      const indexOk = await updateDriveIndex();
+      if (!indexOk) {
+        emitStatus('error', '檔案已上傳，但索引更新失敗');
+      }
     }
   }
 }
@@ -285,8 +322,44 @@ async function updateDriveIndex() {
   try {
     const remoteFiles = await listFiles();
     const remoteIndex = remoteFiles.find(f => f.name === INDEX_FILENAME);
-    const indexJson = await exportIndex();
-    await uploadFile(INDEX_FILENAME, indexJson, 'application/json',
+
+    // Fix C: Download remote index and merge instead of blind overwrite.
+    // This prevents losing entries added by other devices since our last sync.
+    const localEntries = JSON.parse(await exportIndex());
+    let mergedEntries = localEntries;
+    let mergedTombstones = [];
+
+    if (remoteIndex) {
+      const remoteBlob = await downloadFile(remoteIndex.id);
+      const remoteText = await remoteBlob.text();
+      const remoteData = JSON.parse(remoteText);
+      const remoteEntries = Array.isArray(remoteData) ? remoteData : (remoteData.entries || []);
+      mergedEntries = mergeIndices(localEntries, remoteEntries);
+      // Carry forward any existing remote tombstones
+      if (remoteData.tombstones && Array.isArray(remoteData.tombstones)) {
+        mergedTombstones = [...remoteData.tombstones];
+      }
+    }
+
+    // Fix A: Collect local tombstone IDs and include in index JSON
+    // so other devices can learn about deletions.
+    const localTombstoneIds = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('akasha-tombstone:')) {
+        localTombstoneIds.push(key.replace('akasha-tombstone:', ''));
+      }
+    }
+    // Merge local tombstones with remote tombstones (deduplicated)
+    const tombstoneSet = new Set([...mergedTombstones, ...localTombstoneIds]);
+    const allTombstones = Array.from(tombstoneSet);
+
+    // Upload merged index with tombstones (backwards-compatible additive property)
+    const indexPayload = JSON.stringify({
+      entries: mergedEntries,
+      tombstones: allTombstones
+    });
+    await uploadFile(INDEX_FILENAME, indexPayload, 'application/json',
       remoteIndex ? remoteIndex.id : null);
     return true;
   } catch (err) {
