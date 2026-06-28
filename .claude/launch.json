@@ -5,7 +5,8 @@
       "name": "script-editor",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:script-editor"],
-      "port": 5173
+      "port": 4200,
+      "autoPort": true
     },
     {
       "name": "akasha",

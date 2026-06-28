@@ -1238,6 +1238,32 @@ body { display: flex; }
   background: var(--gold-glow); border-color: var(--gold-line); color: var(--gold);
 }
 
+/* Crop screenshot viewer */
+.crop-viewer-overlay {
+  position: fixed; inset: 0; z-index: 9300;
+  background: rgba(0,0,0,0.85); display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+}
+.crop-viewer-overlay.show { display: flex; }
+.crop-viewer-overlay img {
+  max-width: 90vw; max-height: 80vh; object-fit: contain;
+  border: 1px solid var(--gold-line); border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.crop-viewer-bar {
+  display: flex; gap: 10px; align-items: center;
+}
+.crop-viewer-bar span {
+  color: var(--cream-dim); font-family: var(--font-serif-tc); font-size: 12px;
+}
+.crop-viewer-bar button {
+  background: none; border: 1px solid var(--navy-line); color: var(--cream-dim);
+  font-family: var(--font-serif-tc); font-size: 12px; padding: 5px 14px;
+  border-radius: 4px; cursor: pointer; transition: all 0.15s;
+}
+.crop-viewer-bar button:hover { border-color: var(--gold-line); color: var(--gold); }
+
 .ai-choices { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px 6px; }
 .ai-choice {
   background: rgba(255,255,255,0.02); border: 1px solid var(--navy-line);
@@ -2035,6 +2061,15 @@ body { display: flex; }
     </div>
     <div class="cf-body" id="cfBody"></div>
     <div class="cf-actions" id="cfActions"></div>
+  </div>
+</div>
+
+<!-- CROP SCREENSHOT VIEWER -->
+<div class="crop-viewer-overlay" id="cropViewerOverlay" onclick="if(event.target===this)window.closeCropViewer()">
+  <img id="cropViewerImg" alt="截圖預覽">
+  <div class="crop-viewer-bar">
+    <span id="cropViewerName"></span>
+    <button onclick="window.closeCropViewer()">關閉</button>
   </div>
 </div>
 
@@ -2854,10 +2889,20 @@ window.openRecentFile = async function(fileId, moduleName) {
   const entries = await getFileEntries();
   const entry = entries.find(e => e.id === fileId);
   if (entry && (entry.copyrightProtected || COPYRIGHT_TYPES.has(entry.type))) {
+    if (!blob) return;
+    if (entry.type === 'crop-screenshot') {
+      const b = blob instanceof Blob ? blob : new Blob([blob], { type: 'image/png' });
+      const url = URL.createObjectURL(b);
+      const img = document.getElementById('cropViewerImg');
+      const nameEl = document.getElementById('cropViewerName');
+      img.src = url;
+      nameEl.textContent = entry.name || '截圖';
+      document.getElementById('cropViewerOverlay').classList.add('show');
+      return;
+    }
     // Allow viewing but prevent export — send read-only flag to module
     const filename = entry?.name || 'file';
     openModule(moduleName);
-    if (!blob) return;
     frame.addEventListener('load', async () => {
       let text;
       if (typeof blob === 'string') { text = blob; }
@@ -2915,6 +2960,14 @@ window.openRecentFile = async function(fileId, moduleName) {
 };
 
 renderRecent();
+
+window.closeCropViewer = function() {
+  const overlay = document.getElementById('cropViewerOverlay');
+  const img = document.getElementById('cropViewerImg');
+  overlay.classList.remove('show');
+  if (img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  img.src = '';
+};
 
 // Cross-module messages (needs imports)
 window.addEventListener('message', async (event) => {

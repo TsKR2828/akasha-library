@@ -235,6 +235,7 @@ const SwIcon = ({ name, size = 16, stroke = 1.6 }) => {
     close: <><path d="M6 6l12 12M18 6L6 18" /></>,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 8v0M12 11v6" /></>,
     chevronRight: <><path d="M10 6l6 6-6 6" /></>,
+    chevronUp: <><path d="M6 14l6-6 6 6" /></>,
     chevronDown: <><path d="M6 10l6 6 6-6" /></>,
     bubble: <><path d="M5 6h14v10H10l-4 4V6z" /></>,
     scroll: <><path d="M6 4h11a2 2 0 012 2v14H8a2 2 0 01-2-2V4z" /><path d="M6 4a2 2 0 00-2 2v0a2 2 0 002 2" /><path d="M9 9h7M9 13h7" /></>,
@@ -274,7 +275,7 @@ const SwIcon = ({ name, size = 16, stroke = 1.6 }) => {
 const VALID_BLOCK_TYPES = ["dialogue", "narration", "scene", "note", "choice", "command"];
 const SAFE_ID_RE = /^[a-zA-Z0-9_\-]+$/;
 
-function validateBlock(block, characters = []) {
+function validateBlock(block, characters = [], blocks = []) {
   const errors = [];
   // Common checks
   if (!block.id) errors.push("缺少 id");
@@ -310,10 +311,17 @@ function validateBlock(block, characters = []) {
     if (!block.options || !Array.isArray(block.options)) errors.push("缺少 options 陣列");
     else if (block.options.length === 0) errors.push("選項不可為空（至少一個）");
     else {
+      const sceneIds = new Set(blocks.filter(b => b.type === "scene").map(b => b.id));
       block.options.forEach((opt, i) => {
         if (!opt.text) errors.push(`選項 ${i + 1} 文字為空`);
+        if (!opt.nextBlockId) errors.push(`選項 ${i + 1} 未指定跳轉目標`);
+        else if (sceneIds.size > 0 && !sceneIds.has(opt.nextBlockId)) errors.push(`選項 ${i + 1} 指向不存在的場次「${opt.nextBlockId}」`);
       });
     }
+  }
+  if (block.type === "command") {
+    if (!block.command) errors.push("缺少指令名稱");
+    if (!block.value) errors.push("缺少指令值");
   }
 
   return errors;
@@ -2793,6 +2801,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       scene:    { id, type, act: formatSceneLabel(work?.sceneLabelTemplate, { act: "_", scene: "_" }), subtitle: "", note: "" },
       note:     { id, type, text: "" },
       choice:   { id, type, prompt: "", options: [{ text: "選項 1", nextBlockId: "" }] },
+      command:  { id, type, command: "", value: "" },
     };
     const tpl = templates[type];
     if (!tpl) {
@@ -2808,6 +2817,15 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
     if (focusedBlockId === id) setFocusedBlockId(null);
   };
   const updateBlock = (id, patch) => setBlocks(blocks.map(b => b.id === id ? { ...b, ...patch } : b));
+  const moveBlock = (id, dir) => {
+    const idx = blocks.findIndex(b => b.id === id);
+    const target = idx + dir;
+    if (idx < 0 || target < 0 || target >= blocks.length) return;
+    pushSnapshot("移動 block");
+    const next = [...blocks];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    setBlocks(next);
+  };
 
   // ── Import JSONL ──
   const [importWarnings, setImportWarnings] = React.useState(null); // validation overlay
@@ -2965,6 +2983,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
           <SwBtn icon="curtain" size="sm" onClick={() => addBlock("scene")}>場次</SwBtn>
           <SwBtn icon="branch"  size="sm" onClick={() => addBlock("choice")}>選項</SwBtn>
           <SwBtn icon="note"    size="sm" onClick={() => addBlock("note")}>編註</SwBtn>
+          <SwBtn icon="cog"     size="sm" onClick={() => addBlock("command")}>指令</SwBtn>
 
           {/* Table Forge toggle */}
           <span style={{ width: 1, height: 18, background: "var(--navy-line)", margin: "0 2px" }} />
@@ -3010,7 +3029,9 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
               focused={b.id === focusedBlockId}
               onFocus={() => setFocusedBlockId(b.id)}
               onRemove={() => removeBlock(b.id)}
-              onUpdate={p => updateBlock(b.id, p)} />
+              onUpdate={p => updateBlock(b.id, p)}
+              onMoveUp={() => moveBlock(b.id, -1)}
+              onMoveDown={() => moveBlock(b.id, 1)} />
           ))}
         </div>
 
@@ -3521,11 +3542,11 @@ function TagAdder({ onAdd }) {
   );
 }
 
-function BlockCard({ b, blocks, characters = [], charColors = {}, onRemove, onUpdate, focused, onFocus }) {
+function BlockCard({ b, blocks, characters = [], charColors = {}, onRemove, onUpdate, focused, onFocus, onMoveUp, onMoveDown }) {
   const meta = BLOCK_META[b.type];
   const charDot = b.type === "dialogue" ? (charColors[b.speakerId] || meta.color) : meta.color;
   const isFocused = focused && b.type === "dialogue";
-  const blockErrors = React.useMemo(() => validateBlock(b, characters), [b, characters]);
+  const blockErrors = React.useMemo(() => validateBlock(b, characters, blocks), [b, characters, blocks]);
   return (
     <div data-block-id={b.id}
       onClick={b.type === "dialogue" ? onFocus : undefined}
@@ -3570,9 +3591,18 @@ function BlockCard({ b, blocks, characters = [], charColors = {}, onRemove, onUp
           fontFamily: "var(--font-mono)", fontSize: 10,
           color: "var(--text-tertiary)", opacity: 0.65, letterSpacing: "0.05em",
         }}>#{b.id}</span>
-        <span style={{ display: "flex", color: "var(--text-tertiary)", opacity: 0.4 }}>
-          <SwIcon name="drag" size={12} stroke={1.5} />
-        </span>
+        <button onClick={onMoveUp} title="上移"
+          style={{
+            background: "transparent", border: "1px solid var(--navy-line)",
+            color: "var(--text-tertiary)", padding: "3px 5px",
+            borderRadius: 2, cursor: "pointer", display: "flex",
+          }}><SwIcon name="chevronUp" size={12} /></button>
+        <button onClick={onMoveDown} title="下移"
+          style={{
+            background: "transparent", border: "1px solid var(--navy-line)",
+            color: "var(--text-tertiary)", padding: "3px 5px",
+            borderRadius: 2, cursor: "pointer", display: "flex",
+          }}><SwIcon name="chevronDown" size={12} /></button>
         <button onClick={onRemove} title="刪除"
           style={{
             background: "transparent", border: "1px solid var(--navy-line)",
@@ -3702,6 +3732,15 @@ function BlockCard({ b, blocks, characters = [], charColors = {}, onRemove, onUp
       {b.type === "note" && (
         <BlockTextarea placeholder="編輯備註"
           value={b.text} onChange={v => onUpdate({ text: v })} font="serif-tc" />
+      )}
+
+      {b.type === "command" && (
+        <>
+          <BlockTextarea placeholder="指令名稱（如 bgm、sfx、transition）"
+            value={b.command || ""} onChange={v => onUpdate({ command: v })} font="mono" rows={1} />
+          <BlockTextarea placeholder="指令值"
+            value={b.value || ""} onChange={v => onUpdate({ value: v })} font="serif-tc" rows={1} />
+        </>
       )}
     </div>
   );
