@@ -20,33 +20,7 @@
     }
 
     /* ===== Header ===== */
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--navy-line);
-      background: rgba(24,29,40,0.96);
-      backdrop-filter: blur(8px);
-      flex-shrink: 0;
-    }
-    :root[data-mode="light"] header {
-      background: rgba(245,239,225,0.96);
-    }
-    .header-title {
-      font-family: var(--font-display);
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--gold);
-      letter-spacing: 0.04em;
-    }
-    .header-sub {
-      font-size: 11px;
-      color: var(--text-tertiary);
-      font-family: var(--font-display);
-      font-style: italic;
-    }
-    .header-spacer { flex: 1; }
+    /* .module-header / .mh-title / .mh-sub / .mh-spacer / .mh-actions 由 shared.css 提供（表頭統一標準） */
 
     /* Shared button */
     .btn {
@@ -155,6 +129,103 @@
       outline: none;
     }
     .input-date:focus { border-color: var(--gold-dim); }
+
+    /* ===== Feed Loading (新增：接館報管線) ===== */
+    .feed-load-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--navy-line);
+      margin-bottom: 2px;
+    }
+    .feed-load-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .feed-load-row .input-date { flex-shrink: 0; }
+    .feed-status {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      line-height: 1.5;
+      min-height: 14px;
+    }
+    .feed-status.is-error { color: var(--danger); }
+    .feed-settings {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    .feed-settings summary {
+      cursor: pointer;
+      color: var(--text-secondary);
+      user-select: none;
+      padding: 2px 0;
+    }
+    .feed-settings summary:hover { color: var(--text-primary); }
+    .feed-settings-body {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .feed-base-input {
+      flex: 1;
+      min-width: 0;
+      background: var(--navy-light);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 5px 8px;
+      outline: none;
+    }
+    .feed-base-input:focus { border-color: var(--gold-dim); }
+
+    /* ===== Manual Panel (details，手動貼上素材，預設收合) ===== */
+    #manualPanel {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    #manualPanel summary {
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-secondary);
+      user-select: none;
+      padding: 6px 0;
+    }
+    #manualPanel summary:hover { color: var(--text-primary); }
+    #manualPanel[open] {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .manual-panel-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-height: 0;
+      padding-top: 4px;
+    }
+    .input-textarea { min-height: 160px; }
+
+    /* Report notice（RSS 報告 status/warnings 提示列） */
+    .report-notice {
+      background: rgba(201,168,106,0.08);
+      border: 1px solid var(--gold-dim);
+      color: var(--gold);
+      font-size: 11px;
+      line-height: 1.6;
+      padding: 8px 12px;
+      border-radius: var(--r-card);
+      margin-bottom: 14px;
+    }
+    .report-notice-warning { color: var(--text-secondary); }
 
     /* ===== Report Panel (Right) ===== */
     .report-panel {
@@ -398,10 +469,10 @@
 <body>
 
 <!-- Header -->
-<header>
-  <span class="header-title">每日館報</span>
-  <span class="header-sub">Diurnalis</span>
-  <div class="header-spacer"></div>
+<header class="module-header">
+  <h1 class="mh-title">每日館報</h1>
+  <span class="mh-sub">Diurnalis</span>
+  <span class="mh-spacer"></span>
 </header>
 
 <!-- Main -->
@@ -409,15 +480,39 @@
 
   <!-- Input Panel (Left) -->
   <div class="input-panel">
-    <div class="input-header">素材輸入</div>
+    <div class="input-header">載入館報</div>
     <div class="input-body">
-      <textarea class="input-textarea" id="sourceInput" placeholder="將文章、新聞片段或筆記貼在這裡，零韻會幫你整理成結構化的每日館報。&#10;&#10;可以一次貼入多段，會自動分類歸組。"></textarea>
-      <div class="input-actions">
-        <input type="date" class="input-date" id="reportDate">
-        <div style="flex:1"></div>
-        <button class="btn btn--primary" id="btnGenerate">整理成館報</button>
+
+      <!-- 載入館報（主要路徑） -->
+      <div class="feed-load-section">
+        <div class="feed-load-row">
+          <input type="date" class="input-date" id="reportDate">
+          <button class="btn btn--primary" id="btnLoadFeed">載入館報</button>
+          <button class="btn" id="btnOpenFile">開啟館報檔案</button>
+          <input type="file" id="feedFileInput" accept=".json,.md" hidden>
+        </div>
+        <div class="feed-status" id="feedStatus"></div>
+        <details class="feed-settings" id="feedSettings">
+          <summary>來源設定</summary>
+          <div class="feed-settings-body">
+            <input type="text" class="feed-base-input" id="feedBaseInput" placeholder="館報來源 base URL">
+            <button class="btn btn--sm" id="btnSaveFeedBase">儲存</button>
+          </div>
+        </details>
       </div>
-      <div class="input-hint">貼上文字後點「整理成館報」，零韻會分類、摘要，產出 §12.3 格式的結構化報告。</div>
+
+      <!-- 手動貼上素材（AI 整理，降級路徑，預設收合） -->
+      <details id="manualPanel">
+        <summary>手動貼上素材（AI 整理）</summary>
+        <div class="manual-panel-body">
+          <textarea class="input-textarea" id="sourceInput" placeholder="將文章、新聞片段或筆記貼在這裡，零韻會幫你整理成結構化的每日館報。&#10;&#10;可以一次貼入多段，會自動分類歸組。"></textarea>
+          <div class="input-actions">
+            <div style="flex:1"></div>
+            <button class="btn btn--primary" id="btnGenerate">整理成館報</button>
+          </div>
+          <div class="input-hint">貼上文字後點「整理成館報」，零韻會分類、摘要，產出 §12.3 格式的結構化報告。</div>
+        </div>
+      </details>
     </div>
 
     <!-- History -->
@@ -453,7 +548,7 @@
     </div>
     <div class="report-scroll" id="reportScroll">
       <div class="report-empty" id="reportEmpty">
-        在左側貼上文字素材，點「整理成館報」即可生成報告。
+        選擇日期後點「載入館報」，或開啟本機館報檔案。也可展開下方面板貼上素材由零韻整理。
       </div>
     </div>
   </div>
@@ -464,6 +559,22 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+// postMessage type 對照表（本檔為零 import 的 inline module script；加相對 import 會使 file:// 情境整檔失效，
+// 故維持字面值，禁止改為 import；改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
+//   'akasha-mode-change'(632)                    = MSG_TYPES.MODE_CHANGE
+//   'akasha-report-response'(643)                = MSG_TYPES.REPORT_RESPONSE
+//   'akasha-ai-get-context'(651)                 = MSG_TYPES.AI_GET_CONTEXT
+//   'akasha-ai-context-response'(656)            = MSG_TYPES.AI_CONTEXT_RESPONSE
+//   'akasha-report-generate'(672)                = MSG_TYPES.REPORT_GENERATE
+//   'akasha-reading-room-memory'(695)            = MSG_TYPES.READING_ROOM_MEMORY
+//   'akasha-reading-room-memory-response'(711)   = MSG_TYPES.READING_ROOM_MEMORY_RESPONSE
+//   'akasha-voice-play-report'(1236)             = MSG_TYPES.VOICE_PLAY_REPORT
+//   'akasha-bgm-play'(1241)                      = MSG_TYPES.BGM_PLAY
+//   'akasha-voice-resume'(1249)                  = MSG_TYPES.VOICE_RESUME
+//   'akasha-voice-pause'(1252)                   = MSG_TYPES.VOICE_PAUSE
+//   'akasha-voice-stop'(1258)                    = MSG_TYPES.VOICE_STOP
+//   'akasha-bgm-stop'(1259,1270)                 = MSG_TYPES.BGM_STOP
+//   'akasha-voice-state-update'(1265)            = MSG_TYPES.VOICE_STATE_UPDATE
 const MODULE_NAME = 'daily-report';
 
 // ===== State =====
@@ -492,6 +603,12 @@ const voiceBar = $('voiceBar');
 const voiceProgress = $('voiceProgress');
 const voiceText = $('voiceText');
 const toastEl = $('toast');
+const btnLoadFeed = $('btnLoadFeed');
+const btnOpenFile = $('btnOpenFile');
+const feedFileInput = $('feedFileInput');
+const feedStatus = $('feedStatus');
+const feedBaseInput = $('feedBaseInput');
+const btnSaveFeedBase = $('btnSaveFeedBase');
 
 // Set default date to today (local time, not UTC)
 function localDateStr(date) {
@@ -499,6 +616,7 @@ function localDateStr(date) {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 reportDate.value = localDateStr();
+state.loadingFeed = false;
 
 // ===== Toast =====
 let toastTimer = null;
@@ -646,6 +764,135 @@ btnGenerate.addEventListener('click', async () => {
   }
 });
 
+// ===== Feed Base URL 設定（接館報管線） =====
+const FEED_BASE_KEY = 'akasha_report_feed_base';
+const FEED_BASE_DEFAULT = 'https://raw.githubusercontent.com/TsKR2828/akasha-rss-news/main/output/';
+function getFeedBase() {
+  try { return localStorage.getItem(FEED_BASE_KEY) || FEED_BASE_DEFAULT; } catch { return FEED_BASE_DEFAULT; }
+}
+
+// ===== RSS 館報 Adapter：外部 daily_YYYYMMDD.json → 內部 renderReport 形狀 =====
+function adaptRssReport(raw, fallbackDate) {
+  if (!raw || typeof raw !== 'object') {
+    return { date: fallbackDate, sections: [] };
+  }
+
+  const report = {
+    date: String(raw.date || fallbackDate || ''),
+  };
+  if (raw.reportId != null) report.reportId = String(raw.reportId);
+  if (raw.generated_at != null) report.generated_at = String(raw.generated_at);
+  if (raw.timezone != null) report.timezone = String(raw.timezone);
+  if (raw.status != null) report.status = String(raw.status);
+  if (Array.isArray(raw.warnings)) report.warnings = raw.warnings.map(w => String(w));
+
+  const rawSections = Array.isArray(raw.sections) ? raw.sections : [];
+  report.sections = rawSections.map(section => adaptRssSection(section));
+
+  return report;
+}
+
+function adaptRssSection(section) {
+  section = section && typeof section === 'object' ? section : {};
+
+  const beat = section.beat != null ? String(section.beat) : '';
+  const baseTitle = section.title != null ? String(section.title)
+    : (beat || '（未命名段落）');
+  const title = section.emoji != null ? `${String(section.emoji)} ${baseTitle}` : baseTitle;
+
+  let rawItems = section.items || section.entries || section.articles;
+  if (!Array.isArray(rawItems)) {
+    const text = section.summary != null ? section.summary : section.text;
+    rawItems = text != null ? [{ title: baseTitle, summary: text }] : [];
+  }
+
+  const out = {
+    title,
+    items: rawItems.map(item => adaptRssItem(item)),
+  };
+  if (beat) out.beat = beat;
+  return out;
+}
+
+function adaptRssItem(item) {
+  item = item && typeof item === 'object' ? item : {};
+
+  const title = String(item.title || item.headline || item.name || '（無標題）');
+  const summary = String(item.summary || item.description || item.excerpt || item.text || '');
+  const source = String(item.source || item.source_name || item.feed || item.site || '');
+  const rawUrl = item.url || item.link || item.href;
+  const url = (typeof rawUrl === 'string' && /^https?:\/\//i.test(rawUrl)) ? rawUrl : '';
+
+  const out = { title };
+  if (summary) out.summary = summary;
+  if (source) out.source = source;
+  if (url) out.url = url;
+  return out;
+}
+
+// ===== Markdown 館報 Parser（本機 .md 檔案降級路徑） =====
+function parseMdReport(text, fallbackDate) {
+  text = String(text || '');
+  const lines = text.split(/\r?\n/);
+
+  let date = fallbackDate;
+  const dateMatch = text.match(/\d{4}-\d{2}-\d{2}/);
+  if (dateMatch) date = dateMatch[0];
+
+  const sections = [];
+  let currentSection = null;
+  let currentItem = null;
+
+  function ensureDefaultSection() {
+    if (!currentSection) {
+      currentSection = { title: '內容', items: [] };
+      sections.push(currentSection);
+    }
+    return currentSection;
+  }
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    if (/^#\s+/.test(line)) continue; // 主標題已用於抽日期，略過
+
+    const h2 = line.match(/^##\s+(.*)$/);
+    if (h2) {
+      currentSection = { title: h2[1].trim() || '（未命名段落）', items: [] };
+      sections.push(currentSection);
+      currentItem = null;
+      continue;
+    }
+
+    const li = line.match(/^-\s+(.*)$/);
+    if (li) {
+      const body = li[1];
+      const sec = ensureDefaultSection();
+      const bold = body.match(/^\*\*(.+?)\*\*\s*(?:—\s*(.*?))?(?:(?:（|\()來源[：:]\s*(.*?)(?:）|\)))?$/);
+      if (bold) {
+        currentItem = { title: bold[1].trim() };
+        if (bold[2]) currentItem.summary = bold[2].trim();
+        if (bold[3]) currentItem.source = bold[3].trim();
+      } else {
+        currentItem = { title: body };
+      }
+      sec.items.push(currentItem);
+      continue;
+    }
+
+    // 其他非空行：併入目前 item 的 summary，若無目前 item 則整行當一個新 item 的 title
+    const sec = ensureDefaultSection();
+    if (currentItem) {
+      currentItem.summary = currentItem.summary ? `${currentItem.summary} ${line}` : line;
+    } else {
+      currentItem = { title: line };
+      sec.items.push(currentItem);
+    }
+  }
+
+  return { date, sections };
+}
+
 // ===== Render Report =====
 function renderReport(report) {
   if (!report?.sections?.length) {
@@ -656,6 +903,22 @@ function renderReport(report) {
   $('reportHeaderTitle').textContent = `館報 — ${report.date || ''}`;
 
   let html = `<div class="report-date-line">${escapeHtml(report.date || '')}</div>`;
+
+  if ((report.status && report.status !== 'ok') || (report.warnings && report.warnings.length)) {
+    html += `<div class="report-notice">`;
+    if (report.status && report.status !== 'ok') {
+      html += `來源標記狀態：${escapeHtml(report.status)}`;
+    }
+    if (report.warnings && report.warnings.length) {
+      html += `${report.status && report.status !== 'ok' ? '；' : ''}警告 ${report.warnings.length} 則`;
+      html += '<div class="report-notice-warning">';
+      for (const w of report.warnings) {
+        html += `・${escapeHtml(w)}<br>`;
+      }
+      html += '</div>';
+    }
+    html += `</div>`;
+  }
 
   for (const section of report.sections) {
     html += `<div class="report-section">`;
@@ -693,6 +956,129 @@ function toggleReportActions(show) {
   btnRead.style.display = show && !voicePlaying ? '' : 'none';
   bgmSelect.style.display = d;
 }
+
+// ===== 載入館報：base URL 設定 =====
+feedBaseInput.value = getFeedBase();
+
+btnSaveFeedBase.addEventListener('click', () => {
+  let val = feedBaseInput.value.trim();
+  try {
+    if (!val) {
+      localStorage.removeItem(FEED_BASE_KEY);
+      feedBaseInput.value = FEED_BASE_DEFAULT;
+      showToast('已還原預設來源');
+    } else {
+      if (!val.endsWith('/')) val += '/';
+      localStorage.setItem(FEED_BASE_KEY, val);
+      feedBaseInput.value = val;
+      showToast('來源設定已儲存');
+    }
+  } catch {
+    showToast('無法儲存來源設定');
+  }
+});
+
+// ===== 載入館報：URL fetch =====
+async function loadFeedByDate() {
+  if (state.loadingFeed) return;
+
+  const dateValue = reportDate.value || localDateStr();
+  const ymd = dateValue.replace(/-/g, '');
+  const url = getFeedBase() + 'daily_' + ymd + '.json';
+
+  state.loadingFeed = true;
+  btnLoadFeed.disabled = true;
+  feedStatus.classList.remove('is-error');
+  feedStatus.textContent = '載入中…';
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+  try {
+    const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (res.status === 404) {
+      feedStatus.classList.add('is-error');
+      feedStatus.textContent = '這一天的館報尚未發佈';
+      return;
+    }
+    if (!res.ok) {
+      feedStatus.classList.add('is-error');
+      feedStatus.textContent = `館報伺服器回應異常（HTTP ${res.status}）`;
+      return;
+    }
+
+    let json;
+    try {
+      json = await res.json();
+    } catch {
+      feedStatus.classList.add('is-error');
+      feedStatus.textContent = '館報檔案格式無法解析';
+      return;
+    }
+
+    const report = adaptRssReport(json, dateValue);
+    state.currentReport = report;
+    state.currentReportId = null;
+    renderReport(report);
+    toggleReportActions(true);
+    feedStatus.classList.remove('is-error');
+    feedStatus.textContent = '';
+    showToast('館報已載入');
+  } catch (err) {
+    clearTimeout(timeoutId);
+    feedStatus.classList.add('is-error');
+    feedStatus.textContent = '無法連線館報來源，請檢查網路或來源設定';
+  } finally {
+    state.loadingFeed = false;
+    btnLoadFeed.disabled = false;
+  }
+}
+
+btnLoadFeed.addEventListener('click', loadFeedByDate);
+
+// ===== 載入館報：本機檔案 =====
+btnOpenFile.addEventListener('click', () => feedFileInput.click());
+
+feedFileInput.addEventListener('change', async () => {
+  const file = feedFileInput.files && feedFileInput.files[0];
+  if (!file) return;
+
+  const dateValue = reportDate.value || localDateStr();
+
+  try {
+    const text = await file.text();
+    let report;
+
+    if (/\.md$/i.test(file.name)) {
+      report = parseMdReport(text, dateValue);
+    } else {
+      let json;
+      try {
+        json = JSON.parse(text);
+      } catch {
+        feedStatus.classList.add('is-error');
+        feedStatus.textContent = '館報檔案格式無法解析';
+        return;
+      }
+      report = adaptRssReport(json, dateValue);
+    }
+
+    state.currentReport = report;
+    state.currentReportId = null;
+    renderReport(report);
+    toggleReportActions(true);
+    feedStatus.classList.remove('is-error');
+    feedStatus.textContent = '';
+    showToast('館報已載入');
+  } catch (err) {
+    feedStatus.classList.add('is-error');
+    feedStatus.textContent = '館報檔案格式無法解析';
+  } finally {
+    feedFileInput.value = '';
+  }
+});
 
 // ===== Save =====
 btnSave.addEventListener('click', async () => {
@@ -813,7 +1199,7 @@ historyScroll.addEventListener('click', async (e) => {
       if (state.currentReportId === delBtn.dataset.delete) {
         state.currentReport = null;
         state.currentReportId = null;
-        reportScroll.innerHTML = '<div class="report-empty">在左側貼上文字素材，點「整理成館報」即可生成報告。</div>';
+        reportScroll.innerHTML = '<div class="report-empty">選擇日期後點「載入館報」，或開啟本機館報檔案。也可展開下方面板貼上素材由零韻整理。</div>';
         toggleReportActions(false);
         $('reportHeaderTitle').textContent = '報告預覽';
       }

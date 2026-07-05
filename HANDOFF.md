@@ -1,14 +1,26 @@
-# Akasha Library 交接事項（2026-06-13）
+# Akasha Library 交接事項（2026-07-02）
 
 > 本檔每次重大進度後更新；歷史交接與逐項細節見 `dev-log.md`。
 
 ## 目前狀態
 
-**Branch:** `master`（2026-06-13 解凍修復批次已 commit `a34315e`、經 **PR #5 併入 master** `b07c181`；工作樹乾淨。`codex/fix-reviewed-bugs` 與 5 個舊 feature branch 已清，遠端僅剩 `master`）
+**Branch:** `master`（最新 `2b38357` Codex S1 修復 + Editor 完整性；工作樹乾淨，遠端僅剩 `master`）
 **Build / 測試:** `npm test`（= vite build ×2 → `scripts/sync-sw.js` 自動同步 sw.js → SW-INTEGRITY 缺檔檢查 → 關鍵檔存在檢查）
 **本地伺服器:** `npx http-server . -p 3460 -c-1`
 **測試 URL:** `http://127.0.0.1:3460/dist/script-editor/index.html`
 **線上:** Cloudflare Pages 自動部署 / GitHub Pages（`_site/` via `npm run build:public`）
+
+---
+
+## 2026-07-02 Codex S1 修復 + Editor block 完整性（`2b38357`）
+
+| 項目 | 內容 | 檔案 |
+|------|------|------|
+| S1-1 | OCR note postMessage schema 對齊 Shell receiver | `modules/pdf-reader/index.html` |
+| S1-2 | crop-screenshot 圖片預覽面板（不再文字解碼） | `index.html`（Shell） |
+| Editor | Command block 編輯 UI（command + value 欄位） | `modules/script-editor/src/App.jsx` |
+| Editor | Block 上移/下移排序按鈕 | `modules/script-editor/src/App.jsx` |
+| Editor | Choice 路徑驗證（缺跳轉 + 不存在場次） | `modules/script-editor/src/App.jsx` |
 
 ---
 

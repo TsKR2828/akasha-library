@@ -156,3 +156,181 @@ html, body {
   text-rendering: optimizeLegibility;
 }
 button { font-family: inherit; cursor: pointer; }
+
+/* ====================================================================
+   MODULE HEADER — 模組表頭標準元件（表頭統一工項）
+   用法：<header class="module-header">
+           <h1 class="mh-title">標題</h1>
+           <span class="mh-sub">副標</span>
+           <span class="mh-spacer"></span>
+           <div class="mh-actions"> …按鈕… <div class="mh-more">…</div> </div>
+         </header>
+   ==================================================================== */
+.module-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  min-height: var(--topbar-h);           /* 56px */
+  padding: 0 28px;
+  gap: 16px;
+  border-bottom: 1px solid var(--navy-line);
+  background: rgba(24,29,40,0.96);
+  backdrop-filter: blur(8px);
+}
+:root[data-mode="light"] .module-header {
+  background: rgba(245,239,225,0.96);
+}
+
+.mh-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.mh-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.mh-spacer { flex: 1 1 auto; }
+
+.mh-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.mh-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mh-group--sep {                          /* 需要左側分隔線的群組 */
+  padding-left: 16px;
+  border-left: 1px solid var(--navy-line);
+}
+.mh-sep {                                 /* 獨立分隔線元素 */
+  width: 1px;
+  height: 20px;
+  background: var(--navy-line);
+  flex: none;
+}
+
+/* ---- 標準按鈕 baseline（模組自有同名定義會覆蓋顏色，屬預期）---- */
+.btn {
+  appearance: none;
+  border: 1px solid var(--navy-line);
+  background: var(--navy-light);
+  color: var(--text-primary);
+  padding: 7px 10px;
+  border-radius: var(--r-card);
+  font-size: 12px;
+  font-family: inherit;
+  line-height: 1;
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.btn:hover { border-color: var(--gold-dim); background: var(--navy-hover); }
+.btn--gold {
+  background: var(--gold-glow);
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+.btn--gold:hover { background: rgba(201,168,106,0.22); border-color: var(--gold); }
+.btn--danger {
+  background: rgba(196,96,79,0.1);
+  border-color: rgba(196,96,79,0.3);
+  color: var(--danger);
+}
+.btn--danger:hover { background: rgba(196,96,79,0.2); border-color: var(--danger); }
+.btn[disabled], .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---- 表頭內按鈕尺寸鐵則：30px 高、gap 8px。
+       只鎖尺寸不鎖顏色，(0,2,0) 特異度壓過模組自有 .btn (0,1,0) ---- */
+.module-header .btn,
+.module-header .file-label {
+  min-height: 30px;
+  padding: 7px 10px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: var(--r-card);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* ---- 溢出下拉選單 ---- */
+.mh-more { position: relative; }
+.mh-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 230px;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  background: var(--navy-light);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-lift);
+  z-index: 60;
+}
+.mh-menu.open { display: flex; }
+
+/* 選單內按鈕轉直排：只改排版，不動顏色語意（.btn--gold 文字仍為金色） */
+.mh-menu .btn,
+.mh-menu .file-label {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+  min-height: 30px;
+  padding: 7px 10px;
+  font-size: 12px;
+  border-radius: var(--r-soft);
+}
+.mh-menu .btn:hover,
+.mh-menu .file-label:hover {
+  background: var(--navy-hover);
+  border-color: transparent;
+}
+.mh-menu-label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  padding: 6px 8px 2px;
+}
+.mh-menu-hr {
+  height: 1px;
+  border: none;
+  background: var(--navy-line);
+  margin: 4px 2px;
+}
+.mh-menu-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* ---- 窄螢幕 ---- */
+@media (max-width: 760px) {
+  .module-header { padding: 8px 16px; gap: 10px; flex-wrap: wrap; }
+  .mh-sub { display: none; }
+}

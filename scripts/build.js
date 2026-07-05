@@ -49,6 +49,7 @@ const ALWAYS_EXCLUDE_DIRS = new Set([
   'design',
   'scripts',
   '_site',
+  'archive',
   // Vite sources — the built outputs are in dist/<module>/
   join('modules', 'spreadsheet'),
   join('modules', 'script-editor'),
@@ -265,7 +266,6 @@ const critical = [
   join('modules', 'pdf-reader', 'index.html'),
   join('modules', 'table-forge', 'index.html'),
   join('dist', 'script-editor', 'index.html'),
-  join('modules', 'book-editor', 'index.html'),
   join('modules', 'daily-report', 'index.html'),
   // Private modules — only critical in private builds
   ...(MODE === 'private' ? [

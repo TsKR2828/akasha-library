@@ -17,41 +17,6 @@
       flex-direction: column;
     }
 
-    /* --- Header --- */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--navy-line);
-      background: rgba(24,29,40,0.96);
-      backdrop-filter: blur(8px);
-    }
-
-    :root[data-mode="light"] header {
-      background: rgba(245,239,225,0.96);
-    }
-
-    h1 {
-      margin: 0 8px 0 0;
-      font-family: var(--font-display);
-      font-size: 17px;
-      font-weight: 500;
-      color: var(--gold);
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 6px;
-      margin-left: auto;
-    }
-
     /* --- Buttons --- */
     .btn {
       appearance: none;
@@ -433,9 +398,9 @@
 </head>
 <body>
   <!-- Header -->
-  <header>
-    <h1>Table Forge</h1>
-    <div class="header-actions">
+  <header class="module-header">
+    <h1 class="mh-title">Table Forge</h1>
+    <div class="header-actions mh-actions">
       <button class="btn btn--gold" id="btn-toggle-import" title="貼上或開啟檔案匯入表格資料">匯入</button>
       <button class="btn btn--gold" id="btn-toggle-export" disabled title="將表格匯出為 Markdown、JSON 或 CSV">匯出</button>
       <button class="btn btn--danger" id="btn-clear" disabled title="清除目前表格所有資料">清除</button>

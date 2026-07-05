@@ -278,6 +278,21 @@
 
 ---
 
+## 2026-07-02：Codex S1 修復 + Editor block 完整性 ✅ 完成
+
+> Codex 回報 2 筆 S1 bug（凍結區解凍修復）+ Script Editor block type system 3 項完整性缺口。
+> Commit: `2b38357`
+
+| 項目 | 內容 | 狀態 |
+|------|------|:----:|
+| S1-1 | OCR note postMessage schema 對齊（pdf-reader → Shell receiver） | ✅ |
+| S1-2 | crop-screenshot 圖片預覽（新增 overlay，不再進文字解碼） | ✅ |
+| Editor | Command block 編輯 UI（command + value 雙欄位） | ✅ |
+| Editor | Block 上移/下移排序按鈕 | ✅ |
+| Editor | Choice 路徑驗證（缺跳轉 + 不存在場次） | ✅ |
+
+---
+
 ## 已完成（不在 Roadmap 步驟內）
 
 - ✅ Code & Data Reader MVP（9 項新功能：tooltip / HINTS / undo-redo / diff / 存書庫 / 歷程）

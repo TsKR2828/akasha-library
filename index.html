@@ -1544,14 +1544,6 @@ body { display: flex; }
       </span>
       <span class="nav-active-dot"></span>
     </button>
-    <button class="nav-item" data-module="book-editor">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">書籍排版器</span>
-        <span class="nav-item-sub">Bindery</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
     <button class="nav-item" data-module="private-reading-room">
       <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
       <span class="nav-item-text">
@@ -1565,14 +1557,6 @@ body { display: flex; }
       <span class="nav-item-text">
         <span class="nav-item-title">每日館報</span>
         <span class="nav-item-sub">Diurnalis</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" onclick="window.openMemoryViewer()">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">零韻手札</span>
-        <span class="nav-item-sub">Memory</span>
       </span>
       <span class="nav-active-dot"></span>
     </button>
@@ -1737,30 +1721,10 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
-        <!-- Book editor -->
-        <a class="module-card" data-module="book-editor">
-          <div class="card-spine" style="background:linear-gradient(180deg,#4a2828,#4a2828cc,#4a282888)"></div>
-          <div class="card-roman">V</div>
-          <div>
-            <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>
-            </div>
-            <div class="card-title">書籍排版器</div>
-            <div class="card-en">— Bibliopegia</div>
-            <div class="card-desc">頁面重排、封面、匯出 PDF。為文字製作一具身體。</div>
-          </div>
-          <div class="card-footer">
-            <div class="card-formats">
-              <span class="format-tag">.pdf</span>
-              <span class="format-tag">.html</span>
-            </div>
-            <div class="card-open-hint">Open &rarr;</div>
-          </div>
-        </a>
         <!-- Reading Room -->
         <a class="module-card" data-module="private-reading-room" id="card-reading-room">
           <div class="card-spine" style="background:linear-gradient(180deg,#2a2a40,#2a2a40cc,#2a2a4088)"></div>
-          <div class="card-roman">VI</div>
+          <div class="card-roman">V</div>
           <div>
             <div class="card-icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg>
@@ -1780,7 +1744,7 @@ body { display: flex; }
         <!-- Daily Report -->
         <a class="module-card" data-module="daily-report" id="card-daily-report">
           <div class="card-spine" style="background:linear-gradient(180deg,#3a2a1a,#3a2a1acc,#3a2a1a88)"></div>
-          <div class="card-roman">VII</div>
+          <div class="card-roman">VI</div>
           <div>
             <div class="card-icon-box">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
@@ -1830,7 +1794,7 @@ body { display: flex; }
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
       <div class="drop-title">放下卷軸</div>
-      <div class="drop-hint">MD · TXT · PY · JSON · PDF · CSV · TSV · DOCX · DOC · BOOK</div>
+      <div class="drop-hint">MD · TXT · PY · JSON · PDF · CSV · TSV · DOCX · DOC</div>
     </div>
   </div>
 
@@ -1853,11 +1817,6 @@ body { display: flex; }
           <span class="nf-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg></span>
           <span class="nf-item-label">Table Forge</span>
           <span class="nf-item-hint">資料表整理</span>
-        </button>
-        <button class="nf-item" onclick="closeNewFileDialog();openModule('book-editor')">
-          <span class="nf-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></span>
-          <span class="nf-item-label">書籍排版</span>
-          <span class="nf-item-hint">Book Editor</span>
         </button>
       </div>
     </div>
@@ -1903,6 +1862,10 @@ body { display: flex; }
       <button class="ai-mode-tab" data-ai-mode="persona" onclick="setAIMode('persona')">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c0-2 2-4 5-4h8c3 0 5 2 5 4v3a9 9 0 01-18 0z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
         人設
+      </button>
+      <button class="ai-mode-tab" id="btnMemoryPanel" onclick="window.openMemoryViewer()" title="開啟零韻手札">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5"/></svg>
+        手札
       </button>
     </div>
   </div>
@@ -2145,6 +2108,17 @@ body { display: flex; }
 
 <!-- ====== Layer 1: Core UI — works on file:// and http:// ====== -->
 <script>
+// postMessage type 對照表（本段須在 file:// 下運作，禁止 import；改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
+//   'akasha-open-pdf-ai'(2260)          = MSG_TYPES.OPEN_PDF_AI
+//   'akasha-open-script'(2556,2605)     = MSG_TYPES.OPEN_SCRIPT
+//   'akasha-open-file'(2561,2589,2598)  = MSG_TYPES.OPEN_FILE
+//   'akasha-open-pdf'(2568)             = MSG_TYPES.OPEN_PDF
+//   'akasha-export-to-table-forge'(2575) = MSG_TYPES.EXPORT_TO_TABLE_FORGE
+//   'akasha-open-spreadsheet'(2581)     = MSG_TYPES.OPEN_SPREADSHEET
+//   'akasha-mode-change'(2673)          = MSG_TYPES.MODE_CHANGE
+//   'akasha-reading-progress'(2766)     = MSG_TYPES.READING_PROGRESS（注意：同字串亦作 localStorage key，storage 用途處保持字面值，不得改動）
+//   'akasha-open-public-pdf'(2773)      = MSG_TYPES.OPEN_PUBLIC_PDF
+//   'akasha-open-pdf-url'(2778)         = MSG_TYPES.OPEN_PDF_URL
 (function() {
   function escapeHtml(str) {
     return String(str ?? '')
@@ -2162,7 +2136,6 @@ body { display: flex; }
     'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
     'spreadsheet': { title: '試算表', subtitle: 'Tabularium XL', src: 'dist/spreadsheet/index.html' },
     'script-editor': { title: 'Script Editor', subtitle: 'Scriptorium', src: 'dist/script-editor/index.html' },
-    'book-editor': { title: '書籍排版器', subtitle: 'Bibliopegia', src: 'modules/book-editor/index.html' },
     'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
     'private-reading-room': { title: '談心專區', subtitle: 'Intimarium', src: 'modules/reading-room/index.html' },
     'daily-report': { title: '每日館報', subtitle: 'Diurnalis', src: 'modules/daily-report/index.html' },
@@ -2605,14 +2578,14 @@ body { display: flex; }
         frame.contentWindow.postMessage({ type: 'akasha-open-script', filename: file.name, content: text, size: file.size }, location.origin);
       }, { once: true });
     } else if (ext === 'book') {
-      openModule('book-editor');
+      if (window.showNoteToast) window.showNoteToast('書籍排版器已下架，.book 檔案暫不支援開啟');
     }
   }
 
   function importFile() {
     var input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.md,.pdf,.book,.json,.py,.txt,.csv,.tsv,.xlsx,.xls,.docx,.doc,.jsonl,.ks';
+    input.accept = '.md,.pdf,.json,.py,.txt,.csv,.tsv,.xlsx,.xls,.docx,.doc,.jsonl,.ks';
     input.onchange = function(e) { handleFile(e.target.files[0]); };
     input.click();
   }
@@ -2750,8 +2723,8 @@ body { display: flex; }
     }
     // Gate memory system in public build (S1-8)
     if (!sec.isFeatureEnabled('memory_system')) {
-      var memNav = document.querySelector('.nav-item[onclick*="openMemoryViewer"]');
-      if (memNav) memNav.style.display = 'none';
+      var memBtn = document.getElementById('btnMemoryPanel');
+      if (memBtn) memBtn.style.display = 'none';
     }
     // Gate Notion sync in public build (S1-8)
     if (!sec.isFeatureEnabled('notion_sync')) {
@@ -2857,7 +2830,7 @@ const TYPE_ICONS = {
   book: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>',
 };
 const TYPE_LABELS = { md: 'MD', pdf: 'PDF', xlsx: 'XLS', book: 'BOOK', py: 'PY', json: 'JSON', txt: 'TXT', 'ocr-note': 'OCR', 'crop-screenshot': 'CROP', jsonl: 'JSONL', ks: 'KS' };
-const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', xlsx: 'spreadsheet', xls: 'spreadsheet', book: 'book-editor', py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'markdown', jsonl: 'script-editor', ks: 'script-editor' };
+const TYPE_MODULES = { md: 'markdown', pdf: 'pdf-reader', csv: 'table-forge', tsv: 'table-forge', xlsx: 'spreadsheet', xls: 'spreadsheet', book: 'book-editor' /* 已下架，openRecentFile 有守衛 */, py: 'markdown', json: 'markdown', txt: 'markdown', 'ocr-note': 'markdown', 'crop-screenshot': 'markdown', jsonl: 'script-editor', ks: 'script-editor' };
 const COPYRIGHT_TYPES = new Set(['ocr-note', 'crop-screenshot']);
 
 async function renderRecent() {
@@ -2884,6 +2857,7 @@ async function renderRecent() {
 }
 
 window.openRecentFile = async function(fileId, moduleName) {
+  if (moduleName === 'book-editor') { showNoteToast('書籍排版器已下架，此 .book 檔案暫不支援開啟'); return; }
   const frame = document.getElementById('module-frame');
   const blob = await getFileBlob(fileId);
   const entries = await getFileEntries();
@@ -2908,7 +2882,7 @@ window.openRecentFile = async function(fileId, moduleName) {
       if (typeof blob === 'string') { text = blob; }
       else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }
       frame.contentWindow.postMessage({
-        type: 'akasha-open-file',
+        type: MSG_TYPES.OPEN_FILE,
         filename,
         content: text,
         size: text.length,
@@ -2927,34 +2901,34 @@ window.openRecentFile = async function(fileId, moduleName) {
       const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
       const { importDocx } = await import('./core/document-bridge.js');
       const result = await importDocx(buffer, filename);
-      frame.contentWindow.postMessage({ type: 'akasha-open-file', filename: result.outName, content: result.markdown, size: result.markdown.length }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.OPEN_FILE, filename: result.outName, content: result.markdown, size: result.markdown.length }, location.origin);
     } else if (moduleName === 'markdown' && /\.doc$/i.test(filename)) {
       // DOC: extract plain text from the binary
       const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
       const { extractDocText } = await import('./core/document-bridge.js');
       const text = extractDocText(buffer);
-      frame.contentWindow.postMessage({ type: 'akasha-open-file', filename: filename.replace(/\.doc$/i, '.txt'), content: text, size: text.length }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.OPEN_FILE, filename: filename.replace(/\.doc$/i, '.txt'), content: text, size: text.length }, location.origin);
     } else if (moduleName === 'markdown') {
       let text;
       if (typeof blob === 'string') { text = blob; }
       else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }
-      frame.contentWindow.postMessage({ type: 'akasha-open-file', filename, content: text, size: text.length }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.OPEN_FILE, filename, content: text, size: text.length }, location.origin);
     } else if (moduleName === 'pdf-reader') {
       const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
-      frame.contentWindow.postMessage({ type: 'akasha-open-pdf', filename, data: buffer, fileId: entry.id }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.OPEN_PDF, filename, data: buffer, fileId: entry.id }, location.origin);
     } else if (moduleName === 'table-forge') {
       let text;
       if (typeof blob === 'string') { text = blob; }
       else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }
-      frame.contentWindow.postMessage({ type: 'akasha-export-to-table-forge', text, format: 'csv', title: filename }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.EXPORT_TO_TABLE_FORGE, text, format: 'csv', title: filename }, location.origin);
     } else if (moduleName === 'script-editor') {
       let text;
       if (typeof blob === 'string') { text = blob; }
       else { const { decodeBuffer } = await import('./core/text-decode.js'); text = decodeBuffer(blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer()).text; }
-      frame.contentWindow.postMessage({ type: 'akasha-open-script', filename, content: text, size: text.length }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.OPEN_SCRIPT, filename, content: text, size: text.length }, location.origin);
     } else if (moduleName === 'spreadsheet') {
       const buffer = blob instanceof ArrayBuffer ? blob : await new Blob([blob]).arrayBuffer();
-      frame.contentWindow.postMessage({ type: 'akasha-open-spreadsheet', filename, data: buffer }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.OPEN_SPREADSHEET, filename, data: buffer }, location.origin);
     }
   }, { once: true });
 };
@@ -2972,7 +2946,7 @@ window.closeCropViewer = function() {
 // Cross-module messages (needs imports)
 window.addEventListener('message', async (event) => {
   if (event.origin !== location.origin) return;
-  if (event.data?.type === 'akasha-file-opened') {
+  if (event.data?.type === MSG_TYPES.FILE_OPENED) {
     const entry = await saveFileEntry(event.data.entry);
     await queueForSync(entry.id);
     renderRecent();
@@ -3020,28 +2994,28 @@ registerApiKeyCheck(hasApiKey);
 window.addEventListener('message', (event) => {
   if (event.origin !== location.origin) return;
   const d = event.data;
-  if (d?.type === 'akasha-apikey-update') {
+  if (d?.type === MSG_TYPES.APIKEY_UPDATE) {
     if (d.apiKey) setApiKey(d.apiKey);
     else clearApiKey();
   }
-  if (d?.type === 'akasha-apikey-request') {
+  if (d?.type === MSG_TYPES.APIKEY_REQUEST) {
     const frame = document.getElementById('module-frame');
     if (frame?.contentWindow) {
       const s = getAISettings();
-      frame.contentWindow.postMessage({ type: 'akasha-apikey-current', apiKey: s.apiKey || '' }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.APIKEY_CURRENT, apiKey: s.apiKey || '' }, location.origin);
     }
   }
-  if (d?.type === 'akasha-notion-token-update') {
+  if (d?.type === MSG_TYPES.NOTION_TOKEN_UPDATE) {
     setNotionToken(d.token || '');
   }
-  if (d?.type === 'akasha-pdf-settings-request') {
+  if (d?.type === MSG_TYPES.PDF_SETTINGS_REQUEST) {
     const frame = document.getElementById('module-frame');
     if (frame?.contentWindow) {
       const s = getAISettings();
-      frame.contentWindow.postMessage({ type: 'akasha-pdf-settings-response', settings: { mode: s.mode, error: s.error || null } }, location.origin);
+      frame.contentWindow.postMessage({ type: MSG_TYPES.PDF_SETTINGS_RESPONSE, settings: { mode: s.mode, error: s.error || null } }, location.origin);
     }
   }
-  if (d?.type === 'akasha-pdf-ai-send') {
+  if (d?.type === MSG_TYPES.PDF_AI_SEND) {
     (async () => {
       const frame = document.getElementById('module-frame');
       try {
@@ -3050,20 +3024,20 @@ window.addEventListener('message', (event) => {
           const msg = settings.error === 'no-api-key'
             ? '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。'
             : '月幣模式尚未啟用（代理伺服器未部署）。';
-          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: msg, _reqId: d._reqId }, location.origin);
+          frame.contentWindow.postMessage({ type: MSG_TYPES.PDF_AI_RESPONSE, error: msg, _reqId: d._reqId }, location.origin);
           return;
         }
         const totalTokens = estimateTokens(d.context || '') + estimateTokens(d.text);
         if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
-          frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: '月幣不足，無法送出。', _reqId: d._reqId }, location.origin);
+          frame.contentWindow.postMessage({ type: MSG_TYPES.PDF_AI_RESPONSE, error: '月幣不足，無法送出。', _reqId: d._reqId }, location.origin);
           return;
         }
         const systemPrompt = buildSystemPrompt(d.context, d.page, d.fileName);
         const response = await callLLM(settings, systemPrompt, d.text);
         const coinsRemaining = settings.mode === 'coin' ? getBalance() : undefined;
-        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', text: response, tokensUsed: totalTokens, coinsRemaining, _reqId: d._reqId }, location.origin);
+        frame.contentWindow.postMessage({ type: MSG_TYPES.PDF_AI_RESPONSE, text: response, tokensUsed: totalTokens, coinsRemaining, _reqId: d._reqId }, location.origin);
       } catch (err) {
-        frame.contentWindow.postMessage({ type: 'akasha-pdf-ai-response', error: err.message, _reqId: d._reqId }, location.origin);
+        frame.contentWindow.postMessage({ type: MSG_TYPES.PDF_AI_RESPONSE, error: err.message, _reqId: d._reqId }, location.origin);
       }
     })();
   }
@@ -3138,6 +3112,7 @@ function showNoteToast(msg) {
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2200);
 }
+window.showNoteToast = showNoteToast;
 
 // ===== Memory Record Viewer (Phase 10-D) =====
 let _mvTab = 'approved';
@@ -3606,7 +3581,7 @@ function removeThinking() {
 // Listen for context responses from module iframes
 window.addEventListener('message', (event) => {
   if (event.origin !== location.origin) return;
-  if (event.data?.type === 'akasha-ai-context-response' && pendingContextResolve) {
+  if (event.data?.type === MSG_TYPES.AI_CONTEXT_RESPONSE && pendingContextResolve) {
     pendingContextResolve(event.data);
     pendingContextResolve = null;
   }
@@ -3619,7 +3594,7 @@ function requestModuleContext(timeoutMs = 3000) {
   }
   return new Promise((resolve) => {
     pendingContextResolve = resolve;
-    frame.contentWindow.postMessage({ type: 'akasha-ai-get-context' }, location.origin);
+    frame.contentWindow.postMessage({ type: MSG_TYPES.AI_GET_CONTEXT }, location.origin);
     setTimeout(() => {
       if (pendingContextResolve === resolve) {
         pendingContextResolve = null;
@@ -3793,14 +3768,14 @@ window.addEventListener('message', (event) => {
   const d = event.data;
 
   // --- AI send request from Reading Room ---
-  if (d?.type === 'akasha-reading-room-send') {
+  if (d?.type === MSG_TYPES.READING_ROOM_SEND) {
     const replyTarget = event.source; // capture at request time, not response time
     (async () => {
       try {
         const settings = getAISettings();
         if (settings.error === 'no-api-key') {
           replyTarget.postMessage({
-            type: 'akasha-reading-room-response',
+            type: MSG_TYPES.READING_ROOM_RESPONSE,
             error: '尚未設定 API Key。請至側欄「AI 設定」中配置您的金鑰。',
             _reqId: d._reqId,
           }, location.origin);
@@ -3816,7 +3791,7 @@ window.addEventListener('message', (event) => {
 
         if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
           replyTarget.postMessage({
-            type: 'akasha-reading-room-response',
+            type: MSG_TYPES.READING_ROOM_RESPONSE,
             error: '月幣不足，無法送出。請至「AI 設定」查看餘額或切換至 BYOK 模式。',
             _reqId: d._reqId,
           }, location.origin);
@@ -3838,13 +3813,13 @@ window.addEventListener('message', (event) => {
         }
 
         replyTarget.postMessage({
-          type: 'akasha-reading-room-response',
+          type: MSG_TYPES.READING_ROOM_RESPONSE,
           response,
           _reqId: d._reqId,
         }, location.origin);
       } catch (err) {
         replyTarget.postMessage({
-          type: 'akasha-reading-room-response',
+          type: MSG_TYPES.READING_ROOM_RESPONSE,
           error: err.message || '未知錯誤',
           _reqId: d._reqId,
         }, location.origin);
@@ -3853,7 +3828,7 @@ window.addEventListener('message', (event) => {
   }
 
   // --- Memory bridge for Reading Room ---
-  if (d?.type === 'akasha-reading-room-memory') {
+  if (d?.type === MSG_TYPES.READING_ROOM_MEMORY) {
     const replyTarget = event.source; // capture at request time, not response time
     (async () => {
       try {
@@ -3886,13 +3861,13 @@ window.addEventListener('message', (event) => {
             throw new Error('Unknown memory action: ' + d.action);
         }
         replyTarget.postMessage({
-          type: 'akasha-reading-room-memory-response',
+          type: MSG_TYPES.READING_ROOM_MEMORY_RESPONSE,
           reqId: d.reqId,
           result,
         }, location.origin);
       } catch (err) {
         replyTarget.postMessage({
-          type: 'akasha-reading-room-memory-response',
+          type: MSG_TYPES.READING_ROOM_MEMORY_RESPONSE,
           reqId: d.reqId,
           error: err.message,
         }, location.origin);
@@ -3901,13 +3876,13 @@ window.addEventListener('message', (event) => {
   }
 
   // --- Daily Report AI Bridge (Phase 15-C) ---
-  if (d?.type === 'akasha-report-generate') {
+  if (d?.type === MSG_TYPES.REPORT_GENERATE) {
     const replyTarget = event.source; // capture at request time, not response time
     (async () => {
       try {
         const settings = getAISettings();
         if (settings.error === 'no-api-key') {
-          replyTarget.postMessage({ type: 'akasha-report-response', error: '尚未設定 API Key。', requestId: d.requestId }, location.origin);
+          replyTarget.postMessage({ type: MSG_TYPES.REPORT_RESPONSE, error: '尚未設定 API Key。', requestId: d.requestId }, location.origin);
           return;
         }
 
@@ -3941,7 +3916,7 @@ JSON 格式：
         const totalTokens = estimateTokens(reportSystemPrompt) + estimateTokens(d.text);
 
         if (settings.mode === 'coin' && !hasSufficientBalance(totalTokens)) {
-          replyTarget.postMessage({ type: 'akasha-report-response', error: '月幣不足。', requestId: d.requestId }, location.origin);
+          replyTarget.postMessage({ type: MSG_TYPES.REPORT_RESPONSE, error: '月幣不足。', requestId: d.requestId }, location.origin);
           return;
         }
 
@@ -3960,9 +3935,9 @@ JSON 格式：
           throw new Error('LLM 未回傳有效 JSON');
         }
 
-        replyTarget.postMessage({ type: 'akasha-report-response', report, requestId: d.requestId }, location.origin);
+        replyTarget.postMessage({ type: MSG_TYPES.REPORT_RESPONSE, report, requestId: d.requestId }, location.origin);
       } catch (err) {
-        replyTarget.postMessage({ type: 'akasha-report-response', error: err.message || '未知錯誤', requestId: d.requestId }, location.origin);
+        replyTarget.postMessage({ type: MSG_TYPES.REPORT_RESPONSE, error: err.message || '未知錯誤', requestId: d.requestId }, location.origin);
       }
     })();
   }
@@ -4070,7 +4045,7 @@ window.tpSendToTable = function() {
 // Listen for translation preview requests from modules
 window.addEventListener('message', (event) => {
   if (event.origin !== location.origin) return;
-  if (event.data?.type === 'akasha-translation-preview') {
+  if (event.data?.type === MSG_TYPES.TRANSLATION_PREVIEW) {
     window.showTranslationPreview(event.data.content, event.data.filename);
   }
 });
@@ -4153,13 +4128,13 @@ window.addEventListener('message', (event) => {
   // Listen for module requests
   window.addEventListener('message', (event) => {
     if (event.origin !== location.origin) return;
-    if (event.data?.type === 'akasha-bgm-play') {
+    if (event.data?.type === MSG_TYPES.BGM_PLAY) {
       window.akashaBgm.play(event.data.presetId || null);
     }
-    if (event.data?.type === 'akasha-bgm-stop') {
+    if (event.data?.type === MSG_TYPES.BGM_STOP) {
       window.akashaBgm.stop();
     }
-    if (event.data?.type === 'akasha-bgm-toggle') {
+    if (event.data?.type === MSG_TYPES.BGM_TOGGLE) {
       window.akashaBgm.toggle();
     }
   });
@@ -4176,7 +4151,7 @@ window.addEventListener('message', (event) => {
       const frame = document.getElementById('module-frame');
       if (!frame) return;
       frame.contentWindow.postMessage({
-        type: 'akasha-voice-state-update',
+        type: MSG_TYPES.VOICE_STATE_UPDATE,
         speaking: isSpeaking(),
         paused: false,
         index: q.index,
@@ -4202,17 +4177,17 @@ window.addEventListener('message', (event) => {
       if (event.origin !== location.origin) return;
       const d = event.data;
 
-      if (d?.type === 'akasha-voice-play-report') {
+      if (d?.type === MSG_TYPES.VOICE_PLAY_REPORT) {
         clearQueue();
         const tasks = reportToVoiceTasks(d.report, d.opts || {});
         enqueue(tasks);
         playQueue(0);
         broadcastState({ speaking: true, index: 0, total: tasks.length, text: tasks[0]?.text || '' });
       }
-      if (d?.type === 'akasha-voice-pause') { pause(); }
-      if (d?.type === 'akasha-voice-resume') { resume(); }
-      if (d?.type === 'akasha-voice-stop') { stopQueue(); clearQueue(); broadcastState({ speaking: false, paused: false, index: 0, total: 0 }); }
-      if (d?.type === 'akasha-voice-state') { broadcastState(); }
+      if (d?.type === MSG_TYPES.VOICE_PAUSE) { pause(); }
+      if (d?.type === MSG_TYPES.VOICE_RESUME) { resume(); }
+      if (d?.type === MSG_TYPES.VOICE_STOP) { stopQueue(); clearQueue(); broadcastState({ speaking: false, paused: false, index: 0, total: 0 }); }
+      if (d?.type === MSG_TYPES.VOICE_STATE) { broadcastState(); }
     });
   } catch {}
 })();

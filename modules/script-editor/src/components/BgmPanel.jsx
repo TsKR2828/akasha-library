@@ -75,15 +75,10 @@ export default function BgmPanel({ blocks }) {
   }, [blocks]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 12 }}>
+    <div className="se-panel">
 
       {/* 狀態指示 */}
-      <div style={{
-        padding: "10px 12px",
-        background: "rgba(168,156,216,0.08)",
-        border: "1px solid rgba(168,156,216,0.25)",
-        borderRadius: 4,
-      }}>
+      <div className="se-panel-callout" style={{ background: "rgba(168,156,216,0.08)", borderColor: "rgba(168,156,216,0.25)" }}>
         <div style={{
           fontFamily: "var(--font-serif-en)", fontSize: 10.5,
           letterSpacing: "0.22em", color: "rgb(168,156,216)",
@@ -91,11 +86,11 @@ export default function BgmPanel({ blocks }) {
           marginBottom: 4,
         }}>Soundscape · Deferred</div>
         <div style={{ color: "var(--text-primary)", fontFamily: "var(--font-serif-tc)", fontSize: 13, lineHeight: 1.6 }}>
-          BGM / SFX 由獨立子專案 <code style={inlineCode}>tsuki-synth</code> 負責。
+          BGM / SFX 由獨立子專案 <code className="se-code">tsuki-synth</code> 負責。
         </div>
         <div style={{ marginTop: 4, color: "var(--text-tertiary)", fontSize: 11, lineHeight: 1.6 }}>
           目前狀態：VST3 / Standalone build 完成；CLI render 待修；WAV 預渲染 pipeline 尚未啟動。
-          Script Editor 端只負責解析 <code style={inlineCode}>#bgm:</code> / <code style={inlineCode}>#sfx:</code> 指令並顯示 cue，
+          Script Editor 端只負責解析 <code className="se-code">#bgm:</code> / <code className="se-code">#sfx:</code> 指令並顯示 cue，
           實際音訊接入需等 tsuki-synth 出 sound library WAV。
         </div>
       </div>
@@ -104,21 +99,18 @@ export default function BgmPanel({ blocks }) {
       <section>
         <SectionHead latin="Cues in Script" zh={`本稿中的音訊指令 · ${cues.length}`} />
         {cues.length === 0 ? (
-          <div style={{ padding: "10px 4px", color: "var(--text-tertiary)", fontSize: 11.5, lineHeight: 1.6 }}>
-            尚無 <code style={inlineCode}>#bgm:</code> 或 <code style={inlineCode}>#sfx:</code> 指令。<br />
-            範例：<code style={inlineCode}>#bgm: akashic_library_drone_001</code>
+          <div className="se-panel-hint">
+            尚無 <code className="se-code">#bgm:</code> 或 <code className="se-code">#sfx:</code> 指令。<br />
+            範例：<code className="se-code">#bgm: akashic_library_drone_001</code>
           </div>
         ) : (
-          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div className="se-panel-list">
             {cues.map((c, i) => {
               const planned = PLANNED_SOUNDS.find(s => s.id === c.value);
               return (
-                <div key={i} style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  padding: "5px 10px",
+                <div key={i} className="se-panel-row" style={{
                   background: planned ? "rgba(106,174,127,0.06)" : "rgba(196,96,79,0.06)",
-                  border: `1px solid ${planned ? "rgba(106,174,127,0.25)" : "rgba(196,96,79,0.25)"}`,
-                  borderRadius: 3,
+                  borderColor: planned ? "rgba(106,174,127,0.25)" : "rgba(196,96,79,0.25)",
                 }}>
                   <span style={{
                     fontFamily: "var(--font-mono)", fontSize: 10.5,
@@ -147,15 +139,9 @@ export default function BgmPanel({ blocks }) {
       {/* tsuki-synth 規劃中的聲音庫 */}
       <section>
         <SectionHead latin="Planned Library" zh={`tsuki-synth 聲音庫 · 預覽 ${PLANNED_SOUNDS.length}`} />
-        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div className="se-panel-list">
           {PLANNED_SOUNDS.map(s => (
-            <div key={s.id} style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "4px 8px",
-              background: "var(--navy-deep)",
-              border: "1px solid var(--navy-line)",
-              borderRadius: 2,
-            }}>
+            <div key={s.id} className="se-panel-row">
               <span style={{
                 width: 8, height: 8, borderRadius: 4, flexShrink: 0,
                 background: MOOD_COLORS[s.mood] || "var(--text-tertiary)",
@@ -176,12 +162,8 @@ export default function BgmPanel({ blocks }) {
               </span>
             </div>
           ))}
-          <div style={{
-            marginTop: 4, padding: "6px 8px", textAlign: "center",
-            fontSize: 10.5, color: "var(--text-tertiary)",
-            fontFamily: "var(--font-serif-en)", letterSpacing: "0.1em",
-          }}>
-            ↑ snapshot from <code style={inlineCode}>tsuki-synth/sound_library/sound_names.json</code> · 2026-05-19
+          <div className="se-panel-hint" style={{ textAlign: "center", fontFamily: "var(--font-serif-en)", letterSpacing: "0.1em", fontSize: 10.5 }}>
+            ↑ snapshot from <code className="se-code">tsuki-synth/sound_library/sound_names.json</code> · 2026-05-19
           </div>
         </div>
       </section>
@@ -195,9 +177,9 @@ export default function BgmPanel({ blocks }) {
           color: "var(--text-secondary)",
         }}>
           <li><strong style={{ color: "var(--text-primary)" }}>Phase A</strong> · tsuki-synth 完工：CLI render 修好、12 factory preset 確認、sound library 鎖版</li>
-          <li><strong style={{ color: "var(--text-primary)" }}>Phase B</strong> · 批次預渲染：<code style={inlineCode}>tsukisynth-cli --batch scores/examples/*.json → exports/wav/</code></li>
-          <li><strong style={{ color: "var(--text-primary)" }}>Phase C</strong> · 收編到 akasha：把 WAV 放到 <code style={inlineCode}>modules/script-editor/public/audio/</code></li>
-          <li><strong style={{ color: "var(--text-primary)" }}>Phase D</strong> · Script Editor 接 cue：<code style={inlineCode}>#bgm:</code>/<code style={inlineCode}>#sfx:</code> 觸發 HTML5 <code style={inlineCode}>&lt;audio&gt;</code> playback（loop / fade-in / cross-fade）</li>
+          <li><strong style={{ color: "var(--text-primary)" }}>Phase B</strong> · 批次預渲染：<code className="se-code">tsukisynth-cli --batch scores/examples/*.json → exports/wav/</code></li>
+          <li><strong style={{ color: "var(--text-primary)" }}>Phase C</strong> · 收編到 akasha：把 WAV 放到 <code className="se-code">modules/script-editor/public/audio/</code></li>
+          <li><strong style={{ color: "var(--text-primary)" }}>Phase D</strong> · Script Editor 接 cue：<code className="se-code">#bgm:</code>/<code className="se-code">#sfx:</code> 觸發 HTML5 <code className="se-code">&lt;audio&gt;</code> playback（loop / fade-in / cross-fade）</li>
           <li><strong style={{ color: "var(--text-primary)" }}>Phase E</strong> · 同步 Voice TTS：旁白 + BGM + SFX 三軌混音播放</li>
         </ol>
       </section>
@@ -205,7 +187,7 @@ export default function BgmPanel({ blocks }) {
       <div style={{
         marginTop: 4, padding: "8px 10px",
         background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
-        borderRadius: 3, fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.6,
+        borderRadius: "var(--r-sharp)", fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.6,
       }}>
         <div style={{
           fontFamily: "var(--font-serif-en)", fontSize: 10,
@@ -222,29 +204,9 @@ export default function BgmPanel({ blocks }) {
 
 function SectionHead({ latin, zh }) {
   return (
-    <div style={{
-      display: "flex", alignItems: "baseline", gap: 8,
-      paddingBottom: 4, borderBottom: "1px solid var(--navy-line)",
-    }}>
-      <span style={{
-        fontFamily: "var(--font-serif-en)", fontSize: 10,
-        letterSpacing: "0.22em", color: "var(--gold)",
-        fontVariant: "small-caps", textTransform: "uppercase",
-      }}>{latin}</span>
-      <span style={{
-        fontFamily: "var(--font-serif-tc)", fontSize: 11,
-        color: "var(--text-tertiary)", letterSpacing: "0.1em",
-      }}>{zh}</span>
+    <div className="se-panel-title">
+      <span className="latin">{latin}</span>
+      <span className="zh">{zh}</span>
     </div>
   );
 }
-
-const inlineCode = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  background: "var(--navy-deep)",
-  padding: "1px 5px",
-  borderRadius: 2,
-  border: "1px solid var(--navy-line)",
-  color: "var(--gold-dim)",
-};

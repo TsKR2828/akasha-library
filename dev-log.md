@@ -1,5 +1,28 @@
 # Akasha Library — Dev Log
 
+## 2026-07-02：Codex 回報 2 bug 修復 + Script Editor block 完整性補強
+
+### Codex 回報 S1 修復（凍結區解凍修）
+
+| 項目 | 問題 | 修法 | 檔案 |
+|------|------|------|------|
+| S1-1 | OCR 文字摘錄存書庫後，「最近開啟」點開無反應 | `postMessage` payload 從手拼 `{type, id, name, fileType}` 改為直接傳 `{type: 'akasha-file-opened', entry}`，與 Shell receiver schema 對齊 | `modules/pdf-reader/index.html` |
+| S1-2 | 截圖框選 PNG 從書庫重開時顯示亂碼文字 | Shell `openRecentFile` 新增 `entry.type === 'crop-screenshot'` 分支，建 Object URL 顯示於新增的 `.crop-viewer-overlay` 圖片預覽面板，不再進 `decodeBuffer` 文字解碼 | `index.html`（Shell） |
+
+### Script Editor block 類型完整性補強（活躍區）
+
+| 項目 | 內容 | 檔案 |
+|------|------|------|
+| Command 編輯 UI | `addBlock("command")` 模板（`{command, value}`）+ BlockCard 內雙行輸入欄位（指令名 mono / 指令值 serif） | `App.jsx` |
+| Block 排序 | `moveBlock(id, dir)` 上移/下移 + BlockCard 雙按鈕（title="上移"/"下移"），取代原裝飾用拖曳圖標 | `App.jsx` |
+| Choice 路徑驗證 | `validateBlock` 第三參數 `blocks`：檢查選項缺 `nextBlockId`（"未指定跳轉目標"）+ 跳轉指向不存在場次（"指向不存在的場次"） | `App.jsx` |
+
+驗證：`npm test` 通過（8 迴歸 + 2 Vite build + SW-INTEGRITY）；瀏覽器端以 JS 驗證 command 按鈕生成、上下移動 swap、command 缺值警告、choice 跳轉驗證。
+
+Commit: `2b38357`
+
+---
+
 ## 2026-06-13:人類實走測試計畫 + 機器軌驗證（先規劃 → Claude 實跑）
 
 月月要求「先規劃、不執行」一份完整性的人類實走測試，再由 Claude 把「機器能查的」那一軌先跑掉。

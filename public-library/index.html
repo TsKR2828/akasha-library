@@ -224,6 +224,10 @@ body {
 </div>
 
 <script>
+// postMessage type 對照表（本檔為 classic script，file:// 下可運作，禁止 import；
+// 改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
+//   'akasha-open-public-pdf'(324)     = MSG_TYPES.OPEN_PUBLIC_PDF
+//   'akasha-reading-progress'(358)    = MSG_TYPES.READING_PROGRESS（注意：333/340/342 為同字串的 localStorage key，storage 用途處保持字面值，不得改動）
 let catalog = null;
 let activeFilter = 'all';
 

@@ -94,12 +94,12 @@
     cursor: pointer;
   }
   .btn:hover { background: var(--navy-hover); border-color: var(--gold-dim); color: var(--gold-bright); }
-  .btn-gold {
+  .btn--gold {
     background: var(--gold-glow);
     border: 1px solid var(--gold-dim);
     color: var(--gold);
   }
-  .btn-gold:hover { background: rgba(201,168,106,0.22); border-color: var(--gold); }
+  .btn--gold:hover { background: rgba(201,168,106,0.22); border-color: var(--gold); }
   .btn-danger { border-color: rgba(196,96,79,0.3); background: rgba(196,96,79,0.1); color: var(--danger); }
   .btn-danger:hover { background: rgba(196,96,79,0.2); border-color: var(--danger); }
   .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
@@ -1131,7 +1131,7 @@
           <div class="split-preview" id="splitRangePreview">
             將切割 <span class="gold">0 頁</span>，輸出為一份新文件，置於書庫「片段」夾。
           </div>
-          <button class="btn btn-gold" style="width:100%" onclick="splitRange()">
+          <button class="btn btn--gold" style="width:100%" onclick="splitRange()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 11M9 16l11-11"/></svg>
             執行切割
           </button>
@@ -1145,7 +1145,7 @@
             <span>頁為一檔</span>
           </div>
           <div class="split-preview" id="splitPreview"></div>
-          <button class="btn btn-gold" style="width:100%" onclick="splitEvery()">
+          <button class="btn btn--gold" style="width:100%" onclick="splitEvery()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 11M9 16l11-11"/></svg>
             全部切割並下載
           </button>
@@ -1156,7 +1156,7 @@
           <div class="split-label">Custom Selection</div>
           <div class="split-preview" id="customPreview">點擊下方頁碼勾選要切出的頁面</div>
           <div class="custom-page-grid" id="customPageGrid"></div>
-          <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="splitCustom()" id="btnSplitCustom" disabled>
+          <button class="btn btn--gold" style="width:100%;margin-top:8px" onclick="splitCustom()" id="btnSplitCustom" disabled>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M9 8l11 11M9 16l11-11"/></svg>
             切割選取頁面
           </button>
@@ -1413,18 +1413,19 @@
   import { extractContextPages, extractPageText } from '../../core/ai.js';
   import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
+  import { MSG_TYPES } from '../../core/export/bridge.js';
 
   function requestParentAISettings() {
     return new Promise((resolve) => {
       const handler = (e) => {
         if (e.origin !== location.origin) return;
-        if (e.data?.type === 'akasha-pdf-settings-response') {
+        if (e.data?.type === MSG_TYPES.PDF_SETTINGS_RESPONSE) {
           window.removeEventListener('message', handler);
           resolve(e.data.settings || { mode: 'byok', error: 'no-api-key' });
         }
       };
       window.addEventListener('message', handler);
-      window.parent.postMessage({ type: 'akasha-pdf-settings-request' }, location.origin);
+      window.parent.postMessage({ type: MSG_TYPES.PDF_SETTINGS_REQUEST }, location.origin);
       setTimeout(() => { window.removeEventListener('message', handler); resolve({ mode: 'byok', error: 'no-api-key' }); }, 3000);
     });
   }
@@ -1434,14 +1435,14 @@
       const reqId = crypto.randomUUID();
       const handler = (e) => {
         if (e.origin !== location.origin) return;
-        if (e.data?.type === 'akasha-pdf-ai-response' && e.data._reqId === reqId) {
+        if (e.data?.type === MSG_TYPES.PDF_AI_RESPONSE && e.data._reqId === reqId) {
           window.removeEventListener('message', handler);
           if (e.data.error) reject(new Error(e.data.error));
           else resolve(e.data);
         }
       };
       window.addEventListener('message', handler);
-      window.parent.postMessage({ type: 'akasha-pdf-ai-send', text, context, page, fileName, _reqId: reqId }, location.origin);
+      window.parent.postMessage({ type: MSG_TYPES.PDF_AI_SEND, text, context, page, fileName, _reqId: reqId }, location.origin);
       setTimeout(() => { window.removeEventListener('message', handler); reject(new Error('AI 請求逾時')); }, 60000);
     });
   }
@@ -1534,20 +1535,20 @@
   // ===== PostMessage API for parent shell =====
   window.addEventListener('message', async (event) => {
     if (event.origin !== location.origin) return;
-    if (event.data?.type === 'akasha-open-pdf' && event.data.data) {
+    if (event.data?.type === MSG_TYPES.OPEN_PDF && event.data.data) {
       const blob = new Blob([event.data.data], { type: 'application/pdf' });
       const file = new File([blob], event.data.filename || 'document.pdf', { type: 'application/pdf' });
       loadFile(file, event.data.fileId || null);
     }
-    if (event.data?.type === 'akasha-open-pdf-url' && event.data.url) {
+    if (event.data?.type === MSG_TYPES.OPEN_PDF_URL && event.data.url) {
       currentBookId = event.data.bookId || null;
       loadFromUrl(event.data.url, event.data.bookTitle || 'PDF');
     }
-    if (event.data?.type === 'akasha-open-pdf-ai') {
+    if (event.data?.type === MSG_TYPES.OPEN_PDF_AI) {
       toggleAIPanel();
     }
     // AI context request from App Shell
-    if (event.data?.type === 'akasha-ai-get-context') {
+    if (event.data?.type === MSG_TYPES.AI_GET_CONTEXT) {
       let content = '';
       if (pdfDoc) {
         try {
@@ -1563,7 +1564,7 @@
         } catch { /* empty */ }
       }
       window.parent.postMessage({
-        type: 'akasha-ai-context-response',
+        type: MSG_TYPES.AI_CONTEXT_RESPONSE,
         module: 'pdf-reader',
         fileName: currentFileName || null,
         fileType: 'pdf',
@@ -1571,7 +1572,7 @@
         content,
       }, location.origin);
     }
-    if (event.data?.type === 'akasha-mode-change') {
+    if (event.data?.type === MSG_TYPES.MODE_CHANGE) {
       document.documentElement.setAttribute('data-mode', event.data.mode);
     }
   });
@@ -1693,7 +1694,7 @@
     // Notify parent of reading progress
     if (currentBookId && window.parent !== window) {
       window.parent.postMessage({
-        type: 'akasha-reading-progress',
+        type: MSG_TYPES.READING_PROGRESS,
         bookId: currentBookId,
         page: currentPage,
         totalPages,
@@ -2014,7 +2015,7 @@
       const toolbar = document.createElement('div');
       toolbar.className = 'crop-toolbar';
       toolbar.innerHTML = `
-        <button class="btn btn-gold" onclick="window.confirmCrop(${left},${top},${w},${h})">存入書庫</button>
+        <button class="btn btn--gold" onclick="window.confirmCrop(${left},${top},${w},${h})">存入書庫</button>
         <button class="btn" onclick="window.cancelCrop()">取消</button>
       `;
       cropRect.style.pointerEvents = 'auto';
@@ -2065,7 +2066,7 @@
       await saveFileBlob(entry.id, blob);
       showToast('截圖已存入書庫', 'success');
       if (window.parent !== window) {
-        window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+        window.parent.postMessage({ type: MSG_TYPES.FILE_OPENED, entry }, location.origin);
       }
     } catch (err) {
       showToast('儲存失敗：' + err.message, 'error');
@@ -2136,7 +2137,7 @@
         <div class="ocr-body" id="ocrBody">${lines}</div>
         <div class="ocr-footer">
           <span class="ocr-copyright">為保護智慧財產權，摘錄文字僅供館內閱覽</span>
-          <button class="btn btn-gold" onclick="window.saveOCRToLibrary()">存入書庫</button>
+          <button class="btn btn--gold" onclick="window.saveOCRToLibrary()">存入書庫</button>
           <button class="btn" onclick="window.closeOCRPanel()">關閉</button>
         </div>
       </div>
@@ -2190,7 +2191,7 @@
       });
       await saveFileBlob(entry.id, blob);
       if (window.parent !== window) {
-        window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+        window.parent.postMessage({ type: MSG_TYPES.FILE_OPENED, entry }, location.origin);
       }
       showToast('摘錄文字已存入書庫', 'success');
       closeOCRPanel();

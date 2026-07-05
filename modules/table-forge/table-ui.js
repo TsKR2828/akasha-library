@@ -8,7 +8,7 @@ import {
 
 import { parseMarkdownTable, parseJSON, parseCSV, autoDetectAndParse, parseReaderPayload } from './parsers.js';
 import { exportMarkdown, exportJSON, exportCSV } from './exporters.js';
-import { STORAGE_KEY as READER_STORAGE_KEY } from '../../core/export/bridge.js';
+import { STORAGE_KEY as READER_STORAGE_KEY, MSG_TYPES } from '../../core/export/bridge.js';
 import {
   extractChapterTable, extractTableInventory, extractOutline,
   extractCodeFences, extractTasks, detectAvailableExtractions,
@@ -516,13 +516,13 @@ window.addEventListener('message', (e) => {
   if (!e.data) return;
   // Security: only accept messages from same origin (parent shell)
   if (e.origin !== location.origin) return;
-  if (e.data.type === 'akasha-reader-payload') {
+  if (e.data.type === MSG_TYPES.READER_PAYLOAD) {
     const result = parseReaderPayload(e.data.payload);
     if (result.error) { showError(result.error); return; }
     loadDocument(result);
     return;
   }
-  if (e.data.type === 'akasha-export-to-table-forge') {
+  if (e.data.type === MSG_TYPES.EXPORT_TO_TABLE_FORGE) {
     const { text, format } = e.data;
     if (!text) return;
     let result;
@@ -538,7 +538,7 @@ window.addEventListener('message', (e) => {
     loadDocument(result);
   }
   // AI context request from App Shell
-  if (e.data.type === 'akasha-ai-get-context') {
+  if (e.data.type === MSG_TYPES.AI_GET_CONTEXT) {
     let content = '';
     let fileName = '';
     if (currentDoc) {
@@ -547,7 +547,7 @@ window.addEventListener('message', (e) => {
       fileName = currentDoc.title || '';
     }
     window.parent.postMessage({
-      type: 'akasha-ai-context-response',
+      type: MSG_TYPES.AI_CONTEXT_RESPONSE,
       module: 'table-forge',
       fileName,
       fileType: 'table',
@@ -565,7 +565,7 @@ window.addEventListener('message', (e) => {
 })();
 window.addEventListener('message', function(e) {
   if (e.origin !== location.origin) return;
-  if (e.data?.type === 'akasha-mode-change') {
+  if (e.data?.type === MSG_TYPES.MODE_CHANGE) {
     document.documentElement.setAttribute('data-mode', e.data.mode);
   }
 });

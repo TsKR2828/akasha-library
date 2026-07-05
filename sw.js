@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-b9fc8b4702';
+const CACHE_NAME = 'akasha-library-679344a92f';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -52,7 +52,6 @@ const LOCAL_ASSETS = [
 
   // Modules
   './modules/ai-settings/index.html',
-  './modules/book-editor/index.html',
   './modules/markdown/index.html',
   './modules/pdf-reader/index.html',
   './modules/pdf-reader/library-store.js',
@@ -67,10 +66,10 @@ const LOCAL_ASSETS = [
 
   // Built Vite modules
   './dist/spreadsheet/index.html',
-  './dist/spreadsheet/assets/index-Ds0UCttX.js',
+  './dist/spreadsheet/assets/index-OlnYhhkm.js',
   './dist/script-editor/index.html',
-  './dist/script-editor/assets/index-CUnVG5DU.js',
-  './dist/script-editor/assets/index-dpyRvhxh.css',
+  './dist/script-editor/assets/index-CviJqnBu.js',
+  './dist/script-editor/assets/index-SJcf1TR3.css',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',
   './dist/script-editor/data/works/blackstar_ch1.json',

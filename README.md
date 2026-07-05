@@ -149,6 +149,7 @@ npm test
 | Enhancement Phase 17 v2（Script Editor 4-TAB — Archive-host merge：Vite + React + Voice TTS + tsuki-synth integration plan） | ✅ |
 | Phase 18 + 19(Script Editor 品質修正 + 深度強化;19-A~E 完成)+ Write 多模式 | ✅ |
 | 2026-06-13 解凍修復批次（choice 資料安全 / Reader 無損 / SW 自動化 + SW-INTEGRITY / Vite 8） | ✅ |
+| 2026-07-02 Codex S1 修復 + Editor 完整性（OCR note / crop-screenshot / command UI / block 排序 / choice 驗證） | ✅ |
 
 詳見 [ROADMAP.md](ROADMAP.md) 和 [DEVELOPMENT.md](DEVELOPMENT.md)。
 

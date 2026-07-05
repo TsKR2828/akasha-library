@@ -19,45 +19,17 @@
       overflow: hidden;
     }
 
-    /* ===== Header ===== */
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--navy-line);
-      background: rgba(24,29,40,0.96);
-      backdrop-filter: blur(8px);
-      flex-shrink: 0;
-    }
-    :root[data-mode="light"] header {
-      background: rgba(245,239,225,0.96);
-    }
-    .header-title {
-      font-family: var(--font-display);
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--gold);
-      letter-spacing: 0.04em;
-    }
-    .header-sub {
-      font-size: 11px;
-      color: var(--text-tertiary);
-      font-family: var(--font-display);
-      font-style: italic;
-    }
-    .header-spacer { flex: 1; }
-
     /* Toggle buttons */
     .toggle-btn {
       appearance: none;
       border: 1px solid var(--navy-line);
       background: var(--navy-light);
       color: var(--text-secondary);
-      padding: 5px 10px;
+      padding: 7px 10px;
       border-radius: var(--r-card);
-      font-size: 11px;
+      font-size: 12px;
       font-family: inherit;
+      min-height: 30px;
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s, color 0.15s;
       white-space: nowrap;
@@ -590,14 +562,16 @@
 <body>
 
 <!-- Header -->
-<header>
-  <span class="header-title">談心專區</span>
-  <span class="header-sub">Intimarium</span>
+<header class="module-header">
+  <span class="mh-title">談心專區</span>
+  <span class="mh-sub">Intimarium</span>
   <span class="no-trace-badge" id="noTraceBadge">不留痕</span>
-  <div class="header-spacer"></div>
-  <button class="toggle-btn" id="btnNoTrace" title="開啟後對話不會寫入記憶">不留痕模式</button>
-  <button class="toggle-btn" id="btnNotes" title="開啟右側手札面板">手札</button>
-  <button class="toggle-btn toggle-btn--danger" id="btnClear" title="清除本次對話">清除對話</button>
+  <span class="mh-spacer"></span>
+  <div class="mh-actions">
+    <button class="toggle-btn" id="btnNoTrace" title="開啟後對話不會寫入記憶">不留痕模式</button>
+    <button class="toggle-btn" id="btnNotes" title="開啟右側手札面板">手札</button>
+    <button class="toggle-btn toggle-btn--danger" id="btnClear" title="清除本次對話">清除對話</button>
+  </div>
 </header>
 
 <!-- Safety Banner -->
@@ -717,6 +691,15 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
+// postMessage type 對照表（本檔為零 import 的 inline module script；加相對 import 會使 file:// 情境整檔失效，
+// 故維持字面值，禁止改為 import；改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
+//   'akasha-mode-change'(747)                    = MSG_TYPES.MODE_CHANGE
+//   'akasha-reading-room-response'(839)          = MSG_TYPES.READING_ROOM_RESPONSE
+//   'akasha-ai-get-context'(845)                 = MSG_TYPES.AI_GET_CONTEXT
+//   'akasha-ai-context-response'(850)            = MSG_TYPES.AI_CONTEXT_RESPONSE
+//   'akasha-reading-room-send'(866)              = MSG_TYPES.READING_ROOM_SEND
+//   'akasha-reading-room-memory'(1068)           = MSG_TYPES.READING_ROOM_MEMORY
+//   'akasha-reading-room-memory-response'(1084)  = MSG_TYPES.READING_ROOM_MEMORY_RESPONSE
 // ===== Imports =====
 // Memory APIs are in main window (App Shell), accessed via parent
 // We communicate with App Shell via PostMessage for AI calls

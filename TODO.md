@@ -394,6 +394,16 @@
 - [x] **解凍 C** 月幣未部署提示 — `ai-settings`
 - [x] **解凍 D** Vite 5→8 升級，esbuild dev 漏洞清零 — `npm audit` 0
 
+### 已完成（2026-07-02 Codex S1 修復 + Editor 完整性）
+
+> Codex 回報 2 筆 S1 + Script Editor block type system 3 項缺口，一次到位。
+
+- [x] **S1-1** OCR note postMessage schema 對齊 — `pdf-reader` payload 改傳完整 entry
+- [x] **S1-2** crop-screenshot 圖片預覽 — Shell 新增 `.crop-viewer-overlay` 面板，不再 `decodeBuffer`
+- [x] **Editor** Command block 編輯 UI — `addBlock("command")` 模板 + BlockCard 雙欄位
+- [x] **Editor** Block 上移/下移排序 — `moveBlock(id, dir)` + 雙按鈕取代裝飾拖曳圖標
+- [x] **Editor** Choice 路徑驗證 — `validateBlock` 第三參數 `blocks`，檢查缺跳轉 + 不存在場次
+
 ### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
 
 阻塞條件：tsuki-synth `TsukiSynthCLI` 修好 `ScoreRenderer.h` API mismatch + sound library 鎖版。

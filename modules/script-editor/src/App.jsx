@@ -9,6 +9,7 @@ import React from "react";
 import WriteTab from "./components/WriteTab.jsx";
 import { useCharactersOfWork } from "./hooks/useCharactersOfWork.js";
 import { parsePlainScript, blocksToPlainScript } from "./lib/parser.js";
+import { MSG_TYPES } from "../../../core/export/bridge.js";
 
 // ============= DATA (loaded from ./data/ JSONL via Vite public folder) =============
 const DATA_BASE = "./data";
@@ -4225,7 +4226,7 @@ function AiAssistPanel({ onClose, blocks, characters }) {
     const handler = (e) => {
       // Security: only accept messages from same origin
       if (e.origin !== location.origin) return;
-      if (e.data?.type === "akasha-reading-room-response") {
+      if (e.data?.type === MSG_TYPES.READING_ROOM_RESPONSE) {
         setPending(false);
         if (e.data.error) {
           setMessages(prev => [...prev, { role: "error", text: e.data.error }]);
@@ -4268,7 +4269,7 @@ function AiAssistPanel({ onClose, blocks, characters }) {
     setPending(true);
     const contextPrompt = buildContext() + "\n\n用戶提問：" + text;
     window.parent.postMessage({
-      type: "akasha-reading-room-send",
+      type: MSG_TYPES.READING_ROOM_SEND,
       text: contextPrompt,
       module: "script-editor",
       noTrace: false,
@@ -4570,7 +4571,7 @@ function App() {
   React.useEffect(() => {
     const handler = (e) => {
       if (e.origin !== location.origin) return;
-      if (e.data?.type !== "akasha-open-script") return;
+      if (e.data?.type !== MSG_TYPES.OPEN_SCRIPT) return;
       const { filename, content } = e.data;
       if (!content) return;
       const ext = (filename || "").split(".").pop().toLowerCase();
@@ -4661,11 +4662,11 @@ function App() {
   React.useEffect(() => {
     const handler = (e) => {
       if (e.origin !== location.origin) return;
-      if (e.data?.type !== "akasha-ai-get-context") return;
+      if (e.data?.type !== MSG_TYPES.AI_GET_CONTEXT) return;
       const plainText = blocksToPlainScript(blocksRef.current, CHARACTERS);
       const truncated = plainText.length > 12000 ? plainText.slice(0, 12000) + "\n…（內容已截斷）" : plainText;
       window.parent.postMessage({
-        type: "akasha-ai-context-response",
+        type: MSG_TYPES.AI_CONTEXT_RESPONSE,
         module: "script-editor",
         fileName: workMeta?.title || currentWork,
         fileType: "script",
@@ -4690,7 +4691,7 @@ function App() {
   React.useEffect(() => {
     const handler = (e) => {
       if (e.origin !== location.origin) return;
-      if (e.data?.type !== "akasha-mode-change") return;
+      if (e.data?.type !== MSG_TYPES.MODE_CHANGE) return;
       document.documentElement.setAttribute("data-mode", e.data.mode);
     };
     window.addEventListener("message", handler);

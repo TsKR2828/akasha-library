@@ -211,6 +211,9 @@ body{background:var(--bg);color:#ddd;font-family:'Georgia',serif;height:100vh;ov
 </div>
 
 <script>
+// postMessage type 對照表（本檔為 classic script，file:// 下可運作，禁止 import；
+// 改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
+//   'akasha-mode-change'(742) = MSG_TYPES.MODE_CHANGE
 /* ── STATE ── */
 let pages = [
   {id:uid(),type:'cover',title:'我的童話書',subtitle:'A Fairy Tale',author:'作者名稱',imgData:null,layout:'cover'},

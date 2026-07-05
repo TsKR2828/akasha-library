@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import * as XLSX from "xlsx";
-import { STORAGE_KEY } from "../../../core/export/bridge.js";
+import { STORAGE_KEY, MSG_TYPES } from "../../../core/export/bridge.js";
 import { payloadToCells } from "../../../core/export/fromPayload.js";
 import { parseDelimitedText, toNumericValue } from "./lib/spreadsheet-utils.js";
 
@@ -404,7 +404,7 @@ export default function SpreadsheetEditor() {
   useEffect(() => {
     const handler = (event) => {
       if (event.origin !== location.origin) return;
-      if (event.data?.type !== "akasha-open-spreadsheet" || !event.data.data) return;
+      if (event.data?.type !== MSG_TYPES.OPEN_SPREADSHEET || !event.data.data) return;
       try {
         const data = new Uint8Array(event.data.data);
         const filename = event.data.filename || "import.xlsx";

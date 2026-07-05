@@ -20,16 +20,17 @@ body {
   margin: 0 auto;
 }
 
-h1 {
-  color: var(--gold);
-  font-size: 20px;
-  margin-bottom: 6px;
-}
-
-.subtitle {
-  color: var(--text-secondary);
-  font-size: 12px;
-  margin-bottom: 24px;
+/* 本頁為窄欄設定頁：表頭走標準字級/配色，但不 sticky 不全幅 */
+.module-header,
+:root[data-mode="light"] .module-header {
+  position: static;
+  min-height: auto;
+  padding: 0 0 12px;
+  margin-bottom: 20px;
+  background: transparent;
+  backdrop-filter: none;
+  gap: 12px;
+  align-items: baseline;
 }
 
 .section {
@@ -106,10 +107,10 @@ h1 {
 }
 
 .btn:hover { border-color: var(--gold-dim); }
-.btn-gold { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
-.btn-gold:hover { background: var(--gold-dim); }
-.btn-danger { border-color: var(--danger); color: var(--danger); }
-.btn-danger:hover { background: var(--danger); color: var(--cream); }
+.btn--gold { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
+.btn--gold:hover { background: var(--gold-dim); }
+.btn--danger { border-color: var(--danger); color: var(--danger); }
+.btn--danger:hover { background: var(--danger); color: var(--cream); }
 
 .actions {
   display: flex;
@@ -253,8 +254,10 @@ h1 {
 </head>
 <body>
 
-<h1>AI 圖書館員設定</h1>
-<p class="subtitle">設定 AI 服務模式與用量管理</p>
+<header class="module-header">
+  <h1 class="mh-title">AI 圖書館員設定</h1>
+  <span class="mh-sub">設定 AI 服務模式與用量管理</span>
+</header>
 
 <!-- Mode Toggle -->
 <div class="mode-toggle">
@@ -300,9 +303,9 @@ h1 {
   </div>
 
   <div class="actions">
-    <button class="btn btn-gold" onclick="saveByok()">儲存設定</button>
+    <button class="btn btn--gold" onclick="saveByok()">儲存設定</button>
     <button class="btn" onclick="testByok()">測試連線</button>
-    <button class="btn btn-danger" onclick="clearByok()">清除金鑰</button>
+    <button class="btn btn--danger" onclick="clearByok()">清除金鑰</button>
   </div>
 
   <div id="byokStatus"></div>
@@ -361,6 +364,13 @@ h1 {
 <div class="toast" id="toast"></div>
 
 <script>
+// postMessage type 對照表（本檔為 classic script，file:// 下可運作，禁止 import；
+// 改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
+//   'akasha-apikey-update'(381/448/457)  = MSG_TYPES.APIKEY_UPDATE
+//   'akasha-apikey-request'(389)         = MSG_TYPES.APIKEY_REQUEST
+//   'akasha-apikey-current'(397)         = MSG_TYPES.APIKEY_CURRENT
+//   'akasha-mode-change'(629)            = MSG_TYPES.MODE_CHANGE
+// 注意：下方 STORAGE_KEY / KEY_SESSION / COIN_KEY 為 localStorage key，非訊息 type，不在本表範圍。
 const STORAGE_KEY = 'akasha-ai-settings';
 const KEY_SESSION = 'akasha-ai-apikey';
 const COIN_KEY = 'akasha-coin-balance';

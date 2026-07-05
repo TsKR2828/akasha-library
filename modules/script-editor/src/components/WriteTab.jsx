@@ -711,24 +711,8 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
         {availablePreviewTabs.map(id => {
           const active = previewTab === id;
           return (
-            <button
-              key={id}
-              onClick={() => setPreviewTab(id)}
-              style={{
-                flex: 1,
-                padding: "8px 0",
-                background: active ? "var(--gold-glow)" : "transparent",
-                border: "none",
-                borderBottom: active ? "2px solid var(--gold)" : "2px solid transparent",
-                color: active ? "var(--gold-bright)" : "var(--text-tertiary)",
-                fontFamily: "var(--font-serif-en)",
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                cursor: "pointer",
-                transition: "all 160ms",
-              }}
-            >
+            <button key={id} onClick={() => setPreviewTab(id)}
+                    className={active ? "se-tab is-active" : "se-tab"}>
               {id}
             </button>
           );
@@ -1042,14 +1026,14 @@ function CtxItem({ label, danger, onClick }) {
 function BlocksPreview({ blocks, voice }) {
   if (!blocks.length) {
     return (
-      <div style={{ padding: "40px 16px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12 }}>
+      <div className="se-panel-hint is-empty">
         尚未解析出 block。<br />
-        試試在左側輸入「<code style={inlineCode}>角色：對白</code>」或「<code style={inlineCode}>#scene：第一幕</code>」。
+        試試在左側輸入「<code className="se-code">角色：對白</code>」或「<code className="se-code">#scene：第一幕</code>」。
       </div>
     );
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div className="se-panel-list">
       {blocks.map((b, i) => <BlockCard key={b.id} block={b} index={i + 1} voice={voice} />)}
     </div>
   );
@@ -1073,7 +1057,7 @@ function BlockCard({ block, index, voice }) {
       background: color.bg,
       border: `1px solid ${color.bd}`,
       borderLeft: `3px solid ${color.fg}`,
-      borderRadius: 4,
+      borderRadius: "var(--r-soft)",
     }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 3 }}>
         <span style={{
@@ -1131,8 +1115,8 @@ function BlockCard({ block, index, voice }) {
 function VoicePanel({ blocks, voice }) {
   if (!voice.hasTTS) {
     return (
-      <div style={{ padding: "30px 14px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, lineHeight: 1.7 }}>
-        此瀏覽器不支援 <code style={inlineCode}>speechSynthesis</code>。<br />
+      <div className="se-panel-hint is-empty">
+        此瀏覽器不支援 <code className="se-code">speechSynthesis</code>。<br />
         請使用 Chrome / Edge / Safari。
       </div>
     );
@@ -1144,7 +1128,7 @@ function VoicePanel({ blocks, voice }) {
 
   if (!blocks.length) {
     return (
-      <div style={{ padding: "30px 14px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, lineHeight: 1.7 }}>
+      <div className="se-panel-hint is-empty">
         尚無對白可試聽。<br />在左側輸入劇本即可。
       </div>
     );
@@ -1164,15 +1148,9 @@ function VoicePanel({ blocks, voice }) {
   }, [voice.voices]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="se-panel">
       {/* controls */}
-      <div style={{
-        display: "flex", gap: 6, alignItems: "center",
-        padding: "8px 10px",
-        background: "rgba(201,168,106,0.06)",
-        border: "1px solid var(--gold-line)",
-        borderRadius: 4,
-      }}>
+      <div className="se-panel-callout" style={{ display: "flex", gap: 6, alignItems: "center" }}>
         <button
           onClick={onPlayAll}
           disabled={voice.state.queueActive || queue.length === 0}
@@ -1194,7 +1172,7 @@ function VoicePanel({ blocks, voice }) {
       {/* settings */}
       <section>
         <SectionHead latin="Voice Settings" zh="語音設定" />
-        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 6 }}>
+        <div className="se-panel-list" style={{ gap: 6 }}>
           <label style={voiceLabelStyle}>
             <span>語音</span>
             <select
@@ -1249,7 +1227,7 @@ function VoicePanel({ blocks, voice }) {
       {/* queue list */}
       <section>
         <SectionHead latin="Queue" zh={`待播 · ${queue.length}`} />
-        <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div className="se-panel-list">
           {queue.map((item, qi) => {
             const active = voice.state.queueActive && qi === voice.state.queueIdx;
             return (
@@ -1257,19 +1235,8 @@ function VoicePanel({ blocks, voice }) {
                 key={item.id || qi}
                 onClick={() => voice.playQueue(blocks, blocks.indexOf(item) >= 0
                   ? queue.indexOf(item) : qi)}
-                style={{
-                  display: "flex", alignItems: "baseline", gap: 6,
-                  padding: "4px 8px",
-                  background: active ? "var(--gold-glow)" : "var(--navy-deep)",
-                  border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
-                  borderRadius: 2,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  color: "var(--text-secondary)",
-                  fontFamily: "var(--font-serif-tc)",
-                  fontSize: 12,
-                  transition: "background 150ms, border-color 150ms",
-                }}
+                className={"se-panel-row" + (active ? " is-active" : "")}
+                style={{ alignItems: "baseline" }}
               >
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)", minWidth: 16 }}>
                   {qi + 1}
@@ -1350,19 +1317,13 @@ function StatsPreview({ stats }) {
   ];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div className="se-panel">
       {/* type counts */}
       <section>
         <SectionHead latin="Block Types" zh="區塊類型" />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 6 }}>
           {ROWS.map(([label, count, color]) => (
-            <div key={label} style={{
-              display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "5px 10px",
-              background: "var(--navy-light)",
-              border: "1px solid var(--navy-line)",
-              borderRadius: 3,
-            }}>
+            <div key={label} className="se-panel-row" style={{ justifyContent: "space-between" }}>
               <span style={{
                 fontFamily: "var(--font-serif-en)", fontSize: 10.5,
                 letterSpacing: "0.14em", color: color, fontVariant: "small-caps",
@@ -1377,12 +1338,7 @@ function StatsPreview({ stats }) {
       </section>
 
       {/* totals */}
-      <section style={{
-        padding: "10px 12px",
-        background: "rgba(201,168,106,0.06)",
-        border: "1px solid var(--gold-line)",
-        borderRadius: 3,
-      }}>
+      <section className="se-panel-callout">
         <SectionHead latin="Totals" zh="總計" />
         <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
           <span style={{ color: "var(--text-secondary)" }}>Blocks</span>
@@ -1398,21 +1354,17 @@ function StatsPreview({ stats }) {
       <section>
         <SectionHead latin="Speakers" zh={`角色 · ${stats.speakers.length}`} />
         {stats.speakers.length === 0 ? (
-          <div style={{ padding: "12px 4px", fontSize: 11.5, color: "var(--text-tertiary)" }}>尚無對白</div>
+          <div className="se-panel-hint">尚無對白</div>
         ) : (
-          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+          <div className="se-panel-list">
             {stats.speakers.slice(0, 12).map(([name, n]) => (
-              <div key={name} style={{
-                display: "flex", justifyContent: "space-between", alignItems: "center",
-                padding: "4px 8px", borderRadius: 2,
-                background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
-              }}>
+              <div key={name} className="se-panel-row" style={{ justifyContent: "space-between" }}>
                 <span style={{ fontFamily: "var(--font-serif-tc)", fontSize: 12.5, color: "var(--text-primary)" }}>{name}</span>
                 <span style={{ fontFamily: "var(--font-serif-en)", fontSize: 11, color: "var(--text-tertiary)" }}>{n} lines</span>
               </div>
             ))}
             {stats.speakers.length > 12 && (
-              <div style={{ padding: "4px 8px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
+              <div className="se-panel-hint" style={{ textAlign: "center" }}>
                 … 還有 {stats.speakers.length - 12} 位
               </div>
             )}
@@ -1425,13 +1377,8 @@ function StatsPreview({ stats }) {
 
 function TextStatsPreview({ stats, headings, mode }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <section style={{
-        padding: "10px 12px",
-        background: "rgba(201,168,106,0.06)",
-        border: "1px solid var(--gold-line)",
-        borderRadius: 3,
-      }}>
+    <div className="se-panel">
+      <section className="se-panel-callout">
         <SectionHead latin={`${mode.label} Stats`} zh={`${mode.zh}統計`} />
         <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", fontSize: 12 }}>
           <span style={{ color: "var(--text-secondary)" }}>Characters</span>
@@ -1450,24 +1397,20 @@ function TextStatsPreview({ stats, headings, mode }) {
       <section>
         <SectionHead latin="Outline" zh={`標題 · ${headings.length}`} />
         {headings.length === 0 ? (
-          <div style={{ padding: "12px 4px", fontSize: 11.5, color: "var(--text-tertiary)", lineHeight: 1.7 }}>
-            可用 <code style={inlineCode}>#</code> 到 <code style={inlineCode}>####</code> 建立 H1-H4 大綱。
+          <div className="se-panel-hint">
+            可用 <code className="se-code">#</code> 到 <code className="se-code">####</code> 建立 H1-H4 大綱。
           </div>
         ) : (
-          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 3 }}>
+          <div className="se-panel-list">
             {headings.slice(0, 12).map((h, i) => (
-              <div key={i} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "4px 8px", borderRadius: 2,
-                background: "var(--navy-deep)", border: "1px solid var(--navy-line)",
-              }}>
+              <div key={i} className="se-panel-row">
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)", minWidth: 22 }}>H{h.level}</span>
                 <span style={{ flex: 1, fontFamily: "var(--font-serif-tc)", fontSize: 12.5, color: "var(--text-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{h.text}</span>
                 <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--text-tertiary)" }}>:{h.line}</span>
               </div>
             ))}
             {headings.length > 12 && (
-              <div style={{ padding: "4px 8px", fontSize: 11, color: "var(--text-tertiary)", textAlign: "center" }}>
+              <div className="se-panel-hint" style={{ textAlign: "center" }}>
                 … 還有 {headings.length - 12} 個標題
               </div>
             )}
@@ -1480,19 +1423,9 @@ function TextStatsPreview({ stats, headings, mode }) {
 
 function SectionHead({ latin, zh }) {
   return (
-    <div style={{
-      display: "flex", alignItems: "baseline", gap: 8,
-      paddingBottom: 4, borderBottom: "1px solid var(--navy-line)",
-    }}>
-      <span style={{
-        fontFamily: "var(--font-serif-en)", fontSize: 10,
-        letterSpacing: "0.22em", color: "var(--gold)",
-        fontVariant: "small-caps", textTransform: "uppercase",
-      }}>{latin}</span>
-      <span style={{
-        fontFamily: "var(--font-serif-tc)", fontSize: 11,
-        color: "var(--text-tertiary)", letterSpacing: "0.1em",
-      }}>{zh}</span>
+    <div className="se-panel-title">
+      <span className="latin">{latin}</span>
+      <span className="zh">{zh}</span>
     </div>
   );
 }
@@ -1523,7 +1456,7 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
 
   if (!hasHeadings && !hasScenes) {
     return (
-      <div style={{ padding: "40px 14px", textAlign: "center", color: "var(--text-tertiary)", fontSize: 12, lineHeight: 1.7 }}>
+      <div className="se-panel-hint is-empty">
         <div style={{
           fontFamily: "var(--font-serif-en)", fontSize: 10,
           letterSpacing: "0.22em", color: "var(--gold-dim)",
@@ -1531,10 +1464,10 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
         }}>Structure</div>
         <div>尚無結構標記。</div>
         <div style={{ marginTop: 12, fontSize: 11 }}>
-          使用 Markdown 標題（<code style={inlineCode}># ~ ####</code>）<br />
+          使用 Markdown 標題（<code className="se-code"># ~ ####</code>）<br />
           {showSceneHint && (
             <>
-              或場景指令（<code style={inlineCode}>#scene：名稱</code>）<br />
+              或場景指令（<code className="se-code">#scene：名稱</code>）<br />
             </>
           )}
           建立大綱，即可在此導航。
@@ -1549,12 +1482,12 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
 
   let sceneNum = 0;
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div className="se-panel">
       {/* ── Heading tree ── */}
       {hasHeadings && (
         <>
           <SectionHead latin="Heading Outline" zh={`標題大綱 · ${headings.length}`} />
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div className="se-panel-list">
             {headings.map((h, i) => {
               const active = i === activeHdgIdx;
               return (
@@ -1604,12 +1537,8 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
           {hasHeadings && <div style={{ height: 1, background: "var(--navy-line)", margin: "6px 0" }} />}
           <SectionHead latin="Scene Outline" zh={`場景大綱 · ${sceneCount}`} />
 
-          <div style={{
+          <div className="se-panel-callout" style={{
             display: "flex", gap: 12,
-            padding: "6px 10px",
-            background: "rgba(201,168,106,0.06)",
-            border: "1px solid var(--gold-line)",
-            borderRadius: 3,
             fontSize: 11, color: "var(--text-tertiary)",
             fontFamily: "var(--font-serif-en)",
             letterSpacing: "0.08em",
@@ -1619,17 +1548,12 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
             <span>{totalNar} narrations</span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <div className="se-panel-list">
             {outline.map((section, i) => {
               if (!section.scene) {
                 if (section.dialogues + section.narrations > 0) {
                   return (
-                    <div key={i} style={{
-                      padding: "4px 10px",
-                      fontSize: 11, color: "var(--text-tertiary)",
-                      fontFamily: "var(--font-serif-tc)",
-                      fontStyle: "italic",
-                    }}>
+                    <div key={i} className="se-panel-hint" style={{ fontStyle: "italic", padding: "4px 10px" }}>
                       （序 · {section.dialogues} 對白 · {section.narrations} 旁白）
                     </div>
                   );
@@ -1642,18 +1566,8 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
                 <button
                   key={i}
                   onClick={() => onJump(section.scene._line)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 8,
-                    padding: "7px 10px",
-                    background: active ? "var(--gold-glow)" : "var(--navy-deep)",
-                    border: `1px solid ${active ? "var(--gold-dim)" : "var(--navy-line)"}`,
-                    borderLeft: `3px solid ${active ? "var(--gold)" : "var(--gold-line)"}`,
-                    borderRadius: 3,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    width: "100%",
-                    transition: "background 150ms, border-color 150ms",
-                  }}
+                  className={"se-panel-row" + (active ? " is-active" : "")}
+                  style={{ borderLeft: `3px solid ${active ? "var(--gold)" : "var(--gold-line)"}`, padding: "7px 10px" }}
                 >
                   <span style={{
                     fontFamily: "var(--font-serif-en)", fontSize: 10,
@@ -1691,12 +1605,3 @@ function OutlinePanel({ outline, headings = [], onJump, activeLine, showSceneHin
   );
 }
 
-const inlineCode = {
-  fontFamily: "var(--font-mono)",
-  fontSize: 11,
-  background: "var(--navy-deep)",
-  padding: "1px 5px",
-  borderRadius: 2,
-  border: "1px solid var(--navy-line)",
-  color: "var(--gold-dim)",
-};

@@ -18,35 +18,6 @@
       min-height: 100vh;
     }
 
-    /* Header bar */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      align-items: center;
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--navy-line);
-      background: rgba(24,29,40,0.96);
-      backdrop-filter: blur(8px);
-    }
-
-    :root[data-mode="light"] header {
-      background: rgba(245,239,225,0.96);
-    }
-
-    h1 {
-      margin: 0 8px 0 0;
-      font-family: var(--font-display);
-      font-size: 17px;
-      font-weight: 500;
-      color: var(--gold);
-      letter-spacing: 0.04em;
-      white-space: nowrap;
-    }
-
     /* Buttons */
     .btn {
       appearance: none;
@@ -692,54 +663,71 @@
     :root[data-mode="light"] .inline-code {
       color: var(--gold-deep);
     }
+
+    /* 表頭統一：狀態列與選單內群組直排 */
+    #status { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .mh-menu .edit-group.visible,
+    .mh-menu .sheets-group.visible { flex-direction: column; align-items: stretch; }
+    .mh-menu .separator { width: auto; height: 1px; margin: 4px 0; align-self: stretch; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Code & Data Reader</h1>
-    <label class="file-label" title="從電腦選一個檔案打開">
-      開啟檔案
-      <input id="fileInput" type="file" accept=".py,.json,.jsonl,.md,.markdown,.txt,.score.json,.docx,.doc,text/plain,application/json,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-    </label>
-    <button class="btn" id="btnEditToggle" style="display:none" title="直接修改檔案內容（支援 md / txt / json）">編輯模式</button>
-    <button class="btn--gold btn" id="btnDownloadEdited" style="display:none" title="把編輯後的檔案存到你的電腦">下載新檔</button>
-    <button class="btn--gold btn" id="btnSaveToLibrary" style="display:none" title="把編輯後的檔案存進圖書館，下次不用重新上傳">存檔至書庫</button>
-
-    <!-- Edit tools: undo/redo + diff -->
-    <div class="edit-group" id="editGroup">
-      <button class="btn" id="btnUndo" title="復原上一步操作">↩ 復原</button>
-      <button class="btn" id="btnRedo" title="重做剛才復原的操作">↪ 重做</button>
-      <span class="separator"></span>
-      <button class="btn" id="btnShowDiff" title="標記你改過的地方">變更標示</button>
-      <button class="btn" id="btnClearDiff" style="display:none" title="清除所有變更標記">清除標示</button>
-    </div>
-
-    <span id="editError" style="display:none"></span>
-    <button class="btn" id="copyRaw" title="複製你實際打的文字，包含 ### 這些符號">複製原始內容</button>
-    <button class="btn--gold btn" id="copyView" title="複製畫面上看到的樣子，符號會變成標題粗體等">複製目前視圖</button>
-    <button class="btn" id="downloadText" title="把檔案存到你的電腦">下載目前內容</button>
-    <button class="btn--gold btn" id="exportDocx" style="display:none" title="把 Markdown 內容轉成 Word 文件(.docx)下載">匯出 DOCX</button>
-    <button class="btn--gold btn" id="exportScriptDocx" style="display:none" title="把劇本內容轉成 Word 文件(.docx)下載">劇本 DOCX</button>
-    <button class="btn--gold btn" id="exportScriptPdf" style="display:none" title="開啟劇本排版頁面，可直接列印或存成 PDF">劇本 PDF 預覽</button>
-    <button class="btn--gold btn" id="exportSummary" title="自動幫你整理這個檔案的重點大綱">匯出摘要 .md</button>
-    <button class="btn" id="btnSaveSummaryToLibrary" style="display:none" title="把摘要存進圖書館，與原始檔案建立關聯">摘要存入書庫</button>
-
-    <span class="separator"></span>
-
-    <!-- Sheets export group — visible only in MD mode -->
-    <div class="sheets-group" id="sheetsGroup">
-      <button class="btn" id="copyHtml" title="把 Markdown 轉成 HTML 原始碼複製到剪貼簿">複製 HTML (WordPress)</button>
-      <button class="btn" id="copyPlainTables" title="抽取 Markdown 表格轉成 TSV 格式">純表格 → Sheets</button>
-      <button class="btn--sheets btn" id="copyRichSheets" title="Markdown 全文轉格式化表格，貼到 Google Sheets">格式化 → Sheets</button>
-      <button class="btn--sheets btn" id="openSheetsRich" title="自動開新 Google Sheet 並複製格式化內容">開新 Sheet 並貼上</button>
-    </div>
-
-    <span class="separator"></span>
-    <button class="btn--gold btn" id="exportToSpreadsheet" title="把內容傳到表格工具做進一步處理">送到 Table Forge</button>
-
-    <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼..." title="在檔案中搜尋關鍵字">
-    <button class="btn" id="searchBtn" title="在檔案中搜尋關鍵字">搜尋</button>
+  <header class="module-header">
+    <h1 class="mh-title">Code &amp; Data Reader</h1>
     <span id="status">拖曳 .py / .json / .jsonl / .score.json / .md / .txt / .docx 到視窗</span>
+    <span id="editError" style="display:none"></span>
+    <div class="mh-actions">
+      <label class="file-label" title="從電腦選一個檔案打開">
+        開啟檔案
+        <input id="fileInput" type="file" accept=".py,.json,.jsonl,.md,.markdown,.txt,.score.json,.docx,.doc,text/plain,application/json,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+      </label>
+      <button class="btn" id="btnEditToggle" style="display:none" title="直接修改檔案內容（支援 md / txt / json）">編輯模式</button>
+      <button class="btn--gold btn" id="copyView" title="複製畫面上看到的樣子，符號會變成標題粗體等">複製目前視圖</button>
+      <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼..." title="在檔案中搜尋關鍵字">
+      <button class="btn" id="searchBtn" title="在檔案中搜尋關鍵字">搜尋</button>
+      <div class="mh-more">
+        <button class="btn" id="btnMore" aria-haspopup="true" aria-expanded="false">更多 ▾</button>
+        <div class="mh-menu" id="mhMenu">
+
+          <!-- Edit tools: undo/redo + diff -->
+          <div class="edit-group mh-menu-group" id="editGroup">
+            <div class="mh-menu-label">編輯</div>
+            <button class="btn" id="btnUndo" title="復原上一步操作">↩ 復原</button>
+            <button class="btn" id="btnRedo" title="重做剛才復原的操作">↪ 重做</button>
+            <span class="separator"></span>
+            <button class="btn" id="btnShowDiff" title="標記你改過的地方">變更標示</button>
+            <button class="btn" id="btnClearDiff" style="display:none" title="清除所有變更標記">清除標示</button>
+            <button class="btn--gold btn" id="btnDownloadEdited" style="display:none" title="把編輯後的檔案存到你的電腦">下載新檔</button>
+            <button class="btn--gold btn" id="btnSaveToLibrary" style="display:none" title="把編輯後的檔案存進圖書館，下次不用重新上傳">存檔至書庫</button>
+          </div>
+
+          <div class="mh-menu-label">複製 / 下載</div>
+          <button class="btn" id="copyRaw" title="複製你實際打的文字，包含 ### 這些符號">複製原始內容</button>
+          <button class="btn" id="downloadText" title="把檔案存到你的電腦">下載目前內容</button>
+
+          <hr class="mh-menu-hr">
+          <div class="mh-menu-label">匯出</div>
+          <button class="btn--gold btn" id="exportDocx" style="display:none" title="把 Markdown 內容轉成 Word 文件(.docx)下載">匯出 DOCX</button>
+          <button class="btn--gold btn" id="exportScriptDocx" style="display:none" title="把劇本內容轉成 Word 文件(.docx)下載">劇本 DOCX</button>
+          <button class="btn--gold btn" id="exportScriptPdf" style="display:none" title="開啟劇本排版頁面，可直接列印或存成 PDF">劇本 PDF 預覽</button>
+          <button class="btn--gold btn" id="exportSummary" title="自動幫你整理這個檔案的重點大綱">匯出摘要 .md</button>
+          <button class="btn" id="btnSaveSummaryToLibrary" style="display:none" title="把摘要存進圖書館，與原始檔案建立關聯">摘要存入書庫</button>
+
+          <!-- Sheets export group — visible only in MD mode -->
+          <div class="sheets-group mh-menu-group" id="sheetsGroup">
+            <div class="mh-menu-label">Sheets</div>
+            <button class="btn" id="copyHtml" title="把 Markdown 轉成 HTML 原始碼複製到剪貼簿">複製 HTML (WordPress)</button>
+            <button class="btn" id="copyPlainTables" title="抽取 Markdown 表格轉成 TSV 格式">純表格 → Sheets</button>
+            <button class="btn--sheets btn" id="copyRichSheets" title="Markdown 全文轉格式化表格，貼到 Google Sheets">格式化 → Sheets</button>
+            <button class="btn--sheets btn" id="openSheetsRich" title="自動開新 Google Sheet 並複製格式化內容">開新 Sheet 並貼上</button>
+          </div>
+
+          <hr class="mh-menu-hr">
+          <div class="mh-menu-label">傳送</div>
+          <button class="btn--gold btn" id="exportToSpreadsheet" title="把內容傳到表格工具做進一步處理">送到 Table Forge</button>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div class="app" id="appRoot">
@@ -796,6 +784,13 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <script>
+    // postMessage type 對照表（本檔為 classic script，file:// 下可運作，禁止 import；
+    // 改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES。匯出流程另走 2340 行動態 import 使用 MSG_TYPES）：
+    //   'akasha-file-opened'(1704,1729,2112,2132)   = MSG_TYPES.FILE_OPENED
+    //   'akasha-open-file'(2426)                    = MSG_TYPES.OPEN_FILE
+    //   'akasha-ai-get-context'(2475)                = MSG_TYPES.AI_GET_CONTEXT
+    //   'akasha-ai-context-response'(2479)           = MSG_TYPES.AI_CONTEXT_RESPONSE
+    //   'akasha-mode-change'(2496)                   = MSG_TYPES.MODE_CHANGE
     // ═══════════════════════════════════════════
     //  STATE
     // ═══════════════════════════════════════════
@@ -2524,6 +2519,22 @@
 
     // HINTS 聯動 — init hover listeners
     initHoverHints();
+
+    // --- 更多 ▾ 選單 open/close ---
+    (function () {
+      var btn = document.getElementById('btnMore');
+      var menu = document.getElementById('mhMenu');
+      function close() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); }
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = menu.classList.toggle('open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+      document.addEventListener('click', function (e) {
+        if (!menu.contains(e.target)) close();
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    })();
   </script>
 </body>
 </html>

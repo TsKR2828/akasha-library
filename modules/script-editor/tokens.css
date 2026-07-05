@@ -47,3 +47,124 @@
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.06) inset, 0 18px 40px -20px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.35);
   --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
 }
+
+/* ── 工項 H：預覽面板共用元件 ─────────────────────────── */
+
+/* 面板根容器：統一字級基準與段落間距 */
+.se-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 12px;
+  font-family: var(--font-serif-tc);
+  color: var(--text-secondary);
+}
+
+/* 面板標題（拉丁小標 + 中文副標，取代兩份重複的 SectionHead 內聯樣式） */
+.se-panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--navy-line);
+}
+.se-panel-title .latin {
+  font-family: var(--font-serif-en);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  font-variant: small-caps;
+  text-transform: uppercase;
+}
+.se-panel-title .zh {
+  font-family: var(--font-serif-tc);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.1em;
+}
+
+/* 列表容器：標題下方的垂直堆疊 */
+.se-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.se-panel-title + .se-panel-list { margin-top: 6px; }
+
+/* 資料列：統一 navy-deep 底 + navy-line 框 + 2px 圓角 */
+.se-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  background: var(--navy-deep);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-sharp);
+  font-size: 12px;
+  font-family: var(--font-serif-tc);
+  color: var(--text-secondary);
+  text-align: left;
+}
+button.se-panel-row {
+  cursor: pointer;
+  width: 100%;
+  transition: background 150ms, border-color 150ms;
+}
+.se-panel-row.is-active {
+  background: var(--gold-glow);
+  border-color: var(--gold-dim);
+  color: var(--text-primary);
+}
+
+/* 金色重點卡（Totals / 語音控制列 / 統計卡） */
+.se-panel-callout {
+  padding: 10px 12px;
+  background: rgba(201,168,106,0.06);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--r-soft);
+}
+
+/* 次要提示文字；is-empty = 置中空狀態 */
+.se-panel-hint {
+  padding: 10px 4px;
+  color: var(--text-tertiary);
+  font-size: 11.5px;
+  line-height: 1.65;
+  font-family: var(--font-serif-tc);
+}
+.se-panel-hint.is-empty {
+  padding: 36px 14px;
+  text-align: center;
+}
+
+/* 行內 code（取代兩份重複的 inlineCode const） */
+.se-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--navy-deep);
+  padding: 1px 5px;
+  border-radius: var(--r-sharp);
+  border: 1px solid var(--navy-line);
+  color: var(--gold-dim);
+}
+
+/* 預覽分頁 tab */
+.se-tab {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-tertiary);
+  font-family: var(--font-serif-en);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 160ms;
+}
+.se-tab.is-active {
+  background: var(--gold-glow);
+  border-bottom-color: var(--gold);
+  color: var(--gold-bright);
+}
