@@ -5,701 +5,629 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>談心專區 — 阿卡夏圖書館</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- shared.css 已載入全域字體（含 Sorts Mill Goudy／JetBrains Mono／Noto Serif TC／
+       Cormorant Garamond），本檔不重複 <link> Google Fonts。 -->
   <link rel="stylesheet" href="../../assets/styles/shared.css">
   <style>
     * { box-sizing: border-box; margin: 0; }
+    html, body { height: 100%; }
     body {
-      font-family: var(--font-body);
-      color: var(--text-primary);
-      background: var(--navy-deep);
-      height: 100vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      background: var(--page-bg);
+      /* 廳墨色：本模組全域套用，供 shared.css 內所有 var(--zone-ink, …) 元件自動取色 */
+      --zone-ink: var(--ink-intimarium);
     }
 
-    /* Toggle buttons */
-    .toggle-btn {
-      appearance: none;
-      border: 1px solid var(--navy-line);
-      background: var(--navy-light);
-      color: var(--text-secondary);
-      padding: 7px 10px;
-      border-radius: var(--r-card);
-      font-size: 12px;
-      font-family: inherit;
-      min-height: 30px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
-      white-space: nowrap;
-    }
-    .toggle-btn:hover {
-      border-color: var(--gold-dim);
-      color: var(--text-primary);
-    }
-    .toggle-btn--active {
-      background: var(--gold-glow);
-      border-color: var(--gold-dim);
-      color: var(--gold);
-    }
-    .toggle-btn--danger {
-      border-color: var(--oxblood);
-      color: var(--danger);
-    }
-    .toggle-btn--danger:hover {
-      background: rgba(196,96,79,0.12);
-    }
+    /* ===== Deskbar 狀態 ===== */
+    .desk-dot.is-danger { background: var(--danger); }
 
-    /* ===== Safety Banner ===== */
-    .safety-banner {
-      padding: 8px 16px;
-      font-size: 11px;
-      color: var(--text-tertiary);
-      border-bottom: 1px solid var(--navy-line);
-      background: var(--navy);
-      line-height: 1.5;
-      flex-shrink: 0;
+    /* 李紫 active（不留痕 toggle） */
+    .btn.is-active {
+      background: rgba(122,88,152,0.14);
+      border-color: rgba(122,88,152,0.45);
+      color: var(--ink-intimarium);
     }
-    .safety-banner a {
-      color: var(--gold-dim);
-      text-decoration: underline;
-      cursor: pointer;
-    }
+    .btn.is-active:hover { background: rgba(122,88,152,0.22); }
 
-    /* ===== Main Layout ===== */
-    .main {
+    /* ===== Room layout：紙頁（左）＋ 手札軌（右）===== */
+    .im-page {
       flex: 1;
+      min-height: 0;
       display: flex;
       overflow: hidden;
+      gap: 24px;
+      padding: 20px 32px 24px;
+      position: relative;
+    }
+    .im-page::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 200px;
+      background: radial-gradient(ellipse 60% 100% at 50% -20%, rgba(255,248,224,0.5), transparent 72%);
+      pointer-events: none;
     }
 
-    /* ===== Chat Panel (Left) ===== */
-    .chat-panel {
+    .im-paper.page-sheet {
       flex: 1;
-      display: flex;
-      flex-direction: column;
       min-width: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 40px 20px 76px;
     }
+    .im-paper.page-sheet::before { left: 48px; }
 
-    .chat-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      scroll-behavior: smooth;
-    }
-
-    .chat-msg {
+    .im-timestamp {
+      flex: none;
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      letter-spacing: 0.2em;
+      color: var(--page-pencil);
       margin-bottom: 14px;
-      max-width: 80%;
-      animation: msg-in 0.25s ease-out;
     }
-    @keyframes msg-in {
+
+    .im-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-right: 4px;
+    }
+    .im-msg { animation: im-msg-in 0.25s ease-out; }
+    @keyframes im-msg-in {
       from { opacity: 0; transform: translateY(6px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .chat-msg--user {
-      margin-left: auto;
-      text-align: right;
+    .im-msg--user {
+      align-self: flex-end;
+      max-width: 78%;
     }
-    .chat-msg--assistant {
-      margin-right: auto;
-    }
-
-    .chat-msg-label {
-      font-size: 10px;
-      color: var(--text-tertiary);
-      margin-bottom: 3px;
-      font-family: var(--font-display);
-    }
-
-    .chat-msg-bubble {
-      display: inline-block;
+    .im-bubble {
+      background: rgba(122,88,152,0.07);
+      border: 1px solid rgba(122,88,152,0.18);
+      border-radius: 6px 0 0 6px;
       padding: 10px 14px;
-      border-radius: var(--r-card);
-      font-size: 14px;
-      line-height: 1.7;
+      font-family: var(--font-serif-tc);
+      font-size: 13.5px;
+      line-height: 1.95;
+      color: var(--page-ink);
+      white-space: pre-wrap;
+      word-break: break-word;
       text-align: left;
+    }
+    .im-msg--assistant {
+      align-self: flex-start;
+      max-width: 86%;
+    }
+    .im-text {
+      font-family: var(--font-serif-tc);
+      font-size: 13.5px;
+      line-height: 32px;
+      color: var(--page-ink-mid);
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .chat-msg--user .chat-msg-bubble {
-      background: var(--gold-glow);
-      border: 1px solid var(--gold-line);
-      color: var(--text-primary);
+    .im-signature {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: var(--page-pencil);
+      margin-top: 4px;
     }
-    .chat-msg--assistant .chat-msg-bubble {
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      color: var(--text-primary);
+    .im-msg--assistant .margin-note {
+      margin: 6px 0 4px;
+      font-size: 14.5px;
     }
 
     /* Typewriter cursor */
-    .chat-cursor {
+    .im-cursor {
       display: inline-block;
       width: 2px;
       height: 1em;
-      background: var(--gold);
+      background: var(--ink-intimarium);
       margin-left: 2px;
-      animation: blink 0.7s step-end infinite;
+      animation: im-blink 0.7s step-end infinite;
       vertical-align: text-bottom;
     }
-    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes im-blink { 50% { opacity: 0; } }
 
     /* Thinking indicator */
-    .chat-thinking .chat-msg-bubble::after {
+    .im-thinking::after {
       content: '';
       display: inline-block;
       width: 6px; height: 6px;
       border-radius: 50%;
-      background: var(--gold-dim);
-      margin-left: 6px;
-      animation: pulse-dot 1s ease-in-out infinite;
+      background: var(--ink-intimarium);
+      margin-left: 8px;
+      animation: im-pulse-dot 1s ease-in-out infinite;
     }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 1; }
+    @keyframes im-pulse-dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    /* Suggestion actions (under margin-note) */
+    .im-suggest-actions {
+      display: flex;
+      gap: 6px;
+      margin: 2px 0 4px;
+    }
+    .btn--xs {
+      height: 22px;
+      min-height: 22px;
+      padding: 0 8px;
+      font-size: 10.5px;
+      border-radius: var(--r-sharp);
     }
 
-    /* ===== Chat Input ===== */
-    .chat-input-bar {
+    /* ===== Composer ===== */
+    .im-composer {
+      flex: none;
       display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid var(--navy-line);
-      background: var(--navy);
-      flex-shrink: 0;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 10px;
+      border-top: 1px solid var(--page-border);
     }
-    .chat-input {
+    .im-input {
       flex: 1;
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 14px;
-      padding: 10px 14px;
+      min-height: 32px;
+      max-height: 120px;
+      background: var(--page-bg);
+      border: 1px solid var(--page-border);
+      border-radius: 4px;
+      color: var(--page-ink);
+      font-family: var(--font-serif-tc);
+      font-size: 12.5px;
+      line-height: 1.6;
+      padding: 6px 12px;
       resize: none;
       outline: none;
-      min-height: 42px;
-      max-height: 120px;
-      line-height: 1.5;
     }
-    .chat-input:focus {
-      border-color: var(--gold-dim);
-    }
-    .chat-input::placeholder {
-      color: var(--text-tertiary);
-    }
-    .chat-send {
-      appearance: none;
-      background: var(--gold-glow);
-      border: 1px solid var(--gold-dim);
-      color: var(--gold);
-      border-radius: var(--r-card);
+    .im-input:focus { border-color: var(--ink-intimarium); }
+    .im-input::placeholder { color: var(--page-pencil); }
+    .im-send {
+      flex: none;
+      height: 32px;
       padding: 0 16px;
-      font-size: 13px;
+      background: rgba(122,88,152,0.1);
+      border: 1px solid rgba(122,88,152,0.45);
+      border-radius: 4px;
+      color: var(--ink-intimarium);
       font-family: inherit;
+      font-size: 12px;
       cursor: pointer;
       transition: background 0.15s;
       white-space: nowrap;
     }
-    .chat-send:hover {
-      background: rgba(201,168,106,0.22);
+    .im-send:hover { background: rgba(122,88,152,0.18); }
+    .im-send:disabled { opacity: 0.4; cursor: default; }
+
+    /* ===== Footnote：一行鉛筆小字（原免責聲明橫幅收於此）===== */
+    .im-footnote {
+      flex: none;
+      text-align: center;
+      font-family: var(--font-hand);
+      font-style: italic;
+      font-size: 10.5px;
+      color: var(--page-pencil);
+      opacity: 0.75;
+      line-height: 1.7;
+      margin-top: 12px;
     }
-    .chat-send:disabled {
-      opacity: 0.4;
-      cursor: default;
+    .im-footnote a {
+      color: var(--ink-intimarium);
+      text-decoration: underline;
+      cursor: pointer;
+      font-style: normal;
     }
 
-    /* ===== Notes Panel (Right) ===== */
-    .notes-panel {
-      width: 320px;
-      border-left: 1px solid var(--navy-line);
+    /* ===== 手札軌（右）===== */
+    .im-rail {
+      width: 264px;
+      flex: none;
       display: flex;
       flex-direction: column;
-      background: var(--navy);
-      flex-shrink: 0;
+      gap: 14px;
+      overflow-y: auto;
     }
-    .notes-panel--hidden {
-      display: none;
-    }
-    .notes-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--navy-line);
+    .im-rail[hidden] { display: none; }
+
+    .im-rail-head {
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-bottom: 10px;
     }
-    .notes-title {
-      font-family: var(--font-display);
-      font-size: 14px;
-      color: var(--gold);
-      flex: 1;
+    .im-rail-head .index-card__label { margin-bottom: 0; }
+
+    .im-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
     }
-    .notes-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
+    .im-filter-bar:empty { display: none; }
+    .im-filter-tag {
+      appearance: none;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 8px;
+      white-space: nowrap;
+      background: transparent;
+      border: 1px solid var(--page-border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 10px;
+      color: var(--page-pencil);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .im-filter-tag:hover { border-color: var(--ink-intimarium); color: var(--ink-intimarium); }
+    .im-filter-tag.is-active {
+      background: rgba(122,88,152,0.1);
+      border-color: rgba(122,88,152,0.3);
+      color: var(--ink-intimarium);
     }
 
-    /* Note card */
-    .note-card {
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      padding: 12px;
-      margin-bottom: 10px;
+    .im-notes-scroll {
+      max-height: 44vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .im-note {
+      padding: 9px 11px;
+      background: var(--page-bg);
+      border: 1px solid var(--page-border);
+      border-left: 2px solid transparent;
+      cursor: pointer;
       transition: border-color 0.15s;
     }
-    .note-card:hover {
-      border-color: var(--gold-dim);
-    }
-    .note-card-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--gold);
-      margin-bottom: 4px;
-    }
-    .note-card-body {
-      font-size: 12px;
-      color: var(--text-secondary);
+    .im-note:hover { border-left-color: var(--ink-intimarium); }
+    .im-note__title { font-size: 12px; color: var(--page-ink); font-weight: 600; }
+    .im-note__body {
+      font-size: 11px;
+      color: var(--page-ink-mid);
       line-height: 1.6;
+      margin-top: 4px;
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .note-card-meta {
+    .im-note__meta {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
-      font-size: 10px;
-      color: var(--text-tertiary);
+      flex-wrap: wrap;
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: var(--page-pencil);
     }
-    .note-card-actions {
+    .im-note__actions {
       display: flex;
       gap: 6px;
-      margin-top: 8px;
+      margin-top: 7px;
     }
-    .note-btn {
-      appearance: none;
-      border: 1px solid var(--navy-line);
-      background: var(--navy);
-      color: var(--text-secondary);
-      padding: 3px 8px;
-      border-radius: var(--r-sharp);
-      font-size: 10px;
-      font-family: inherit;
-      cursor: pointer;
-    }
-    .note-btn:hover {
-      border-color: var(--gold-dim);
-      color: var(--text-primary);
-    }
-    .note-btn--danger:hover {
-      border-color: var(--oxblood);
-      color: var(--danger);
-    }
+    .im-note__actions .btn { color: var(--page-ink-mid); border-color: var(--page-border); background: var(--page-card); }
+    .im-note__actions .btn:hover { border-color: var(--ink-intimarium); color: var(--ink-intimarium); }
+    .im-note__actions .btn--danger { color: var(--danger); border-color: rgba(196,96,79,0.35); background: var(--page-card); }
+    .im-note__actions .btn--danger:hover { background: rgba(196,96,79,0.1); }
 
-    /* Notes empty state */
-    .notes-empty {
-      color: var(--text-tertiary);
-      font-size: 12px;
+    .im-notes-empty {
       text-align: center;
-      padding: 32px 16px;
-      line-height: 1.8;
+      padding: 20px 6px;
+    }
+    .im-notes-empty__line {
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--page-ink);
+      margin-bottom: 6px;
+    }
+    .im-notes-empty__sub {
+      font-family: var(--font-body);
+      font-size: 11px;
+      line-height: 1.7;
+      color: var(--page-pencil);
     }
 
-    /* ===== Memory Save Dialog ===== */
-    .save-dialog-overlay {
+    .im-tea {
+      background: var(--postit-lavender);
+      box-shadow: 2px 3px 6px rgba(0,0,0,0.07);
+      padding: 14px 16px;
+      transform: rotate(0.6deg);
+      font-family: var(--font-hand);
+      font-style: italic;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--page-ink-mid);
+    }
+
+    /* ===== Dialogs（沿用全域對話框樣式：navy 卡＋金框標題＋.btn 動作列）===== */
+    .im-dialog-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
       z-index: 100;
       align-items: center;
       justify-content: center;
     }
-    .save-dialog-overlay.active {
-      display: flex;
-    }
-    .save-dialog {
+    .im-dialog-overlay.active { display: flex; }
+    .im-dialog {
       background: var(--navy);
-      border: 1px solid var(--navy-line);
+      border: 1px solid var(--gold-line);
       border-radius: var(--r-card);
-      padding: 24px;
-      width: 380px;
-      max-width: 90vw;
+      width: 440px;
+      max-width: 92vw;
+      max-height: 86vh;
+      display: flex;
+      flex-direction: column;
       box-shadow: var(--shadow-lift);
     }
-    .save-dialog h3 {
-      font-family: var(--font-display);
-      color: var(--gold);
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 16px;
+    .im-dialog__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--navy-line);
+      flex: none;
     }
-    .save-option {
+    .im-dialog__header h3 {
+      margin: 0;
+      font-family: var(--font-serif-tc);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--gold);
+    }
+    .im-dialog__close {
+      appearance: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 15px;
+      opacity: 0.7;
+      line-height: 1;
+      padding: 4px;
+    }
+    .im-dialog__close:hover { opacity: 1; color: var(--text-primary); }
+    .im-dialog__body {
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    .im-dialog__footer {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 0 20px 18px;
+      flex: none;
+    }
+    .im-field-label {
+      display: block;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+    .im-field input[type="text"],
+    .im-field textarea {
+      width: 100%;
+      background: var(--navy-deep);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-soft);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 13px;
+      padding: 8px 12px;
+      outline: none;
+    }
+    .im-field input[type="text"]:focus,
+    .im-field textarea:focus { border-color: var(--ink-intimarium); }
+    .im-field textarea {
+      resize: vertical;
+      min-height: 150px;
+      max-height: 40vh;
+      line-height: 1.7;
+    }
+    .im-field-hint {
+      font-size: 10px;
+      color: var(--text-tertiary);
+      margin-top: 3px;
+    }
+    .im-field-meta {
+      font-size: 10px;
+      color: var(--text-tertiary);
+    }
+
+    .im-option {
       display: flex;
       align-items: center;
       gap: 10px;
       padding: 10px 12px;
       border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      margin-bottom: 8px;
+      border-radius: var(--r-soft);
       cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
     }
-    .save-option:hover {
-      border-color: var(--gold-dim);
-      background: var(--navy-light);
-    }
-    .save-option input[type="radio"] {
-      accent-color: var(--gold);
-    }
-    .save-option-label {
-      font-size: 13px;
-      color: var(--text-primary);
-    }
-    .save-option-desc {
-      font-size: 11px;
-      color: var(--text-tertiary);
-    }
-    .save-dialog-actions {
-      display: flex;
-      gap: 8px;
-      margin-top: 16px;
-      justify-content: flex-end;
-    }
-
-    /* ===== No-Trace Badge ===== */
-    .no-trace-badge {
-      display: none;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 10px;
-      background: rgba(196,96,79,0.15);
-      color: var(--danger);
-      border: 1px solid rgba(196,96,79,0.3);
-    }
-    .no-trace-badge.active {
-      display: inline-block;
-    }
-
-    /* ===== Note Edit Modal ===== */
-    .note-edit-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 110;
-      align-items: center;
-      justify-content: center;
-    }
-    .note-edit-overlay.active { display: flex; }
-    .note-edit-dialog {
-      background: var(--navy);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      padding: 24px;
-      width: 480px;
-      max-width: 92vw;
-      max-height: 85vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: var(--shadow-lift);
-    }
-    .note-edit-dialog h3 {
-      font-family: var(--font-display);
-      color: var(--gold);
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 14px;
-    }
-    .note-edit-field { margin-bottom: 12px; }
-    .note-edit-label {
-      display: block;
-      font-size: 11px;
-      color: var(--text-tertiary);
-      margin-bottom: 4px;
-    }
-    .note-edit-input,
-    .note-edit-textarea {
-      width: 100%;
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 13px;
-      padding: 8px 12px;
-      outline: none;
-    }
-    .note-edit-input:focus,
-    .note-edit-textarea:focus {
-      border-color: var(--gold-dim);
-    }
-    .note-edit-textarea {
-      resize: vertical;
-      min-height: 160px;
-      max-height: 40vh;
-      line-height: 1.7;
-    }
-    .note-edit-tags-hint {
-      font-size: 10px;
-      color: var(--text-tertiary);
-      margin-top: 2px;
-    }
-    .note-edit-meta {
-      font-size: 10px;
-      color: var(--text-tertiary);
-      margin-bottom: 12px;
-    }
-
-    /* ===== Notes Filter Bar ===== */
-    .notes-filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--navy-line);
-    }
-    .notes-filter-bar:empty { display: none; }
-    .filter-tag {
-      appearance: none;
-      border: 1px solid var(--navy-line);
-      background: var(--navy-light);
-      color: var(--text-tertiary);
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-    .filter-tag:hover {
-      border-color: var(--gold-dim);
-      color: var(--text-secondary);
-    }
-    .filter-tag--active {
-      background: var(--gold-glow);
-      border-color: var(--gold-dim);
-      color: var(--gold);
-    }
-
-    /* ===== Export Dropdown ===== */
-    .export-wrap { position: relative; }
-    .export-dropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 100%;
-      margin-top: 4px;
-      background: var(--navy);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      box-shadow: var(--shadow-lift);
-      z-index: 60;
-      min-width: 120px;
-    }
-    .export-dropdown.active { display: block; }
-    .export-item {
-      display: block;
-      width: 100%;
-      appearance: none;
-      border: none;
-      background: none;
-      color: var(--text-secondary);
-      font-size: 12px;
-      font-family: inherit;
-      padding: 8px 14px;
-      text-align: left;
-      cursor: pointer;
-    }
-    .export-item:hover {
-      background: var(--navy-light);
-      color: var(--text-primary);
-    }
-    .export-item + .export-item {
-      border-top: 1px solid var(--navy-line);
-    }
-
-    /* ===== Toast ===== */
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--navy-light);
-      border: 1px solid var(--gold-dim);
-      color: var(--text-primary);
-      padding: 10px 20px;
-      border-radius: var(--r-card);
-      font-size: 13px;
-      z-index: 200;
-      opacity: 0;
-      transition: transform 0.3s, opacity 0.3s;
-      pointer-events: none;
-    }
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
+    .im-option:hover { border-color: var(--ink-intimarium); background: var(--navy-light); }
+    .im-option input[type="radio"] { accent-color: var(--ink-intimarium); }
+    .im-option__label { font-size: 13px; color: var(--text-primary); }
+    .im-option__desc { font-size: 11px; color: var(--text-tertiary); }
 
     /* ===== Responsive ===== */
-    @media (max-width: 768px) {
-      .notes-panel {
+    @media (max-width: 760px) {
+      .im-page { padding: 14px 14px 18px; gap: 0; flex-wrap: wrap; }
+      .im-paper.page-sheet { padding: 24px 18px 16px 40px; width: 100%; }
+      .im-paper.page-sheet::before { left: 18px; }
+      .im-rail:not([hidden]) {
         position: fixed;
-        inset: 0;
-        width: 100%;
+        inset: var(--deskbar-h) 0 0 0;
         z-index: 50;
-        border-left: none;
+        width: 100%;
+        background: var(--page-bg);
+        padding: 18px;
       }
-      .notes-panel--hidden { display: none; }
-      .chat-msg { max-width: 92%; }
+      .im-msg { max-width: 94%; }
     }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="module-header">
-  <span class="mh-title">談心專區</span>
-  <span class="mh-sub">Intimarium</span>
-  <span class="no-trace-badge" id="noTraceBadge">不留痕</span>
-  <span class="mh-spacer"></span>
-  <div class="mh-actions">
-    <button class="toggle-btn" id="btnNoTrace" title="開啟後對話不會寫入記憶">不留痕模式</button>
-    <button class="toggle-btn" id="btnNotes" title="開啟右側手札面板">手札</button>
-    <button class="toggle-btn toggle-btn--danger" id="btnClear" title="清除本次對話">清除對話</button>
+<!-- Deskbar — 模組唯一 chrome 列；殼負責標題，這裡不放模組名字 -->
+<header class="deskbar">
+  <span class="desk-status">
+    <span class="desk-dot" id="deskDot"></span>
+    <span id="deskStatusText">在館</span>
+  </span>
+  <span class="desk-spacer"></span>
+  <div class="desk-actions">
+    <button class="btn" id="btnNoTrace" title="開啟後對話不會寫入記憶">不留痕模式</button>
+    <button class="btn" id="btnNotes" title="開啟／關閉手札面板">手札</button>
+    <button class="btn btn--danger" id="btnClear" title="清除本次對話">清除對話</button>
   </div>
 </header>
 
-<!-- Safety Banner -->
-<div class="safety-banner" id="safetyBanner">
-  這是陪伴型文字空間，不提供醫療、法律或金融專業判斷。
-  你隨時可以<a id="linkNoTrace">開啟不留痕</a>、<a id="linkDeleteAll">刪除紀錄</a>或<a id="linkMemOff">關閉長期記憶</a>。
-  私密內容預設不會同步雲端。
-</div>
+<!-- Main：紙頁對話面 + 手札軌 -->
+<div class="im-page">
 
-<!-- Main -->
-<div class="main">
+  <div class="im-paper page-sheet" id="paperSheet">
+    <div class="im-timestamp" id="paperTimestamp"></div>
+    <div class="im-scroll" id="chatScroll"></div>
 
-  <!-- Chat Panel -->
-  <div class="chat-panel">
-    <div class="chat-scroll" id="chatScroll"></div>
-    <div class="chat-input-bar">
-      <textarea class="chat-input" id="chatInput" rows="1" placeholder="和零韻聊聊吧…" maxlength="4000"></textarea>
-      <button class="chat-send" id="chatSend">送出</button>
+    <div class="im-composer">
+      <textarea class="im-input" id="chatInput" rows="1" placeholder="寫給零韻…" maxlength="4000"></textarea>
+      <button class="im-send" id="chatSend">送出</button>
+    </div>
+
+    <div class="im-footnote">
+      ＊零韻不提供醫療、法律、金融判斷；重要的決定，請與人類商量。私密內容預設不同步雲端。你可以<a id="linkNoTrace">開啟不留痕</a>・<a id="linkDeleteAll">刪除紀錄</a>・<a id="linkMemOff">關閉長期記憶</a>。
     </div>
   </div>
 
-  <!-- Notes Panel -->
-  <div class="notes-panel notes-panel--hidden" id="notesPanel">
-    <div class="notes-header">
-      <span class="notes-title">零韻手札</span>
-      <div class="export-wrap">
-        <button class="toggle-btn" id="btnExport" title="匯出手札">匯出</button>
-        <div class="export-dropdown" id="exportDropdown">
-          <button class="export-item" data-fmt="md">Markdown (.md)</button>
-          <button class="export-item" data-fmt="json">JSON (.json)</button>
+  <aside class="im-rail" id="notesPanel" hidden>
+    <div class="index-card">
+      <div class="im-rail-head">
+        <span class="index-card__label">JOURNAL · 手札</span>
+        <span class="desk-spacer"></span>
+        <button class="btn btn--ghost btn--xs" id="btnNewNote" title="新增一篇手札">＋ 新篇</button>
+        <button class="btn btn--ghost btn--xs" id="btnCloseNotes" title="關閉手札">✕</button>
+      </div>
+      <div class="im-filter-bar" id="filterBar"></div>
+      <div class="im-notes-scroll" id="notesScroll">
+        <div class="im-notes-empty" id="notesEmpty">
+          <div class="im-notes-empty__line">這裡的話不出這張桌子。</div>
+          <div class="im-notes-empty__sub">想到什麼，就從第一句開始——對話中零韻會問要不要整理成手札。</div>
         </div>
       </div>
-      <button class="toggle-btn" id="btnCloseNotes" title="關閉手札">✕</button>
-    </div>
-    <div class="notes-filter-bar" id="filterBar"></div>
-    <div class="notes-scroll" id="notesScroll">
-      <div class="notes-empty" id="notesEmpty">
-        目前還沒有手札。<br>對話中零韻會詢問是否整理成手札。
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" id="btnExportMd" style="flex:1;justify-content:center">匯出 MD</button>
+        <button class="btn" id="btnExportJson" style="flex:1;justify-content:center">匯出 JSON</button>
       </div>
     </div>
-  </div>
+    <div class="im-tea">tonight's tea: 蜜香紅茶，第二泡。</div>
+  </aside>
 
 </div>
 
 <!-- Memory Save Dialog -->
-<div class="save-dialog-overlay" id="saveOverlay">
-  <div class="save-dialog">
-    <h3>保存這段對話？</h3>
-    <label class="save-option">
-      <input type="radio" name="saveChoice" value="none" checked>
-      <div>
-        <div class="save-option-label">不保存</div>
-        <div class="save-option-desc">關閉後清除</div>
-      </div>
-    </label>
-    <label class="save-option">
-      <input type="radio" name="saveChoice" value="today">
-      <div>
-        <div class="save-option-label">只保留今日</div>
-        <div class="save-option-desc">存入 session，關閉瀏覽器後消失</div>
-      </div>
-    </label>
-    <label class="save-option">
-      <input type="radio" name="saveChoice" value="local">
-      <div>
-        <div class="save-option-label">存成本機手札</div>
-        <div class="save-option-desc">寫入零韻手札（IndexedDB），可隨時查閱刪除</div>
-      </div>
-    </label>
-    <label class="save-option">
-      <input type="radio" name="saveChoice" value="creative">
-      <div>
-        <div class="save-option-label">轉成創作素材</div>
-        <div class="save-option-desc">存為手札並標記「創作」標籤</div>
-      </div>
-    </label>
-    <label class="save-option">
-      <input type="radio" name="saveChoice" value="notion">
-      <div>
-        <div class="save-option-label">同步到 Notion</div>
-        <div class="save-option-desc">存入本機手札，並排入 Notion 同步佇列</div>
-      </div>
-    </label>
-    <div class="save-dialog-actions">
-      <button class="toggle-btn" id="saveDlgCancel">取消</button>
-      <button class="toggle-btn toggle-btn--active" id="saveDlgConfirm">確認</button>
+<div class="im-dialog-overlay" id="saveOverlay">
+  <div class="im-dialog">
+    <div class="im-dialog__header">
+      <h3>保存這段對話？</h3>
+    </div>
+    <div class="im-dialog__body">
+      <label class="im-option">
+        <input type="radio" name="saveChoice" value="none" checked>
+        <div>
+          <div class="im-option__label">不保存</div>
+          <div class="im-option__desc">關閉後清除</div>
+        </div>
+      </label>
+      <label class="im-option">
+        <input type="radio" name="saveChoice" value="today">
+        <div>
+          <div class="im-option__label">只保留今日</div>
+          <div class="im-option__desc">存入 session，關閉瀏覽器後消失</div>
+        </div>
+      </label>
+      <label class="im-option">
+        <input type="radio" name="saveChoice" value="local">
+        <div>
+          <div class="im-option__label">存成本機手札</div>
+          <div class="im-option__desc">寫入零韻手札（IndexedDB），可隨時查閱刪除</div>
+        </div>
+      </label>
+      <label class="im-option">
+        <input type="radio" name="saveChoice" value="creative">
+        <div>
+          <div class="im-option__label">轉成創作素材</div>
+          <div class="im-option__desc">存為手札並標記「創作」標籤</div>
+        </div>
+      </label>
+      <label class="im-option">
+        <input type="radio" name="saveChoice" value="notion">
+        <div>
+          <div class="im-option__label">同步到 Notion</div>
+          <div class="im-option__desc">存入本機手札，並排入 Notion 同步佇列</div>
+        </div>
+      </label>
+    </div>
+    <div class="im-dialog__footer">
+      <button class="btn" id="saveDlgCancel">取消</button>
+      <button class="btn btn--gold" id="saveDlgConfirm">確認</button>
     </div>
   </div>
 </div>
 
-<!-- Note Edit Modal -->
-<div class="note-edit-overlay" id="editOverlay">
-  <div class="note-edit-dialog">
-    <h3 id="editDialogTitle">編輯手札</h3>
-    <div class="note-edit-field">
-      <label class="note-edit-label">標題</label>
-      <input class="note-edit-input" id="editTitle" type="text" maxlength="100">
+<!-- Note Edit / New Modal -->
+<div class="im-dialog-overlay" id="editOverlay">
+  <div class="im-dialog">
+    <div class="im-dialog__header">
+      <h3 id="editDialogTitle">編輯手札</h3>
+      <button class="im-dialog__close" id="editClose">&times;</button>
     </div>
-    <div class="note-edit-field">
-      <label class="note-edit-label">內容</label>
-      <textarea class="note-edit-textarea" id="editContent"></textarea>
+    <div class="im-dialog__body">
+      <div class="im-field">
+        <label class="im-field-label">標題</label>
+        <input type="text" id="editTitle" maxlength="100">
+      </div>
+      <div class="im-field">
+        <label class="im-field-label">內容</label>
+        <textarea id="editContent"></textarea>
+      </div>
+      <div class="im-field">
+        <label class="im-field-label">標籤</label>
+        <input type="text" id="editTags" placeholder="以逗號分隔，例：談心, 創作">
+        <div class="im-field-hint">以半形或全形逗號分隔</div>
+      </div>
+      <div class="im-field-meta" id="editMeta"></div>
     </div>
-    <div class="note-edit-field">
-      <label class="note-edit-label">標籤</label>
-      <input class="note-edit-input" id="editTags" type="text" placeholder="以逗號分隔，例：談心, 創作">
-      <div class="note-edit-tags-hint">以半形或全形逗號分隔</div>
-    </div>
-    <div class="note-edit-meta" id="editMeta"></div>
-    <div class="save-dialog-actions">
-      <button class="toggle-btn" id="editCancel">取消</button>
-      <button class="toggle-btn toggle-btn--active" id="editSave">儲存</button>
+    <div class="im-dialog__footer">
+      <button class="btn" id="editCancel">取消</button>
+      <button class="btn btn--gold" id="editSave">儲存</button>
     </div>
   </div>
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" style="display:none"></div>
 
 <script type="module">
 // postMessage type 對照表（本檔為零 import 的 inline module script；加相對 import 會使 file:// 情境整檔失效，
 // 故維持字面值，禁止改為 import；改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
-//   'akasha-mode-change'(747)                    = MSG_TYPES.MODE_CHANGE
-//   'akasha-reading-room-response'(839)          = MSG_TYPES.READING_ROOM_RESPONSE
-//   'akasha-ai-get-context'(845)                 = MSG_TYPES.AI_GET_CONTEXT
-//   'akasha-ai-context-response'(850)            = MSG_TYPES.AI_CONTEXT_RESPONSE
-//   'akasha-reading-room-send'(866)              = MSG_TYPES.READING_ROOM_SEND
-//   'akasha-reading-room-memory'(1068)           = MSG_TYPES.READING_ROOM_MEMORY
-//   'akasha-reading-room-memory-response'(1084)  = MSG_TYPES.READING_ROOM_MEMORY_RESPONSE
+//   'akasha-mode-change'                    = MSG_TYPES.MODE_CHANGE
+//   'akasha-reading-room-response'          = MSG_TYPES.READING_ROOM_RESPONSE
+//   'akasha-ai-get-context'                 = MSG_TYPES.AI_GET_CONTEXT
+//   'akasha-ai-context-response'            = MSG_TYPES.AI_CONTEXT_RESPONSE
+//   'akasha-reading-room-send'              = MSG_TYPES.READING_ROOM_SEND
+//   'akasha-reading-room-memory'            = MSG_TYPES.READING_ROOM_MEMORY
+//   'akasha-reading-room-memory-response'   = MSG_TYPES.READING_ROOM_MEMORY_RESPONSE
 // ===== Imports =====
 // Memory APIs are in main window (App Shell), accessed via parent
 // We communicate with App Shell via PostMessage for AI calls
@@ -724,24 +652,25 @@ const chatInput = $('chatInput');
 const chatSend = $('chatSend');
 const notesPanel = $('notesPanel');
 const notesScroll = $('notesScroll');
-const noTraceBadge = $('noTraceBadge');
+const deskDot = $('deskDot');
+const deskStatusText = $('deskStatusText');
 const btnNoTrace = $('btnNoTrace');
 const btnNotes = $('btnNotes');
 const btnClear = $('btnClear');
 const btnCloseNotes = $('btnCloseNotes');
+const btnNewNote = $('btnNewNote');
 const saveOverlay = $('saveOverlay');
 const editOverlay = $('editOverlay');
 const filterBar = $('filterBar');
-const exportDropdown = $('exportDropdown');
 const toastEl = $('toast');
 
-// ===== Toast =====
+// ===== Toast (shared .toast component) =====
 let toastTimer = null;
 function showToast(msg, ms = 2200) {
   toastEl.textContent = msg;
-  toastEl.classList.add('show');
+  toastEl.style.display = '';
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+  toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, ms);
 }
 
 // ===== Theme Sync =====
@@ -758,6 +687,15 @@ window.addEventListener('message', (e) => {
   }
 });
 
+// ===== Paper timestamp (decorative — 紙頁語言) =====
+(function paperTimestamp() {
+  const branches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const now = new Date();
+  const idx = Math.floor(((now.getHours() + 1) % 24) / 2);
+  const ymd = now.toISOString().slice(0, 10);
+  $('paperTimestamp').textContent = `${ymd} · ${branches[idx]}時 · 檯燈下`;
+})();
+
 // ===== Chat Rendering =====
 function escapeHtml(str) {
   return String(str ?? '')
@@ -767,44 +705,47 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function formatClock(d) {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
 function appendMessage(role, text, animate = true) {
-  const div = document.createElement('div');
-  div.className = `chat-msg chat-msg--${role}`;
-  if (!animate) div.style.animation = 'none';
-
-  const label = document.createElement('div');
-  label.className = 'chat-msg-label';
-  label.textContent = role === 'user' ? '' : '談心與手札整理員 · 月上零韻';
-
-  const bubble = document.createElement('div');
-  bubble.className = 'chat-msg-bubble';
+  const wrap = document.createElement('div');
+  wrap.className = `im-msg im-msg--${role}`;
+  if (!animate) wrap.style.animation = 'none';
 
   if (role === 'user') {
+    const bubble = document.createElement('div');
+    bubble.className = 'im-bubble';
     bubble.textContent = text;
-  } else {
-    bubble.textContent = text;
+    wrap.appendChild(bubble);
+    chatScroll.appendChild(wrap);
+    chatScroll.scrollTop = chatScroll.scrollHeight;
+    return bubble;
   }
 
-  if (role !== 'user') div.appendChild(label);
-  div.appendChild(bubble);
-  chatScroll.appendChild(div);
+  const textEl = document.createElement('div');
+  textEl.className = 'im-text';
+  textEl.textContent = text;
+  const sig = document.createElement('div');
+  sig.className = 'im-signature';
+  sig.textContent = '談心與手札整理員 · 月上零韻 · ' + formatClock(new Date());
+  wrap.appendChild(textEl);
+  wrap.appendChild(sig);
+  chatScroll.appendChild(wrap);
   chatScroll.scrollTop = chatScroll.scrollHeight;
-  return bubble;
+  return textEl;
 }
 
 function showThinking() {
-  const div = document.createElement('div');
-  div.className = 'chat-msg chat-msg--assistant chat-thinking';
-  div.id = 'thinking-msg';
-  const label = document.createElement('div');
-  label.className = 'chat-msg-label';
-  label.textContent = '談心與手札整理員 · 月上零韻';
-  const bubble = document.createElement('div');
-  bubble.className = 'chat-msg-bubble';
-  bubble.textContent = '';
-  div.appendChild(label);
-  div.appendChild(bubble);
-  chatScroll.appendChild(div);
+  const wrap = document.createElement('div');
+  wrap.className = 'im-msg im-msg--assistant';
+  wrap.id = 'thinking-msg';
+  const textEl = document.createElement('div');
+  textEl.className = 'im-text im-thinking';
+  textEl.textContent = '';
+  wrap.appendChild(textEl);
+  chatScroll.appendChild(wrap);
   chatScroll.scrollTop = chatScroll.scrollHeight;
 }
 
@@ -814,12 +755,12 @@ function removeThinking() {
 }
 
 // Typewriter effect
-function typewrite(text, bubble, onDone) {
+function typewrite(text, target, onDone) {
   let i = 0;
   const cursor = document.createElement('span');
-  cursor.className = 'chat-cursor';
-  bubble.textContent = '';
-  bubble.appendChild(cursor);
+  cursor.className = 'im-cursor';
+  target.textContent = '';
+  target.appendChild(cursor);
 
   clearInterval(state.typewriterTimer);
   state.typewriterTimer = setInterval(() => {
@@ -910,8 +851,8 @@ async function handleSend() {
     removeThinking();
 
     // Render with typewriter
-    const bubble = appendMessage('assistant', '', true);
-    typewrite(response, bubble, () => {
+    const textEl = appendMessage('assistant', '', true);
+    typewrite(response, textEl, () => {
       // After response: check if we should suggest saving as note
       maybeSuggestNote(text, response);
     });
@@ -944,8 +885,9 @@ chatSend.addEventListener('click', handleSend);
 // ===== No-Trace Mode =====
 function setNoTrace(on) {
   state.noTrace = on;
-  noTraceBadge.classList.toggle('active', on);
-  btnNoTrace.classList.toggle('toggle-btn--active', on);
+  deskDot.classList.toggle('is-danger', on);
+  deskStatusText.textContent = on ? '不留痕已開啟 · 對話不寫入記憶' : '在館';
+  btnNoTrace.classList.toggle('is-active', on);
   btnNoTrace.textContent = on ? '不留痕：開' : '不留痕模式';
   if (on) showToast('不留痕模式已開啟 — 對話不會寫入記憶');
 }
@@ -967,8 +909,8 @@ btnClear.addEventListener('click', () => {
 // ===== Notes Panel =====
 function toggleNotes(open) {
   state.notesPanelOpen = open ?? !state.notesPanelOpen;
-  notesPanel.classList.toggle('notes-panel--hidden', !state.notesPanelOpen);
-  btnNotes.classList.toggle('toggle-btn--active', state.notesPanelOpen);
+  notesPanel.hidden = !state.notesPanelOpen;
+  btnNotes.classList.toggle('is-active', state.notesPanelOpen);
   if (state.notesPanelOpen) loadNotes();
 }
 
@@ -1001,13 +943,13 @@ function renderFilterBar() {
 
   const sorted = [...allTags].sort();
   filterBar.innerHTML =
-    `<button class="filter-tag ${state.filterTag === null ? 'filter-tag--active' : ''}" data-tag="">全部</button>` +
+    `<button class="im-filter-tag ${state.filterTag === null ? 'is-active' : ''}" data-tag="">全部</button>` +
     sorted.map(t =>
-      `<button class="filter-tag ${state.filterTag === t ? 'filter-tag--active' : ''}" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`
+      `<button class="im-filter-tag ${state.filterTag === t ? 'is-active' : ''}" data-tag="${escapeHtml(t)}">#${escapeHtml(t)}</button>`
     ).join('');
 
   filterBar.onclick = (e) => {
-    const btn = e.target.closest('.filter-tag');
+    const btn = e.target.closest('.im-filter-tag');
     if (!btn) return;
     state.filterTag = btn.dataset.tag || null;
     renderFilterBar();
@@ -1029,10 +971,15 @@ function renderNotes() {
 
   if (filtered.length === 0) {
     container.innerHTML = '';
-    const msg = state.notes.length === 0
-      ? '目前還沒有手札。<br>對話中零韻會詢問是否整理成手札。'
-      : '沒有符合「#' + escapeHtml(state.filterTag) + '」的手札。';
-    empty.innerHTML = msg;
+    if (state.notes.length === 0) {
+      empty.innerHTML = `
+        <div class="im-notes-empty__line">這裡的話不出這張桌子。</div>
+        <div class="im-notes-empty__sub">想到什麼，就從第一句開始——對話中零韻會問要不要整理成手札。</div>`;
+    } else {
+      empty.innerHTML = `
+        <div class="im-notes-empty__line">沒有符合的手札</div>
+        <div class="im-notes-empty__sub">找不到標記「#${escapeHtml(state.filterTag)}」的篇章。</div>`;
+    }
     container.appendChild(empty);
     empty.style.display = '';
     return;
@@ -1040,16 +987,16 @@ function renderNotes() {
 
   empty.style.display = 'none';
   container.innerHTML = filtered.map(n => `
-    <div class="note-card" data-id="${escapeHtml(n.id)}">
-      <div class="note-card-title">${escapeHtml(n.title || '(無標題)')}</div>
-      <div class="note-card-body">${escapeHtml(truncate(n.content, 200))}</div>
-      <div class="note-card-meta">
+    <div class="im-note" data-id="${escapeHtml(n.id)}">
+      <div class="im-note__title">${escapeHtml(n.title || '(無標題)')}</div>
+      <div class="im-note__body">${escapeHtml(truncate(n.content, 200))}</div>
+      <div class="im-note__meta">
         <span>${formatDate(n.createdAt)}</span>
         ${(n.tags || []).map(t => '<span>#' + escapeHtml(t) + '</span>').join('')}
       </div>
-      <div class="note-card-actions">
-        <button class="note-btn" onclick="window._viewNote('${escapeHtml(n.id)}')">編輯</button>
-        <button class="note-btn note-btn--danger" onclick="window._deleteNote('${escapeHtml(n.id)}')">刪除</button>
+      <div class="im-note__actions">
+        <button class="btn btn--xs" onclick="window._viewNote('${escapeHtml(n.id)}')">編輯</button>
+        <button class="btn btn--xs btn--danger" onclick="window._deleteNote('${escapeHtml(n.id)}')">刪除</button>
       </div>
     </div>
   `).join('');
@@ -1101,28 +1048,38 @@ window.addEventListener('message', (e) => {
 });
 
 // Global handlers for inline onclick
-let editingNoteId = null;
+let editingNoteId = null; // null = 新篇（建立模式）
+
+function openEditDialog(note) {
+  editingNoteId = note ? note.id : null;
+  $('editDialogTitle').textContent = note ? '編輯手札' : '新篇手札';
+  $('editTitle').value = note?.title || '';
+  $('editContent').value = note?.content || '';
+  $('editTags').value = (note?.tags || []).join(', ');
+  $('editMeta').textContent = note
+    ? '建立：' + formatDate(note.createdAt) +
+      (note.updatedAt && note.updatedAt !== note.createdAt ? '　更新：' + formatDate(note.updatedAt) : '')
+    : '';
+  editOverlay.classList.add('active');
+  $('editTitle').focus();
+}
 
 window._viewNote = async (id) => {
   const note = state.notes.find(n => n.id === id);
   if (!note) return;
-  editingNoteId = id;
-  $('editTitle').value = note.title || '';
-  $('editContent').value = note.content || '';
-  $('editTags').value = (note.tags || []).join(', ');
-  $('editMeta').textContent = '建立：' + formatDate(note.createdAt) +
-    (note.updatedAt && note.updatedAt !== note.createdAt ? '　更新：' + formatDate(note.updatedAt) : '');
-  editOverlay.classList.add('active');
+  openEditDialog(note);
 };
 
-$('editCancel').addEventListener('click', () => {
+btnNewNote.addEventListener('click', () => openEditDialog(null));
+
+function closeEditDialog() {
   editOverlay.classList.remove('active');
   editingNoteId = null;
-});
+}
+$('editCancel').addEventListener('click', closeEditDialog);
+$('editClose').addEventListener('click', closeEditDialog);
 
 $('editSave').addEventListener('click', async () => {
-  const note = state.notes.find(n => n.id === editingNoteId);
-  if (!note) return;
   const title = $('editTitle').value.trim();
   const content = $('editContent').value.trim();
   const tagsRaw = $('editTags').value;
@@ -1134,15 +1091,13 @@ $('editSave').addEventListener('click', async () => {
   if (!content) { showToast('內容不能為空'); return; }
 
   try {
-    await callParentMemory('save', {
-      ...note,
-      title: title || autoTitle(content),
-      content,
-      tags,
-    });
-    editOverlay.classList.remove('active');
-    editingNoteId = null;
-    showToast('手札已更新');
+    const existing = editingNoteId ? state.notes.find(n => n.id === editingNoteId) : null;
+    const record = existing
+      ? { ...existing, title: title || autoTitle(content), content, tags }
+      : { module: MODULE_NAME, title: title || autoTitle(content), content, tags, source: 'reading-room-manual' };
+    await callParentMemory('save', record);
+    closeEditDialog();
+    showToast(existing ? '手札已更新' : '新篇已建立');
     await loadNotes();
   } catch (err) {
     showToast('儲存失敗：' + err.message);
@@ -1246,16 +1201,22 @@ function maybeSuggestNote(userText, response) {
     ).join('\n\n');
 
     setTimeout(() => {
-      const suggest = appendMessage('assistant', '', true);
-      typewrite('是否要將這段對話整理成零韻手札？', suggest, () => {
-        // Add save/skip buttons
+      const wrap = document.createElement('div');
+      wrap.className = 'im-msg im-msg--assistant';
+      const note = document.createElement('div');
+      note.className = 'margin-note';
+      wrap.appendChild(note);
+      chatScroll.appendChild(wrap);
+      chatScroll.scrollTop = chatScroll.scrollHeight;
+
+      typewrite('↳ 是否要將這段對話整理成零韻手札？', note, () => {
         const actions = document.createElement('div');
-        actions.style.cssText = 'margin-top:8px;display:flex;gap:6px;';
+        actions.className = 'im-suggest-actions';
         actions.innerHTML = `
-          <button class="note-btn" style="color:var(--gold);border-color:var(--gold-dim);" id="suggestSave">整理成手札</button>
-          <button class="note-btn" id="suggestSkip">跳過</button>
+          <button class="btn btn--xs" id="suggestSave" style="color:var(--ink-intimarium);border-color:rgba(122,88,152,.45)">整理成手札</button>
+          <button class="btn btn--xs btn--ghost" id="suggestSkip">跳過</button>
         `;
-        suggest.parentElement.appendChild(actions);
+        wrap.appendChild(actions);
 
         $('suggestSave')?.addEventListener('click', () => {
           actions.remove();
@@ -1290,18 +1251,8 @@ $('linkMemOff').addEventListener('click', () => {
   showToast('已開啟不留痕模式，長期記憶暫停寫入');
 });
 
-// ===== Export =====
-$('btnExport').addEventListener('click', (e) => {
-  e.stopPropagation();
-  exportDropdown.classList.toggle('active');
-});
-document.addEventListener('click', () => exportDropdown.classList.remove('active'));
-
-exportDropdown.addEventListener('click', (e) => {
-  const btn = e.target.closest('.export-item');
-  if (!btn) return;
-  exportDropdown.classList.remove('active');
-  const fmt = btn.dataset.fmt;
+// ===== Export（匯出 MD／JSON 兩鍵，直達不經選單）=====
+function exportNotes(fmt) {
   if (state.notes.length === 0) { showToast('沒有可匯出的手札'); return; }
 
   const sorted = state.notes
@@ -1331,15 +1282,15 @@ exportDropdown.addEventListener('click', (e) => {
   a.click();
   URL.revokeObjectURL(url);
   showToast('已匯出 ' + filename);
-});
+}
+
+$('btnExportMd').addEventListener('click', () => exportNotes('md'));
+$('btnExportJson').addEventListener('click', () => exportNotes('json'));
 
 // ===== Greeting =====
 function showGreeting() {
-  appendMessage('assistant', '', false);
-  const bubble = chatScroll.querySelector('.chat-msg:last-child .chat-msg-bubble');
-  if (bubble) {
-    typewrite('歡迎來到談心專區。我是零韻，你的談心與手札整理員。\n這裡是你的私人閱覽室 — 可以聊聊近況、整理思緒，或讓我幫你整理手札。', bubble);
-  }
+  const textEl = appendMessage('assistant', '', false);
+  typewrite('歡迎來到談心專區。我是零韻，你的談心與手札整理員。\n這裡是你的私人閱覽室 — 可以聊聊近況、整理思緒，或讓我幫你整理手札。', textEl);
 }
 
 // ===== Init =====

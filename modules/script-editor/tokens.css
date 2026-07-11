@@ -1,5 +1,13 @@
 /* Akasha Library — Design Tokens (extracted for Script Workshop prototype)
-   Source: akasha-library/assets/styles/shared.css */
+   Source: akasha-library/assets/styles/shared.css
+
+   ── HANDOFF §5 Dramaturgica redesign (2026-07) ──
+   This module is a standalone Vite app (does NOT import assets/styles/shared.css),
+   so the shared component patterns (.deskbar/.btn/.seg/.mh-menu/.index-card) and
+   the v2 paper tokens (--page-*, --ink-*, --font-hand) are ported in below,
+   scoped to this file only. Source of truth for values:
+     design/styles/tokens.css (v2) + design/from-claude-design/style-guide.html
+     (sections 01/04/05/06) + mockup.html "劇本工房 Dramaturgica" screen. */
 
 :root {
   /* Base */
@@ -46,6 +54,58 @@
   --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px -12px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.3);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.06) inset, 0 18px 40px -20px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.35);
   --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
+
+  /* ══ v2 · 紙頁系 The Open Page (design/styles/tokens.css) ══
+     不隨 data-mode 反轉：燈再暗，稿紙永遠是亮的。 */
+  --page-bg: #FAF4E5;
+  --page-card: #FFFFFF;
+  --page-old: #F3EDE0;
+  --page-ink: #1C1610;
+  --page-ink-mid: #3E352A;
+  --page-pencil: #8A7A66;
+  --page-border: #E8E3DA;
+  --page-old-border: #E0D6C2;
+  --page-line: rgba(0,0,0,0.035);
+  --page-margin-line: rgba(212,118,58,0.13);
+  --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
+
+  /* ══ v2 · 廳墨色 — 劇本工房 = 莓紅 Dramaturgica ══ */
+  --ink-dramaturgica: #B84058;
+  --zone-ink: var(--ink-dramaturgica);
+  --zone-ink-glow: rgba(184,64,88,0.14);
+  --zone-ink-line: rgba(184,64,88,0.32);
+
+  /* ══ v2 · 手寫體（僅 fallback — Sorts Mill Goudy 未由本模組載入字型，
+     見 modules/script-editor/index.html 的 Google Fonts link；
+     依 HARD RULES 不得編輯 index.html，故退回 Cormorant Garamond italic） ══ */
+  --font-hand: "Sorts Mill Goudy", "Cormorant Garamond", Georgia, serif;
+
+  /* ══ v2 · 標題契約量體 ══ */
+  --deskbar-h: 44px;
+}
+
+/* ── Light mode — 白日書房：家具轉米色，紙頁不變（rule 4） ── */
+:root[data-mode="light"] {
+  --navy: #F4EEDD;
+  --navy-deep: #EFE7D3;
+  --navy-light: #f7f2e4;
+  --navy-hover: #e5dcc2;
+  --navy-line: #d5c9aa;
+
+  --text-primary: #2a2118;
+  --text-secondary: #6b5d49;
+  --text-tertiary: #9c8d75;
+
+  --gold: #8a6f30;
+  --gold-bright: #a78640;
+  --gold-dim: #6b552a;
+  --gold-deep: #4d3e1f;
+  --gold-glow: rgba(138,111,48,0.12);
+  --gold-line: rgba(138,111,48,0.28);
+
+  --cream: #2a2118;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
+  --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
 }
 
 /* ── 工項 H：預覽面板共用元件 ─────────────────────────── */
@@ -167,4 +227,417 @@ button.se-panel-row {
   background: var(--gold-glow);
   border-bottom-color: var(--gold);
   color: var(--gold-bright);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   工項 HANDOFF §5 · 劇本工房 redesign — ported shared-component patterns
+   (source: assets/styles/shared.css — NOT imported here, so mirrored 1:1
+   for the classes this module actually uses)
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── 書桌列 DESKBAR · 44px · 模組唯一 chrome · 禁止模組名字 ── */
+.deskbar {
+  position: relative;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  height: var(--deskbar-h);
+  min-height: var(--deskbar-h);
+  padding: 0 20px;
+  gap: 8px;
+  background: var(--navy);
+  border-bottom: 1px solid var(--navy-line);
+  flex: none;
+}
+.desk-spacer { flex: 1 1 auto; }
+.desk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+/* ── BUTTONS · 一套四種（style guide 04） ── */
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  background: var(--navy-light);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+  color: var(--text-primary);
+  font-family: var(--font-serif-tc);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.btn:hover { border-color: var(--gold-dim); background: var(--navy-hover); }
+.btn--gold { background: var(--gold-glow); border-color: var(--gold-dim); color: var(--gold); padding: 0 12px; }
+.btn--gold:hover { background: rgba(201,168,106,0.24); border-color: var(--gold); }
+.btn--danger { background: transparent; border-color: rgba(196,96,79,0.35); color: var(--danger); }
+.btn--danger:hover { background: rgba(196,96,79,0.12); border-color: var(--danger); }
+.btn--ghost { background: transparent; border-color: transparent; color: var(--text-secondary); }
+.btn--ghost:hover { background: var(--navy-light); color: var(--text-primary); border-color: transparent; }
+.btn[disabled], .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn[disabled]:hover, .btn:disabled:hover { background: var(--navy-light); border-color: var(--navy-line); }
+
+/* ── SEG · 分段切換（速寫/搜尋/編輯/閱讀） ── */
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--navy-deep);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+}
+.seg__opt {
+  height: 24px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-serif-tc);
+  font-size: 11.5px;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.seg__opt:hover { color: var(--text-primary); }
+.seg__opt.is-active {
+  background: var(--zone-ink-glow, var(--gold-glow));
+  color: var(--zone-ink, var(--gold-bright));
+  box-shadow: inset 0 0 0 1px var(--zone-ink-line, var(--gold-line));
+}
+
+/* 紙夾籤變體（體裁三切：稿紙上緣紙夾籤，rotate ±0.6°） */
+.seg--tab {
+  padding-left: 22px;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.seg--tab .seg__opt {
+  height: 30px;
+  padding: 0 14px;
+  background: var(--page-old);
+  border: 1px solid var(--page-old-border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  color: var(--page-pencil);
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+.seg--tab .seg__opt:nth-child(odd) { transform: rotate(-0.6deg); }
+.seg--tab .seg__opt:nth-child(even) { transform: rotate(0.6deg); }
+.seg--tab .seg__opt.is-active {
+  background: var(--page-card);
+  color: var(--zone-ink, var(--ink-dramaturgica));
+  box-shadow: none;
+  transform: none;
+  z-index: 2;
+  position: relative;
+}
+
+/* ── MH-MENU · 更多▾ 溢出選單 ── */
+.mh-more { position: relative; }
+.mh-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 200px;
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px;
+  background: var(--navy-light);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-lift);
+  z-index: 90;
+}
+.mh-menu.open { display: flex; }
+.mh-menu .btn {
+  width: 100%;
+  height: 28px;
+  min-height: 28px;
+  justify-content: flex-start;
+  text-align: left;
+  background: transparent;
+  border-color: transparent;
+  padding: 0 9px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+.mh-menu .btn:hover { background: var(--navy-hover); border-color: transparent; }
+
+/* ── STATUSBAR · 28px 深色狀態列 ── */
+.sw-statusbar {
+  height: 28px;
+  min-height: 28px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  background: var(--navy);
+  border-top: 1px solid var(--navy-line);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sw-statusbar__chip {
+  padding: 1px 8px;
+  background: var(--navy-light);
+  border-radius: 2px;
+  color: var(--gold-dim);
+  letter-spacing: 0.14em;
+  flex: none;
+}
+.sw-statusbar__ok { color: var(--success); flex: none; }
+.sw-statusbar__live { color: var(--gold); animation: blink 1.2s infinite; flex: none; }
+
+/* ════════════════════════════════════════════════════════════════════
+   WRITE VIEW · 稿紙 manuscript + 紙夾籤 + 筆盤 + 索引卡（HANDOFF §5）
+   ════════════════════════════════════════════════════════════════════ */
+
+/* 稿紙欄：容納紙夾籤 + 稿紙 + 筆盤 */
+.sw-manuscript-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  padding: 16px 22px 16px 26px;
+  background: var(--page-bg);
+  overflow: hidden;
+}
+
+/* 紙夾籤容器：貼齊稿紙上緣，遮住接縫 */
+.sw-genre-tabs {
+  position: relative;
+  z-index: 2;
+  margin-bottom: -1px;
+  flex: none;
+}
+
+/* 稿紙本體：白紙 + 32px 橫線 + 左紅邊，textarea 直接當紙面 */
+.sw-manuscript {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.sw-manuscript-stats {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  color: var(--page-pencil);
+  background: rgba(255,255,255,0.82);
+  padding: 2px 7px;
+  border-radius: 2px;
+}
+.sw-manuscript-textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 22px 40px 60vh 82px;
+  background-color: var(--page-card);
+  /* layer 1: left red margin rule · layer 2: 32px horizontal rules —
+     both use background-attachment:local so they scroll WITH the text,
+     keeping exact 32px line-height alignment while typing/scrolling */
+  background-image:
+    linear-gradient(var(--page-margin-line), var(--page-margin-line)),
+    repeating-linear-gradient(transparent, transparent 31px, var(--page-line) 31px, var(--page-line) 32px);
+  background-size: 1px 100%, 100% auto;
+  background-position: 54px 0, 0 8px;
+  background-repeat: no-repeat, repeat;
+  background-attachment: local, local;
+  border: 1px solid var(--page-border);
+  box-shadow: var(--page-shadow);
+  color: var(--page-ink);
+  outline: none;
+  resize: none;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  line-height: 32px;
+  letter-spacing: 0.03em;
+  tab-size: 4;
+  white-space: pre-wrap;
+  scroll-padding-bottom: 60vh;
+}
+.sw-manuscript-textarea::placeholder { color: var(--page-pencil); opacity: 0.85; }
+
+/* 筆盤：稿紙下緣，PERSONA SLOTS */
+.sw-pen-tray {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--page-old);
+  border: 1px solid var(--page-old-border);
+  border-top: none;
+}
+.sw-pen-tray__label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.18em;
+  color: var(--page-pencil);
+  flex: none;
+}
+.sw-pen-tray__overflow {
+  font-family: var(--font-serif-en);
+  font-size: 10.5px;
+  color: var(--page-pencil);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex: none;
+}
+.sw-pen-tray__hint {
+  margin-left: auto;
+  font-family: var(--font-hand);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--page-pencil);
+  white-space: nowrap;
+  flex: none;
+}
+
+/* Persona slot chip · ALT+1–9 · 26px 高 · 鎖定＝莓紅框＋🔒 */
+.sw-slot-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px 0 7px;
+  background: var(--page-card);
+  border: 1px solid var(--page-old-border);
+  border-radius: 3px;
+  color: var(--page-ink);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  cursor: pointer;
+  white-space: nowrap;
+  opacity: 0.62;
+  transition: border-color 0.15s, opacity 0.15s, background 0.15s;
+}
+.sw-slot-chip:hover { border-color: var(--ink-dramaturgica); }
+.sw-slot-chip.is-filled { opacity: 1; }
+.sw-slot-chip.is-locked {
+  border-color: var(--ink-dramaturgica);
+  background: rgba(184,64,88,0.06);
+}
+.sw-slot-chip__n {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--page-pencil);
+}
+.sw-slot-chip.is-filled .sw-slot-chip__n,
+.sw-slot-chip.is-locked .sw-slot-chip__n { color: var(--ink-dramaturgica); }
+.sw-slot-chip__label {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 索引欄（右軌）：五張索引卡 tab + 內容卡 */
+.sw-index-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--page-bg);
+  border-left: 1px solid var(--page-border);
+  padding: 16px 12px 12px;
+}
+.sw-index-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-bottom: 10px;
+  flex: none;
+}
+.sw-index-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--page-ink-mid);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s, color 0.15s;
+}
+.sw-index-tab:hover { background: rgba(0,0,0,0.03); }
+.sw-index-tab.is-active {
+  background: var(--page-card);
+  box-shadow: inset 2px 0 0 var(--ink-dramaturgica), var(--page-shadow);
+  transform: translateX(-4px);
+  color: var(--page-ink);
+}
+.sw-index-tab__en {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-dramaturgica);
+  width: 34px;
+  flex: none;
+}
+.sw-index-tab__zh { font-family: var(--font-body); font-size: 12px; }
+
+/* 內容卡：淡藍格線的 index card；把既有 .se-panel / .se-code 等深色殼元件
+   的 token 重新映射到紙頁值，讓 Blocks/Stats/Outline/Voice/Bgm 面板
+   （邏輯完全不動）在白紙卡上自動讀出正確配色，不必逐一改寫其原始碼。 */
+.sw-index-card {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background: #FFFDF5;
+  border: 1px solid var(--page-border);
+  border-radius: 3px;
+  box-shadow: var(--page-shadow);
+  padding: 14px;
+  background-image: repeating-linear-gradient(transparent, transparent 20px, rgba(74,128,168,0.07) 20px, rgba(74,128,168,0.07) 21px);
+
+  --navy-deep: var(--page-old);
+  --navy-light: var(--page-card);
+  --navy-hover: rgba(184,64,88,0.08);
+  --navy-line: var(--page-border);
+  --text-primary: var(--page-ink);
+  --text-secondary: var(--page-ink-mid);
+  --text-tertiary: var(--page-pencil);
+  --gold: var(--ink-dramaturgica);
+  --gold-bright: var(--ink-dramaturgica);
+  --gold-dim: var(--ink-dramaturgica);
+  --gold-deep: #8a2f42;
+  --gold-glow: rgba(184,64,88,0.10);
+  --gold-line: rgba(184,64,88,0.28);
 }

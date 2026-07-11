@@ -14,7 +14,7 @@
 <title>阿卡夏圖書館</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Sorts+Mill+Goudy:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/styles/shared.css">
 <style>
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.45} }
@@ -28,7 +28,7 @@ body { display: flex; }
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
   height: 100vh;
-  background: linear-gradient(180deg, #1c2230 0%, #161b25 70%, #11151d 100%);
+  background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 70%, var(--navy-deep) 100%);
   border-right: 1px solid var(--navy-line);
   display: flex;
   flex-direction: column;
@@ -43,33 +43,28 @@ body { display: flex; }
   pointer-events: none;
 }
 
-/* Brand */
-.sidebar-brand {
+/* Brand — lives in topbar per redesign */
+.topbar-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 22px 22px 18px;
+  gap: 10px;
+  flex: none;
 }
-
-.sidebar-brand-text {
-  display: flex; flex-direction: column; line-height: 1.05;
+.topbar-brand-text {
+  display: flex; flex-direction: column; gap: 1px; line-height: 1;
 }
-
-.brand-en {
-  font-family: var(--font-serif-en);
-  font-size: 18px;
-  letter-spacing: 0.18em;
-  color: var(--gold);
-  font-weight: 500;
-  text-transform: uppercase;
-}
-
 .brand-tc {
   font-family: var(--font-serif-tc);
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cream);
+  letter-spacing: 0.08em;
+}
+.brand-en {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
   letter-spacing: 0.32em;
-  margin-top: 4px;
+  color: var(--gold-dim);
 }
 
 /* Auth block */
@@ -148,9 +143,9 @@ body { display: flex; }
 }
 
 .nav-section-label {
-  font-family: var(--font-serif-en);
-  font-size: 10.5px;
-  letter-spacing: 0.32em;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.28em;
   color: var(--text-tertiary);
   text-transform: uppercase;
   padding: 16px 10px 8px;
@@ -163,13 +158,12 @@ body { display: flex; }
 }
 
 .nav-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 9px 12px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
   color: var(--text-secondary);
   background: transparent;
   border: none;
-  border-left: 2px solid transparent;
-  border-radius: 0 var(--r-soft) var(--r-soft) 0;
+  border-radius: var(--r-soft);
   cursor: pointer;
   transition: all 160ms ease;
   position: relative;
@@ -184,9 +178,15 @@ body { display: flex; }
 }
 
 .nav-item.active {
-  color: var(--gold-bright);
-  background: var(--gold-glow);
-  border-left-color: var(--gold);
+  color: var(--text-primary);
+  background: var(--navy-light);
+  box-shadow: inset 2px 0 0 var(--item-ink, var(--gold));
+}
+
+.nav-item-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--item-ink, var(--gold));
+  flex: none;
 }
 
 .nav-item-icon {
@@ -200,31 +200,24 @@ body { display: flex; }
 }
 
 .nav-item-title {
-  font-size: 13.5px; letter-spacing: 0.08em;
+  font-size: 13px; letter-spacing: 0.04em;
 }
 
 .nav-item-sub {
   font-family: var(--font-serif-en);
-  font-size: 10px; letter-spacing: 0.18em;
+  font-style: italic;
+  font-size: 10.5px; letter-spacing: 0.06em;
   color: var(--text-tertiary);
-  text-transform: uppercase;
   margin-top: 2px;
 }
 
-.nav-item.active .nav-item-sub { color: var(--gold-dim); }
+.nav-item.active .nav-item-sub { color: var(--item-ink, var(--gold-dim)); }
 
-.nav-active-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 6px var(--gold);
-  display: none;
-}
-.nav-item.active .nav-active-dot { display: block; }
+.nav-active-dot { display: none; }
 
 /* Sidebar footer */
 .sidebar-footer {
-  padding: 14px 22px 18px;
-  border-top: 1px solid var(--navy-line);
+  padding: 10px 22px 14px;
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--text-tertiary);
@@ -239,20 +232,6 @@ body { display: flex; }
 }
 .sidebar-footer a:hover { color: var(--gold); }
 
-.mode-toggle-btn {
-  background: none; border: 1px solid var(--navy-line);
-  border-radius: var(--r-soft);
-  color: var(--text-tertiary);
-  padding: 4px 6px;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all 160ms;
-}
-.mode-toggle-btn:hover {
-  color: var(--gold);
-  border-color: var(--gold-line);
-}
-
 /* ===== MAIN ===== */
 .main {
   flex: 1;
@@ -265,78 +244,87 @@ body { display: flex; }
 .topbar {
   height: var(--topbar-h);
   min-height: var(--topbar-h);
-  background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
-  border-bottom: 1px solid var(--navy-line);
+  background: var(--navy-deep);
+  border-bottom: 1px solid var(--gold-line);
   display: flex; align-items: center;
-  padding: 0 28px;
+  padding: 0 20px;
   gap: 16px;
   position: relative;
 }
 
-.topbar-brass {
-  position: absolute; left: 28px; right: 28px; bottom: -1px; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold-line) 25%, var(--gold-line) 75%, transparent);
+/* Global search (visual; not wired — no existing global search to bind to) */
+.topbar-search-wrap {
+  flex: 1;
+  display: flex; justify-content: center;
+  min-width: 0;
 }
-
-.topbar-info {
-  display: flex; flex-direction: column; line-height: 1.15;
-}
-
-.topbar-breadcrumb {
-  font-family: var(--font-serif-en);
-  font-size: 10.5px; letter-spacing: 0.3em;
+.topbar-search {
+  display: flex; align-items: center; gap: 8px;
+  width: min(420px, 100%);
+  height: 30px;
+  padding: 0 12px;
+  background: var(--navy);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
   color: var(--text-tertiary);
-  text-transform: uppercase;
-  margin-bottom: 3px;
+  transition: border-color 160ms;
 }
-
-.topbar-title {
-  font-family: var(--font-serif-tc);
-  font-size: 15.5px; color: var(--text-primary);
-  letter-spacing: 0.06em;
-  display: flex; align-items: baseline; gap: 10px;
+.topbar-search:focus-within { border-color: var(--gold-dim); }
+.topbar-search-icon { font-size: 12px; flex: none; }
+.topbar-search-input {
+  flex: 1; min-width: 0;
+  background: none; border: none; outline: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-primary);
 }
-
-.topbar-subtitle {
-  font-family: var(--font-serif-en);
-  font-style: italic;
-  font-size: 12px; color: var(--text-tertiary);
-  letter-spacing: 0.04em;
+.topbar-search-input::placeholder { color: var(--text-tertiary); }
+.topbar-search-kbd {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 9px; color: var(--text-tertiary);
+  border: 1px solid var(--navy-line);
+  border-radius: 3px; padding: 1px 5px;
 }
 
 .topbar-actions {
-  margin-left: auto;
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: center; gap: 8px; flex: none;
+}
+
+.topbar-divider {
+  width: 1px; height: 18px;
+  background: var(--navy-line);
+  flex: none;
 }
 
 /* Summon Librarian button */
 .btn-summon {
   font-family: var(--font-serif-tc);
-  font-size: 12.5px;
-  letter-spacing: 0.12em;
-  padding: 7px 16px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  height: 28px;
+  padding: 0 12px;
   border-radius: var(--r-soft);
-  border: 1px solid var(--gold-line);
-  background: linear-gradient(180deg, rgba(212,175,55,0.15) 0%, rgba(212,175,55,0.05) 100%);
+  border: 1px solid var(--gold-dim);
+  background: var(--gold-glow);
   color: var(--gold);
   cursor: pointer;
-  display: flex; align-items: center; gap: 7px;
+  display: inline-flex; align-items: center; gap: 7px;
   transition: all 200ms;
   white-space: nowrap;
+  line-height: 1;
 }
 .btn-summon:hover {
-  background: linear-gradient(180deg, rgba(212,175,55,0.28) 0%, rgba(212,175,55,0.12) 100%);
+  background: rgba(201,168,106,0.24);
   border-color: var(--gold);
-  color: var(--cream);
-  box-shadow: 0 0 12px rgba(212,175,55,0.15);
 }
 .btn-summon svg { flex-shrink: 0; }
 
-/* Topbar icon buttons (import / new) */
+/* Topbar icon buttons (import / new / mode) */
 .topbar-icon-btn {
   background: none; border: 1px solid var(--navy-line);
   color: var(--text-secondary); cursor: pointer;
-  width: 34px; height: 34px; border-radius: var(--r-soft);
+  width: 28px; height: 28px; border-radius: var(--r-soft);
   display: flex; align-items: center; justify-content: center;
   transition: all 160ms; position: relative;
 }
@@ -354,6 +342,43 @@ body { display: flex; }
   opacity: 0; pointer-events: none; transition: opacity 160ms;
 }
 .topbar-icon-btn:hover[data-tooltip]::after { opacity: 1; }
+
+/* ===== MASTHEAD — shell's only title, sits between topbar and module iframe ===== */
+.masthead {
+  flex: none;
+  padding: 16px 28px 0;
+  background: var(--navy);
+}
+.masthead--hidden { display: none; }
+.masthead-breadcrumb {
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.22em;
+  color: var(--text-tertiary);
+}
+.masthead-breadcrumb .mh-sep { opacity: 0.5; margin: 0 2px; }
+.masthead-crumb-tail { color: var(--gold); }
+.masthead-title-row {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-top: 5px;
+}
+.masthead-title {
+  margin: 0;
+  font-family: var(--font-serif-tc);
+  font-size: 23px; font-weight: 700;
+  color: var(--cream);
+  letter-spacing: 0.04em; line-height: 1.2;
+}
+.masthead-latin {
+  font-family: var(--font-serif-en);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--gold);
+}
+.masthead-rule {
+  height: 2px; width: 58px;
+  background: var(--gold);
+  margin-top: 10px;
+}
 
 /* Drop overlay */
 .drop-overlay {
@@ -451,66 +476,41 @@ body { display: flex; }
   border-color: var(--gold-line);
 }
 
-.btn-gold {
-  background: rgba(201,168,106,0.12);
-  border-color: var(--gold);
-  color: var(--gold-bright);
-}
-.btn-gold:hover {
-  background: var(--gold);
-  color: var(--navy-deep);
-}
-
 /* ===== DASHBOARD ===== */
 .dashboard {
   flex: 1;
   overflow: auto;
-  padding: 32px 48px 56px;
-  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+  padding: 32px 36px 40px;
+  background: var(--hall-bg);
   position: relative;
 }
+.dashboard-inner { max-width: 1140px; margin: 0 auto; }
 
 /* Hero */
 .dash-hero {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 32px; gap: 24px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  flex-wrap: wrap; gap: 18px;
 }
 
-.hero-left { max-width: 600px; }
-
-.hero-eyebrow {
-  font-family: var(--font-serif-en);
-  font-size: 11px; letter-spacing: 0.4em;
-  color: var(--gold);
-  text-transform: uppercase;
-  display: flex; align-items: center; gap: 12px;
-  margin-bottom: 16px;
-}
-
-.hero-eyebrow-orn {
-  width: 28px; height: 1px; background: var(--gold);
-}
+.hero-left { display: flex; align-items: baseline; gap: 18px; flex-wrap: wrap; }
 
 .hero-title {
   font-family: var(--font-serif-tc);
-  font-size: 38px; line-height: 1.2;
-  color: var(--text-primary);
+  font-size: 27px; line-height: 1.2;
+  color: var(--cream);
   margin: 0;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 .hero-en {
-  font-family: var(--font-serif-en);
-  font-style: italic;
-  font-size: 17px;
-  color: var(--text-secondary);
-  margin-top: 8px;
-  letter-spacing: 0.04em;
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 0.14em;
+  color: var(--text-tertiary);
 }
 
 .hero-right {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 6px;
+  display: flex; align-items: baseline; gap: 6px;
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-tertiary);
@@ -519,159 +519,135 @@ body { display: flex; }
 
 .hero-time {
   font-family: var(--font-serif-en);
-  font-size: 22px; color: var(--gold);
-  letter-spacing: 0.18em;
+  font-size: 20px; color: var(--gold);
+  letter-spacing: 0.14em;
 }
 
 .hero-time-sep { color: var(--text-tertiary); }
 
-/* Shelf header */
+.dash-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-dim) 15%, var(--gold) 50%, var(--gold-dim) 85%, transparent 100%);
+  opacity: 0.5;
+  margin: 20px 0 26px;
+}
+
+/* Section header (used above RECENT ledger) */
 .shelf-header {
-  display: flex; align-items: baseline; gap: 16px;
-  margin-top: 16px; margin-bottom: 18px;
+  display: flex; align-items: baseline; gap: 12px;
+  margin: 30px 0 10px;
 }
-
-.shelf-num {
-  font-family: var(--font-serif-en);
-  font-size: 34px; color: var(--gold-deep);
-  font-style: italic; line-height: 1;
-}
-
 .shelf-label {
-  font-family: var(--font-serif-tc);
-  font-size: 18px; color: var(--text-primary);
-  letter-spacing: 0.18em;
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.26em;
+  color: var(--gold-dim);
 }
-
-.shelf-en {
-  font-family: var(--font-serif-en);
-  font-size: 11px; letter-spacing: 0.3em;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-}
-
 .shelf-rule { flex: 1; height: 1px; background: var(--navy-line); }
-
-/* Module shelf */
-.module-shelf {
-  position: relative;
-  padding: 0 0 28px;
-  margin-bottom: 36px;
-}
-
-.shelf-board {
-  position: absolute;
-  bottom: 8px; left: -8px; right: -8px; height: 14px;
-  background: linear-gradient(180deg, #5b3a2a 0%, #3a2618 70%, #1f130a 100%);
-  border-radius: 1px;
-  box-shadow: 0 6px 18px -4px rgba(0,0,0,0.6), inset 0 1px 0 var(--gold-line);
-}
 
 .cards-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
   position: relative;
-  z-index: 1;
 }
 
 /* Module card */
 .module-card {
   position: relative;
-  background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy-light) 100%);
+  background: var(--navy);
   border: 1px solid var(--navy-line);
   border-radius: var(--r-card);
-  padding: 22px 22px 20px;
+  padding: 20px 18px 16px;
   cursor: pointer;
-  transition: transform 220ms cubic-bezier(.2,.8,.2,1), border-color 200ms, box-shadow 220ms;
+  transition: transform 200ms cubic-bezier(.2,.8,.2,1), border-color 180ms, box-shadow 200ms;
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  min-height: 220px;
+  min-height: 190px;
   display: flex; flex-direction: column; justify-content: space-between;
   text-decoration: none; color: inherit;
 }
 .module-card:hover {
   border-color: var(--gold-line);
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--shadow-lift);
 }
-.module-card.featured {
-  background: linear-gradient(180deg, var(--navy-light) 0%, #262d3c 100%);
-  border-color: var(--gold-line);
-}
 
-.card-spine {
-  position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
-  box-shadow: 1px 0 0 rgba(0,0,0,0.4), inset 0 0 4px rgba(0,0,0,0.5);
+.card-topline {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--card-ink, var(--gold));
 }
 
 .card-roman {
-  position: absolute; top: 14px; right: 18px;
   font-family: var(--font-serif-en);
   font-size: 22px; font-style: italic;
-  color: var(--gold-deep);
+  color: var(--card-ink, var(--gold-deep));
   letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.card-top-row {
+  display: flex; align-items: baseline; justify-content: space-between;
 }
 
 .card-icon-box {
-  width: 48px; height: 48px;
+  width: 40px; height: 40px;
   border: 1px solid var(--gold-line);
   border-radius: 2px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--gold);
+  color: var(--card-ink, var(--gold));
   background: rgba(201,168,106,0.04);
-  margin-bottom: 18px;
   transition: all 200ms;
 }
-.module-card:hover .card-icon-box { color: var(--gold-bright); }
 
 .card-title {
   font-family: var(--font-serif-tc);
-  font-size: 19px; color: var(--text-primary);
-  letter-spacing: 0.06em;
-  margin-bottom: 2px;
+  font-size: 15px; color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin: 10px 0 1px;
 }
 
 .card-en {
   font-family: var(--font-serif-en);
   font-style: italic;
-  font-size: 12.5px; color: var(--gold);
-  letter-spacing: 0.16em;
-  margin-bottom: 10px;
+  font-size: 11.5px; color: var(--card-ink, var(--gold));
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
 }
 
 .card-desc {
   font-family: var(--font-serif-tc);
-  font-size: 12.5px; color: var(--text-secondary);
+  font-size: 12px; color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .card-footer {
   display: flex; align-items: center; justify-content: space-between;
-  margin-top: 18px; padding-top: 12px;
-  border-top: 1px dashed rgba(201,168,106,0.18);
+  margin-top: 14px; padding-top: 10px;
+  border-top: 1px dashed var(--navy-line);
 }
 
-.card-formats { display: flex; gap: 5px; }
+.card-formats { display: flex; gap: 5px; flex-wrap: wrap; }
 
 .format-tag {
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 9px;
   padding: 2px 6px;
   border: 1px solid var(--navy-hover);
   border-radius: 2px;
   color: var(--text-tertiary);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
 }
 
 .card-open-hint {
-  font-family: var(--font-serif-en);
-  font-size: 11px; letter-spacing: 0.24em;
+  font-family: var(--font-mono);
+  font-size: 9.5px; letter-spacing: 0.16em;
   color: var(--text-tertiary);
   text-transform: uppercase;
   transition: color 180ms;
+  flex: none;
 }
-.module-card:hover .card-open-hint { color: var(--gold); }
+.module-card:hover .card-open-hint { color: var(--card-ink, var(--gold)); }
 
 /* Recent files ledger */
 .recent-ledger {
@@ -1355,9 +1331,13 @@ body { display: flex; }
   .ledger-row > :nth-child(4),
   .ledger-row > :nth-child(5) { display: none; }
   .btn-summon span { display: none; }
-  .btn-summon { padding: 7px 10px; }
+  .btn-summon { padding: 0 10px; }
   .topbar-icon-btn[data-tooltip]::after { display: none; }
   .topbar { padding: 0 12px; gap: 10px; }
+  .topbar-search-wrap { display: none; }
+  .topbar-brand-text { display: none; }
+  .masthead { padding: 12px 16px 0; }
+  .masthead-title { font-size: 19px; }
   .ai-panel {
     position: fixed;
     left: 0; right: 0; bottom: 0;
@@ -1442,24 +1422,107 @@ body { display: flex; }
 <aside class="sidebar tex-paper">
   <div class="sidebar-brass-edge"></div>
 
-  <!-- Brand -->
-  <div class="sidebar-brand">
-    <svg width="42" height="42" viewBox="0 0 60 60" fill="none" style="flex-shrink:0">
-      <path d="M30 4 L52 16 L52 44 L30 56 L8 44 L8 16 Z" stroke="var(--gold)" stroke-width="1" opacity="0.55" fill="none"/>
-      <path d="M30 8 L48 18 L48 42 L30 52 L12 42 L12 18 Z" stroke="var(--gold)" stroke-width="0.5" opacity="0.35" fill="none"/>
-      <path d="M30 14 c1.5 2 3 3 3 5.5 a3 3 0 11-6 0 c0-1.2 .6-1.8 1.2-2.4 0 1.2 1.2 1.8 1.8 .6 0-1.8-.6-2.4 0-3.7z" fill="var(--gold)" opacity="0.9"/>
-      <path d="M19 42 L30 22 L41 42 M23.5 35 H36.5" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      <path d="M16 46 L44 46" stroke="var(--gold)" stroke-width="0.8" opacity="0.6"/>
-    </svg>
-    <div class="sidebar-brand-text">
-      <div class="brand-en">Akasha</div>
-      <div class="brand-tc">阿卡夏圖書館</div>
+  <!-- Nav -->
+  <nav class="nav-wrap" style="padding-top:14px">
+    <div class="nav-section-label">
+      <span>TOOLS &middot; 館內設施</span>
+      <span class="nav-section-rule"></span>
     </div>
-  </div>
+    <button class="nav-item" data-module="markdown" style="--item-ink:var(--ink-manuscripta)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">Code & Data</span>
+        <span class="nav-item-sub">Manuscripta</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="pdf-reader" style="--item-ink:var(--ink-lectorium)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">PDF 閱讀器</span>
+        <span class="nav-item-sub">Lectorium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="table-forge" style="--item-ink:var(--ink-tabularium)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">Table Forge</span>
+        <span class="nav-item-sub">Tabularium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="script-editor" style="--item-ink:var(--ink-dramaturgica)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">劇本工房</span>
+        <span class="nav-item-sub">Dramaturgica</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="private-reading-room" style="--item-ink:var(--ink-intimarium)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">談心專區</span>
+        <span class="nav-item-sub">Intimarium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="daily-report" style="--item-ink:var(--ink-gazette)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">每日館報</span>
+        <span class="nav-item-sub">Gazette</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="ai-settings" style="--item-ink:var(--gold)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">AI 設定</span>
+        <span class="nav-item-sub">Aetherium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
 
-  <div class="brass-rule brass-rule--thin" style="margin:0 22px"></div>
+    <div class="nav-section-label" style="margin-top:8px">
+      <span>VIEWS &middot; 館別</span>
+      <span class="nav-section-rule"></span>
+    </div>
+    <button class="nav-item active" data-view="dashboard" style="--item-ink:var(--gold)">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">總覽</span>
+        <span class="nav-item-sub">Overview</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-view="personal" style="--item-ink:var(--gold)">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/><path d="M8 8v0M12 8v0M16 8v0M8 16v0M12 16v0M16 16v0"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">個人書庫</span>
+        <span class="nav-item-sub">My Library</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-view="public" style="--item-ink:var(--gold)">
+      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">公共書庫</span>
+        <span class="nav-item-sub">Public Stacks</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+  </nav>
 
-  <!-- Auth -->
+  <!-- Auth / sync — bottom block -->
   <div class="auth-block" id="auth-block">
     <div class="auth-row">
       <div class="auth-avatar" id="auth-avatar">客</div>
@@ -1477,105 +1540,9 @@ body { display: flex; }
     </button>
   </div>
 
-  <!-- Nav -->
-  <nav class="nav-wrap">
-    <div class="nav-section-label">
-      <span>I &middot; Navigate</span>
-      <span class="nav-section-rule"></span>
-    </div>
-    <button class="nav-item active" data-view="dashboard">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">總覽</span>
-        <span class="nav-item-sub">Overview</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-view="personal">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/><path d="M8 8v0M12 8v0M16 8v0M8 16v0M12 16v0M16 16v0"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">個人書庫</span>
-        <span class="nav-item-sub">My Library</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-view="public">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">公共書庫</span>
-        <span class="nav-item-sub">Public Stacks</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-
-    <div class="nav-section-label">
-      <span>II &middot; Tools</span>
-      <span class="nav-section-rule"></span>
-    </div>
-    <button class="nav-item" data-module="markdown">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">Code & Data</span>
-        <span class="nav-item-sub">Manuscripta</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-module="pdf-reader">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">PDF 閱讀器</span>
-        <span class="nav-item-sub">Reading Hall</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-module="table-forge">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">Table Forge</span>
-        <span class="nav-item-sub">Tabularium</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-module="script-editor">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">Script Editor</span>
-        <span class="nav-item-sub">Scriptorium</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-module="private-reading-room">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">談心專區</span>
-        <span class="nav-item-sub">Intimarium</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-module="daily-report">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">每日館報</span>
-        <span class="nav-item-sub">Diurnalis</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-    <button class="nav-item" data-module="ai-settings">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">AI 設定</span>
-        <span class="nav-item-sub">Aetherium</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
-  </nav>
-
   <!-- Footer -->
   <div class="sidebar-footer">
     <span>v0.1 &middot; MMXXVI</span>
-    <button class="mode-toggle-btn" id="mode-toggle" onclick="toggleMode()" title="切換明暗模式">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" id="mode-icon"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
-    </button>
     <a href="privacy.html" target="_blank">Privacy</a>
   </div>
 </aside>
@@ -1585,16 +1552,28 @@ body { display: flex; }
   <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeMobileSidebar()"></div>
   <!-- Topbar -->
   <div class="topbar" id="topbar">
-    <div class="topbar-brass"></div>
     <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileSidebar()" title="選單">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="topbar-info">
-      <div class="topbar-breadcrumb" id="topbar-breadcrumb">AKASHA LIBRARY</div>
-      <div class="topbar-title">
-        <span id="topbar-title">總覽</span>
-        <span class="topbar-subtitle" id="topbar-subtitle">&middot; Overview</span>
+    <div class="topbar-brand">
+      <svg width="26" height="26" viewBox="0 0 60 60" fill="none" style="flex-shrink:0">
+        <path d="M30 4 L52 16 L52 44 L30 56 L8 44 L8 16 Z" stroke="var(--gold)" stroke-width="1" opacity="0.55" fill="none"/>
+        <path d="M30 8 L48 18 L48 42 L30 52 L12 42 L12 18 Z" stroke="var(--gold)" stroke-width="0.5" opacity="0.35" fill="none"/>
+        <path d="M30 14 c1.5 2 3 3 3 5.5 a3 3 0 11-6 0 c0-1.2 .6-1.8 1.2-2.4 0 1.2 1.2 1.8 1.8 .6 0-1.8-.6-2.4 0-3.7z" fill="var(--gold)" opacity="0.9"/>
+        <path d="M19 42 L30 22 L41 42 M23.5 35 H36.5" stroke="var(--cream)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <path d="M16 46 L44 46" stroke="var(--gold)" stroke-width="0.8" opacity="0.6"/>
+      </svg>
+      <div class="topbar-brand-text">
+        <span class="brand-tc">阿卡夏圖書館</span>
+        <span class="brand-en">AKASHA LIBRARY</span>
       </div>
+    </div>
+    <div class="topbar-search-wrap">
+      <label class="topbar-search">
+        <span class="topbar-search-icon">&#8981;</span>
+        <input class="topbar-search-input" id="topbar-search-input" type="text" placeholder="搜尋全館藏…">
+        <span class="topbar-search-kbd">&#8984;K</span>
+      </label>
     </div>
     <div class="topbar-actions">
       <button class="topbar-icon-btn" data-tooltip="匯入檔案" onclick="importFile()" title="匯入檔案">
@@ -1603,6 +1582,10 @@ body { display: flex; }
       <button class="topbar-icon-btn" data-tooltip="新建檔案" onclick="newFile()" title="新建檔案">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
       </button>
+      <button class="topbar-icon-btn" id="mode-toggle" data-tooltip="夜燈" onclick="toggleMode()" title="切換明暗模式">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" id="mode-icon"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+      <div class="topbar-divider"></div>
       <button class="btn-summon" id="btn-summon" onclick="summonLibrarian()" title="召喚 AI 圖書館員「零韻」">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z"/></svg>
         <span>召喚圖書館員</span>
@@ -1610,42 +1593,44 @@ body { display: flex; }
     </div>
   </div>
 
+  <!-- Masthead — shell's only title, all modules incl. atrium driven from HALLS -->
+  <div class="masthead" id="masthead">
+    <div class="masthead-breadcrumb" id="masthead-breadcrumb">AKASHA LIBRARY <span class="mh-sep">&raquo;</span> HALLS <span class="mh-sep">&raquo;</span> <b class="masthead-crumb-tail" id="masthead-crumb-tail">ATRIUM</b></div>
+    <div class="masthead-title-row">
+      <h1 class="masthead-title" id="masthead-title">大廳</h1>
+      <span class="masthead-latin" id="masthead-latin">Atrium</span>
+    </div>
+    <div class="masthead-rule" id="masthead-rule"></div>
+  </div>
+
   <!-- Dashboard view -->
   <div class="dashboard tex-paper" id="view-dashboard">
+   <div class="dashboard-inner">
     <!-- Hero -->
     <div class="dash-hero">
       <div class="hero-left">
-        <div class="hero-eyebrow">
-          <span class="hero-eyebrow-orn"></span>
-          Bibliotheca &middot; 阿卡夏
-          <span class="hero-eyebrow-orn"></span>
-        </div>
         <h1 class="hero-title" id="hero-greeting">晚安，旅人。書庫今晚靜謐。</h1>
-        <div class="hero-en">"All knowledge that the world has ever received comes from the mind."</div>
       </div>
       <div class="hero-right">
         <div class="hero-time" id="hero-time">00<span class="hero-time-sep">:</span>00</div>
         <div id="hero-date">MMXXVI &middot; MAY &middot; V</div>
       </div>
     </div>
+    <div class="hero-en">"All knowledge that the world has ever received comes from the mind."</div>
+    <div class="dash-rule"></div>
 
-    <!-- Shelf I: Modules -->
-    <div class="shelf-header">
-      <span class="shelf-num">I.</span>
-      <span class="shelf-label">五廳</span>
-      <span class="shelf-en">Quinque Aulae &middot; Five Halls</span>
-      <span class="shelf-rule"></span>
-    </div>
-    <div class="module-shelf">
-      <div class="cards-row">
+    <!-- Halls -->
+    <div class="cards-row">
         <!-- Markdown -->
         <a class="module-card" data-module="markdown">
-          <div class="card-spine" style="background:linear-gradient(180deg,#5b3a2a,#5b3a2acc,#5b3a2a88)"></div>
-          <div class="card-roman">I</div>
-          <div>
+          <div class="card-topline"></div>
+          <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
             </div>
+            <div class="card-roman">I</div>
+          </div>
+          <div>
             <div class="card-title">Code & Data</div>
             <div class="card-en">— Manuscripta</div>
             <div class="card-desc">PY / JSON / MD / TXT 多格式閱讀器，支援 Sheets 匯出。</div>
@@ -1661,13 +1646,15 @@ body { display: flex; }
           </div>
         </a>
         <!-- PDF -->
-        <a class="module-card featured" data-module="pdf-reader">
-          <div class="card-spine" style="background:linear-gradient(180deg,#3a2818,#3a2818cc,#3a281888)"></div>
-          <div class="card-roman">II</div>
-          <div>
+        <a class="module-card" data-module="pdf-reader">
+          <div class="card-topline"></div>
+          <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
             </div>
+            <div class="card-roman">II</div>
+          </div>
+          <div>
             <div class="card-title">PDF 閱讀器</div>
             <div class="card-en">— Lectorium</div>
             <div class="card-desc">翻頁、註解、頁面切割；圖書館員為您伴讀。</div>
@@ -1681,12 +1668,14 @@ body { display: flex; }
         </a>
         <!-- Table Forge -->
         <a class="module-card" data-module="table-forge">
-          <div class="card-spine" style="background:linear-gradient(180deg,#3d3220,#3d3220cc,#3d322088)"></div>
-          <div class="card-roman">III</div>
-          <div>
+          <div class="card-topline"></div>
+          <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>
             </div>
+            <div class="card-roman">III</div>
+          </div>
+          <div>
             <div class="card-title">Table Forge</div>
             <div class="card-en">— Tabularium</div>
             <div class="card-desc">Markdown、JSON、CSV 資料表整理與格式轉換。</div>
@@ -1702,14 +1691,16 @@ body { display: flex; }
         </a>
         <!-- Script Editor -->
         <a class="module-card" data-module="script-editor">
-          <div class="card-spine" style="background:linear-gradient(180deg,#2a3a4a,#2a3a4acc,#2a3a4a88)"></div>
-          <div class="card-roman">IV</div>
-          <div>
+          <div class="card-topline"></div>
+          <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg>
             </div>
-            <div class="card-title">Script Editor</div>
-            <div class="card-en">— Scriptorium</div>
+            <div class="card-roman">IV</div>
+          </div>
+          <div>
+            <div class="card-title">劇本工房</div>
+            <div class="card-en">— Dramaturgica</div>
             <div class="card-desc">劇本編輯器。Plain Script 即時預覽，多格式匯出。</div>
           </div>
           <div class="card-footer">
@@ -1723,12 +1714,14 @@ body { display: flex; }
         </a>
         <!-- Reading Room -->
         <a class="module-card" data-module="private-reading-room" id="card-reading-room">
-          <div class="card-spine" style="background:linear-gradient(180deg,#2a2a40,#2a2a40cc,#2a2a4088)"></div>
-          <div class="card-roman">V</div>
-          <div>
+          <div class="card-topline"></div>
+          <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg>
             </div>
+            <div class="card-roman">V</div>
+          </div>
+          <div>
             <div class="card-title">談心專區</div>
             <div class="card-en">— Intimarium</div>
             <div class="card-desc">私人閱覽室。陪伴對話、文字整理、手札保存。</div>
@@ -1743,14 +1736,16 @@ body { display: flex; }
         </a>
         <!-- Daily Report -->
         <a class="module-card" data-module="daily-report" id="card-daily-report">
-          <div class="card-spine" style="background:linear-gradient(180deg,#3a2a1a,#3a2a1acc,#3a2a1a88)"></div>
-          <div class="card-roman">VI</div>
-          <div>
+          <div class="card-topline"></div>
+          <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
             </div>
+            <div class="card-roman">VI</div>
+          </div>
+          <div>
             <div class="card-title">每日館報</div>
-            <div class="card-en">— Diurnalis</div>
+            <div class="card-en">— Gazette</div>
             <div class="card-desc">資訊整理與結構化輸出。貼上素材，產出分類館報。</div>
           </div>
           <div class="card-footer">
@@ -1761,15 +1756,11 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
-      </div>
-      <div class="shelf-board"></div>
     </div>
 
-    <!-- Shelf II: Recent files -->
+    <!-- Recent files -->
     <div class="shelf-header">
-      <span class="shelf-num">II.</span>
-      <span class="shelf-label">近日卷帙</span>
-      <span class="shelf-en">Recentes &middot; Last Opened</span>
+      <span class="shelf-label">RECENT &middot; 最近經手</span>
       <span class="shelf-rule"></span>
     </div>
     <div id="recent-list">
@@ -1782,6 +1773,7 @@ body { display: flex; }
         </div>
       </div>
     </div>
+   </div>
   </div>
 
   <!-- Module iframe container -->
@@ -2135,11 +2127,70 @@ body { display: flex; }
     'pdf-reader': { title: 'PDF 閱讀器', subtitle: 'Lectorium', src: 'modules/pdf-reader/index.html' },
     'table-forge': { title: 'Table Forge', subtitle: 'Tabularium', src: 'modules/table-forge/index.html' },
     'spreadsheet': { title: '試算表', subtitle: 'Tabularium XL', src: 'dist/spreadsheet/index.html' },
-    'script-editor': { title: 'Script Editor', subtitle: 'Scriptorium', src: 'dist/script-editor/index.html' },
+    'script-editor': { title: '劇本工房', subtitle: 'Dramaturgica', src: 'dist/script-editor/index.html' },
     'ai-settings': { title: 'AI 設定', subtitle: 'Aetherium', src: 'modules/ai-settings/index.html' },
     'private-reading-room': { title: '談心專區', subtitle: 'Intimarium', src: 'modules/reading-room/index.html' },
-    'daily-report': { title: '每日館報', subtitle: 'Diurnalis', src: 'modules/daily-report/index.html' },
+    'daily-report': { title: '每日館報', subtitle: 'Gazette', src: 'modules/daily-report/index.html' },
   };
+
+  // ===== HALLS — single source of truth for the title contract =====
+  // {key, zh, latin, ink, roman}. Reused by: masthead (always), sidebar
+  // TOOLS dots (inline --item-ink already set in HTML, synced here),
+  // and dashboard hall cards (inline --card-ink synced here).
+  var HALLS = {
+    'atrium':               { zh: '大廳',        latin: 'Atrium',       ink: 'var(--gold)',              roman: '' },
+    'markdown':             { zh: 'Code & Data', latin: 'Manuscripta',  ink: 'var(--ink-manuscripta)',   roman: 'I' },
+    'pdf-reader':           { zh: 'PDF 閱讀器',   latin: 'Lectorium',    ink: 'var(--ink-lectorium)',     roman: 'II' },
+    'table-forge':          { zh: 'Table Forge', latin: 'Tabularium',   ink: 'var(--ink-tabularium)',    roman: 'III' },
+    'spreadsheet':          { zh: '試算表',       latin: 'Tabularium XL',ink: 'var(--ink-tabularium)',    roman: '' },
+    'script-editor':        { zh: '劇本工房',     latin: 'Dramaturgica', ink: 'var(--ink-dramaturgica)',  roman: 'IV' },
+    'private-reading-room': { zh: '談心專區',     latin: 'Intimarium',   ink: 'var(--ink-intimarium)',    roman: 'V' },
+    'daily-report':         { zh: '每日館報',     latin: 'Gazette',      ink: 'var(--ink-gazette)',       roman: 'VI' },
+    'ai-settings':          { zh: 'AI 設定',      latin: 'Aetherium',    ink: 'var(--gold)',              roman: '' },
+  };
+  window.HALLS = HALLS;
+
+  // Sync sidebar TOOLS dots + dashboard hall cards from HALLS (single source)
+  function applyHallStyling() {
+    document.querySelectorAll('.nav-item[data-module]').forEach(function(el) {
+      var h = HALLS[el.dataset.module];
+      if (!h) return;
+      el.style.setProperty('--item-ink', h.ink);
+      var sub = el.querySelector('.nav-item-sub');
+      if (sub) sub.textContent = h.latin;
+    });
+    document.querySelectorAll('.module-card[data-module]').forEach(function(el) {
+      var h = HALLS[el.dataset.module];
+      if (!h) return;
+      el.style.setProperty('--card-ink', h.ink);
+      var roman = el.querySelector('.card-roman');
+      if (roman && h.roman) roman.textContent = h.roman;
+      var en = el.querySelector('.card-en');
+      if (en) en.textContent = '— ' + h.latin;
+    });
+  }
+
+  // Update the shell masthead (the site's only title). key = HALLS key,
+  // or null/'dashboard'/'personal' to show the Atrium hall.
+  function updateMasthead(key) {
+    var masthead = document.getElementById('masthead');
+    if (!masthead) return;
+    var h = HALLS[key] || HALLS['atrium'];
+    masthead.classList.remove('masthead--hidden');
+    var tailEl = document.getElementById('masthead-crumb-tail');
+    var titleEl = document.getElementById('masthead-title');
+    var latinEl = document.getElementById('masthead-latin');
+    var ruleEl = document.getElementById('masthead-rule');
+    if (tailEl) { tailEl.textContent = h.latin.toUpperCase(); tailEl.style.color = h.ink; }
+    if (titleEl) titleEl.textContent = h.zh;
+    if (latinEl) { latinEl.textContent = h.latin; latinEl.style.color = h.ink; }
+    if (ruleEl) ruleEl.style.background = h.ink;
+  }
+  function hideMasthead() {
+    var masthead = document.getElementById('masthead');
+    if (masthead) masthead.classList.add('masthead--hidden');
+  }
+  window.updateMasthead = updateMasthead;
 
   // Per-module AI context definitions (spec §3.4)
   var MODULE_CONTEXTS = {
@@ -2208,12 +2259,6 @@ body { display: flex; }
     },
   };
   window.MODULE_CONTEXTS = MODULE_CONTEXTS;
-
-  var viewTitles = {
-    'dashboard': { title: '總覽', subtitle: 'Overview', breadcrumb: 'AKASHA LIBRARY' },
-    'personal': { title: '個人書庫', subtitle: 'My Library', breadcrumb: 'AKASHA LIBRARY \xBB LIBRARY' },
-    'public': { title: '公共書庫', subtitle: 'Public Stacks', breadcrumb: 'AKASHA LIBRARY \xBB LIBRARY' },
-  };
 
   // ===== AI PANEL (零韻) =====
   var aiPanelOpen = false;
@@ -2451,27 +2496,28 @@ body { display: flex; }
   }
   updateClock();
   setInterval(updateClock, 30000);
+  applyHallStyling();
+  updateMasthead('atrium');
 
   // Navigation
   function switchView(view) {
     closeMemoryViewer();
     var dashboard = document.getElementById('view-dashboard');
     var frame = document.getElementById('module-frame');
-    var titleEl = document.getElementById('topbar-title');
-    var subtitleEl = document.getElementById('topbar-subtitle');
-    var breadcrumbEl = document.getElementById('topbar-breadcrumb');
-    var info = viewTitles[view] || viewTitles['dashboard'];
-    titleEl.textContent = info.title;
-    subtitleEl.textContent = info.subtitle ? '· ' + info.subtitle : '';
-    breadcrumbEl.textContent = info.breadcrumb;
     if (view === 'dashboard' || view === 'personal') {
       dashboard.style.display = '';
       frame.classList.remove('active');
+      updateMasthead('atrium');
     } else if (view === 'public') {
       dashboard.style.display = 'none';
       frame.src = 'public-library/index.html';
       frame.classList.add('active');
+      // Public library owns its own header — the shell masthead stays out of its way.
+      hideMasthead();
     }
+    document.querySelectorAll('.nav-item').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.view === view);
+    });
     var prevModule = aiCurrentModule;
     aiCurrentModule = null;
     updateAIContextBadge(prevModule !== null);
@@ -2483,15 +2529,10 @@ body { display: flex; }
     closeMemoryViewer();
     var dashboard = document.getElementById('view-dashboard');
     var frame = document.getElementById('module-frame');
-    var titleEl = document.getElementById('topbar-title');
-    var subtitleEl = document.getElementById('topbar-subtitle');
-    var breadcrumbEl = document.getElementById('topbar-breadcrumb');
     dashboard.style.display = 'none';
     frame.src = mod.src;
     frame.classList.add('active');
-    titleEl.textContent = mod.title;
-    subtitleEl.textContent = mod.subtitle ? '· ' + mod.subtitle : '';
-    breadcrumbEl.textContent = 'AKASHA LIBRARY \xBB TOOLS \xBB ' + mod.title;
+    updateMasthead(name);
     // Sync sidebar active state
     document.querySelectorAll('.nav-item').forEach(function(b) {
       b.classList.toggle('active', b.dataset.module === name);

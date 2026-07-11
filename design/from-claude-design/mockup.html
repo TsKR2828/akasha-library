@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&amp;family=Noto+Serif+TC:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;family=Sorts+Mill+Goudy:ital@0;1&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#181d28; --navy-deep:#11151d; --navy-light:#232a37; --navy-hover:#2e3645; --navy-line:#313a4b;
+  --gold:#c9a86a; --gold-bright:#e3c486; --gold-dim:#a08550; --gold-glow:rgba(201,168,106,0.14); --gold-line:rgba(201,168,106,0.22);
+  --cream:#f1ead6; --cream-dim:#d6cfb8; --text-primary:#ece5cf; --text-secondary:#9aa1ad; --text-tertiary:#646b78;
+  --danger:#c4604f; --success:#6aae7f;
+  --page-bg:#FAF8F3; --page-card:#FFFFFF; --page-old:#F3EDE0; --page-ink:#1C1610; --page-ink-mid:#3E352A; --page-pencil:#8A7A66;
+  --page-border:#E8E3DA; --page-old-border:#E0D6C2; --page-line:rgba(0,0,0,0.035); --page-margin:rgba(212,118,58,0.13);
+  --ink-atrium:#C9A86A; --ink-manuscripta:#4A80A8; --ink-lectorium:#C8962E; --ink-tabularium:#5A8A4A; --ink-dramaturgica:#B84058; --ink-gazette:#D4763A; --ink-intimarium:#7A5898;
+  --pt-yellow:#FFF8DC; --pt-pink:#FDE8E8; --pt-blue:#E5F0FA; --pt-green:#E8F4E5; --pt-lavender:#F0E8F5; --pt-peach:#FDF0E5;
+}
+:root{
+  --hall-bg:var(--navy-deep); --desk-bg:var(--navy);
+}
+:root[data-mode="light"]{
+  --navy:#F4EEDD; --navy-deep:#EFE7D3; --navy-light:#f7f2e4; --navy-hover:#e5dcc2; --navy-line:#d5c9aa;
+  --hall-bg:#FAF4E5; --desk-bg:#F4EEDD;
+  --text-primary:#2a2118; --text-secondary:#6b5d49; --text-tertiary:#9c8d75;
+  --gold:#8a6f30; --gold-bright:#a78640; --gold-dim:#6b552a; --gold-glow:rgba(138,111,48,0.12); --gold-line:rgba(138,111,48,0.28);
+  --cream:#2a2118; --cream-dim:#4d4232;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--navy-deep);color:var(--text-primary);font-family:'Noto Serif TC',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+a{color:var(--gold);text-decoration:none}
+a:hover{color:var(--gold-bright)}
+button{font-family:inherit;cursor:pointer;white-space:nowrap}
+input,textarea{font-family:inherit}
+::selection{background:rgba(201,168,106,0.25);color:var(--gold-bright)}
+*::-webkit-scrollbar{width:6px;height:6px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:rgba(201,168,106,0.18);border-radius:3px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(201,168,106,0.36)}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes eqa{0%,100%{height:4px}50%{height:13px}}
+@keyframes eqb{0%,100%{height:10px}50%{height:5px}}
+@keyframes eqc{0%,100%{height:6px}50%{height:12px}}
+</style>
+</helmet>
+
+<div style="height:100vh;display:flex;flex-direction:column;overflow:hidden;background:var(--navy-deep);position:relative">
+
+  <!-- ═══ 上列 TOPBAR · 52px · 殼 ═══ -->
+  <div style="height:52px;flex:none;display:flex;align-items:center;gap:16px;padding:0 20px;background:var(--navy-deep);border-bottom:1px solid var(--gold-line)">
+    <div style="display:flex;align-items:center;gap:10px;flex:none">
+      <img src="assets/akasha-mark.svg" alt="" style="width:26px;height:26px;display:block">
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <span style="font-family:'Noto Serif TC',serif;font-size:14px;font-weight:600;color:var(--cream);letter-spacing:.08em;line-height:1">阿卡夏圖書館</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:7.5px;letter-spacing:.32em;color:var(--gold-dim);line-height:1">AKASHA LIBRARY</span>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;justify-content:center">
+      <div style="display:flex;align-items:center;gap:8px;width:min(420px,100%);height:30px;padding:0 12px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px" style-hover="border-color:var(--gold-dim)">
+        <span style="color:var(--text-tertiary);font-size:12px">⌕</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary)">搜尋全館藏…</span>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary);border:1px solid var(--navy-line);border-radius:3px;padding:1px 5px">⌘K</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;flex:none">
+      <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">匯入</button>
+      <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">新增 ▾</button>
+      <button onClick="{{ toggleMode }}" title="夜燈" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:transparent;border:1px solid var(--navy-line);border-radius:4px;color:var(--gold);font-size:13px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">{{ modeGlyph }}</button>
+      <div style="width:1px;height:18px;background:var(--navy-line)"></div>
+      <button onClick="{{ toggleAi }}" style="display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24);border-color:var(--gold)">
+        <span style="width:5px;height:5px;border-radius:50%;background:var(--gold);animation:breathe 3s ease-in-out infinite"></span>召喚圖書館員
+      </button>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0">
+
+    <!-- ═══ 側欄 SIDEBAR · 240px · 殼 ═══ -->
+    <div style="width: 240px; flex: none; display: flex; flex-direction: column; border-right: 1px solid var(--navy-line); padding: 14px 10px 12px; background-color: var(--navy-deep)">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.28em;color:var(--text-tertiary);padding:2px 10px 8px">TOOLS · 館內設施</div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <sc-for list="{{ halls }}" as="h" hint-placeholder-count="9">
+          <div onClick="{{ navTo }}" data-hall="{{ h.id }}" style="{{ h.rowStyle }}" style-hover="background:var(--navy-light)">
+            <span style="{{ h.dotStyle }}"></span>
+            <span style="font-size:13px;color:var(--text-primary)">{{ h.zh }}</span>
+            <span style="margin-left:auto;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:10.5px;color:var(--text-tertiary)">{{ h.la }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height:1px;background:linear-gradient(90deg,transparent,var(--gold-line) 20%,var(--gold-line) 80%,transparent);margin:14px 6px"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.28em;color:var(--text-tertiary);padding:2px 10px 8px">VIEWS · 館別</div>
+      <div style="display:flex;flex-direction:column;gap:1px">
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:4px;background:var(--navy-light);box-shadow:inset 2px 0 0 var(--gold)">
+          <span style="font-size:13px;color:var(--text-primary)">個人館</span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold-dim)">PRIVATE</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:4px;cursor:pointer" style-hover="background:var(--navy-light)">
+          <span style="font-size:13px;color:var(--text-secondary)">公共書庫</span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">PUBLIC ↗</span>
+        </div>
+      </div>
+      <div style="margin-top:auto;padding:10px;background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;display:flex;align-items:center;gap:10px">
+        <div style="width:28px;height:28px;border-radius:50%;background:var(--gold-glow);border:1px solid var(--gold-line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--gold);flex:none">月</div>
+        <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+          <span style="font-size:12px;color:var(--text-primary);line-height:1">月月 · 館主</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);line-height:1;display:flex;align-items:center;gap:5px"><span style="width:5px;height:5px;border-radius:50%;background:var(--success);animation:breathe 3s ease-in-out infinite;flex:none"></span>DRIVE 已同步 · 21:42</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 主欄 ═══ -->
+    <div style="flex:1;display:flex;flex-direction:column;min-width:0;background:var(--navy)">
+
+      <!-- ═══ 刊頭 MASTHEAD · 殼 · 全站唯一標題 ═══ -->
+      <div style="flex:none;padding:16px 28px 0">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.22em;color:var(--text-tertiary)">阿卡夏圖書館 <span style="opacity:.5">/</span> 卷 {{ hallNum }} <span style="opacity:.5">·</span> <span style="{{ crumbInkStyle }}">{{ hallLaUp }}</span></div>
+        <div style="display:flex;align-items:baseline;gap:14px;margin-top:5px">
+          <h1 style="margin:0;font-family:'Noto Serif TC',serif;font-size:23px;font-weight:700;color:var(--cream);letter-spacing:.04em;line-height:1.2">{{ hallZh }}</h1>
+          <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;{{ crumbInkCss }}">{{ hallLa }}</span>
+        </div>
+        <div style="{{ mastRuleStyle }}"></div>
+      </div>
+
+      <!-- ═══ 書桌列 DESKBAR · 44px · 模組唯一 chrome · 禁止模組名 ═══ -->
+      <div style="height: 44px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 28px; margin-top: 14px; border-top: 1px solid var(--navy-line); border-bottom: 1px solid var(--navy-line); position: relative; z-index: 40; background-color: var(--desk-bg)">
+
+        <sc-if value="{{ showAtrium }}" hint-placeholder-val="{{ true }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--success);animation:breathe 3s ease-in-out infinite"></span>亥時 · 燈下無事 · INDEXEDDB 41 冊</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">記憶檢視器</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">設定</button>
+        </sc-if>
+
+        <sc-if value="{{ showMarkdown }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--ink-manuscripta);flex:none"></span>{{ mdStatus }}</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">開啟檔案</button>
+          <button onClick="{{ toggleMdEdit }}" style="{{ mdEditBtnStyle }}">{{ mdEditLabel }}</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">複製目前視圖</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">搜尋 <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">⌘F</span></button>
+          <div style="position:relative">
+            <button onClick="{{ toggleMdMore }}" style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">更多 ▾</button>
+            <sc-if value="{{ mdMoreOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:calc(100% + 6px);right:0;min-width:262px;max-height:min(64vh,540px);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:1px;padding:6px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:6px;box-shadow:0 18px 40px -20px rgba(0,0,0,.8),0 4px 8px rgba(0,0,0,.35);z-index:90;animation:fadeUp .18s ease both">
+                <sc-for list="{{ mdMenu }}" as="m" hint-placeholder-count="6">
+                  <div style="{{ m.style }}" style-hover="background:var(--navy-hover)">{{ m.text }}<span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">{{ m.kbd }}</span></div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showPdf }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--ink-lectorium);flex:none"></span>內容策略（第二版）.pdf · P.12 / 248</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">開啟</button>
+          <div style="display:flex;align-items:center;height:28px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;overflow:hidden;flex:none">
+            <button style="width:26px;height:100%;background:transparent;border:none;color:var(--text-secondary);font-size:13px;line-height:1" style-hover="background:var(--navy-hover);color:var(--gold)">−</button>
+            <span style="padding:0 8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-primary);border-left:1px solid var(--navy-line);border-right:1px solid var(--navy-line);height:100%;display:inline-flex;align-items:center">100%</span>
+            <button style="width:26px;height:100%;background:transparent;border:none;color:var(--text-secondary);font-size:13px;line-height:1" style-hover="background:var(--navy-hover);color:var(--gold)">＋</button>
+            <button style="height:100%;padding:0 9px;background:transparent;border:none;border-left:1px solid var(--navy-line);color:var(--text-secondary);font-size:11px;line-height:1;flex:none" style-hover="background:var(--navy-hover);color:var(--gold)">適頁</button>
+          </div>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">書籤</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">截圖框選</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">OCR 摘錄</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24);border-color:var(--gold)">匯出</button>
+        </sc-if>
+
+        <sc-if value="{{ showTableforge }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--ink-tabularium);flex:none"></span>未命名表 · 8 欄 × 24 列 · 已解析</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">匯入 ▾</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">Meta</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">HINTS</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">Diff 比對</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24);border-color:var(--gold)">匯出 ▾</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:transparent;border:1px solid rgba(196,96,79,.35);border-radius:4px;color:var(--danger);font-size:12px;line-height:1" style-hover="background:rgba(196,96,79,.12);border-color:var(--danger)">清除</button>
+        </sc-if>
+
+        <sc-if value="{{ showSpreadsheet }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--ink-tabularium);flex:none"></span>關鍵字排名-六月.xlsx · Sheet 1 · C4</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">匯入 XLSX / CSV</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">匯出 ▾</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24);border-color:var(--gold)">存書庫</button>
+        </sc-if>
+
+        <sc-if value="{{ showScript }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;gap:2px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;padding:2px">
+            <sc-for list="{{ scriptModes }}" as="m" hint-placeholder-count="4">
+              <button onClick="{{ setScriptMode }}" data-mode="{{ m.id }}" style="{{ m.style }}">{{ m.zh }}</button>
+            </sc-for>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);margin-left:6px;white-space:nowrap;overflow:hidden;min-width:0">草稿自動保存 · 20:47</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">《月下城》 ▾</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">從劇本回填</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">範例</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:transparent;border:1px solid rgba(196,96,79,.35);border-radius:4px;color:var(--danger);font-size:12px;line-height:1" style-hover="background:rgba(196,96,79,.12);border-color:var(--danger)">清空</button>
+        </sc-if>
+
+        <sc-if value="{{ showGazette }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ setGzToday }}" style="{{ gzTodayStyle }}">07-07 · 今日</button>
+          <button onClick="{{ setGzNext }}" style="{{ gzNextStyle }}">07-08 · 明日</button>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);margin-left:6px;white-space:nowrap;overflow:hidden;min-width:0">{{ gzStatus }}</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24);border-color:var(--gold)">▶ 朗讀</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">BGM</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">匯出 ▾</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">存書庫</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">更多 ▾</button>
+        </sc-if>
+
+        <sc-if value="{{ showRoom }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--ink-intimarium);animation:breathe 3s ease-in-out infinite;flex:none"></span>{{ roomStatus }}</span>
+          <span style="flex:1"></span>
+          <button onClick="{{ toggleIncognito }}" style="{{ incogStyle }}">{{ incogLabel }}</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">手札</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:transparent;border:1px solid rgba(196,96,79,.35);border-radius:4px;color:var(--danger);font-size:12px;line-height:1" style-hover="background:rgba(196,96,79,.12);border-color:var(--danger)">清除對話</button>
+        </sc-if>
+
+        <sc-if value="{{ showAiSet }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--text-secondary);display:flex;align-items:center;gap:8px;white-space:nowrap;overflow:hidden;min-width:0"><span style="width:5px;height:5px;border-radius:50%;background:var(--success);flex:none"></span>BYOK · ANTHROPIC · 連線正常</span>
+          <span style="flex:1"></span>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">測試連線</button>
+          <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:transparent;border:1px solid rgba(196,96,79,.35);border-radius:4px;color:var(--danger);font-size:12px;line-height:1" style-hover="background:rgba(196,96,79,.12);border-color:var(--danger)">清除金鑰</button>
+        </sc-if>
+      </div>
+
+      <!-- ═══ 內容區（真實 app 中＝iframe）═══ -->
+      <div style="flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative">
+
+        <!-- ─── 大廳 ATRIUM ─── -->
+        <sc-if value="{{ showAtrium }}" hint-placeholder-val="{{ true }}">
+          <div data-screen-label="大廳 Atrium" style="min-height: 100%; padding: 32px 36px 40px; animation: fadeUp .35s ease both; background-color: var(--hall-bg)">
+            <div style="max-width:1060px;margin:0 auto">
+              <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap">
+                <div style="font-family:'Noto Serif TC',serif;font-size:27px;font-weight:600;color:var(--cream);letter-spacing:.03em">晚安，月月。</div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--text-tertiary)">2026-07-07 · 亥時 · 館內一切如常</div>
+              </div>
+              <div style="height:1px;background:linear-gradient(90deg,transparent 0%,var(--gold-dim) 15%,var(--gold) 50%,var(--gold-dim) 85%,transparent 100%);opacity:.5;margin:20px 0 26px"></div>
+
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+                <sc-for list="{{ hallCards }}" as="c" hint-placeholder-count="8">
+                  <div onClick="{{ navTo }}" data-hall="{{ c.id }}" style="{{ c.cardStyle }}" style-hover="border-color:var(--gold-dim);transform:translateY(-2px)">
+                    <div style="{{ c.topLineStyle }}"></div>
+                    <div style="display:flex;align-items:baseline;justify-content:space-between">
+                      <span style="{{ c.numStyle }}">{{ c.num }}</span>
+                      <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:11px;color:var(--text-tertiary)">{{ c.la }}</span>
+                    </div>
+                    <div style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;color:var(--text-primary);margin-top:10px">{{ c.zh }}</div>
+                    <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;line-height:1.6">{{ c.desc }}</div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="margin-top:30px">
+                <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.26em;color:var(--gold-dim)">RECENT · 最近經手</span>
+                  <span style="flex:1;height:1px;background:var(--navy-line)"></span>
+                </div>
+                <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden">
+                  <div style="display:grid;grid-template-columns:1fr 150px 110px 90px;gap:12px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--navy-line);cursor:pointer" style-hover="background:var(--navy-light)">
+                    <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-primary)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ink-manuscripta);flex:none"></span>SEO-筆記-0707.md</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-manuscripta)">MANUSCRIPTA</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">21:18</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">12.4 KB</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 150px 110px 90px;gap:12px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--navy-line);cursor:pointer" style-hover="background:var(--navy-light)">
+                    <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-primary)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ink-dramaturgica);flex:none"></span>月下城 · 第七幕草稿</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-dramaturgica)">DRAMATURGICA</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">20:47</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">36.1 KB</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 150px 110px 90px;gap:12px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--navy-line);cursor:pointer" style-hover="background:var(--navy-light)">
+                    <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-primary)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ink-lectorium);flex:none"></span>內容策略（第二版）.pdf</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-lectorium)">LECTORIUM</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">19:02</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">8.7 MB</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 150px 110px 90px;gap:12px;align-items:center;padding:9px 16px;border-bottom:1px solid var(--navy-line);cursor:pointer" style-hover="background:var(--navy-light)">
+                    <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-primary)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ink-tabularium);flex:none"></span>關鍵字排名-六月.csv</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-tabularium)">TABULARIUM</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">昨日</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">214 KB</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:1fr 150px 110px 90px;gap:12px;align-items:center;padding:9px 16px;cursor:pointer" style-hover="background:var(--navy-light)">
+                    <span style="display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-primary)"><span style="width:6px;height:6px;border-radius:50%;background:var(--ink-gazette);flex:none"></span>daily_20260706.json</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--ink-gazette)">GAZETTE</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">昨日</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">96 KB</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── CODE & DATA · MANUSCRIPTA ─── -->
+        <sc-if value="{{ showMarkdown }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="Code&amp;Data Manuscripta" style="min-height: 100%; padding: 26px 36px 44px; animation: fadeUp .35s ease both; background-color: var(--page-bg)">
+            <div style="max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr 264px;gap:26px;align-items:start">
+
+              <sc-if value="{{ mdView }}" hint-placeholder-val="{{ true }}">
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 14px;padding:42px 46px 50px 86px;position:relative">
+                  <div style="position:absolute;top:0;bottom:0;left:56px;width:1px;background:var(--page-margin)"></div>
+                  <h2 style="margin:0 0 18px;font-family:'Noto Serif TC',serif;font-size:21px;font-weight:700;letter-spacing:.06em;color:var(--page-ink);line-height:32px">選物店的感覺劑量閾值</h2>
+                  <p style="margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">草悟道巷子裡新開了一間選物店。門口放了一盆很漂亮的蕨類，玻璃門上貼著「精選歐洲生活雜貨」。走進去的瞬間，我聽到的是 Billie Eilish。<span style="background:rgba(220,190,90,.25);padding:0 3px">這兩個訊號打架了，而且打得很大聲。</span></p>
+                  <div style="border-left:2px solid var(--ink-manuscripta);padding:6px 0 6px 15px;margin:20px 0;transform:rotate(-.3deg)">
+                    <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:16px;line-height:1.55;color:var(--ink-manuscripta)">↳ 零韻眉批：這一段的「劑量」比喻可以直接沿用到第三節，不必另起爐灶。</div>
+                  </div>
+                  <p style="margin:0 0 16px;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">如果不一致的程度超過了某個閾值，你的認知就會開始不舒服。每一個感覺通道都是一個劑量，顧客的大腦會把這些訊號加總起來。</p>
+                  <div style="background:var(--page-old);border:1px solid var(--page-old-border);border-left:3px solid var(--page-ink);padding:14px 18px;margin:22px 0;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.9;color:var(--page-ink-mid);overflow-x:auto"><span style="color:var(--page-pencil)"># 感覺劑量計算（草稿）</span><br>threshold = sum(channel.dose for channel in senses)<br>if threshold &gt; tolerance: <span style="color:var(--ink-dramaturgica)">dissonance()</span></div>
+                  <div style="display:flex;height:8px;margin:28px 0;overflow:hidden"><span style="flex:1;background:var(--ink-manuscripta);opacity:.3"></span><span style="flex:1;background:var(--ink-atrium);opacity:.3"></span></div>
+                  <h2 style="margin:0 0 18px;font-family:'Noto Serif TC',serif;font-size:21px;font-weight:700;letter-spacing:.06em;color:var(--page-ink);line-height:32px">帶走的東西</h2>
+                  <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">下次走進一間店，試著分開聽每個通道。<span style="background:rgba(212,118,58,.12);padding:0 3px">你會驚訝於大部分的店有多不一致。</span></p>
+                  <div style="display:flex;flex-direction:column;align-items:center;margin:48px 0 0;transform:rotate(-6deg)">
+                    <div style="width:66px;height:66px;border-radius:50%;border:2px solid var(--ink-manuscripta);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;opacity:.75">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:6px;letter-spacing:.14em;color:var(--ink-manuscripta)">EX LIBRIS</span>
+                      <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--ink-manuscripta)">Akasha</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:6.5px;letter-spacing:.1em;color:var(--ink-manuscripta)">MANUSCRIPTA</span>
+                    </div>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil);margin-top:8px;transform:rotate(6deg)">2026.07.07</span>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ mdEdit }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--page-card);border:1px solid var(--ink-manuscripta);box-shadow:2px 3px 12px rgba(0,0,0,.06),0 0 0 3px rgba(74,128,168,.08);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 14px;padding:42px 46px 50px 86px;position:relative">
+                  <div style="position:absolute;top:0;bottom:0;left:56px;width:1px;background:var(--page-margin)"></div>
+                  <div style="position:absolute;top:14px;right:16px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--ink-manuscripta);border:1px solid rgba(74,128,168,.4);border-radius:3px;padding:3px 8px;background:rgba(74,128,168,.06)">EDIT · 變更標示中</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:32px;color:var(--page-ink-mid);white-space:pre-wrap"><span style="color:var(--page-pencil)"># 選物店的感覺劑量閾值</span><br><br>草悟道巷子裡新開了一間選物店。門口放了一盆很漂亮的蕨類，玻璃門上貼著「精選歐洲生活雜貨」。<br><span style="display:block;background:rgba(90,138,74,.13);box-shadow:inset 2px 0 0 var(--ink-tabularium)">走進去的瞬間，我聽到的是 Billie Eilish。這兩個訊號打架了，而且打得很大聲。</span><span style="display:block;background:rgba(196,96,79,.1);box-shadow:inset 2px 0 0 var(--danger);text-decoration:line-through;color:var(--page-pencil)">走進去的瞬間，音樂讓我覺得有點怪。</span><br>如果不一致的程度超過了某個閾值，你的認知就會開始不舒服。每一個感覺通道都是一個劑量，顧客的大腦會把這些訊號加總起來。<br><br><span style="color:var(--page-pencil)">## 帶走的東西</span><br><br>下次走進一間店，試著分開聽每個通道。<span style="background:rgba(90,138,74,.13);box-shadow:inset 2px 0 0 var(--ink-tabularium)">你會驚訝於大部分的店有多不一致。</span><span style="display:inline-block;width:2px;height:18px;background:var(--ink-manuscripta);vertical-align:-3px;animation:breathe 1.1s steps(2) infinite"></span></div>
+                </div>
+              </sc-if>
+
+              <div style="display:flex;flex-direction:column;gap:14px;position:sticky;top:20px">
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 8px rgba(0,0,0,.05);padding:14px 16px;transform:rotate(.3deg)">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.24em;color:var(--page-pencil);margin-bottom:9px">INDEX · 本頁目次</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="opacity:.7"><span style="width:5px;height:5px;border-radius:50%;background:var(--ink-manuscripta);flex:none"></span><span style="font-family:'Noto Serif TC',serif;font-size:12px;color:var(--page-ink)">選物店的感覺劑量閾值</span></div>
+                    <div style="display:flex;align-items:center;gap:8px;padding-left:13px;cursor:pointer" style-hover="opacity:.7"><span style="font-family:'Noto Serif TC',serif;font-size:12px;color:var(--page-pencil)">走進去</span></div>
+                    <div style="display:flex;align-items:center;gap:8px;padding-left:13px;cursor:pointer" style-hover="opacity:.7"><span style="font-family:'Noto Serif TC',serif;font-size:12px;color:var(--page-pencil)">翻轉一下</span></div>
+                    <div style="display:flex;align-items:center;gap:8px;cursor:pointer" style-hover="opacity:.7"><span style="width:5px;height:5px;border-radius:50%;background:transparent;border:1px solid var(--page-pencil);flex:none"></span><span style="font-family:'Noto Serif TC',serif;font-size:12px;color:var(--page-ink)">帶走的東西</span></div>
+                  </div>
+                </div>
+                <div style="background:var(--pt-yellow);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:14px 16px 16px;transform:rotate(-1deg)">
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-weight:700;font-size:15px;color:var(--page-ink);margin-bottom:7px">檔案</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.9;color:var(--page-ink-mid)">SEO-筆記-0707.md<br>12.4 KB · UTF-8<br>修改 2026-07-07 21:18</div>
+                </div>
+                <div style="background:var(--pt-blue);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:14px 16px 16px;transform:rotate(.8deg)">
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-weight:700;font-size:15px;color:var(--page-ink);margin-bottom:7px">AI 摘要</div>
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:13.5px;line-height:1.6;color:var(--page-ink-mid)">↳ 一句話：每間店都有一個感覺劑量閾值，超過就開始怪。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── PDF 閱讀器 · LECTORIUM ─── -->
+        <sc-if value="{{ showPdf }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="PDF閱讀器 Lectorium" style="height: 100%; display: flex; animation: fadeUp .35s ease both; background-color: var(--hall-bg)">
+            <div style="width:212px;flex:none;display:flex;flex-direction:column;border-right:1px solid var(--navy-line);background:var(--navy)">
+              <div style="display:flex;flex:none">
+                <sc-for list="{{ pdfTabs }}" as="t" hint-placeholder-count="4">
+                  <button onClick="{{ setPdfTab }}" data-tab="{{ t.id }}" style="{{ t.style }}"><span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.16em">{{ t.en }}</span><span style="font-size:11px">{{ t.zh }}</span></button>
+                </sc-for>
+              </div>
+              <div style="flex:1;overflow-y:auto;padding:12px">
+                <sc-if value="{{ showPdfPages }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                    <sc-for list="{{ pdfPages }}" as="p" hint-placeholder-count="8">
+                      <div style="{{ p.style }}"><span style="{{ p.numStyle }}">{{ p.n }}</span></div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ showPdfCut }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:10px">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--ink-lectorium)">CUT · 切割</div>
+                    <div style="display:flex;flex-direction:column;gap:6px">
+                      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-primary)"><span style="width:12px;height:12px;border-radius:50%;border:1px solid var(--ink-lectorium);background:rgba(200,150,46,.35);flex:none"></span>頁碼範圍</label>
+                      <div style="display:flex;align-items:center;gap:6px;padding-left:20px"><span style="width:52px;height:24px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-primary)">8</span><span style="color:var(--text-tertiary);font-size:11px">–</span><span style="width:52px;height:24px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-primary)">24</span></div>
+                      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)"><span style="width:12px;height:12px;border-radius:50%;border:1px solid var(--navy-line);flex:none"></span>每 N 頁一冊</label>
+                      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-secondary)"><span style="width:12px;height:12px;border-radius:50%;border:1px solid var(--navy-line);flex:none"></span>自訂勾選</label>
+                    </div>
+                    <button style="height:28px;background:rgba(200,150,46,.14);border:1px solid rgba(200,150,46,.5);border-radius:4px;color:var(--ink-lectorium);font-size:12px;line-height:1" style-hover="background:rgba(200,150,46,.24)">切割並存書庫</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ showPdfMark }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--ink-lectorium)">MARK · 書籤</div>
+                    <div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;cursor:pointer" style-hover="border-color:var(--ink-lectorium)"><span style="font-size:12px;color:var(--text-primary);flex:1">內容盤點模板</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-lectorium)">P.12</span><span style="color:var(--text-tertiary);font-size:10px;cursor:pointer" style-hover="color:var(--danger)">✕</span></div>
+                    <div style="display:flex;align-items:center;gap:8px;padding:7px 9px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;cursor:pointer" style-hover="border-color:var(--ink-lectorium)"><span style="font-size:12px;color:var(--text-primary);flex:1">訊息架構排序法</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-lectorium)">P.87</span><span style="color:var(--text-tertiary);font-size:10px;cursor:pointer" style-hover="color:var(--danger)">✕</span></div>
+                    <button style="height:26px;background:transparent;border:1px dashed var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:11px;line-height:1" style-hover="border-color:var(--ink-lectorium);color:var(--ink-lectorium)">＋ 標記本頁</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ showPdfLib }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--ink-lectorium)">LIB · 本檔筆記</div>
+                    <div style="padding:9px 10px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px"><div style="font-size:12px;color:var(--text-primary);line-height:1.7">content sprawl＝內容蔓生，翻得真好。</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:5px">P.12 · 21:05</div></div>
+                    <div style="padding:9px 10px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px"><div style="font-size:12px;color:var(--text-primary);line-height:1.7">第七章模板可搬去 Table Forge。</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:5px">P.104 · 19:44</div></div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:26px">
+              <div style="width:min(520px,92%);aspect-ratio:3/4;background:#FDFCF8;border:1px solid var(--navy-line);box-shadow:0 24px 50px -24px rgba(0,0,0,.9);position:relative;display:flex;align-items:center;justify-content:center;background-image:repeating-linear-gradient(0deg,transparent,transparent 14px,rgba(28,22,16,.045) 14px,rgba(28,22,16,.045) 15px);background-size:74% auto;background-position:center 12%;background-repeat:no-repeat">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;color:#B0A48E;border:1px dashed #D8CFBC;padding:8px 14px;background:rgba(253,252,248,.85)">PDF 內文 · pdf.js 渲染區</span>
+                <span style="position:absolute;bottom:12px;left:0;right:0;text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:#B0A48E">— 12 —</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:14px">
+                <button style="width:30px;height:30px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:50%;color:var(--text-secondary);font-size:13px;line-height:1" style-hover="border-color:var(--ink-lectorium);color:var(--ink-lectorium)">‹</button>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary)">P.12 / 248</span>
+                <button style="width:30px;height:30px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:50%;color:var(--text-secondary);font-size:13px;line-height:1" style-hover="border-color:var(--ink-lectorium);color:var(--ink-lectorium)">›</button>
+              </div>
+            </div>
+            <div style="width:252px;flex:none;border-left:1px solid var(--navy-line);background:var(--navy);display:flex;flex-direction:column">
+              <div style="flex:none;display:flex;align-items:center;gap:8px;height:38px;padding:0 14px;border-bottom:1px solid var(--navy-line)">
+                <span style="width:5px;height:5px;border-radius:50%;background:var(--ink-lectorium);animation:breathe 3s ease-in-out infinite"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--text-secondary)">RAG · 伴讀摘錄</span>
+                <span style="flex:1"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);white-space:nowrap;flex:none">文字｜語音｜人格</span>
+              </div>
+              <div style="flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px">
+                <div style="background:var(--navy-deep);border:1px solid var(--navy-line);border-left:2px solid var(--ink-lectorium);border-radius:0 4px 4px 0;padding:10px 12px">
+                  <div style="font-size:12px;color:var(--text-primary);line-height:1.8">這一章的核心：內容盤點先於一切策略。第 12 頁的表格就是月月妳在找的那份模板。</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:6px">引用 P.12 · P.104</div>
+                </div>
+                <div style="align-self:flex-end;max-width:90%;background:var(--gold-glow);border:1px solid var(--gold-line);border-radius:4px 0 0 4px;padding:8px 11px"><div style="font-size:12px;color:var(--cream);line-height:1.7">幫我摘 12–24 頁的重點。</div></div>
+              </div>
+              <div style="flex:none;padding:10px 12px;border-top:1px solid var(--navy-line)"><div style="display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px"><span style="font-size:11.5px;color:var(--text-tertiary)">問這本書…</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold-dim)">↵</span></div></div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── TABLE FORGE · TABULARIUM ─── -->
+        <sc-if value="{{ showTableforge }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="TableForge Tabularium" style="min-height: 100%; padding: 24px 32px 40px; animation: fadeUp .35s ease both; background-color: var(--hall-bg)">
+            <div style="max-width:1060px;margin:0 auto;display:grid;grid-template-columns:1fr 256px;gap:20px;align-items:start">
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;gap:10px">
+                  <div style="flex:1;display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--navy);border:1px dashed var(--navy-line);border-radius:6px;cursor:pointer" style-hover="border-color:var(--ink-tabularium)"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-tabularium)">PASTE</span><span style="font-size:12px;color:var(--text-secondary)">貼上 CSV / TSV / MD 自動解析</span></div>
+                  <div style="flex:1;display:flex;align-items:center;gap:10px;padding:11px 14px;background:var(--navy);border:1px dashed var(--navy-line);border-radius:6px;cursor:pointer" style-hover="border-color:var(--ink-tabularium)"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-tabularium)">EXTRACT</span><span style="font-size:12px;color:var(--text-secondary)">從 Markdown 抽取表格結構</span></div>
+                </div>
+                <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden">
+                  <div style="display:grid;grid-template-columns:1.6fr 1fr .7fr .7fr .7fr;gap:10px;padding:8px 14px;background:rgba(90,138,74,.09);border-bottom:1px solid var(--navy-line)">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--ink-tabularium)">KEYWORD</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--ink-tabularium)">VOLUME</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--ink-tabularium)">RANK</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--ink-tabularium)">Δ</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;color:var(--ink-tabularium)">KD</span>
+                  </div>
+                  <sc-for list="{{ tfRows }}" as="r" hint-placeholder-count="8">
+                    <div style="{{ r.rowStyle }}" style-hover="background:rgba(90,138,74,.07)">
+                      <span style="font-size:12.5px;color:var(--text-primary)">{{ r.k }}</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary)">{{ r.v }}</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary)">{{ r.r }}</span>
+                      <span style="{{ r.dStyle }}">{{ r.d }}</span>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary)">{{ r.df }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)"><span style="color:var(--ink-tabularium)">◆</span>解析器：CSV FSM · RFC 4180<span style="flex:1"></span>預覽格式：MD ｜ JSON ｜ CSV</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:14px 16px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--ink-tabularium);margin-bottom:10px">META · 表格資訊</div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary)">TITLE</span><span style="height:26px;display:flex;align-items:center;padding:0 9px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:3px;font-size:12px;color:var(--text-primary)">六月關鍵字排名</span></div>
+                    <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary)">SOURCE</span><span style="height:26px;display:flex;align-items:center;padding:0 9px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:3px;font-size:12px;color:var(--text-secondary)">GSC 匯出 · 2026-07</span></div>
+                  </div>
+                </div>
+                <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:14px 16px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--ink-tabularium);margin-bottom:10px">HINTS · 提示</div>
+                  <div style="font-size:12px;color:var(--text-secondary);line-height:1.9">・第 3 欄偵測為排名，已轉數值排序。<br>・2 列含未閉合引號，已自動修復。</div>
+                </div>
+                <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:14px 16px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--text-tertiary);margin-bottom:8px">DIFF · 比對</div>
+                  <div style="font-size:12px;color:var(--text-tertiary);line-height:1.8">尚未載入比對對象。<br><span style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:12.5px;color:var(--page-pencil)">two tables walk into a forge…</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── 試算表 · TABULARIUM Ⅱ ─── -->
+        <sc-if value="{{ showSpreadsheet }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="試算表 Spreadsheet" style="min-height: 100%; padding: 24px 32px 40px; animation: fadeUp .35s ease both; background-color: var(--hall-bg)">
+            <div style="max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:64px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-tabularium)">C4</span>
+                <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">fx</span>
+                <span style="flex:1;height:30px;display:flex;align-items:center;padding:0 12px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary)">320</span>
+              </div>
+              <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden">
+                <div style="display:grid;grid-template-columns:44px 1.6fr 1fr 1fr 1fr;background:rgba(90,138,74,.09);border-bottom:1px solid var(--navy-line)">
+                  <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary);border-right:1px solid var(--navy-line)"></span>
+                  <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-tabularium);border-right:1px solid var(--navy-line)">A</span>
+                  <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-tabularium);border-right:1px solid var(--navy-line)">B</span>
+                  <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-tabularium);border-right:1px solid var(--navy-line)">C</span>
+                  <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--ink-tabularium)">D</span>
+                </div>
+                <sc-for list="{{ ssRows }}" as="r" hint-placeholder-count="8">
+                  <div style="{{ r.rowStyle }}">
+                    <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);border-right:1px solid var(--navy-line);background:rgba(90,138,74,.05)">{{ r.n }}</span>
+                    <span style="padding:6px 10px;font-size:12px;color:var(--text-primary);border-right:1px solid var(--navy-line)">{{ r.a }}</span>
+                    <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary);border-right:1px solid var(--navy-line)">{{ r.b }}</span>
+                    <span style="{{ r.cStyle }}">{{ r.cv }}</span>
+                    <span style="padding:6px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary)">{{ r.d }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button style="height:26px;padding:0 10px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:11.5px;line-height:1" style-hover="border-color:var(--ink-tabularium);color:var(--text-primary)">＋ 增列</button>
+                <button style="height:26px;padding:0 10px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:11.5px;line-height:1" style-hover="border-color:var(--ink-tabularium);color:var(--text-primary)">− 刪列</button>
+                <button style="height:26px;padding:0 10px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:11.5px;line-height:1" style-hover="border-color:var(--ink-tabularium);color:var(--text-primary)">排序 ▾</button>
+                <button style="height:26px;padding:0 10px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:11.5px;line-height:1" style-hover="border-color:var(--ink-tabularium);color:var(--text-primary)">欄寬</button>
+                <span style="flex:1"></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">公式引擎：SUM · AVERAGE · IF · COUNT · MIN · MAX</span>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── 劇本工房 · DRAMATURGICA ─── -->
+        <sc-if value="{{ showScript }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="劇本工房 Dramaturgica" style="min-height: 100%; display: flex; flex-direction: column; animation: fadeUp .35s ease both; background-color: var(--page-bg)">
+            <div style="flex:1;padding:22px 36px 26px;display:grid;grid-template-columns:1fr 236px;gap:22px;align-items:start;max-width:1120px;margin:0 auto;width:100%">
+
+              <sc-if value="{{ showScriptWrite }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column">
+                  <div style="display:flex;gap:6px;padding-left:26px;position:relative;z-index:2">
+                    <sc-for list="{{ genres }}" as="g" hint-placeholder-count="3">
+                      <button onClick="{{ setGenre }}" data-genre="{{ g.id }}" style="{{ g.style }}">{{ g.zh }}</button>
+                    </sc-for>
+                    <span style="align-self:flex-end;margin-left:12px;padding-bottom:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil)">4,218 字 · 96 行 · 約 14 分鐘</span>
+                  </div>
+                  <sc-if value="{{ showGenreScript }}" hint-placeholder-val="{{ true }}">
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 12px;padding:36px 44px 18px 82px;position:relative;margin-top:-1px">
+                    <div style="position:absolute;top:0;bottom:0;left:54px;width:1px;background:var(--page-margin)"></div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--ink-dramaturgica);line-height:32px">§7 · 鐘樓之夜 — 內景</div>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">月光從破窗斜切進來，把地板割成兩半。零站在光的邊界上，遲遲沒有跨過去。</p>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink)"><span style="font-weight:700;color:var(--ink-dramaturgica)">零：</span>「你說過鐘停了，時間就不算數。」</p>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink)"><span style="font-weight:700;color:var(--ink-dramaturgica)">守鐘人：</span>「不算數的是鐘，不是妳欠下的夜。」<span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--page-pencil);background:var(--page-old);border:1px solid var(--page-old-border);border-radius:2px;padding:1px 5px;margin-left:6px">#bgm 鐘擺・慢板</span></p>
+                    <p style="margin:0 0 4px;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">遠處傳來一聲不存在的鐘響。<span style="display:inline-block;width:2px;height:18px;background:var(--ink-dramaturgica);vertical-align:-3px;animation:breathe 1.1s steps(2) infinite"></span></p>
+                    <div style="display:flex;align-items:center;gap:8px;margin:16px -28px 0 -66px;padding:9px 16px 9px 18px;background:var(--page-old);border-top:1px solid var(--page-old-border)">
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.18em;color:var(--page-pencil);flex:none">ALT＋</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:26px;white-space:nowrap;flex:none;padding:0 9px;background:var(--page-card);border:1px solid var(--ink-dramaturgica);border-radius:3px;font-size:11.5px;color:var(--page-ink);cursor:pointer"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-dramaturgica)">1</span>零<span style="font-size:9px;color:var(--ink-dramaturgica)">🔒</span></span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:26px;white-space:nowrap;flex:none;padding:0 9px;background:var(--page-card);border:1px solid var(--page-old-border);border-radius:3px;font-size:11.5px;color:var(--page-ink);cursor:pointer" style-hover="border-color:var(--ink-dramaturgica)"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil)">2</span>守鐘人</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:26px;white-space:nowrap;flex:none;padding:0 9px;background:var(--page-card);border:1px solid var(--page-old-border);border-radius:3px;font-size:11.5px;color:var(--page-ink);cursor:pointer" style-hover="border-color:var(--ink-dramaturgica)"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil)">3</span>影</span>
+                      <span style="display:inline-flex;align-items:center;justify-content:center;height:26px;white-space:nowrap;flex:none;padding:0 9px;background:transparent;border:1px dashed var(--page-old-border);border-radius:3px;font-size:11px;color:var(--page-pencil);cursor:pointer" style-hover="border-color:var(--ink-dramaturgica);color:var(--ink-dramaturgica)">＋</span>
+                      <span style="margin-left:auto;font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:11.5px;color:var(--page-pencil)">the pen tray · 右鍵可鎖定</span>
+                    </div>
+                  </div>
+                  </sc-if>
+
+                  <sc-if value="{{ showGenreNovel }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 12px;padding:36px 44px 30px 82px;position:relative;margin-top:-1px">
+                    <div style="position:absolute;top:0;bottom:0;left:54px;width:1px;background:var(--page-margin)"></div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--page-pencil);line-height:32px">第七章 · 鐘樓之夜</div>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid);text-indent:2em">月光從破窗斜切進來，把地板割成兩半。零站在光的邊界上，遲遲沒有跨過去。她想起守鐘人說過的話——鐘停了，時間就不算數。可是不算數的從來不是鐘，是她欠下的那些夜。</p>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid);text-indent:2em">遠處傳來一聲不存在的鐘響。<span style="font-style:italic;color:var(--page-pencil)">（也許只有她聽得見。）</span><span style="display:inline-block;width:2px;height:18px;background:var(--ink-dramaturgica);vertical-align:-3px;animation:breathe 1.1s steps(2) infinite"></span></p>
+                    <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:11.5px;color:var(--page-pencil);margin-top:20px">novel：純散文 · 段首縮排 2em · 無角色前綴、無筆盤 · Enter＝新段落</div>
+                  </div>
+                  </sc-if>
+
+                  <sc-if value="{{ showGenreNote }}" hint-placeholder-val="{{ false }}">
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 12px;padding:36px 44px 30px 82px;position:relative;margin-top:-1px">
+                    <div style="position:absolute;top:0;bottom:0;left:54px;width:1px;background:var(--page-margin)"></div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.16em;color:var(--page-pencil);line-height:32px">NOTES · 月下城 世界觀速記</div>
+                    <div style="font-family:'Noto Serif TC',serif;font-size:14px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">
+                      <div style="display:flex;gap:10px;align-items:baseline"><span style="width:11px;height:11px;border:1.5px solid var(--ink-dramaturgica);flex:none;position:relative;top:1px;background:rgba(184,64,88,.14)"></span><span style="text-decoration:line-through;color:var(--page-pencil)">鐘樓的鐘為什麼停——寫進 §7 開場</span></div>
+                      <div style="display:flex;gap:10px;align-items:baseline"><span style="width:11px;height:11px;border:1.5px solid var(--page-pencil);flex:none;position:relative;top:1px"></span><span>守鐘人的債：一夜＝一枚月幣？和 AI 設定的月幣呼應</span></div>
+                      <div style="display:flex;gap:10px;align-items:baseline"><span style="width:11px;height:11px;border:1.5px solid var(--page-pencil);flex:none;position:relative;top:1px"></span><span>影的登場改到 §8，太早會搶戲 <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--page-pencil);background:var(--page-old);border:1px solid var(--page-old-border);border-radius:2px;padding:1px 5px">#結構</span><span style="display:inline-block;width:2px;height:18px;background:var(--ink-dramaturgica);vertical-align:-3px;animation:breathe 1.1s steps(2) infinite;margin-left:2px"></span></span></div>
+                    </div>
+                    <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:11.5px;color:var(--page-pencil);margin-top:20px">note：條列＋核取方塊 · #標籤 · 「- 」自動變清單</div>
+                  </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showScriptSearch }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:12px">
+                  <div style="display:flex;align-items:center;gap:10px;background:var(--page-card);border:1px solid var(--ink-dramaturgica);box-shadow:2px 3px 10px rgba(0,0,0,.06);padding:10px 14px">
+                    <span style="font-size:13px;color:var(--ink-dramaturgica);flex:none">⌕</span>
+                    <span style="flex:1;font-family:'Noto Serif TC',serif;font-size:13.5px;color:var(--page-ink)">鐘<span style="display:inline-block;width:2px;height:16px;background:var(--ink-dramaturgica);vertical-align:-3px;animation:breathe 1.1s steps(2) infinite"></span></span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--page-pencil);white-space:nowrap;flex:none">7 處 · 3 / 7</span>
+                    <button style="width:24px;height:24px;background:transparent;border:1px solid var(--page-border);border-radius:3px;color:var(--page-ink-mid);font-size:11px;line-height:1;flex:none" style-hover="border-color:var(--ink-dramaturgica);color:var(--ink-dramaturgica)">‹</button>
+                    <button style="width:24px;height:24px;background:transparent;border:1px solid var(--page-border);border-radius:3px;color:var(--page-ink-mid);font-size:11px;line-height:1;flex:none" style-hover="border-color:var(--ink-dramaturgica);color:var(--ink-dramaturgica)">›</button>
+                    <span style="display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil);flex:none;border-left:1px solid var(--page-border);padding-left:10px">Aa｜僅台詞</span>
+                  </div>
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 12px;padding:30px 44px 34px 82px;position:relative">
+                    <div style="position:absolute;top:0;bottom:0;left:54px;width:1px;background:var(--page-margin)"></div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--page-pencil);line-height:32px">§3 · 碼頭的信</div>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">…信末只畫了一座<span style="background:rgba(184,64,88,.14);padding:0 2px">鐘</span>樓，沒有署名。</p>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--ink-dramaturgica);line-height:32px;margin-top:14px">§7 · 鐘樓之夜 ← 目前位置</div>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink)"><span style="font-weight:700;color:var(--ink-dramaturgica)">零：</span>「你說過<span style="background:var(--ink-dramaturgica);color:#fff;padding:0 2px">鐘</span>停了，時間就不算數。」</p>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink)"><span style="font-weight:700;color:var(--ink-dramaturgica)">守鐘人：</span>「不算數的是<span style="background:rgba(184,64,88,.14);padding:0 2px">鐘</span>，不是妳欠下的夜。」</p>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:14.5px;line-height:32px;letter-spacing:.03em;color:var(--page-ink-mid)">遠處傳來一聲不存在的<span style="background:rgba(184,64,88,.14);padding:0 2px">鐘</span>響。</p>
+                    <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:12px;color:var(--page-pencil);margin-top:18px">jump: 點擊任一結果回到速寫模式該行</div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showScriptReader }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:0">
+                  <div style="display:flex;align-items:center;gap:10px;padding:0 4px 10px">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--page-pencil);white-space:nowrap">READER · 閱讀模式 · 無游標</span>
+                    <span style="flex:1;height:1px;background:var(--page-border)"></span>
+                    <button style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 12px;background:rgba(184,64,88,.1);border:1px solid rgba(184,64,88,.45);border-radius:13px;color:var(--ink-dramaturgica);font-size:11.5px;line-height:1;flex:none" style-hover="background:rgba(184,64,88,.18)">▶ 逐句朗讀</button>
+                    <span style="display:inline-flex;gap:2px;background:var(--page-card);border:1px solid var(--page-border);border-radius:3px;padding:2px;flex:none">
+                      <button style="height:20px;padding:0 8px;border:none;border-radius:2px;background:transparent;color:var(--page-pencil);font-size:10.5px;line-height:1">A−</button>
+                      <button style="height:20px;padding:0 8px;border:none;border-radius:2px;background:rgba(184,64,88,.12);color:var(--ink-dramaturgica);font-size:11.5px;line-height:1">A＋</button>
+                    </span>
+                  </div>
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);padding:52px 74px 58px;position:relative">
+                    <div style="text-align:center;margin-bottom:26px">
+                      <div style="font-family:'Noto Serif TC',serif;font-size:20px;font-weight:700;letter-spacing:.1em;color:var(--page-ink)">§7 · 鐘樓之夜</div>
+                      <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12.5px;color:var(--ink-dramaturgica);margin-top:4px">act vii · the bell tower</div>
+                      <div style="width:36px;height:2px;background:var(--ink-dramaturgica);opacity:.6;margin:12px auto 0"></div>
+                    </div>
+                    <p style="margin:0 0 20px;font-family:'Noto Serif TC',serif;font-size:16px;line-height:2.3;letter-spacing:.04em;color:var(--page-ink-mid);text-align:justify">月光從破窗斜切進來,把地板割成兩半。零站在光的邊界上,遲遲沒有跨過去。</p>
+                    <p style="margin:0 0 20px;font-family:'Noto Serif TC',serif;font-size:16px;line-height:2.3;letter-spacing:.04em;color:var(--page-ink);background:rgba(184,64,88,.06);box-shadow:inset 3px 0 0 var(--ink-dramaturgica);padding:2px 14px"><span style="font-weight:700;color:var(--ink-dramaturgica)">零</span>——「你說過鐘停了,時間就不算數。」<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-dramaturgica);margin-left:8px">🔊 朗讀中</span></p>
+                    <p style="margin:0 0 20px;font-family:'Noto Serif TC',serif;font-size:16px;line-height:2.3;letter-spacing:.04em;color:var(--page-ink)"><span style="font-weight:700;color:var(--ink-dramaturgica)">守鐘人</span>——「不算數的是鐘,不是妳欠下的夜。」</p>
+                    <p style="margin:0;font-family:'Noto Serif TC',serif;font-size:16px;line-height:2.3;letter-spacing:.04em;color:var(--page-ink-mid);text-align:justify">遠處傳來一聲不存在的鐘響。</p>
+                    <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-top:40px">
+                      <span style="width:44px;height:1px;background:var(--page-border)"></span>
+                      <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:var(--page-pencil)">7 / 9</span>
+                      <span style="width:44px;height:1px;background:var(--page-border)"></span>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ showScriptEditor }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;color:var(--page-pencil)">STRUCTURED BLOCKS · 結構化區塊 · 拖曳排序</div>
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 10px rgba(0,0,0,.05);padding:12px 14px;display:flex;align-items:center;gap:10px" style-hover="border-color:var(--ink-dramaturgica)">
+                    <span style="color:var(--page-pencil);font-size:12px;cursor:grab">⠿</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--ink-dramaturgica);border:1px solid rgba(184,64,88,.35);border-radius:2px;padding:2px 6px;flex:none">SCENE</span>
+                    <span style="font-size:13px;color:var(--page-ink);font-weight:600">§7 · 鐘樓之夜 — 內景</span>
+                    <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil)">b.041</span>
+                  </div>
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 10px rgba(0,0,0,.05);padding:12px 14px;display:flex;align-items:flex-start;gap:10px" style-hover="border-color:var(--ink-dramaturgica)">
+                    <span style="color:var(--page-pencil);font-size:12px;cursor:grab;line-height:1.6">⠿</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--page-pencil);border:1px solid var(--page-border);border-radius:2px;padding:2px 6px;flex:none;margin-top:2px">ACTION</span>
+                    <span style="font-size:13px;color:var(--page-ink-mid);line-height:1.8">月光從破窗斜切進來，把地板割成兩半。零站在光的邊界上。</span>
+                    <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil);flex:none">b.042</span>
+                  </div>
+                  <div style="background:var(--page-card);border:1px solid var(--page-border);border-left:3px solid var(--ink-dramaturgica);box-shadow:2px 3px 10px rgba(0,0,0,.05);padding:12px 14px;display:flex;align-items:flex-start;gap:10px" style-hover="border-color:var(--ink-dramaturgica)">
+                    <span style="color:var(--page-pencil);font-size:12px;cursor:grab;line-height:1.6">⠿</span>
+                    <span style="display:inline-flex;align-items:center;gap:5px;flex:none;margin-top:1px"><span style="width:18px;height:18px;border-radius:50%;background:rgba(184,64,88,.14);border:1px solid rgba(184,64,88,.4);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--ink-dramaturgica)">零</span></span>
+                    <span style="font-size:13px;color:var(--page-ink);line-height:1.8">「你說過鐘停了，時間就不算數。」</span>
+                    <span style="margin-left:auto;display:inline-flex;gap:6px;flex:none"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil)">b.043</span><span style="font-size:10px;color:var(--ink-dramaturgica);cursor:pointer">▶</span></span>
+                  </div>
+                  <button style="height:32px;background:transparent;border:1px dashed var(--page-border);border-radius:4px;color:var(--page-pencil);font-size:12px;line-height:1" style-hover="border-color:var(--ink-dramaturgica);color:var(--ink-dramaturgica)">＋ 插入區塊（場景 / 動作 / 台詞 / 選項）</button>
+                  <div style="background:var(--page-old);border:1px solid var(--page-old-border);padding:12px 14px">
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--page-pencil);margin-bottom:8px">CAST · 角色管理</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:26px;white-space:nowrap;flex:none;padding:0 10px;background:var(--page-card);border:1px solid rgba(184,64,88,.4);border-radius:13px;font-size:11.5px;color:var(--page-ink)">零 · 主角</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:26px;white-space:nowrap;flex:none;padding:0 10px;background:var(--page-card);border:1px solid var(--page-old-border);border-radius:13px;font-size:11.5px;color:var(--page-ink)">守鐘人</span>
+                      <span style="display:inline-flex;align-items:center;gap:6px;height:26px;white-space:nowrap;flex:none;padding:0 10px;background:var(--page-card);border:1px solid var(--page-old-border);border-radius:13px;font-size:11.5px;color:var(--page-ink)">影</span>
+                      <span style="display:inline-flex;align-items:center;justify-content:center;height:26px;white-space:nowrap;flex:none;padding:0 10px;border:1px dashed var(--page-old-border);border-radius:13px;font-size:11px;color:var(--page-pencil);cursor:pointer" style-hover="border-color:var(--ink-dramaturgica);color:var(--ink-dramaturgica)">＋ 新角色</span>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <div style="display:flex;flex-direction:column;gap:8px;position:sticky;top:18px">
+                <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:11.5px;color:var(--page-pencil);padding-left:2px">index cards on the desk</div>
+                <sc-for list="{{ previewTabs }}" as="t" hint-placeholder-count="5">
+                  <div onClick="{{ setPreviewTab }}" data-tab="{{ t.id }}" style="{{ t.style }}">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.18em;color:var(--ink-dramaturgica);width:52px;flex:none">{{ t.en }}</span>
+                    <span style="font-size:12px">{{ t.zh }}</span>
+                  </div>
+                </sc-for>
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 10px rgba(0,0,0,.06);padding:13px 14px;margin-top:4px;transform:rotate(-.4deg)">
+                  <sc-if value="{{ showPvBlocks }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--ink-dramaturgica);cursor:pointer">▶</span><span style="font-size:11.5px;color:var(--page-ink-mid);line-height:1.6">零：「你說過鐘停了…」</span></div>
+                      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--ink-dramaturgica);cursor:pointer">▶</span><span style="font-size:11.5px;color:var(--page-ink-mid);line-height:1.6">守鐘人：「不算數的是鐘…」</span></div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil)">128 blocks · 逐句播放</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ showPvCast }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px">
+                      <div style="display:flex;gap:9px;align-items:flex-start;padding:8px 9px;background:var(--page-bg);border:1px solid var(--page-border);border-left:2px solid var(--ink-dramaturgica)">
+                        <span style="width:24px;height:24px;border-radius:50%;background:rgba(184,64,88,.14);border:1px solid rgba(184,64,88,.4);display:inline-flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-dramaturgica);flex:none">零</span>
+                        <span style="font-size:11px;line-height:1.7;color:var(--page-ink-mid);min-width:0"><b style="color:var(--page-ink)">零 · 主角</b><br>欠下夜的人。Rein-Voice · 語速 0.95</span>
+                      </div>
+                      <div style="display:flex;gap:9px;align-items:flex-start;padding:8px 9px;background:var(--page-bg);border:1px solid var(--page-border)">
+                        <span style="width:24px;height:24px;border-radius:50%;background:var(--page-old);border:1px solid var(--page-old-border);display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:var(--page-ink-mid);flex:none">守</span>
+                        <span style="font-size:11px;line-height:1.7;color:var(--page-ink-mid);min-width:0"><b style="color:var(--page-ink)">守鐘人</b><br>記帳的人。低沉 · 待發音校正</span>
+                      </div>
+                      <div style="border-top:1px dashed var(--page-border);padding-top:8px">
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.18em;color:var(--page-pencil);margin-bottom:6px">RELATIONS · 關係線</div>
+                        <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--page-ink-mid)">
+                          <div style="display:flex;align-items:center;gap:6px"><span style="color:var(--page-ink)">零</span><span style="flex:1;display:flex;align-items:center;gap:4px"><span style="flex:1;height:1px;background:var(--ink-dramaturgica)"></span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ink-dramaturgica);white-space:nowrap">債主／師徒</span><span style="flex:1;height:1px;background:var(--ink-dramaturgica)"></span></span><span style="color:var(--page-ink)">守鐘人</span></div>
+                          <div style="display:flex;align-items:center;gap:6px"><span style="color:var(--page-ink)">影</span><span style="flex:1;display:flex;align-items:center;gap:4px"><span style="flex:1;height:1px;background:var(--page-pencil);opacity:.5"></span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil);white-space:nowrap">鏡像 · §8 登場</span><span style="flex:1;height:1px;background:var(--page-pencil);opacity:.5"></span></span><span style="color:var(--page-ink)">零</span></div>
+                        </div>
+                      </div>
+                      <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ink-dramaturgica);cursor:pointer">＋ 新人物卡</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ showPvStats }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                      <div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--page-ink)">4,218</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.16em;color:var(--page-pencil)">字數</div></div>
+                      <div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--page-ink)">96</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.16em;color:var(--page-pencil)">行數</div></div>
+                      <div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--page-ink)">14′</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.16em;color:var(--page-pencil)">閱讀時間</div></div>
+                      <div><div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--page-ink)">3</div><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.16em;color:var(--page-pencil)">角色</div></div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ showPvOutline }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <div style="font-size:11.5px;color:var(--page-pencil);cursor:pointer" style-hover="color:var(--ink-dramaturgica)">§5 · 碼頭的信</div>
+                      <div style="font-size:11.5px;color:var(--page-pencil);cursor:pointer" style-hover="color:var(--ink-dramaturgica)">§6 · 無人的市集</div>
+                      <div style="font-size:11.5px;color:var(--page-ink);font-weight:600;cursor:pointer">§7 · 鐘樓之夜 ←</div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil)">點擊跳轉至段落</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ showPvVoice }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <div style="display:flex;align-items:flex-end;gap:3px;height:14px"><span style="width:3px;background:var(--ink-dramaturgica);animation:eqa 1s ease-in-out infinite"></span><span style="width:3px;background:var(--ink-dramaturgica);animation:eqb 1s ease-in-out .15s infinite"></span><span style="width:3px;background:var(--ink-dramaturgica);animation:eqc 1s ease-in-out .3s infinite"></span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil);margin-left:6px">TTS 佇列 2 / 5</span></div>
+                      <div style="font-size:11.5px;color:var(--page-ink-mid)">零 → Rein-Voice · 語速 0.95</div>
+                      <div style="font-size:11.5px;color:var(--page-pencil)">守鐘人 → 低沉 · 待發音校正</div>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ showPvBgm }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:7px">
+                      <div style="display:flex;align-items:center;gap:7px"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-dramaturgica)">#bgm</span><span style="font-size:11.5px;color:var(--page-ink-mid)">鐘擺・慢板 → §7</span></div>
+                      <div style="display:flex;align-items:center;gap:7px"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil)">#bgm</span><span style="font-size:11.5px;color:var(--page-pencil)">霧中燈塔 → §5</span></div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil)">標記於稿內，播放時觸發</div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="flex:none;height:28px;background:var(--navy-deep);border-top:1px solid var(--navy-line);display:flex;align-items:center;gap:18px;padding:0 28px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">
+              <span>LN 42 · COL 8</span><span>128 BLOCKS PARSED</span><span style="color:var(--success)">⇄ 已同步</span><span>AUTO-SAVE · 30S</span><span style="margin-left:auto">打字機模式 ON</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── 每日館報 · GAZETTE ─── -->
+        <sc-if value="{{ showGazette }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="每日館報 Gazette" style="min-height: 100%; padding: 26px 36px 44px; animation: fadeUp .35s ease both; background-color: var(--page-bg)">
+            <div style="max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr 250px;gap:26px;align-items:start">
+
+              <sc-if value="{{ gzOk }}" hint-placeholder-val="{{ true }}">
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);padding:34px 42px 44px">
+                  <div style="text-align:center;border-top:3px double var(--page-ink);border-bottom:3px double var(--page-ink);padding:16px 0 14px">
+                    <div style="font-family:'Noto Serif TC',serif;font-size:34px;font-weight:900;letter-spacing:.18em;color:var(--page-ink);line-height:1.1">每日館報</div>
+                    <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-gazette);margin-top:4px">The Akasha Gazette</div>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:8px 2px;border-bottom:1px solid var(--page-border);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--page-pencil)">
+                    <span>NO. 188</span><span>2026 年 7 月 7 日 · 星期二 · 小暑</span><span>晨六時付印</span>
+                  </div>
+                  <div style="margin-top:22px">
+                    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-family:'Noto Serif TC',serif;font-size:16px;font-weight:700;color:var(--page-ink)">🔍 搜尋圈</span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.18em;color:var(--ink-gazette)">SEARCH DESK</span></div>
+                    <div style="font-family:'Noto Serif TC',serif;font-size:13.5px;line-height:2;color:var(--page-ink-mid)">・Google 更新七月核心演算法，E-E-A-T 權重再上調。<a href="#" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette)">SOURCE ↗</a><br>・SGE 摘要框在繁中結果的覆蓋率升至 34%。<a href="#" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette)">SOURCE ↗</a></div>
+                  </div>
+                  <div style="display:flex;height:8px;margin:22px 0;overflow:hidden"><span style="flex:1;background:var(--ink-gazette);opacity:.32"></span><span style="flex:1;background:var(--ink-tabularium);opacity:.32"></span></div>
+                  <div>
+                    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px"><span style="font-family:'Noto Serif TC',serif;font-size:16px;font-weight:700;color:var(--page-ink)">📚 內容圈</span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.18em;color:var(--ink-gazette)">CONTENT DESK</span></div>
+                    <div style="font-family:'Noto Serif TC',serif;font-size:13.5px;line-height:2;color:var(--page-ink-mid)">・長文回歸：三份產業報告不約而同指出 5,000 字級內容的停留時間優勢。<a href="#" style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette)">SOURCE ↗</a></div>
+                  </div>
+                  <div style="margin-top:30px;padding-top:12px;border-top:1px solid var(--page-border);display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:12px;color:var(--page-pencil)">printed at the midnight press</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil)">daily_20260707.json</span>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ gz404 }}" hint-placeholder-val="{{ false }}">
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);padding:70px 42px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+                  <div style="width:88px;height:88px;border-radius:50%;border:2px dashed var(--ink-gazette);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transform:rotate(-8deg);opacity:.8">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:7px;letter-spacing:.2em;color:var(--ink-gazette)">GAZETTE</span>
+                    <span style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:700;color:var(--ink-gazette)">未付印</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:7.5px;color:var(--ink-gazette)">07-08</span>
+                  </div>
+                  <div style="font-family:'Noto Serif TC',serif;font-size:16px;font-weight:600;color:var(--page-ink)">明日的館報還在印刷機裡。</div>
+                  <div style="font-family:'Noto Serif TC',serif;font-size:13px;line-height:1.9;color:var(--page-pencil);max-width:340px">晨間六點後，報童會把它掛上架。<br>要不要先翻翻過刊，或自己帶一份來？</div>
+                  <div style="display:flex;gap:10px;margin-top:6px">
+                    <button style="height:30px;padding:0 14px;background:rgba(212,118,58,.1);border:1px solid rgba(212,118,58,.45);border-radius:4px;color:var(--ink-gazette);font-size:12px;line-height:1" style-hover="background:rgba(212,118,58,.18)">查看過刊</button>
+                    <button style="height:30px;padding:0 14px;background:transparent;border:1px solid var(--page-border);border-radius:4px;color:var(--page-ink-mid);font-size:12px;line-height:1" style-hover="border-color:var(--ink-gazette);color:var(--ink-gazette)">開啟本地 .json / .md</button>
+                  </div>
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:11.5px;color:var(--page-pencil);margin-top:8px">— the paperboy is still asleep —</div>
+                </div>
+              </sc-if>
+
+              <div style="display:flex;flex-direction:column;gap:14px;position:sticky;top:20px">
+                <div style="background:var(--pt-yellow);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:14px 16px;transform:rotate(-.8deg)">
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-weight:700;font-size:15px;color:var(--page-ink);margin-bottom:8px">語音稿</div>
+                  <div style="display:flex;align-items:center;gap:9px"><button style="width:26px;height:26px;border-radius:50%;background:var(--page-card);border:1px solid var(--ink-gazette);color:var(--ink-gazette);font-size:10px;line-height:1;flex:none">▶</button><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--page-ink-mid);line-height:1.5">voice_20260707.txt<br><span style="color:var(--page-pencil)">約 6 分鐘 · 零韻朗讀</span></span></div>
+                </div>
+                <div style="background:var(--pt-blue);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:14px 16px;transform:rotate(.7deg)">
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-weight:700;font-size:15px;color:var(--page-ink);margin-bottom:6px">月幣</div>
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.9;color:var(--page-ink-mid)">餘額 128 枚<br>本篇整理花費 3 枚</div>
+                </div>
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 8px rgba(0,0,0,.05);padding:13px 15px">
+                  <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--page-pencil);margin-bottom:9px">ARCHIVE · 過刊</div>
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;justify-content:space-between;cursor:pointer" style-hover="opacity:.7"><span style="font-size:12px;color:var(--page-ink)">07-06 · 週一刊</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette)">NO.187</span></div>
+                    <div style="display:flex;justify-content:space-between;cursor:pointer" style-hover="opacity:.7"><span style="font-size:12px;color:var(--page-ink)">07-05 · 週日刊</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette)">NO.186</span></div>
+                    <div style="display:flex;justify-content:space-between;cursor:pointer" style-hover="opacity:.7"><span style="font-size:12px;color:var(--page-ink)">07-04 · 週六刊</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette)">NO.185</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── 談心專區 · INTIMARIUM ─── -->
+        <sc-if value="{{ showRoom }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="談心專區 Intimarium" style="min-height: 100%; padding: 26px 36px 40px; animation: fadeUp .35s ease both; background-color: var(--page-bg)">
+            <div style="max-width:1040px;margin:0 auto;display:grid;grid-template-columns:1fr 264px;gap:26px;align-items:start">
+              <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 14px;padding:34px 40px 24px 78px;position:relative;display:flex;flex-direction:column;min-height:520px">
+                <div style="position:absolute;top:0;bottom:0;left:52px;width:1px;background:var(--page-margin)"></div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--page-pencil);margin-bottom:14px">2026-07-07 · 亥時 · 檯燈下</div>
+                <div style="display:flex;flex-direction:column;gap:16px;flex:1">
+                  <div style="align-self:flex-end;max-width:78%;background:rgba(122,88,152,.07);border:1px solid rgba(122,88,152,.18);border-radius:6px 0 0 6px;padding:10px 14px"><div style="font-family:'Noto Serif TC',serif;font-size:13.5px;line-height:1.95;color:var(--page-ink)">今天改稿改到懷疑人生，感覺整份筆記都是廢話。</div></div>
+                  <div style="align-self:flex-start;max-width:84%">
+                    <div style="font-family:'Noto Serif TC',serif;font-size:13.5px;line-height:32px;color:var(--page-ink-mid)">廢話和草稿的差別，只在有沒有人陪妳再讀一次。妳今天寫下的「感覺劑量」那段，我讀了兩遍——那不是廢話，是還沒長好的骨架。</div>
+                    <div style="border-left:2px solid var(--ink-intimarium);padding:4px 0 4px 13px;margin-top:8px;transform:rotate(-.3deg)"><span style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:14.5px;color:var(--ink-intimarium)">↳ 要不要把這句收進手札？「還沒長好的骨架」。</span></div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil);margin-top:6px">談心與手札整理員 · 月上零韻 · 21:47</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:22px;padding:10px 0 0;border-top:1px solid var(--page-border)">
+                  <span style="flex:1;height:32px;display:flex;align-items:center;padding:0 12px;background:var(--page-bg);border:1px solid var(--page-border);border-radius:4px;font-size:12.5px;color:var(--page-pencil)">寫給零韻…</span>
+                  <button style="height:32px;padding:0 14px;background:rgba(122,88,152,.1);border:1px solid rgba(122,88,152,.45);border-radius:4px;color:var(--ink-intimarium);font-size:12px;line-height:1" style-hover="background:rgba(122,88,152,.18)">送出</button>
+                </div>
+                <div style="text-align:center;font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:10.5px;color:var(--page-pencil);opacity:.75;margin-top:12px">＊零韻不提供醫療、法律、金融判斷；重要的決定，請與人類商量。</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:14px;position:sticky;top:20px">
+                <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 8px rgba(0,0,0,.05);padding:14px 16px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--page-pencil);white-space:nowrap">JOURNAL · 手札</span><span style="flex:1"></span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--ink-intimarium);cursor:pointer;white-space:nowrap;flex:none">＋ 新篇</span></div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+                    <span style="height:20px;display:inline-flex;align-items:center;padding:0 8px;white-space:nowrap;flex:none;background:rgba(122,88,152,.1);border:1px solid rgba(122,88,152,.3);border-radius:10px;font-size:10px;color:var(--ink-intimarium);cursor:pointer">#寫作</span>
+                    <span style="height:20px;display:inline-flex;align-items:center;padding:0 8px;white-space:nowrap;flex:none;border:1px solid var(--page-border);border-radius:10px;font-size:10px;color:var(--page-pencil);cursor:pointer" style-hover="border-color:var(--ink-intimarium);color:var(--ink-intimarium)">#工作</span>
+                    <span style="height:20px;display:inline-flex;align-items:center;padding:0 8px;white-space:nowrap;flex:none;border:1px solid var(--page-border);border-radius:10px;font-size:10px;color:var(--page-pencil);cursor:pointer" style-hover="border-color:var(--ink-intimarium);color:var(--ink-intimarium)">#深夜</span>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <div style="padding:9px 11px;background:var(--page-bg);border:1px solid var(--page-border);border-left:2px solid var(--ink-intimarium);cursor:pointer" style-hover="border-color:var(--ink-intimarium)"><div style="font-size:12px;color:var(--page-ink);font-weight:600">還沒長好的骨架</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil);margin-top:3px">07-07 · #寫作</div></div>
+                    <div style="padding:9px 11px;background:var(--page-bg);border:1px solid var(--page-border);cursor:pointer" style-hover="border-color:var(--ink-intimarium)"><div style="font-size:12px;color:var(--page-ink)">交稿前的三次深呼吸</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil);margin-top:3px">07-04 · #工作</div></div>
+                  </div>
+                  <div style="display:flex;gap:8px;margin-top:12px">
+                    <button style="flex:1;height:26px;background:transparent;border:1px solid var(--page-border);border-radius:4px;color:var(--page-ink-mid);font-size:11px;line-height:1" style-hover="border-color:var(--ink-intimarium);color:var(--ink-intimarium)">匯出 MD</button>
+                    <button style="flex:1;height:26px;background:transparent;border:1px solid var(--page-border);border-radius:4px;color:var(--page-ink-mid);font-size:11px;line-height:1" style-hover="border-color:var(--ink-intimarium);color:var(--ink-intimarium)">匯出 JSON</button>
+                  </div>
+                </div>
+                <div style="background:var(--pt-lavender);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:14px 16px;transform:rotate(.6deg)">
+                  <div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:13.5px;line-height:1.65;color:var(--page-ink-mid)">tonight's tea: 蜜香紅茶，第二泡。</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+        <!-- ─── AI 設定 · AETHERIUM ─── -->
+        <sc-if value="{{ showAiSet }}" hint-placeholder-val="{{ false }}">
+          <div data-screen-label="AI設定 Aetherium" style="min-height: 100%; padding: 28px 36px 44px; animation: fadeUp .35s ease both; background-color: var(--hall-bg)">
+            <div style="max-width:880px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
+              <div style="background:var(--navy);border:1px solid var(--gold-line);border-radius:6px;padding:20px 22px;box-shadow:0 0 24px -8px var(--gold-glow)">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span style="width:12px;height:12px;border-radius:50%;border:1px solid var(--gold);background:var(--gold-glow);flex:none"></span><span style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;color:var(--cream)">自帶金鑰 BYOK</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.16em;color:var(--success);white-space:nowrap;flex:none">● 使用中</span></div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:16px">金鑰只存在本機瀏覽器，不會上傳到任何地方。</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--text-tertiary)">PROVIDER</span><span style="height:30px;display:flex;align-items:center;padding:0 11px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;font-size:12.5px;color:var(--text-primary)">Anthropic ▾</span></div>
+                  <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--text-tertiary)">API KEY</span><span style="height:30px;display:flex;align-items:center;padding:0 11px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-secondary)">sk-ant-••••••••••••••••</span></div>
+                  <div style="display:flex;gap:8px;margin-top:2px">
+                    <button style="height:28px;padding:0 12px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24)">測試連線</button>
+                    <button style="height:28px;padding:0 12px;background:transparent;border:1px solid rgba(196,96,79,.35);border-radius:4px;color:var(--danger);font-size:12px;line-height:1" style-hover="background:rgba(196,96,79,.12)">清除金鑰</button>
+                    <span style="margin-left:auto;align-self:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--success)">✓ 21:40 通過</span>
+                  </div>
+                </div>
+              </div>
+              <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:20px 22px;opacity:.92">
+                <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span style="width:12px;height:12px;border-radius:50%;border:1px solid var(--navy-line);flex:none"></span><span style="font-family:'Noto Serif TC',serif;font-size:15px;font-weight:600;color:var(--text-primary)">月幣制</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.16em;color:var(--text-tertiary);white-space:nowrap;flex:none">備援</span></div>
+                <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;margin-bottom:16px">由館方代理計費，適合沒有金鑰的日子。</div>
+                <div style="display:flex;align-items:baseline;gap:10px;padding:14px 16px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px">
+                  <span style="font-family:'Cormorant Garamond',serif;font-size:34px;color:var(--gold);line-height:1">128</span>
+                  <span style="font-size:12px;color:var(--text-secondary)">枚 · 每月一日子時重置</span>
+                </div>
+                <div style="display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:10px 12px;background:rgba(196,96,79,.06);border:1px solid rgba(196,96,79,.2);border-radius:4px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;color:var(--danger);flex:none;margin-top:2px">NOTE</span>
+                  <span style="font-size:11.5px;color:var(--text-secondary);line-height:1.7">代理尚未部署——月幣暫時只能看，不能花。部署 Worker 後自動啟用。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ AI 面板 · 召喚圖書館員（全域抽屜）═══ -->
+  <sc-if value="{{ aiOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;top:52px;right:0;bottom:0;width:344px;background:var(--navy-deep);border-left:1px solid var(--gold-line);box-shadow:-18px 0 40px -20px rgba(0,0,0,.8);display:flex;flex-direction:column;z-index:80;animation:fadeUp .25s ease both">
+      <div style="flex:none;display:flex;align-items:center;gap:10px;height:44px;padding:0 16px;border-bottom:1px solid var(--navy-line)">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.24em;color:var(--gold-dim)">LIBRARIAN · 圖書館員</span>
+        <span style="flex:1"></span>
+        <button onClick="{{ toggleAi }}" style="width:24px;height:24px;background:transparent;border:1px solid var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);color:var(--gold)">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;overflow-x:hidden;padding:16px">
+        <div style="background:var(--page-old);border:1px solid var(--page-old-border);padding:10px 10px 12px;box-shadow:2px 3px 10px rgba(0,0,0,.35);transform:rotate(-.6deg)">
+          <div style="height:150px;overflow:hidden;display:flex;align-items:flex-start;justify-content:center;background:#fff">
+            <img src="assets/librarian-portrait.png" alt="月上零韻" style="width:64%;display:block;margin-top:-6px">
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:9px;padding:0 2px">
+            <span style="font-family:'Noto Serif TC',serif;font-size:13px;font-weight:600;color:var(--page-ink)">月上零韻</span>
+            <span style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:11px;color:var(--page-pencil)">the librarian on duty</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:2px;margin:16px 0 12px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px;padding:2px">
+          <sc-for list="{{ aiTabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ setAiTab }}" data-tab="{{ t.id }}" style="{{ t.style }}">{{ t.zh }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="align-self:flex-start;max-width:92%;background:var(--navy);border:1px solid var(--navy-line);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:10px 12px">
+            <div style="font-size:12.5px;color:var(--text-primary);line-height:1.8">晚安。今晚的館報已經送到了，第七幕的草稿也還攤在劇本工房——需要我先為哪一件掌燈？</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:6px">21:42 · 亥時</div>
+          </div>
+          <div style="align-self:flex-end;max-width:88%;background:var(--gold-glow);border:1px solid var(--gold-line);border-radius:6px 0 0 6px;padding:9px 12px">
+            <div style="font-size:12.5px;color:var(--cream);line-height:1.8">幫我把今天的 SEO 筆記整理成摘要。</div>
+          </div>
+          <div style="align-self:flex-start;display:flex;align-items:flex-end;gap:3px;padding:6px 2px">
+            <span style="width:3px;height:8px;background:var(--gold);animation:eqa 1s ease-in-out infinite"></span>
+            <span style="width:3px;height:8px;background:var(--gold);animation:eqb 1s ease-in-out .15s infinite"></span>
+            <span style="width:3px;height:8px;background:var(--gold);animation:eqc 1s ease-in-out .3s infinite"></span>
+          </div>
+        </div>
+      </div>
+      <div style="flex:none;padding:12px 16px;border-top:1px solid var(--navy-line);display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:8px;height:32px;padding:0 12px;background:var(--navy);border:1px solid var(--navy-line);border-radius:4px">
+          <span style="font-size:12px;color:var(--text-tertiary);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">對零韻說些什麼…</span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold-dim)">↵</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <button style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;background:transparent;border:1px solid var(--navy-line);border-radius:4px;color:var(--text-secondary);font-size:11px;line-height:1" style-hover="border-color:var(--gold-dim);color:var(--gold)">手札 ↗</button>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary)">月幣 128 枚 · BYOK</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;: {&quot;width&quot;: 1440, &quot;height&quot;: 900}, &quot;mode&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;dark&quot;, &quot;light&quot;], &quot;default&quot;: &quot;dark&quot;, &quot;tsType&quot;: &quot;'dark' | 'light'&quot;, &quot;section&quot;: &quot;書房&quot;}, &quot;paperTint&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;options&quot;: [&quot;#FAF4E5&quot;, &quot;#FAF8F3&quot;, &quot;#FBF5EA&quot;, &quot;#F7F6F2&quot;], &quot;default&quot;: &quot;#FAF4E5&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;紙頁&quot;}, &quot;ruling&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;紙頁&quot;}}">
+class Component extends DCLogic {
+  state = {
+    active: 'atrium', modeOverride: null,
+    aiOpen: false, aiTab: 'text',
+    mdEdit: false, mdMoreOpen: false,
+    scriptMode: 'write', genre: 'scriptg', previewTab: 'blocks',
+    pdfTab: 'pages',
+    gzDay: 'today',
+    incognito: false
+  };
+
+  componentDidMount() { this.applyTheme(); }
+  componentDidUpdate() { this.applyTheme(); }
+  applyTheme() {
+    const mode = this.state.modeOverride ?? this.props.mode ?? 'dark';
+    document.documentElement.dataset.mode = mode;
+    const root = document.documentElement.style;
+    root.setProperty('--page-bg', this.props.paperTint ?? '#FAF4E5');
+    root.setProperty('--page-line', (this.props.ruling ?? true) ? 'rgba(0,0,0,0.035)' : 'transparent');
+  }
+
+  nav = (e) => {
+    const hall = e.currentTarget.dataset.hall;
+    this.setState({ active: hall, mdMoreOpen: false });
+  };
+
+  renderVals() {
+    const s = this.state;
+    const HALLS = [
+      { id: 'atrium',      zh: '大廳',        la: 'Atrium',       ink: '#C9A86A', num: 'Ⅰ', desc: '卡片目錄與最近經手的帳簿。' },
+      { id: 'markdown',    zh: 'Code & Data', la: 'Manuscripta',  ink: '#4A80A8', num: 'Ⅱ', desc: '手稿閱讀、編輯、摘要與匯出。' },
+      { id: 'pdf',         zh: 'PDF 閱讀器',  la: 'Lectorium',    ink: '#C8962E', num: 'Ⅲ', desc: '翻頁、書籤、切割與 OCR 摘錄。' },
+      { id: 'tableforge',  zh: 'Table Forge', la: 'Tabularium',   ink: '#5A8A4A', num: 'Ⅳ', desc: '表格鍛造、解析與格式互換。' },
+      { id: 'spreadsheet', zh: '試算表',      la: 'Tabularium',   ink: '#5A8A4A', num: 'Ⅴ', desc: '公式、排序與 XLSX 進出。' },
+      { id: 'script',      zh: '劇本工房',    la: 'Dramaturgica', ink: '#B84058', num: 'Ⅵ', desc: '速寫稿紙、結構化與語音預覽。' },
+      { id: 'gazette',     zh: '每日館報',    la: 'Gazette',      ink: '#D4763A', num: 'Ⅶ', desc: '晨報送達、朗讀與過刊。' },
+      { id: 'room',        zh: '談心專區',    la: 'Intimarium',   ink: '#7A5898', num: 'Ⅷ', desc: '夜談、不留痕與手札。' },
+      { id: 'ai',          zh: 'AI 設定',     la: 'Aetherium',    ink: '#C9A86A', num: 'Ⅸ', desc: '金鑰、月幣與代理狀態。' }
+    ];
+    const cur = HALLS.find(h => h.id === s.active) || HALLS[0];
+
+    const halls = HALLS.map(h => ({
+      ...h,
+      rowStyle: {
+        display: 'flex', alignItems: 'center', gap: '10px', padding: '7px 10px',
+        borderRadius: '4px', cursor: 'pointer',
+        background: h.id === s.active ? 'var(--navy-light)' : 'transparent',
+        boxShadow: h.id === s.active ? ('inset 2px 0 0 ' + h.ink) : 'none'
+      },
+      dotStyle: {
+        width: '6px', height: '6px', borderRadius: '50%', flex: 'none',
+        background: h.ink, opacity: h.id === s.active ? 1 : 0.55
+      }
+    }));
+
+    const hallCards = HALLS.filter(h => h.id !== 'atrium').map(h => ({
+      ...h,
+      cardStyle: {
+        background: 'var(--navy)', border: '1px solid var(--navy-line)', borderRadius: '6px',
+        padding: '14px 16px 16px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
+        transition: 'border-color .18s, transform .18s'
+      },
+      topLineStyle: { position: 'absolute', top: 0, left: 0, right: 0, height: '2px', background: h.ink, opacity: 0.85 },
+      numStyle: { fontFamily: "'JetBrains Mono',monospace", fontSize: '10px', letterSpacing: '.14em', color: h.ink }
+    }));
+
+    const seg = (list, activeId, ink, handlerKey) => list.map(t => ({
+      ...t,
+      style: {
+        flex: 1, height: '24px', border: 'none', borderRadius: '3px',
+        fontFamily: "'Noto Serif TC',serif", fontSize: '11.5px', lineHeight: 1,
+        background: t.id === activeId ? (ink + '26') : 'transparent',
+        color: t.id === activeId ? ink : 'var(--text-secondary)',
+        boxShadow: t.id === activeId ? ('inset 0 0 0 1px ' + ink + '66') : 'none'
+      }
+    }));
+
+    const aiTabs = seg([
+      { id: 'text', zh: '文字' }, { id: 'voice', zh: '語音' }, { id: 'persona', zh: '人格' }
+    ], s.aiTab, '#c9a86a');
+
+    const scriptModes = [
+      { id: 'write', zh: '速寫' }, { id: 'search', zh: '搜尋' }, { id: 'editor', zh: '編輯' }, { id: 'reader', zh: '閱讀' }
+    ].map(m => ({
+      ...m,
+      style: {
+        height: '26px', padding: '0 13px', border: 'none', borderRadius: '3px',
+        fontFamily: "'Noto Serif TC',serif", fontSize: '12px', lineHeight: 1,
+        background: m.id === s.scriptMode ? 'rgba(184,64,88,.16)' : 'transparent',
+        color: m.id === s.scriptMode ? '#d98a9a' : 'var(--text-secondary)',
+        boxShadow: m.id === s.scriptMode ? 'inset 0 0 0 1px rgba(184,64,88,.45)' : 'none'
+      }
+    }));
+
+    const genres = [
+      { id: 'novel', zh: '小說' }, { id: 'scriptg', zh: '劇本' }, { id: 'note', zh: '筆記' }
+    ].map((g, i) => ({
+      ...g,
+      style: {
+        height: '30px', padding: '0 18px 4px', border: '1px solid var(--page-border)', borderBottom: 'none',
+        borderRadius: '5px 5px 0 0', fontFamily: "'Noto Serif TC',serif", fontSize: '12px', lineHeight: 1,
+        background: g.id === s.genre ? 'var(--page-card)' : '#EFEAE0',
+        color: g.id === s.genre ? '#B84058' : 'var(--page-pencil)',
+        fontWeight: g.id === s.genre ? 600 : 400,
+        transform: 'rotate(' + [-0.6, 0.4, -0.3][i] + 'deg) translateY(' + (g.id === s.genre ? 1 : 3) + 'px)',
+        boxShadow: g.id === s.genre ? '0 -2px 6px rgba(0,0,0,.05)' : 'none',
+        position: 'relative', zIndex: g.id === s.genre ? 3 : 1, cursor: 'pointer'
+      }
+    }));
+
+    const previewTabs = [
+      { id: 'blocks', zh: '段落', en: 'BLOCKS' }, { id: 'cast', zh: '人物', en: 'CAST' },
+      { id: 'stats', zh: '統計', en: 'STATS' },
+      { id: 'outline', zh: '大綱', en: 'OUTLINE' }, { id: 'voice', zh: '語音', en: 'VOICE' },
+      { id: 'bgm', zh: '配樂', en: 'BGM' }
+    ].map(t => ({
+      ...t,
+      style: {
+        display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 12px',
+        border: '1px solid var(--page-border)', borderRadius: '4px', cursor: 'pointer',
+        background: t.id === s.previewTab ? 'var(--page-card)' : '#F1ECE2',
+        boxShadow: t.id === s.previewTab ? 'inset 2px 0 0 #B84058, 2px 3px 8px rgba(0,0,0,.06)' : 'none',
+        color: t.id === s.previewTab ? 'var(--page-ink)' : 'var(--page-pencil)',
+        transform: t.id === s.previewTab ? 'translateX(-4px)' : 'none',
+        transition: 'transform .15s'
+      }
+    }));
+
+    const pdfTabs = [
+      { id: 'pages', zh: '頁', en: 'PAGES' }, { id: 'cut', zh: '切', en: 'CUT' },
+      { id: 'mark', zh: '籤', en: 'MARK' }, { id: 'lib', zh: '筆', en: 'LIB' }
+    ].map(t => ({
+      ...t,
+      style: {
+        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+        padding: '7px 0 6px', border: 'none', cursor: 'pointer',
+        background: t.id === s.pdfTab ? 'var(--navy-light)' : 'transparent',
+        boxShadow: t.id === s.pdfTab ? 'inset 0 -2px 0 #C8962E' : 'inset 0 -1px 0 var(--navy-line)',
+        color: t.id === s.pdfTab ? '#C8962E' : 'var(--text-tertiary)'
+      }
+    }));
+
+    const pdfPages = [8, 9, 10, 11, 12, 13, 14, 15].map(n => ({
+      n,
+      style: {
+        aspectRatio: '3/4', background: n === 12 ? '#FFFFFF' : '#EDE8DC',
+        border: n === 12 ? '2px solid #C8962E' : '1px solid var(--navy-line)',
+        borderRadius: '2px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        paddingBottom: '4px', cursor: 'pointer',
+        backgroundImage: 'repeating-linear-gradient(transparent, transparent 7px, rgba(0,0,0,0.05) 7px, rgba(0,0,0,0.05) 8px)'
+      },
+      numStyle: {
+        fontFamily: "'JetBrains Mono',monospace", fontSize: '8px',
+        color: n === 12 ? '#C8962E' : 'var(--text-tertiary)'
+      }
+    }));
+
+    const gzChip = (day) => ({
+      display: 'inline-flex', alignItems: 'center', gap: '6px', height: '24px', padding: '0 10px',
+      borderRadius: '4px', cursor: 'pointer', fontFamily: "'JetBrains Mono',monospace", fontSize: '10px',
+      background: s.gzDay === day ? 'rgba(212,118,58,.16)' : 'transparent',
+      border: '1px solid ' + (s.gzDay === day ? 'rgba(212,118,58,.5)' : 'var(--navy-line)'),
+      color: s.gzDay === day ? '#D4763A' : 'var(--text-secondary)'
+    });
+
+    return {
+      // shell
+      halls, hallCards, navTo: this.nav,
+      hallZh: cur.zh, hallLa: cur.la, hallLaUp: cur.la.toUpperCase(), hallNum: cur.num,
+      crumbInkStyle: { color: cur.ink }, crumbInkCss: { color: cur.ink },
+      mastRuleStyle: { height: '2px', width: '58px', background: cur.ink, opacity: .85, margin: '12px 0 0' },
+      modeGlyph: (s.modeOverride ?? this.props.mode ?? 'dark') === 'dark' ? '☾' : '☀',
+      toggleMode: () => this.setState(p => ({ modeOverride: (p.modeOverride ?? this.props.mode ?? 'dark') === 'dark' ? 'light' : 'dark' })),
+      // screens
+      showAtrium: s.active === 'atrium',
+      showMarkdown: s.active === 'markdown',
+      showPdf: s.active === 'pdf',
+      showTableforge: s.active === 'tableforge',
+      showSpreadsheet: s.active === 'spreadsheet',
+      showScript: s.active === 'script',
+      showGazette: s.active === 'gazette',
+      showRoom: s.active === 'room',
+      showAiSet: s.active === 'ai',
+      // ai drawer
+      aiOpen: s.aiOpen, toggleAi: () => this.setState(p => ({ aiOpen: !p.aiOpen })),
+      aiTabs, setAiTab: (e) => this.setState({ aiTab: e.currentTarget.dataset.tab }),
+      // markdown
+      mdEdit: s.mdEdit, mdView: !s.mdEdit,
+      toggleMdEdit: () => this.setState(p => ({ mdEdit: !p.mdEdit, mdMoreOpen: false })),
+      mdEditBtnStyle: {
+        display: 'inline-flex', alignItems: 'center', gap: '6px', height: '28px', padding: '0 10px',
+        borderRadius: '4px', fontSize: '12px', lineHeight: 1,
+        background: s.mdEdit ? 'rgba(74,128,168,.18)' : 'var(--navy-light)',
+        border: '1px solid ' + (s.mdEdit ? '#4A80A8' : 'var(--navy-line)'),
+        color: s.mdEdit ? '#7FA8C8' : 'var(--text-primary)'
+      },
+      mdEditLabel: s.mdEdit ? '完成編輯' : '編輯',
+      mdStatus: s.mdEdit ? '編輯中 · 未存檔變更' : 'SEO-筆記-0707.md · 已載入 · 12.4 KB',
+      mdMoreOpen: s.mdMoreOpen,
+      toggleMdMore: () => this.setState(p => ({ mdMoreOpen: !p.mdMoreOpen })),
+      mdMenu: [
+        ['label', '編輯'], ['item', '復原', '⌘Z'], ['item', '重做', '⇧⌘Z'], ['item', '變更標示'], ['item', '清除標示'], ['item', '下載新檔'], ['item', '存檔至書庫'],
+        ['label', '複製與下載'], ['item', '複製原始內容'], ['item', '下載目前內容'],
+        ['label', '匯出'], ['item', '匯出 DOCX'], ['item', '劇本 DOCX'], ['item', '劇本 PDF 預覽'], ['item', 'AI 摘要（匯出＋存書庫）'],
+        ['label', 'SHEETS'], ['item', '複製 HTML'], ['item', '純表格 → Sheets'], ['item', '格式化 → Sheets'], ['item', '開新 Sheet 貼上'],
+        ['label', '跨模組'], ['item', '送到 Table Forge', '↗']
+      ].map(([kind, text, kbd]) => ({
+        text, kbd: kbd || '',
+        style: kind === 'label'
+          ? { fontFamily: "'JetBrains Mono',monospace", fontSize: '8.5px', letterSpacing: '.2em', color: 'var(--gold-dim)', padding: '7px 9px 3px', pointerEvents: 'none' }
+          : { display: 'flex', alignItems: 'center', gap: '8px', borderRadius: '3px', padding: '6px 9px', fontSize: '12px', color: 'var(--text-primary)', lineHeight: 1.4, cursor: 'pointer' }
+      })),
+      // script
+      scriptModes, setScriptMode: (e) => this.setState({ scriptMode: e.currentTarget.dataset.mode }),
+      showScriptWrite: s.active === 'script' && s.scriptMode === 'write',
+      showScriptSearch: s.active === 'script' && s.scriptMode === 'search',
+      showScriptReader: s.active === 'script' && s.scriptMode === 'reader',
+      showScriptEditor: s.active === 'script' && s.scriptMode === 'editor',
+      genres, setGenre: (e) => this.setState({ genre: e.currentTarget.dataset.genre }),
+      previewTabs, setPreviewTab: (e) => this.setState({ previewTab: e.currentTarget.dataset.tab }),
+      showPvBlocks: s.previewTab === 'blocks', showPvCast: s.previewTab === 'cast',
+      showGenreNovel: s.genre === 'novel', showGenreScript: s.genre === 'scriptg', showGenreNote: s.genre === 'note',
+      showPvStats: s.previewTab === 'stats',
+      showPvOutline: s.previewTab === 'outline', showPvVoice: s.previewTab === 'voice', showPvBgm: s.previewTab === 'bgm',
+      // pdf
+      pdfTabs, setPdfTab: (e) => this.setState({ pdfTab: e.currentTarget.dataset.tab }),
+      showPdfPages: s.pdfTab === 'pages', showPdfCut: s.pdfTab === 'cut',
+      showPdfMark: s.pdfTab === 'mark', showPdfLib: s.pdfTab === 'lib',
+      pdfPages,
+      tfRows: [
+        ['選物店 台中', '2,400', '#6', '▲ 2', '38'],
+        ['內容策略 範例', '1,900', '#11', '▼ 1', '52'],
+        ['感覺劑量', '320', '#3', '—', '17'],
+        ['SEO 筆記法', '880', '#8', '▲ 5', '44'],
+        ['知識庫 工具', '5,400', '#14', '▲ 1', '61'],
+        ['PWA 離線', '720', '#9', '—', '35'],
+        ['手帳 數位化', '1,300', '#5', '▲ 3', '29'],
+        ['個人圖書館', '590', '#2', '▲ 1', '23']
+      ].map((c, i) => ({
+        k: c[0], v: c[1], r: c[2], d: c[3], df: c[4],
+        rowStyle: {
+          display: 'grid', gridTemplateColumns: '1.6fr 1fr .7fr .7fr .7fr', gap: '10px',
+          padding: '7px 14px', alignItems: 'center',
+          background: i % 2 ? 'rgba(90,138,74,0.03)' : 'transparent',
+          borderBottom: '1px solid var(--navy-line)'
+        },
+        dStyle: {
+          fontFamily: "'JetBrains Mono',monospace", fontSize: '10.5px',
+          color: c[3].includes('▲') ? 'var(--success)' : (c[3].includes('▼') ? 'var(--danger)' : 'var(--text-tertiary)')
+        }
+      })),
+      ssRows: [
+        ['1', '關鍵字', '六月', '七月', '變化'],
+        ['2', '選物店 台中', '2210', '2400', '+190'],
+        ['3', '內容策略 範例', '2050', '1900', '-150'],
+        ['4', '感覺劑量', '180', '320', '+140'],
+        ['5', '知識庫 工具', '5100', '5400', '+300'],
+        ['6', 'PWA 離線', '740', '720', '-20'],
+        ['7', '手帳 數位化', '990', '1300', '+310'],
+        ['8', '合計', '=SUM(C2:C7)', '=SUM(D2:D7)', '']
+      ].map((c, i) => ({
+        n: c[0], a: c[1], b: c[2], cv: c[3], d: c[4],
+        head: i === 0,
+        rowStyle: {
+          display: 'grid', gridTemplateColumns: '44px 1.6fr 1fr 1fr 1fr', alignItems: 'stretch',
+          borderBottom: '1px solid var(--navy-line)',
+          background: i === 0 ? 'rgba(90,138,74,0.08)' : 'transparent',
+          fontWeight: i === 0 ? 500 : 400
+        },
+        cStyle: {
+          padding: '6px 10px', fontFamily: "'JetBrains Mono',monospace", fontSize: '11px',
+          color: i === 7 ? 'var(--ink-tabularium)' : (i === 0 ? 'var(--text-primary)' : 'var(--text-secondary)'),
+          borderRight: '1px solid var(--navy-line)',
+          boxShadow: (i === 3) ? 'inset 0 0 0 2px var(--ink-tabularium)' : 'none',
+          background: (i === 3) ? 'rgba(90,138,74,0.1)' : 'transparent'
+        }
+      })),
+      // gazette
+      gzTodayStyle: gzChip('today'), gzNextStyle: gzChip('next'),
+      setGzToday: () => this.setState({ gzDay: 'today' }),
+      setGzNext: () => this.setState({ gzDay: 'next' }),
+      gz404: s.gzDay === 'next', gzOk: s.gzDay === 'today',
+      gzStatus: s.gzDay === 'today' ? '2026-07-07 · 已送達' : '2026-07-08 · 未發佈',
+      // room
+      incognito: s.incognito,
+      toggleIncognito: () => this.setState(p => ({ incognito: !p.incognito })),
+      incogStyle: {
+        display: 'inline-flex', alignItems: 'center', gap: '6px', height: '28px', padding: '0 10px',
+        borderRadius: '4px', fontSize: '12px', lineHeight: 1, cursor: 'pointer',
+        background: s.incognito ? 'rgba(122,88,152,.2)' : 'var(--navy-light)',
+        border: '1px solid ' + (s.incognito ? '#7A5898' : 'var(--navy-line)'),
+        color: s.incognito ? '#A88CC8' : 'var(--text-primary)'
+      },
+      incogLabel: s.incognito ? '不留痕 · 開' : '不留痕',
+      roomStatus: s.incognito ? '月上零韻 · 在館 · 本次對話不留痕' : '月上零韻 · 在館 · 對話將存入手札'
+    };
+  }
+}
+</script>
+</body>
+</html>

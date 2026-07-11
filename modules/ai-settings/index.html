@@ -8,209 +8,115 @@
 <link rel="stylesheet" href="../../assets/styles/shared.css">
 <style>
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
-  font-family: 'Noto Serif TC', system-ui, sans-serif;
-  background: var(--navy);
+  --zone-ink: var(--ink-atrium);
+  --zone-ink-glow: rgba(201,168,106,.16);
+  --zone-ink-line: rgba(201,168,106,.5);
+  margin: 0;
+  font-family: var(--font-body);
   color: var(--text-primary);
+  background: var(--hall-bg);
   min-height: 100vh;
-  padding: 24px;
-  max-width: 640px;
+}
+
+/* .btn / .btn--gold / .btn--danger / .seg / .panel / .panel__field come from shared.css.
+   Only module-specific pieces below. */
+
+.ai-content {
+  padding: 28px 36px 44px;
+}
+
+.ai-grid {
+  max-width: 880px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .ai-grid { grid-template-columns: 1fr; }
 }
 
-/* 本頁為窄欄設定頁：表頭走標準字級/配色，但不 sticky 不全幅 */
-.module-header,
-:root[data-mode="light"] .module-header {
-  position: static;
-  min-height: auto;
-  padding: 0 0 12px;
-  margin-bottom: 20px;
+.ai-estimate-wrap {
+  max-width: 880px;
+  margin: 16px auto 0;
+}
+
+/* ── 儀器卡（BYOK / 月幣制）── */
+.ai-card {
+  padding: 20px 22px;
+  transition: opacity .18s, border-color .18s, box-shadow .18s;
+}
+.ai-card:not(.is-active) { opacity: .92; }
+
+.ai-card__head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 4px;
+}
+.ai-card__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--navy-line);
   background: transparent;
-  backdrop-filter: none;
-  gap: 12px;
-  align-items: baseline;
+  flex: none;
 }
+.ai-card.is-active .ai-card__dot {
+  border-color: var(--gold);
+  background: var(--gold-glow);
+}
+.ai-card__title {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ai-card.is-active .ai-card__title { color: var(--cream); }
+.ai-card__badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: .16em;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  flex: none;
+}
+.ai-card__badge--on { color: var(--success); }
 
-.section {
-  background: var(--navy-light);
-  border: 1px solid var(--navy-hover);
-  border-radius: 10px;
-  padding: 20px;
+.ai-card__desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.8;
   margin-bottom: 16px;
 }
 
-.section-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--gold);
+.ai-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.section-desc {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-bottom: 14px;
-}
-
-.field {
-  margin-bottom: 12px;
-}
-
-.field label {
-  display: block;
-  font-size: 11px;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 4px;
-}
-
-.field input, .field select {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--navy);
-  border: 1px solid var(--navy-hover);
-  border-radius: 6px;
-  color: var(--text-primary);
-  font-size: 13px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.field input:focus, .field select:focus {
-  border-color: var(--gold-dim);
-}
-
-.field select option {
-  background: var(--navy);
-}
-
-.field .hint {
+.ai-hint {
   font-size: 10px;
   color: var(--text-secondary);
-  margin-top: 4px;
+  line-height: 1.6;
 }
 
-.btn {
-  padding: 9px 18px;
-  border: 1px solid var(--navy-hover);
-  border-radius: 6px;
-  background: var(--navy-light);
-  color: var(--text-primary);
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-}
+.panel select option { background: var(--navy); }
 
-.btn:hover { border-color: var(--gold-dim); }
-.btn--gold { background: var(--gold); color: var(--navy); border-color: var(--gold); font-weight: 600; }
-.btn--gold:hover { background: var(--gold-dim); }
-.btn--danger { border-color: var(--danger); color: var(--danger); }
-.btn--danger:hover { background: var(--danger); color: var(--cream); }
-
-.actions {
+.ai-card__actions {
   display: flex;
+  align-items: center;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 2px;
+  flex-wrap: wrap;
 }
+.ai-card__actions #byokStatus { margin-left: auto; }
 
-/* Mode toggle */
-.mode-toggle {
-  display: flex;
-  border: 1px solid var(--navy-hover);
-  border-radius: 6px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-
-.mode-toggle__btn {
-  flex: 1;
-  padding: 10px;
-  background: var(--navy);
-  border: none;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: center;
-}
-
-.mode-toggle__btn--active {
-  background: var(--gold-glow);
-  color: var(--gold);
-  font-weight: 600;
-}
-
-/* Coin balance */
-.coin-display {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-  background: var(--navy);
-  border: 1px solid var(--navy-hover);
-  border-radius: 8px;
-  margin-bottom: 14px;
-}
-
-.coin-display__icon {
-  font-size: 28px;
-}
-
-.coin-display__info {
-  flex: 1;
-}
-
-.coin-display__balance {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--gold);
-}
-
-.coin-display__label {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-/* Usage log */
-.usage-log {
-  margin-top: 12px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.usage-log__item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--navy-hover);
-  font-size: 11px;
-}
-
-.usage-log__item:last-child {
-  border-bottom: none;
-}
-
-.usage-log__desc {
-  color: var(--text-secondary);
-}
-
-.usage-log__cost {
-  color: var(--danger);
-  font-weight: 600;
-}
-
-.usage-log__cost--credit {
-  color: var(--success);
-}
-
-/* Status indicator */
+/* 狀態小標籤（沿用既有 class 名，僅重排為行內） */
 .status {
   display: inline-flex;
   align-items: center;
@@ -218,147 +124,220 @@ body {
   font-size: 11px;
   padding: 4px 10px;
   border-radius: 10px;
-  margin-top: 8px;
+  white-space: nowrap;
 }
+.status--ok { background: rgba(106,174,127,0.15); color: var(--success); }
+.status--none { background: rgba(196,96,79,0.15); color: var(--danger); }
 
-.status--ok {
-  background: rgba(106,174,127,0.15);
-  color: var(--success);
+/* 月幣餘額 */
+.ai-coin-balance {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--navy-deep);
+  border: 1px solid var(--navy-line);
+  border-radius: 4px;
+  margin-bottom: 12px;
 }
+.ai-coin-balance__num {
+  font-family: var(--font-serif-en);
+  font-size: 34px;
+  color: var(--gold);
+  line-height: 1;
+}
+.ai-coin-balance__label { font-size: 12px; color: var(--text-secondary); }
 
-.status--none {
-  background: rgba(199,91,91,0.15);
+/* 代理未部署 note */
+.ai-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(196,96,79,.06);
+  border: 1px solid rgba(196,96,79,.2);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+.ai-note__label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: .14em;
   color: var(--danger);
+  flex: none;
+  margin-top: 2px;
 }
+.ai-note__text { font-size: 11.5px; color: var(--text-secondary); line-height: 1.7; }
+
+.ai-sub-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: .2em;
+  color: var(--gold-dim);
+  text-transform: uppercase;
+  margin: 14px 0 8px;
+}
+
+.ai-rate-list { font-size: 11px; color: var(--text-secondary); line-height: 1.8; }
+
+/* 使用紀錄 */
+.usage-log { margin-top: 4px; max-height: 160px; overflow-y: auto; }
+.usage-log__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--navy-line);
+  font-size: 11px;
+}
+.usage-log__item:last-child { border-bottom: none; }
+.usage-log__desc { color: var(--text-secondary); }
+.usage-log__cost { color: var(--danger); font-weight: 600; }
+.usage-log__cost--credit { color: var(--success); }
 
 .toast {
   position: fixed;
   bottom: 20px;
   right: 20px;
   padding: 10px 16px;
-  background: var(--success);
-  color: var(--navy);
-  border-radius: 6px;
+  background: var(--navy-light);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--r-soft);
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
+  box-shadow: 0 8px 24px -10px rgba(0,0,0,.7);
   transform: translateY(60px);
   opacity: 0;
   transition: all 0.3s;
+  z-index: 200;
 }
-
-.toast.visible {
-  transform: translateY(0);
-  opacity: 1;
-}
+.toast.visible { transform: translateY(0); opacity: 1; }
 </style>
 </head>
 <body>
 
-<header class="module-header">
-  <h1 class="mh-title">AI 圖書館員設定</h1>
-  <span class="mh-sub">設定 AI 服務模式與用量管理</span>
+<!-- Deskbar — 44px 唯一 chrome，左狀態／右動作（mode seg），禁止出現模組名字 -->
+<header class="deskbar">
+  <div class="desk-status">
+    <span class="desk-dot" id="deskStatusDot"></span>
+    <span id="deskStatusText">BYOK 使用中</span>
+  </div>
+  <div class="desk-actions">
+    <span class="seg">
+      <button class="seg__opt is-active" id="modeByok" aria-selected="true" onclick="setMode('byok')">BYOK</button>
+      <button class="seg__opt" id="modeCoin" aria-selected="false" onclick="setMode('coin')">月幣制</button>
+    </span>
+  </div>
 </header>
 
-<!-- Mode Toggle -->
-<div class="mode-toggle">
-  <button class="mode-toggle__btn mode-toggle__btn--active" id="modeByok" onclick="setMode('byok')">BYOK 自帶金鑰</button>
-  <button class="mode-toggle__btn" id="modeCoin" onclick="setMode('coin')">月幣制</button>
-</div>
+<div class="ai-content">
+  <div class="ai-grid">
 
-<!-- BYOK Section -->
-<div class="section" id="sectionByok">
-  <div class="section-title">自帶 API Key（BYOK）</div>
-  <div class="section-desc">使用您自己的 API Key 直接連線，不經過第三方，用量由您的帳號計費。</div>
+    <!-- BYOK 卡 -->
+    <div class="panel ai-card is-active panel--brass" id="cardByok">
+      <div class="ai-card__head">
+        <span class="ai-card__dot"></span>
+        <span class="ai-card__title">自帶金鑰 BYOK</span>
+        <span class="ai-card__badge ai-card__badge--on" id="byokBadge">● 使用中</span>
+      </div>
+      <div class="ai-card__desc">金鑰只存在本機瀏覽器，不會上傳到任何地方。</div>
 
-  <div class="field">
-    <label>AI 服務提供商</label>
-    <select id="byokProvider" onchange="onProviderChange()">
-      <option value="openai">OpenAI</option>
-      <option value="anthropic">Anthropic (Claude)</option>
-      <option value="google">Google (Gemini)</option>
-      <option value="custom">自訂端點</option>
-    </select>
+      <div class="ai-card__body">
+        <div class="panel__field">
+          <span class="panel__field-label">PROVIDER</span>
+          <select id="byokProvider" onchange="onProviderChange()">
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="google">Google (Gemini)</option>
+            <option value="custom">自訂端點</option>
+          </select>
+        </div>
+
+        <div class="panel__field">
+          <span class="panel__field-label">API KEY</span>
+          <input type="password" id="byokKey" placeholder="sk-... 或 您的 API Key">
+        </div>
+        <div class="ai-hint">&#9888; 金鑰僅在本次瀏覽階段有效（sessionStorage），關閉分頁後自動清除。測試連線會從瀏覽器直接呼叫第三方 API。</div>
+
+        <div class="panel__field" id="fieldCustomEndpoint" style="display:none;">
+          <span class="panel__field-label">自訂 API 端點</span>
+          <input type="text" id="byokEndpoint" placeholder="https://your-api.example.com/v1/chat">
+        </div>
+
+        <div class="panel__field">
+          <span class="panel__field-label">MODEL</span>
+          <select id="byokModel">
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o Mini</option>
+            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+          </select>
+        </div>
+
+        <div class="ai-card__actions">
+          <button class="btn btn--gold" onclick="saveByok()">儲存</button>
+          <button class="btn" onclick="testByok()">測試連線</button>
+          <button class="btn btn--danger" onclick="clearByok()">清除金鑰</button>
+          <span id="byokStatus"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 月幣制 卡 -->
+    <div class="panel ai-card" id="cardCoin">
+      <div class="ai-card__head">
+        <span class="ai-card__dot"></span>
+        <span class="ai-card__title">月幣制</span>
+        <span class="ai-card__badge" id="coinBadge">備援</span>
+      </div>
+      <div class="ai-card__desc">由館方代理計費，適合沒有金鑰的日子。</div>
+
+      <div class="ai-coin-balance">
+        <span class="ai-coin-balance__num" id="coinBalance">100</span>
+        <span class="ai-coin-balance__label">枚 · 每月一日子時重置</span>
+      </div>
+
+      <div class="ai-note" id="coinUnavailable" style="display:none;">
+        <span class="ai-note__label">NOTE</span>
+        <span class="ai-note__text">代理尚未部署——月幣暫時只能看，不能花。部署 Worker 後自動啟用。</span>
+      </div>
+      <script>(function(){var u=window.__AKASHA_API_BASE;if(!u||String(u).indexOf('your-subdomain')>-1){var el=document.getElementById('coinUnavailable');if(el)el.style.display='';}})();</script>
+
+      <div class="ai-card__actions">
+        <button class="btn" onclick="resetCoins()">重置為免費額度</button>
+      </div>
+
+      <div class="ai-sub-label">費率參考</div>
+      <div class="ai-rate-list">
+        &#8226; 一般對話：1 月幣 / 則<br>
+        &#8226; 長文分析（>2000字）：3 月幣 / 則<br>
+        &#8226; PDF 全文摘要：5 月幣<br>
+        &#8226; 每月免費額度：100 月幣（每月 1 日重置）
+      </div>
+
+      <div class="ai-sub-label">使用紀錄</div>
+      <div class="usage-log" id="usageLog">
+        <div class="usage-log__item">
+          <span class="usage-log__desc">尚無使用紀錄</span>
+        </div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="field">
-    <label>API Key</label>
-    <input type="password" id="byokKey" placeholder="sk-... 或 您的 API Key">
-    <div class="hint">&#9888; 金鑰僅在本次瀏覽階段有效（sessionStorage），關閉分頁後自動清除。測試連線會從瀏覽器直接呼叫第三方 API。</div>
-  </div>
-
-  <div class="field" id="fieldCustomEndpoint" style="display:none;">
-    <label>自訂 API 端點</label>
-    <input type="text" id="byokEndpoint" placeholder="https://your-api.example.com/v1/chat">
-  </div>
-
-  <div class="field">
-    <label>模型</label>
-    <select id="byokModel">
-      <option value="gpt-4o">GPT-4o</option>
-      <option value="gpt-4o-mini">GPT-4o Mini</option>
-      <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-      <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
-      <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-    </select>
-  </div>
-
-  <div class="actions">
-    <button class="btn btn--gold" onclick="saveByok()">儲存設定</button>
-    <button class="btn" onclick="testByok()">測試連線</button>
-    <button class="btn btn--danger" onclick="clearByok()">清除金鑰</button>
-  </div>
-
-  <div id="byokStatus"></div>
-</div>
-
-<!-- Coin Section -->
-<div class="section" id="sectionCoin" style="display:none;">
-  <div class="section-title">月幣系統</div>
-  <div class="section-desc">使用平台提供的 AI 服務，以月幣計費。每月自動補充免費額度。</div>
-  <div id="coinUnavailable" class="section-desc" style="display:none;color:#c9a86a;border:1px solid rgba(201,168,106,.35);border-radius:6px;padding:8px 10px;margin-top:6px;">⚠️ 月幣模式需平台後端代理伺服器；此部署尚未啟用，月幣計費無法使用，請改用上方「BYOK 自帶金鑰」。</div>
-  <script>(function(){var u=window.__AKASHA_API_BASE;if(!u||String(u).indexOf('your-subdomain')>-1){var el=document.getElementById('coinUnavailable');if(el)el.style.display='';}})();</script>
-
-  <div class="coin-display">
-    <div class="coin-display__icon">&#127942;</div>
-    <div class="coin-display__info">
-      <div class="coin-display__balance" id="coinBalance">100</div>
-      <div class="coin-display__label">月幣餘額</div>
+  <div class="ai-estimate-wrap">
+    <div class="panel">
+      <div class="panel__label">用量預估器 · ESTIMATE</div>
+      <div class="ai-card__desc" style="margin-bottom:10px">根據文字長度預估 token 數與費用</div>
+      <div class="panel__field">
+        <span class="panel__field-label">輸入文字長度（字數）</span>
+        <input type="number" id="estimateChars" placeholder="2000" value="2000" oninput="updateEstimate()">
+      </div>
+      <div id="estimateResult" style="font-size:12px;color:var(--text-secondary);margin-top:10px;"></div>
     </div>
   </div>
-
-  <div class="field">
-    <label>費率參考</label>
-    <div style="font-size:11px;color:var(--text-secondary);line-height:1.8;">
-      &#8226; 一般對話：1 月幣 / 則<br>
-      &#8226; 長文分析（>2000字）：3 月幣 / 則<br>
-      &#8226; PDF 全文摘要：5 月幣<br>
-      &#8226; 每月免費額度：100 月幣（每月 1 日重置）
-    </div>
-  </div>
-
-  <div class="section-title" style="margin-top:16px;">使用紀錄</div>
-  <div class="usage-log" id="usageLog">
-    <div class="usage-log__item">
-      <span class="usage-log__desc">尚無使用紀錄</span>
-    </div>
-  </div>
-
-  <div class="actions">
-    <button class="btn" onclick="resetCoins()">重置為免費額度</button>
-  </div>
-</div>
-
-<!-- Estimate Section -->
-<div class="section">
-  <div class="section-title">用量預估器</div>
-  <div class="section-desc">根據文字長度預估 token 數與費用</div>
-
-  <div class="field">
-    <label>輸入文字長度（字數）</label>
-    <input type="number" id="estimateChars" placeholder="2000" value="2000" oninput="updateEstimate()">
-  </div>
-
-  <div id="estimateResult" style="font-size:12px;color:var(--text-secondary);margin-top:8px;"></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -366,10 +345,10 @@ body {
 <script>
 // postMessage type 對照表（本檔為 classic script，file:// 下可運作，禁止 import；
 // 改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
-//   'akasha-apikey-update'(381/448/457)  = MSG_TYPES.APIKEY_UPDATE
-//   'akasha-apikey-request'(389)         = MSG_TYPES.APIKEY_REQUEST
-//   'akasha-apikey-current'(397)         = MSG_TYPES.APIKEY_CURRENT
-//   'akasha-mode-change'(629)            = MSG_TYPES.MODE_CHANGE
+//   'akasha-apikey-update'(fired in saveByok/clearByok/loadSettings) = MSG_TYPES.APIKEY_UPDATE
+//   'akasha-apikey-request'(loadSettings)         = MSG_TYPES.APIKEY_REQUEST
+//   'akasha-apikey-current'(message listener)     = MSG_TYPES.APIKEY_CURRENT
+//   'akasha-mode-change'(message listener)        = MSG_TYPES.MODE_CHANGE
 // 注意：下方 STORAGE_KEY / KEY_SESSION / COIN_KEY 為 localStorage key，非訊息 type，不在本表範圍。
 const STORAGE_KEY = 'akasha-ai-settings';
 const KEY_SESSION = 'akasha-ai-apikey';
@@ -381,10 +360,7 @@ let currentMode = 'byok';
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    if (saved.mode) {
-      currentMode = saved.mode;
-      setMode(saved.mode);
-    }
+    if (saved.mode) currentMode = saved.mode;
     if (saved.provider) document.getElementById('byokProvider').value = saved.provider;
     if (saved.apiKey) {
       document.getElementById('byokKey').value = saved.apiKey;
@@ -396,6 +372,7 @@ function loadSettings() {
     onProviderChange(saved.model);
     updateByokStatus();
   } catch {}
+  setMode(currentMode);
   try { window.parent.postMessage({ type: 'akasha-apikey-request' }, location.origin); } catch {}
   loadCoinBalance();
   loadUsageLog();
@@ -415,10 +392,27 @@ window.addEventListener('message', function(e) {
 
 function setMode(mode) {
   currentMode = mode;
-  document.getElementById('modeByok').classList.toggle('mode-toggle__btn--active', mode === 'byok');
-  document.getElementById('modeCoin').classList.toggle('mode-toggle__btn--active', mode === 'coin');
-  document.getElementById('sectionByok').style.display = mode === 'byok' ? '' : 'none';
-  document.getElementById('sectionCoin').style.display = mode === 'coin' ? '' : 'none';
+
+  document.getElementById('modeByok').classList.toggle('is-active', mode === 'byok');
+  document.getElementById('modeByok').setAttribute('aria-selected', mode === 'byok');
+  document.getElementById('modeCoin').classList.toggle('is-active', mode === 'coin');
+  document.getElementById('modeCoin').setAttribute('aria-selected', mode === 'coin');
+
+  const cardByok = document.getElementById('cardByok');
+  const cardCoin = document.getElementById('cardCoin');
+  cardByok.classList.toggle('is-active', mode === 'byok');
+  cardByok.classList.toggle('panel--brass', mode === 'byok');
+  cardCoin.classList.toggle('is-active', mode === 'coin');
+  cardCoin.classList.toggle('panel--brass', mode === 'coin');
+
+  const byokBadge = document.getElementById('byokBadge');
+  byokBadge.textContent = mode === 'byok' ? '● 使用中' : '備援';
+  byokBadge.classList.toggle('ai-card__badge--on', mode === 'byok');
+  const coinBadge = document.getElementById('coinBadge');
+  coinBadge.textContent = mode === 'coin' ? '● 使用中' : '備援';
+  coinBadge.classList.toggle('ai-card__badge--on', mode === 'coin');
+
+  document.getElementById('deskStatusText').textContent = mode === 'byok' ? 'BYOK 使用中' : '月幣制 使用中';
 
   const settings = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
   settings.mode = mode;
@@ -478,9 +472,9 @@ function updateByokStatus() {
   const el = document.getElementById('byokStatus');
   if (key) {
     const masked = key.slice(0, 7) + '...' + key.slice(-4);
-    el.innerHTML = `<div class="status status--ok">&#9679; 已設定（${masked}）</div>`;
+    el.innerHTML = `<span class="status status--ok">&#9679; 已設定（${masked}）</span>`;
   } else {
-    el.innerHTML = `<div class="status status--none">&#9679; 尚未設定 API Key</div>`;
+    el.innerHTML = `<span class="status status--none">&#9679; 尚未設定 API Key</span>`;
   }
 }
 

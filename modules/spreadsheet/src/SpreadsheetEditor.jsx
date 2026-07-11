@@ -3,6 +3,9 @@ import * as XLSX from "xlsx";
 import { STORAGE_KEY, MSG_TYPES } from "../../../core/export/bridge.js";
 import { payloadToCells } from "../../../core/export/fromPayload.js";
 import { parseDelimitedText, toNumericValue } from "./lib/spreadsheet-utils.js";
+// Design tokens + shared component classes (.deskbar/.btn/.panel/.mh-menu…) —
+// Tabularium 儀器類模組維持深色（不隨殼的淺色模式反轉），見 HANDOFF §4。
+import "../../../assets/styles/shared.css";
 
 const DEFAULT_ROWS = 50;
 const DEFAULT_COLS = 26;
@@ -684,6 +687,42 @@ export default function SpreadsheetEditor() {
     showNotif("已匯出 CSV！");
   };
 
+  // ===== 存書庫（IndexedDB，供其他模組後續開啟）=====
+  const saveToLibrary = async () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      sheets.forEach((sh) => {
+        let maxR = 0, maxC = 0;
+        Object.keys(sh.cells).forEach((id) => {
+          const ref = parseCellRef(id);
+          if (ref) { maxR = Math.max(maxR, ref.r); maxC = Math.max(maxC, ref.c); }
+        });
+        const aoa = [];
+        for (let r = 0; r <= maxR; r++) {
+          const row = [];
+          for (let c = 0; c <= maxC; c++) {
+            row.push(evaluate(sh.cells[cellId(r, c)], sh.cells));
+          }
+          aoa.push(row);
+        }
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), sh.name);
+      });
+      const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      const blob = new Blob([arrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const filename = "試算表_" + new Date().toISOString().slice(0, 10) + ".xlsx";
+      const { saveFileEntry, saveFileBlob } = await import("../../../core/storage.js");
+      const entry = await saveFileEntry({ name: filename, type: "xlsx", size: blob.size });
+      await saveFileBlob(entry.id, blob);
+      showNotif("已存入書庫：" + filename);
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: "akasha-file-opened", entry }, location.origin);
+      }
+    } catch (err) {
+      console.error("Save to library failed:", err);
+      showNotif("存入書庫失敗：" + err.message);
+    }
+  };
+
   // ===== 匯入（xlsx / csv / tsv） =====
   const importFile = () => {
     const input = document.createElement("input");
@@ -780,10 +819,10 @@ export default function SpreadsheetEditor() {
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        fontFamily: "'IBM Plex Sans', 'Noto Sans TC', system-ui, sans-serif",
+        fontFamily: "var(--font-body)",
         fontSize: 13,
-        color: "#1a1a2e",
-        background: "#f0f0f5",
+        color: "var(--text-primary)",
+        background: "var(--hall-bg)",
         overflow: "hidden",
         position: "relative",
       }}
@@ -791,37 +830,23 @@ export default function SpreadsheetEditor() {
       onKeyDown={handleKeyDown}
       onClick={() => setContextMenu(null)}
     >
-      {/* 頂部列 */}
-      <div style={{
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)",
-        padding: "8px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        color: "#e8e8f0",
-        boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="2" width="20" height="20" rx="3" stroke="#4ecca3" strokeWidth="2"/>
-            <line x1="2" y1="9" x2="22" y2="9" stroke="#4ecca3" strokeWidth="1.5"/>
-            <line x1="2" y1="15" x2="22" y2="15" stroke="#4ecca3" strokeWidth="1.5"/>
-            <line x1="9" y1="2" x2="9" y2="22" stroke="#4ecca3" strokeWidth="1.5"/>
-            <line x1="16" y1="2" x2="16" y2="22" stroke="#4ecca3" strokeWidth="1.5"/>
-          </svg>
-          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: "0.5px" }}>試算表</span>
+      {/* 書桌列 — .deskbar：模組唯一 chrome，禁止出現模組名字 */}
+      <header className="deskbar">
+        <div className="desk-status">
+          <span className="desk-dot" style={{ background: "var(--ink-tabularium)" }}></span>
+          <span>{currentId} · {sheet.name}</span>
         </div>
-        <div style={{ flex: 1 }} />
-        <ToolBtn label="匯入檔案" icon="📂" onClick={importFile} />
-        <div style={{ position: "relative" }}>
+        <div className="desk-actions">
+          <button className="btn" onClick={importFile} title="從電腦開啟 XLSX / CSV / TSV 檔案">匯入 XLSX/CSV</button>
           <ExportMenu onCSV={exportCSV} onXLSX={exportXLSX} />
+          <button className="btn btn--gold" onClick={saveToLibrary} title="把目前試算表存進圖書館（IndexedDB），供其他模組開啟">存書庫</button>
         </div>
-      </div>
+      </header>
 
-      {/* 工具列 */}
+      {/* 格式工具列（B/I/U · 對齊 · 字級 · 底色/文字色）*/}
       <div style={{
-        background: "#fff",
-        borderBottom: "1px solid #ddd",
+        background: "var(--navy)",
+        borderBottom: "1px solid var(--navy-line)",
         padding: "4px 12px",
         display: "flex",
         alignItems: "center",
@@ -839,45 +864,49 @@ export default function SpreadsheetEditor() {
         <ToolBtn label="▬" active={currentStyle.align === "center"} onClick={() => updateCellStyle("align", "center")} style={{ width: 30 }} />
         <ToolBtn label="▶" active={currentStyle.align === "right"} onClick={() => updateCellStyle("align", "right")} style={{ width: 30 }} />
         <Divider />
-        <span style={{ fontSize: 11, color: "#888", marginRight: 2 }}>字級</span>
+        <span style={{ fontSize: 11, color: "var(--text-tertiary)", marginRight: 2 }}>字級</span>
         <select value={currentStyle.fontSize} onChange={(e) => updateCellStyle("fontSize", Number(e.target.value))}
-          style={{ border: "1px solid #ddd", borderRadius: 4, padding: "2px 4px", fontSize: 12, background: "#fafafa" }}>
+          style={{ border: "1px solid var(--navy-line)", borderRadius: 4, padding: "2px 4px", fontSize: 12, background: "var(--navy-deep)", color: "var(--text-primary)" }}>
           {[10, 11, 12, 13, 14, 16, 18, 20, 24].map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
         <Divider />
-        <span style={{ fontSize: 11, color: "#888" }}>底色</span>
+        <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>底色</span>
         <input type="color" value={currentStyle.bg || "#ffffff"}
           onChange={(e) => updateCellStyle("bg", e.target.value)}
           style={{ width: 24, height: 24, border: "none", cursor: "pointer", background: "none" }} />
-        <span style={{ fontSize: 11, color: "#888" }}>文字</span>
+        <span style={{ fontSize: 11, color: "var(--text-tertiary)" }}>文字</span>
         <input type="color" value={currentStyle.color || "#000000"}
           onChange={(e) => updateCellStyle("color", e.target.value)}
           style={{ width: 24, height: 24, border: "none", cursor: "pointer", background: "none" }} />
       </div>
 
-      {/* 公式列 */}
+      {/* 公式列（名稱框＋fx）— 進內容區頂，style guide 06 儀器規格 */}
       <div style={{
-        background: "#fff",
-        borderBottom: "1px solid #ddd",
-        padding: "3px 12px",
+        background: "var(--navy)",
+        borderBottom: "1px solid var(--navy-line)",
+        padding: "6px 12px",
         display: "flex",
         alignItems: "center",
         gap: 8,
       }}>
         <div style={{
-          background: "#f0f0f5",
-          border: "1px solid #ccc",
+          background: "var(--navy-deep)",
+          border: "1px solid var(--navy-line)",
           borderRadius: 4,
-          padding: "3px 10px",
+          height: 28,
+          padding: "0 10px",
+          display: "flex",
+          alignItems: "center",
+          fontFamily: "var(--font-mono)",
           fontWeight: 600,
           fontSize: 12,
           minWidth: 50,
-          textAlign: "center",
-          color: "#1a1a2e",
+          justifyContent: "center",
+          color: "var(--ink-tabularium)",
         }}>
           {currentId}
         </div>
-        <span style={{ color: "#4ecca3", fontWeight: 700, fontSize: 14 }}>𝑓𝑥</span>
+        <span style={{ color: "var(--ink-tabularium)", fontWeight: 700, fontSize: 14, fontFamily: "var(--font-serif-en)", fontStyle: "italic" }}>fx</span>
         <input
           ref={formulaRef}
           value={editing ? editValue : formulaBarValue}
@@ -903,12 +932,15 @@ export default function SpreadsheetEditor() {
           }}
           style={{
             flex: 1,
-            border: "1px solid #ddd",
+            height: 28,
+            border: "1px solid var(--navy-line)",
             borderRadius: 4,
-            padding: "4px 8px",
+            padding: "0 10px",
             fontSize: 13,
-            fontFamily: "'IBM Plex Mono', monospace",
+            fontFamily: "var(--font-mono)",
             outline: "none",
+            background: "var(--navy-deep)",
+            color: "var(--text-primary)",
           }}
           placeholder="輸入數值或公式（例如 =SUM(A1:A10)）"
         />
@@ -920,14 +952,14 @@ export default function SpreadsheetEditor() {
           <thead>
             <tr>
               <th style={{
-                width: 45, minWidth: 45, background: "#e8e8f0",
-                border: "1px solid #ccc", position: "sticky", top: 0, left: 0, zIndex: 3,
+                width: 45, minWidth: 45, background: "var(--navy-light)",
+                border: "1px solid var(--navy-line)", position: "sticky", top: 0, left: 0, zIndex: 3,
               }} />
               {Array.from({ length: gridCols }, (_, c) => (
                 <th key={c} style={{
                   width: getColWidth(c), minWidth: getColWidth(c), maxWidth: getColWidth(c),
-                  background: "#e8e8f0", border: "1px solid #ccc", padding: "4px 0",
-                  fontSize: 12, fontWeight: 600, color: "#555",
+                  background: "var(--navy-light)", border: "1px solid var(--navy-line)", padding: "4px 0",
+                  fontSize: 12, fontWeight: 600, color: "var(--ink-tabularium)",
                   position: "sticky", top: 0, zIndex: 2, userSelect: "none",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
@@ -945,8 +977,8 @@ export default function SpreadsheetEditor() {
             {Array.from({ length: gridRows }, (_, r) => (
               <tr key={r}>
                 <td style={{
-                  background: "#e8e8f0", border: "1px solid #ccc", textAlign: "center",
-                  fontSize: 11, color: "#777", fontWeight: 500,
+                  background: "var(--navy-light)", border: "1px solid var(--navy-line)", textAlign: "center",
+                  fontSize: 11, color: "var(--text-tertiary)", fontWeight: 500,
                   position: "sticky", left: 0, zIndex: 1, width: 45, padding: "2px 0",
                 }}>
                   {r + 1}
@@ -968,8 +1000,8 @@ export default function SpreadsheetEditor() {
                       style={{
                         width: getColWidth(c), minWidth: getColWidth(c), maxWidth: getColWidth(c),
                         height: ROW_HEIGHT,
-                        border: sel ? "2px solid #4ecca3" : inRange ? "1px solid #4ecca3" : "1px solid #e0e0e0",
-                        background: inRange && !sel ? "rgba(78,204,163,0.08)" : st.bg || "#fff",
+                        border: sel ? "2px solid var(--ink-tabularium)" : inRange ? "1px solid var(--ink-tabularium)" : "1px solid var(--navy-line)",
+                        background: inRange && !sel ? "rgba(90,138,74,0.14)" : st.bg || "var(--navy)",
                         padding: 0, position: "relative", overflow: "hidden", cursor: "cell",
                       }}
                     >
@@ -983,8 +1015,8 @@ export default function SpreadsheetEditor() {
                             width: "100%", height: "100%", border: "none", outline: "none",
                             padding: "0 4px", fontSize: st.fontSize,
                             fontWeight: st.bold ? 700 : 400, fontStyle: st.italic ? "italic" : "normal",
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            background: "rgba(78,204,163,0.06)", boxSizing: "border-box",
+                            fontFamily: "var(--font-mono)",
+                            background: "rgba(90,138,74,0.12)", color: "var(--text-primary)", boxSizing: "border-box",
                           }}
                           autoFocus
                         />
@@ -993,7 +1025,7 @@ export default function SpreadsheetEditor() {
                           padding: "0 5px", fontSize: st.fontSize,
                           fontWeight: st.bold ? 700 : 400, fontStyle: st.italic ? "italic" : "normal",
                           textDecoration: st.underline ? "underline" : "none", textAlign: st.align,
-                          color: st.color || "#1a1a2e", lineHeight: `${ROW_HEIGHT}px`,
+                          color: st.color || "var(--text-primary)", lineHeight: `${ROW_HEIGHT}px`,
                           whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
                         }}>
                           {getDisplay(id)}
@@ -1010,7 +1042,7 @@ export default function SpreadsheetEditor() {
 
       {/* 工作表分頁 */}
       <div style={{
-        background: "#e8e8f0", borderTop: "1px solid #ccc",
+        background: "var(--navy-light)", borderTop: "1px solid var(--navy-line)",
         padding: "4px 12px", display: "flex", alignItems: "center", gap: 4,
       }}>
         {sheets.map((s, i) => (
@@ -1020,12 +1052,12 @@ export default function SpreadsheetEditor() {
             onDoubleClick={() => renameSheet(i)}
             style={{
               padding: "5px 16px",
-              background: i === activeSheet ? "#fff" : "transparent",
-              border: i === activeSheet ? "1px solid #ccc" : "1px solid transparent",
-              borderBottom: i === activeSheet ? "1px solid #fff" : "1px solid #ccc",
+              background: i === activeSheet ? "var(--navy)" : "transparent",
+              border: i === activeSheet ? "1px solid var(--navy-line)" : "1px solid transparent",
+              borderBottom: i === activeSheet ? "1px solid var(--navy)" : "1px solid var(--navy-line)",
               borderRadius: "6px 6px 0 0", cursor: "pointer",
               fontSize: 12, fontWeight: i === activeSheet ? 600 : 400,
-              color: i === activeSheet ? "#1a1a2e" : "#666", transition: "all 0.15s",
+              color: i === activeSheet ? "var(--ink-tabularium)" : "var(--text-secondary)", transition: "all 0.15s",
             }}
           >
             {s.name}
@@ -1033,33 +1065,32 @@ export default function SpreadsheetEditor() {
         ))}
         <div
           onClick={addSheet}
-          style={{ padding: "4px 10px", cursor: "pointer", fontSize: 16, color: "#888", borderRadius: 4, lineHeight: 1 }}
-          onMouseEnter={(e) => e.target.style.background = "#ddd"}
+          style={{ padding: "4px 10px", cursor: "pointer", fontSize: 16, color: "var(--text-tertiary)", borderRadius: 4, lineHeight: 1 }}
+          onMouseEnter={(e) => e.target.style.background = "var(--navy-hover)"}
           onMouseLeave={(e) => e.target.style.background = "transparent"}
         >
           +
         </div>
         <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 11, color: "#999" }}>
-          {Object.keys(cells).filter((k) => cells[k] !== "").length} 個儲存格 · {sheet.name}
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--text-tertiary)" }}>
+          {Object.keys(cells).filter((k) => cells[k] !== "").length} 個儲存格 · {sheet.name} · 公式引擎：SUM · AVERAGE · IF · COUNT · MIN · MAX
         </span>
       </div>
 
       {/* 右鍵選單 */}
       {contextMenu && (
-        <div style={{
-          position: "fixed", left: contextMenu.x, top: contextMenu.y,
-          background: "#fff", border: "1px solid #ddd", borderRadius: 8,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.12)", zIndex: 100, padding: "4px 0", minWidth: 180,
+        <div className="mh-menu open" style={{
+          position: "fixed", left: contextMenu.x, top: contextMenu.y, right: "auto",
+          minWidth: 190,
         }}>
           <CtxItem label="在上方插入列" onClick={() => insertRow(contextMenu.r)} />
           <CtxItem label="在下方插入列" onClick={() => insertRow(contextMenu.r + 1)} />
           <CtxItem label="刪除此列" onClick={() => deleteRow(contextMenu.r)} />
-          <div style={{ borderTop: "1px solid #eee", margin: "4px 0" }} />
+          <hr className="mh-menu-hr" />
           <CtxItem label="在左側插入欄" onClick={() => insertCol(contextMenu.c)} />
           <CtxItem label="在右側插入欄" onClick={() => insertCol(contextMenu.c + 1)} />
           <CtxItem label="刪除此欄" onClick={() => deleteCol(contextMenu.c)} />
-          <div style={{ borderTop: "1px solid #eee", margin: "4px 0" }} />
+          <hr className="mh-menu-hr" />
           <CtxItem label="清除儲存格" onClick={() => {
             const id = cellId(contextMenu.r, contextMenu.c);
             const newCells = { ...cells };
@@ -1070,27 +1101,24 @@ export default function SpreadsheetEditor() {
         </div>
       )}
 
-      {/* 通知 */}
+      {/* 通知／toast — 沿用 shared.css .toast 語彙（bottom-center，模組既有位置） */}
       {notification && (
         <div style={{
           position: "fixed", bottom: 60, left: "50%", transform: "translateX(-50%)",
-          background: "#1a1a2e", color: "#4ecca3", padding: "8px 20px", borderRadius: 8,
-          fontSize: 13, fontWeight: 500, boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-          zIndex: 200, animation: "fadeIn 0.2s ease",
+          display: "flex", alignItems: "center", gap: 9,
+          background: "var(--navy-light)", border: "1px solid var(--gold-line)",
+          color: "var(--text-primary)", padding: "0 16px", height: 34, borderRadius: "var(--r-soft)",
+          fontSize: 13, fontWeight: 500, boxShadow: "0 8px 24px -10px rgba(0,0,0,0.7)",
+          zIndex: 200, animation: "tf-ss-fadein 0.2s ease",
         }}>
+          <span className="toast__dot"></span>
           {notification}
         </div>
       )}
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap');
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        * { box-sizing: border-box; }
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: #f0f0f5; }
-        ::-webkit-scrollbar-thumb { background: #c0c0cc; border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a0a0b0; }
-        td:hover { background: rgba(78,204,163,0.04) !important; }
+        @keyframes tf-ss-fadein { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        td:hover { background: rgba(90,138,74,0.08) !important; }
       `}</style>
     </div>
   );
@@ -1099,14 +1127,10 @@ export default function SpreadsheetEditor() {
 function ExportMenu({ onCSV, onXLSX }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ position: "relative" }}>
-      <ToolBtn label="匯出 ▾" icon="💾" onClick={() => setOpen(!open)} />
+    <div className="mh-more">
+      <button className="btn" onClick={() => setOpen(!open)} title="將試算表匯出為 CSV 或 XLSX">匯出 ▾</button>
       {open && (
-        <div style={{
-          position: "absolute", top: "100%", right: 0, marginTop: 4,
-          background: "#fff", border: "1px solid #ddd", borderRadius: 8,
-          boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, padding: "4px 0", minWidth: 150,
-        }}>
+        <div className={"mh-menu" + (open ? " open" : "")}>
           <CtxItem label="匯出為 .xlsx" onClick={() => { onXLSX(); setOpen(false); }} />
           <CtxItem label="匯出為 .csv" onClick={() => { onCSV(); setOpen(false); }} />
         </div>
@@ -1116,19 +1140,18 @@ function ExportMenu({ onCSV, onXLSX }) {
 }
 
 function ToolBtn({ label, icon, onClick, active, style = {} }) {
-  const [hovered, setHovered] = useState(false);
   return (
     <button
+      className="btn btn--ghost"
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex", alignItems: "center", gap: 4,
-        padding: "4px 8px", border: active ? "1px solid #4ecca3" : "1px solid transparent",
+        height: 26, padding: "0 8px",
+        border: active ? "1px solid var(--ink-tabularium)" : "1px solid transparent",
         borderRadius: 5,
-        background: active ? "rgba(78,204,163,0.12)" : hovered ? "rgba(0,0,0,0.06)" : "transparent",
-        cursor: "pointer", fontSize: 12, color: active ? "#1a7a5a" : "#444",
-        fontWeight: active ? 600 : 400, transition: "all 0.15s", ...style,
+        background: active ? "rgba(90,138,74,0.16)" : "transparent",
+        fontSize: 12, color: active ? "var(--ink-tabularium)" : "var(--text-secondary)",
+        fontWeight: active ? 600 : 400, ...style,
       }}
     >
       {icon && <span>{icon}</span>}
@@ -1138,23 +1161,13 @@ function ToolBtn({ label, icon, onClick, active, style = {} }) {
 }
 
 function Divider() {
-  return <div style={{ width: 1, height: 20, background: "#ddd", margin: "0 4px" }} />;
+  return <div style={{ width: 1, height: 20, background: "var(--navy-line)", margin: "0 4px" }} />;
 }
 
 function CtxItem({ label, onClick }) {
-  const [hovered, setHovered] = useState(false);
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: "7px 16px", fontSize: 13, cursor: "pointer",
-        background: hovered ? "#f0f0f5" : "transparent",
-        color: "#333", transition: "background 0.1s",
-      }}
-    >
+    <button className="btn" onClick={onClick} style={{ width: "100%", justifyContent: "flex-start" }}>
       {label}
-    </div>
+    </button>
   );
 }

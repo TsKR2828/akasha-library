@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Mockup 01 — 大廳 Atrium</title>
+<link rel="stylesheet" href="mock-shared.css">
+<style>
+  .dash { overflow-y: auto; background: var(--navy); }
+  .dash__inner { max-width: 1020px; margin: 0 auto; padding: 44px 32px 90px; }
+
+  /* Hero：問候 */
+  .dash-hero { text-align: center; margin-bottom: 48px; }
+  .dash-hero__en { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.32em; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 12px; }
+  .dash-hero__greet { font-family: var(--serif-zh); font-weight: 900; font-size: 27px; letter-spacing: 2px; color: var(--cream); }
+  .dash-hero__time { font-family: var(--serif-en); font-style: italic; font-size: 14px; color: var(--gold-dim); margin-top: 8px; }
+  .brass-rule { height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim) 30%, var(--gold) 50%, var(--gold-dim) 70%, transparent); opacity: 0.45; max-width: 300px; margin: 26px auto 0; }
+
+  /* 卡片目錄：五廳 */
+  .halls-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 14px; display: flex; align-items: center; gap: 12px; }
+  .halls-label::after { content: ''; flex: 1; height: 1px; background: var(--navy-line); }
+  .halls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 52px; }
+  .hall {
+    position: relative; padding: 20px 20px 16px;
+    background: var(--navy-light); border: 1px solid var(--navy-line); border-radius: var(--r-card);
+    cursor: pointer; transition: transform 180ms, box-shadow 180ms, border-color 180ms;
+    overflow: hidden;
+  }
+  .hall:hover { transform: translateY(-2px); border-color: var(--gold-line); box-shadow: 0 14px 30px -18px rgba(0,0,0,0.8); }
+  .hall::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--zone-ink); opacity: 0.8; }
+  .hall__num { position: absolute; top: 14px; right: 16px; font-family: var(--serif-en); font-size: 15px; color: var(--text-tertiary); font-style: italic; }
+  .hall__zh { font-family: var(--serif-zh); font-weight: 700; font-size: 16.5px; letter-spacing: 1px; color: var(--cream); margin-bottom: 2px; display: flex; align-items: center; gap: 9px; }
+  .hall__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--zone-ink); }
+  .hall__latin { font-family: var(--serif-en); font-style: italic; font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 12px; }
+  .hall__desc { font-size: 12px; line-height: 1.8; color: var(--text-secondary); }
+  .hall__tools { margin-top: 12px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .hall__tool { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.08em; padding: 3px 8px; border: 1px solid var(--navy-line); border-radius: 2px; color: var(--text-tertiary); }
+  .hall__tool:hover { color: var(--cream); border-color: var(--gold-line); }
+
+  /* 最近檔案：帳簿 */
+  .ledger { border: 1px solid var(--navy-line); border-radius: var(--r-card); overflow: hidden; }
+  .ledger table { width: 100%; border-collapse: collapse; }
+  .ledger th { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); text-align: left; padding: 11px 18px; border-bottom: 1px solid var(--gold-line); background: rgba(201,168,106,0.03); }
+  .ledger td { padding: 11px 18px; border-bottom: 1px solid var(--navy-line); font-size: 12.5px; color: var(--text-secondary); }
+  .ledger tr:last-child td { border-bottom: none; }
+  .ledger tr:hover td { background: rgba(255,255,255,0.02); color: var(--cream); cursor: pointer; }
+  .ledger .no { font-family: var(--serif-en); font-style: italic; color: var(--text-tertiary); width: 40px; }
+  .ledger .fmt { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; }
+  .ledger .fmt span { padding: 2px 7px; border: 1px solid var(--navy-line); border-radius: 2px; }
+  .ledger .when { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+  .ledger .zone-mark { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <!-- 上列：全域 -->
+  <div class="topbar">
+    <div class="topbar__brand">
+      <span class="topbar__logo">AKASHA</span>
+      <span class="topbar__motto">bibliotheca nocturna</span>
+    </div>
+    <div class="topbar__spacer"></div>
+    <div class="topbar__search">⌕ 搜尋整座圖書館…<span style="margin-left:auto;opacity:.5">⌘K</span></div>
+    <button class="topbar__icon" title="匯入檔案">⬆</button>
+    <button class="topbar__icon" title="新增檔案">✚</button>
+    <button class="topbar__icon" title="夜燈">☾</button>
+    <button class="topbar__librarian">✦ 召喚圖書館員</button>
+  </div>
+
+  <div class="frame__body">
+    <!-- 側欄 -->
+    <div class="sidebar">
+      <div class="side-label">Atrium · 大廳</div>
+      <div class="side-item is-active" style="--zone-ink:#c9a86a"><span class="side-item__dot"></span>總覽大廳<span class="side-item__latin">Atrium</span></div>
+      <div class="side-label">Halls · 五廳</div>
+      <div class="side-item" style="--zone-ink:#4a80a8"><span class="side-item__dot"></span>Code &amp; Data<span class="side-item__latin">MSS</span></div>
+      <div class="side-item" style="--zone-ink:#c8962e"><span class="side-item__dot"></span>PDF 閱讀器<span class="side-item__latin">LECT</span></div>
+      <div class="side-item" style="--zone-ink:#5a8a4a"><span class="side-item__dot"></span>Table Forge<span class="side-item__latin">TAB</span></div>
+      <div class="side-item" style="--zone-ink:#5a8a4a"><span class="side-item__dot"></span>試算表<span class="side-item__latin">TAB</span></div>
+      <div class="side-item" style="--zone-ink:#b84058"><span class="side-item__dot"></span>劇本工房<span class="side-item__latin">DRAM</span></div>
+      <div class="side-item" style="--zone-ink:#d4763a"><span class="side-item__dot"></span>每日館報<span class="side-item__latin">GAZ</span></div>
+      <div class="side-item" style="--zone-ink:#7a5898"><span class="side-item__dot"></span>談心專區<span class="side-item__latin">INT</span></div>
+      <div class="side-label">Collections · 館藏</div>
+      <div class="side-item"><span class="side-item__dot" style="background:var(--text-tertiary)"></span>公共書庫<span class="side-item__latin">PUB</span></div>
+      <div class="side-item"><span class="side-item__dot" style="background:var(--text-tertiary)"></span>AI 設定<span class="side-item__latin">CFG</span></div>
+    </div>
+
+    <!-- 舞台：大廳不需要刊頭與書桌列，直接是大廳 -->
+    <div class="dash" style="grid-column: 2;">
+      <div class="dash__inner">
+        <div class="dash-hero">
+          <div class="dash-hero__en">Akasha Library · Personal Collection</div>
+          <div class="dash-hero__greet">夜深了，月月。圖書館還亮著。</div>
+          <div class="dash-hero__time">7 月 6 日 · 星期一 · 亥時 · 館內藏書 42 冊</div>
+          <div class="brass-rule"></div>
+        </div>
+
+        <div class="halls-label">Card Catalogue · 五廳目錄</div>
+        <div class="halls">
+          <div class="hall" style="--zone-ink:#4a80a8">
+            <span class="hall__num">I</span>
+            <div class="hall__zh"><span class="hall__dot"></span>手稿廳</div>
+            <div class="hall__latin">Manuscripta</div>
+            <div class="hall__desc">Code &amp; Data 閱讀與編輯。Markdown、JSON、程式碼的家。</div>
+            <div class="hall__tools"><span class="hall__tool">.md</span><span class="hall__tool">.py</span><span class="hall__tool">.json</span><span class="hall__tool">.docx</span></div>
+          </div>
+          <div class="hall" style="--zone-ink:#c8962e">
+            <span class="hall__num">II</span>
+            <div class="hall__zh"><span class="hall__dot"></span>閱讀廳</div>
+            <div class="hall__latin">Lectorium</div>
+            <div class="hall__desc">PDF 閱讀、書籤、切割、截圖與摘錄。</div>
+            <div class="hall__tools"><span class="hall__tool">.pdf</span><span class="hall__tool">書籤</span><span class="hall__tool">切割</span></div>
+          </div>
+          <div class="hall" style="--zone-ink:#5a8a4a">
+            <span class="hall__num">III</span>
+            <div class="hall__zh"><span class="hall__dot"></span>表籍廳</div>
+            <div class="hall__latin">Tabularium</div>
+            <div class="hall__desc">Table Forge 表格鍛造與試算表雙器。</div>
+            <div class="hall__tools"><span class="hall__tool">.csv</span><span class="hall__tool">.xlsx</span><span class="hall__tool">公式</span></div>
+          </div>
+          <div class="hall" style="--zone-ink:#b84058">
+            <span class="hall__num">IV</span>
+            <div class="hall__zh"><span class="hall__dot"></span>劇本工房</div>
+            <div class="hall__latin">Dramaturgica</div>
+            <div class="hall__desc">速寫、結構化編輯、語音朗讀、配樂標記。</div>
+            <div class="hall__tools"><span class="hall__tool">速寫</span><span class="hall__tool">語音</span><span class="hall__tool">BGM</span></div>
+          </div>
+          <div class="hall" style="--zone-ink:#d4763a">
+            <span class="hall__num">V</span>
+            <div class="hall__zh"><span class="hall__dot"></span>館報室</div>
+            <div class="hall__latin">Gazette</div>
+            <div class="hall__desc">每日館報自動送達，可朗讀、可存檔。</div>
+            <div class="hall__tools"><span class="hall__tool">RSS</span><span class="hall__tool">朗讀</span><span class="hall__tool">歷史</span></div>
+          </div>
+          <div class="hall" style="--zone-ink:#7a5898">
+            <span class="hall__num">VI</span>
+            <div class="hall__zh"><span class="hall__dot"></span>談心室</div>
+            <div class="hall__latin">Intimarium</div>
+            <div class="hall__desc">陪伴型文字空間，手札與不留痕模式。</div>
+            <div class="hall__tools"><span class="hall__tool">手札</span><span class="hall__tool">不留痕</span></div>
+          </div>
+        </div>
+
+        <div class="halls-label">Recent Ledger · 最近經手</div>
+        <div class="ledger">
+          <table>
+            <tr><th style="width:40px">№</th><th>書目</th><th>格式</th><th>經手時間</th><th style="width:36px"></th></tr>
+            <tr><td class="no">i</td><td>seo-pipeline-notes.md</td><td class="fmt"><span>MD</span></td><td class="when">今晚 22:14</td><td><span class="zone-mark" style="background:#4a80a8"></span></td></tr>
+            <tr><td class="no">ii</td><td>羅恩格林・第二幕（劇本）</td><td class="fmt"><span>SCRIPT</span></td><td class="when">昨天 01:30</td><td><span class="zone-mark" style="background:#b84058"></span></td></tr>
+            <tr><td class="no">iii</td><td>Whisper 配方測試報告.pdf</td><td class="fmt"><span>PDF</span></td><td class="when">6/28</td><td><span class="zone-mark" style="background:#c8962e"></span></td></tr>
+            <tr><td class="no">iv</td><td>關鍵字排名追蹤.xlsx</td><td class="fmt"><span>XLSX</span></td><td class="when">6/25</td><td><span class="zone-mark" style="background:#5a8a4a"></span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

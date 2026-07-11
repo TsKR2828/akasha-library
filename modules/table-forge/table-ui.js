@@ -349,9 +349,16 @@ $btnExportJson.addEventListener('click', () => { currentExportFormat = 'json'; r
 $btnExportCsv.addEventListener('click', () => { currentExportFormat = 'csv'; refreshExportPreview(); highlightExportBtn(); });
 
 function highlightExportBtn() {
-  [$btnExportMd, $btnExportJson, $btnExportCsv, $btnDiff].forEach(b => b.classList.remove('btn--gold'));
-  const map = { markdown: $btnExportMd, json: $btnExportJson, csv: $btnExportCsv, diff: $btnDiff };
-  map[currentExportFormat]?.classList.add('btn--gold');
+  // MD/JSON/CSV live inside the .seg tab group → 選中態 = is-active（見 shared.css seg 規格）
+  [$btnExportMd, $btnExportJson, $btnExportCsv].forEach(b => b.classList.remove('is-active'));
+  // Diff is its own deskbar button, outside the seg group → 選中態 = btn--gold
+  $btnDiff.classList.remove('btn--gold');
+  const segMap = { markdown: $btnExportMd, json: $btnExportJson, csv: $btnExportCsv };
+  if (segMap[currentExportFormat]) {
+    segMap[currentExportFormat].classList.add('is-active');
+  } else if (currentExportFormat === 'diff') {
+    $btnDiff.classList.add('btn--gold');
+  }
 }
 
 function refreshExportPreview() {
@@ -556,19 +563,11 @@ window.addEventListener('message', (e) => {
   }
 });
 
-// Dark/light mode sync from App Shell
-(function() {
-  try {
-    var parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
-    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
-  } catch(e) {}
-})();
-window.addEventListener('message', function(e) {
-  if (e.origin !== location.origin) return;
-  if (e.data?.type === MSG_TYPES.MODE_CHANGE) {
-    document.documentElement.setAttribute('data-mode', e.data.mode);
-  }
-});
+// Tabularium instruments stay dark regardless of shell mode (HANDOFF §4:
+// "both stay dark"). Table Forge no longer mirrors the shell's data-mode —
+// pin to dark so it matches the spreadsheet, which never had a mode-sync
+// listener to begin with. Do not re-add a data-mode sync here.
+document.documentElement.setAttribute('data-mode', 'dark');
 
 // --- Init ---
 

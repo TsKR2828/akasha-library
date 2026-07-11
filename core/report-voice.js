@@ -70,9 +70,10 @@ export function reportToVoiceTasks(report, opts = {}) {
         }
         task(line, 'calm');
 
-        // Item summary
-        if (readSummary && item.summary) {
-          task(item.summary, 'calm');
+        // Item summary — rss-news 條目附 TTS 專用稿（item.voice），優先於顯示用 summary
+        const spoken = item.voice || item.summary;
+        if (readSummary && spoken) {
+          task(spoken, 'calm');
         }
       }
     }

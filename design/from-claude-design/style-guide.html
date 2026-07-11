@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&amp;family=Noto+Serif+TC:wght@400;500;600;700;900&amp;family=JetBrains+Mono:wght@400;500&amp;family=Sorts+Mill+Goudy:ital@0;1&amp;display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#181d28; --navy-deep:#11151d; --navy-light:#232a37; --navy-hover:#2e3645; --navy-line:#313a4b;
+  --gold:#c9a86a; --gold-bright:#e3c486; --gold-dim:#a08550; --gold-glow:rgba(201,168,106,0.14); --gold-line:rgba(201,168,106,0.22);
+  --cream:#f1ead6; --text-primary:#ece5cf; --text-secondary:#9aa1ad; --text-tertiary:#646b78;
+  --danger:#c4604f; --success:#6aae7f;
+  --page-bg:#FAF8F3; --page-card:#FFFFFF; --page-old:#F3EDE0; --page-ink:#1C1610; --page-ink-mid:#3E352A; --page-pencil:#8A7A66;
+  --page-border:#E8E3DA; --page-old-border:#E0D6C2; --page-line:rgba(0,0,0,0.035); --page-margin:rgba(212,118,58,0.13);
+  --ink-atrium:#C9A86A; --ink-manuscripta:#4A80A8; --ink-lectorium:#C8962E; --ink-tabularium:#5A8A4A; --ink-dramaturgica:#B84058; --ink-gazette:#D4763A; --ink-intimarium:#7A5898;
+  --pt-yellow:#FFF8DC; --pt-blue:#E5F0FA; --pt-lavender:#F0E8F5;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--navy-deep);color:var(--text-primary);font-family:'Noto Serif TC',serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--gold)} a:hover{color:var(--gold-bright)}
+@keyframes breathe{0%,100%{opacity:.35}50%{opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:var(--navy-deep);padding:44px 40px 80px">
+  <div style="max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:44px">
+
+    <!-- 封面 -->
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.3em;color:var(--gold-dim)">AKASHA LIBRARY · DESIGN SPEC v2 · 2026-07</div>
+      <h1 style="margin:10px 0 0;font-family:'Noto Serif TC',serif;font-size:32px;font-weight:700;color:var(--cream);letter-spacing:.04em">元件規格書 <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:var(--gold);font-weight:400">The Midnight Study &amp; The Open Page</span></h1>
+      <p style="margin:12px 0 0;font-size:13.5px;color:var(--text-secondary);line-height:2;max-width:640px">兩種材質：<b style="color:var(--cream)">書房（深）</b>＝殼與儀器類模組；<b style="color:var(--cream)">紙頁（亮）</b>＝一切閱讀與書寫的內容面。紙頁不隨深淺模式反轉——燈再暗，紙永遠是亮的。權威 token：<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">design/styles/tokens.css</span></p>
+      <div style="height:1px;background:linear-gradient(90deg,transparent 0%,var(--gold-dim) 15%,var(--gold) 50%,var(--gold-dim) 85%,transparent 100%);opacity:.5;margin-top:24px"></div>
+    </div>
+
+    <!-- 01 標題契約 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">01</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">標題契約 · 全站固定三層</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">the title covenant</span></div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+        <div style="border:1px solid var(--navy-line);border-radius:6px;overflow:hidden">
+          <div style="height:52px;background:var(--navy-deep);border-bottom:1px solid var(--gold-line);display:flex;align-items:center;padding:0 16px;gap:10px"><span style="font-size:12px;color:var(--cream)">① 上列 TOPBAR</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">52px · 殼 · 品牌＋全域搜尋＋匯入/新增/夜燈＋召喚圖書館員</span></div>
+          <div style="background:var(--navy);padding:14px 16px 12px">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--text-tertiary)">阿卡夏圖書館 / 卷 Ⅱ · <span style="color:var(--ink-manuscripta)">MANUSCRIPTA</span></div>
+            <div style="display:flex;align-items:baseline;gap:12px;margin-top:4px"><span style="font-size:19px;font-weight:700;color:var(--cream)">② 刊頭 MASTHEAD</span><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--ink-manuscripta)">Manuscripta</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">殼 · 全站唯一的標題</span></div>
+            <div style="height:2px;width:56px;background:var(--ink-manuscripta);margin-top:10px"></div>
+          </div>
+          <div style="height:44px;background:var(--navy);border-top:1px solid var(--navy-line);display:flex;align-items:center;gap:10px;padding:0 16px"><span style="font-size:12px;color:var(--cream)">③ 書桌列 DESKBAR</span><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">44px · 模組唯一 chrome · 左＝狀態、右＝動作 · 禁止出現模組名字</span></div>
+          <div style="height:56px;background:var(--page-bg);display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--page-pencil)">內容區（iframe）— 模組內不得再畫任何標題列</span></div>
+        </div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:2.1;color:var(--text-secondary)">
+          <span style="color:var(--gold-dim);letter-spacing:.2em">SPEC</span><br>
+          上列高 <b style="color:var(--cream)">52px</b> · padding 0 20px<br>
+          刊頭 padding <b style="color:var(--cream)">16 28 0</b><br>
+          麵包屑 mono <b style="color:var(--cream)">9px</b> ls .22em<br>
+          中文標題 <b style="color:var(--cream)">23px / 700</b> Noto Serif TC<br>
+          拉丁名 <b style="color:var(--cream)">16px italic</b> Cormorant · 廳墨色<br>
+          墨色底線 <b style="color:var(--cream)">2 × 58px</b><br>
+          書桌列高 <b style="color:var(--cream)">44px</b> · padding 0 28px · gap 8<br>
+          狀態字 mono <b style="color:var(--cream)">10.5px</b> ＋ 5px 墨色圓點
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 墨色 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">02</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">七廳墨色 Zone Inks</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">one ink per hall</span></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px">
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#C9A86A"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">大廳</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#C9A86A<br>ATRIUM</div></div></div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#4A80A8"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">Code&amp;Data</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#4A80A8<br>MANUSCRIPTA</div></div></div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#C8962E"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">PDF</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#C8962E<br>LECTORIUM</div></div></div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#5A8A4A"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">Table/試算</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#5A8A4A<br>TABULARIUM</div></div></div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#B84058"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">劇本工房</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#B84058<br>DRAMATURGICA</div></div></div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#D4763A"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">每日館報</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#D4763A<br>GAZETTE</div></div></div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;overflow:hidden"><div style="height:44px;background:#7A5898"></div><div style="padding:9px 11px"><div style="font-size:12px;color:var(--text-primary)">談心專區</div><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary);margin-top:2px">#7A5898<br>INTIMARIUM</div></div></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);margin-top:10px;line-height:1.9">用途（固定四處）：側欄圓點 6px · 麵包屑尾字 · 刊頭底線 2×58 · 模組內強調色。深淺模式同值，墨不換色。AI 設定與公共書庫沿用黃銅。</div>
+    </div>
+
+    <!-- 03 字級 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">03</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">字的階級</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">type hierarchy</span></div>
+      <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:4px 22px">
+        <div style="display:flex;align-items:baseline;gap:18px;padding:14px 0;border-bottom:1px solid var(--navy-line)"><span style="font-size:23px;font-weight:700;color:var(--cream);flex:1">刊頭標題二十三</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">Noto Serif TC 700 · 23px · 只出現在刊頭</span></div>
+        <div style="display:flex;align-items:baseline;gap:18px;padding:14px 0;border-bottom:1px solid var(--navy-line)"><span style="font-size:16px;font-weight:600;color:var(--text-primary);flex:1">區段標題十六</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">Noto Serif TC 600 · 15–16px · 面板/卡片標題</span></div>
+        <div style="display:flex;align-items:baseline;gap:18px;padding:14px 0;border-bottom:1px solid var(--navy-line)"><span style="font-size:14.5px;color:var(--text-primary);flex:1">紙頁正文十四點五，行高 32px 貼齊橫線格。</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">Noto Serif TC 400 · 14.5px / lh 32px · 紙頁正文</span></div>
+        <div style="display:flex;align-items:baseline;gap:18px;padding:14px 0;border-bottom:1px solid var(--navy-line)"><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:16px;color:var(--gold);flex:1">Latin hall names &amp; ornaments</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">Cormorant Garamond italic · 拉丁裝飾層</span></div>
+        <div style="display:flex;align-items:baseline;gap:18px;padding:14px 0;border-bottom:1px solid var(--navy-line)"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--text-secondary);flex:1">STATUS · 功能字永遠 MONO 小字眉</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">JetBrains Mono · 8.5–10.5px · ls .14–.28em</span></div>
+        <div style="display:flex;align-items:baseline;gap:18px;padding:14px 0"><span style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:16px;color:var(--gold-dim);flex:1">↳ handwriting, only for the human touch</span><span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary);text-align:right">Sorts Mill Goudy italic · 只給眉批/便利貼/藏書章日期</span></div>
+      </div>
+    </div>
+
+    <!-- 04 按鈕 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">04</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">按鈕 · 一套四種，不再漂移</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">.btn — one family</span></div>
+      <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1" style-hover="border-color:var(--gold-dim);background:var(--navy-hover)">預設 .btn</button>
+            <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;background:var(--gold-glow);border:1px solid var(--gold-dim);border-radius:4px;color:var(--gold);font-size:12px;line-height:1" style-hover="background:rgba(201,168,106,0.24);border-color:var(--gold)">主要 .btn--gold</button>
+            <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:transparent;border:1px solid rgba(196,96,79,.35);border-radius:4px;color:var(--danger);font-size:12px;line-height:1" style-hover="background:rgba(196,96,79,.12);border-color:var(--danger)">危險 .btn--danger</button>
+            <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:transparent;border:1px solid transparent;border-radius:4px;color:var(--text-secondary);font-size:12px;line-height:1" style-hover="background:var(--navy-light);color:var(--text-primary)">幽靈 .btn--ghost</button>
+            <button disabled style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1;opacity:.45;cursor:not-allowed">停用</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <span style="display:inline-flex;gap:2px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;padding:2px">
+              <button style="height:24px;padding:0 12px;border:none;border-radius:3px;background:rgba(184,64,88,.16);color:#d98a9a;font-size:11.5px;line-height:1;box-shadow:inset 0 0 0 1px rgba(184,64,88,.45)">速寫</button>
+              <button style="height:24px;padding:0 12px;border:none;border-radius:3px;background:transparent;color:var(--text-secondary);font-size:11.5px;line-height:1">搜尋</button>
+              <button style="height:24px;padding:0 12px;border:none;border-radius:3px;background:transparent;color:var(--text-secondary);font-size:11.5px;line-height:1">編輯</button>
+            </span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:var(--text-tertiary)">seg 分段切換 · 24px 內鍵 · 選中＝墨色 16% 底＋1px 內框</span>
+          </div>
+          <div style="position:relative;align-self:flex-start">
+            <button style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:4px;color:var(--text-primary);font-size:12px;line-height:1">更多 ▾</button>
+            <div style="margin-top:6px;min-width:220px;display:flex;flex-direction:column;gap:1px;padding:6px;background:var(--navy-light);border:1px solid var(--navy-line);border-radius:6px;box-shadow:0 18px 40px -20px rgba(0,0,0,.8)">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.2em;color:var(--gold-dim);padding:6px 9px 3px">分組標籤</div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:3px;padding:6px 9px;font-size:12px;color:var(--text-primary);cursor:pointer" style-hover="background:var(--navy-hover)">選單項<span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)">⌘Z</span></div>
+              <div style="display:flex;align-items:center;gap:8px;border-radius:3px;padding:6px 9px;font-size:12px;color:var(--text-primary);cursor:pointer" style-hover="background:var(--navy-hover)">溢出的功能收在這，不消失</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:2.1;color:var(--text-secondary)">
+          <span style="color:var(--gold-dim);letter-spacing:.2em">SPEC</span><br>
+          書桌列內高 <b style="color:var(--cream)">28px</b>；紙頁上高 <b style="color:var(--cream)">30px</b><br>
+          padding <b style="color:var(--cream)">0 10px</b>（gold 0 12px）<br>
+          字 <b style="color:var(--cream)">12px</b> serif · 快捷鍵 mono 9px<br>
+          radius <b style="color:var(--cream)">4px</b> · gap <b style="color:var(--cream)">8px</b><br>
+          hover＝金框＋navy-hover 底<br>
+          選單 min-width <b style="color:var(--cream)">238px</b> · 項高 28px<br>
+          舊名 .btn-gold 一律改 <b style="color:var(--cream)">.btn--gold</b>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 紙頁解剖 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">05</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">紙頁語言 · 攤開的一頁</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">the open page, from Charta</span></div>
+      <div style="background:var(--page-bg);border-radius:6px;padding:26px;display:grid;grid-template-columns:1fr 268px;gap:22px;align-items:start">
+        <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 12px rgba(0,0,0,.06);background-image:repeating-linear-gradient(transparent,transparent 31px,var(--page-line) 31px,var(--page-line) 32px);background-position:0 14px;padding:34px 38px 30px 82px;position:relative">
+          <div style="position:absolute;top:0;bottom:0;left:54px;width:1px;background:var(--page-margin)"></div>
+          <div style="position:absolute;top:8px;right:12px;font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--page-pencil)">notebook：白紙＋32px 橫線＋左紅邊 @54px</div>
+          <h3 style="margin:0 0 16px;font-size:19px;font-weight:700;color:var(--page-ink);line-height:32px">正文永遠襯線</h3>
+          <p style="margin:0 0 14px;font-size:14.5px;line-height:32px;color:var(--page-ink-mid)">內文 Noto Serif TC 14.5px，行高鎖 32px 貼齊格線。重點用<span style="background:rgba(220,190,90,.25);padding:0 3px">螢光黃 .hl</span>或<span style="background:rgba(212,118,58,.12);padding:0 3px">胡蘿蔔 .hl--carrot</span>。</p>
+          <div style="border-left:2px solid var(--ink-manuscripta);padding:5px 0 5px 14px;margin:18px 0;transform:rotate(-.3deg)"><span style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:16px;color:var(--ink-manuscripta)">↳ margin-note 旁註：手寫體＋廳墨色，AI 眉批專用。</span></div>
+          <div style="background:var(--page-old);border:1px solid var(--page-old-border);border-left:3px solid var(--page-ink);padding:12px 16px;margin:18px 0;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.9;color:var(--page-ink-mid)">code = "舊紙標本" <span style="color:var(--page-pencil)"># F3EDE0 底＋左墨條 3px</span></div>
+          <div style="display:flex;height:8px;margin:20px 0;overflow:hidden"><span style="flex:1;background:var(--ink-manuscripta);opacity:.3"></span><span style="flex:1;background:var(--ink-atrium);opacity:.3"></span></div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--page-pencil)">↑ washi 紙膠帶分隔：8px 高 · 兩色 · 30% 透明</div>
+          <div style="display:flex;flex-direction:column;align-items:center;margin:26px 0 0;transform:rotate(-6deg)">
+            <div style="width:64px;height:64px;border-radius:50%;border:2px solid var(--ink-manuscripta);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;opacity:.75"><span style="font-family:'JetBrains Mono',monospace;font-size:6px;letter-spacing:.14em;color:var(--ink-manuscripta)">EX LIBRIS</span><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:12px;color:var(--ink-manuscripta)">Akasha</span></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--page-pencil);margin-top:7px;transform:rotate(6deg)">藏書章 · 頁尾 · 廳墨色</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="background:var(--pt-yellow);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:13px 15px;transform:rotate(-1deg)"><div style="font-family:'Sorts Mill Goudy',serif;font-weight:700;font-size:14px;color:var(--page-ink);margin-bottom:5px">postit 便利貼</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.8;color:var(--page-ink-mid)">檔案資訊 / 月幣 / 語音稿<br>六色 · rotate ±1° · 無圓角</div></div>
+          <div style="background:var(--page-card);border:1px solid var(--page-border);box-shadow:2px 3px 8px rgba(0,0,0,.05);padding:12px 14px;transform:rotate(.4deg)"><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--page-pencil);margin-bottom:7px">INDEX · 索引卡</div><div style="font-size:12px;color:var(--page-ink);line-height:1.9">目次、預覽分頁、過刊。<br>選中＝左墨條＋左移 4px。</div></div>
+          <div style="background:var(--pt-blue);box-shadow:2px 3px 6px rgba(0,0,0,.07);padding:13px 15px;transform:rotate(.8deg)"><div style="font-family:'Sorts Mill Goudy',serif;font-style:italic;font-size:13px;line-height:1.65;color:var(--page-ink-mid)">紙頁側 token：--page-bg FAF8F3 · --page-card FFF · --page-old F3EDE0 · --page-ink 1C1610 · --page-pencil 8A7A66</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 儀器面板＋狀態列 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">06</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">儀器面板 · 狀態列 · toast</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">instruments</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:14px 16px">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.22em;color:var(--ink-tabularium);margin-bottom:9px">PANEL · 儀器面板</div>
+          <div style="font-size:12px;color:var(--text-secondary);line-height:1.9">navy 底 · 1px navy-line 框 · radius 6 · padding 14–16。標籤＝mono 8.5px 廳墨色。表單輸入 26–30px 高、navy-deep 底。Table Forge、試算表、AI 設定、公共書庫一律用這套。</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="height:28px;background:var(--navy-deep);border:1px solid var(--navy-line);border-radius:4px;display:flex;align-items:center;gap:16px;padding:0 14px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-tertiary)"><span>LN 42 · COL 8</span><span style="color:var(--success)">⇄ 已同步</span><span style="margin-left:auto">狀態列 28px · mono 9px</span></div>
+          <div style="align-self:flex-start;display:flex;align-items:center;gap:9px;height:34px;padding:0 14px;background:var(--navy-light);border:1px solid var(--gold-line);border-radius:4px;box-shadow:0 8px 24px -10px rgba(0,0,0,.7)"><span style="width:5px;height:5px;border-radius:50%;background:var(--success)"></span><span style="font-size:12px;color:var(--text-primary)">已存入書庫 · 手稿區</span><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:var(--text-tertiary)">TOAST · 右下 · 淡入 3s 自滅</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 07 空狀態文案 -->
+    <div>
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.24em;color:var(--gold-dim)">07</span><h2 style="margin:0;font-size:19px;font-weight:700;color:var(--cream)">空狀態文案 · 世界觀語氣</h2><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--text-tertiary)">empty states</span></div>
+      <div style="background:var(--navy);border:1px solid var(--navy-line);border-radius:6px;padding:6px 22px">
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-atrium);width:110px;flex:none">大廳</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">館裡還沒有藏書。匯入一份檔案，或從公共書庫借一本回來。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-manuscripta);width:110px;flex:none">CODE&amp;DATA</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">書桌還空著。開啟一份手稿，或從大廳的帳簿挑一本。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-lectorium);width:110px;flex:none">PDF</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">閱讀架上沒有書。開啟一份 PDF，燈已經幫妳點好了。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-tabularium);width:110px;flex:none">TABLE FORGE</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">鍛台是冷的。貼上一段 CSV，或從手稿抽一張表過來。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-tabularium);width:110px;flex:none">試算表</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">格線攤好了，還沒有數字。匯入一份 XLSX，或從第一格開始記。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-dramaturgica);width:110px;flex:none">劇本工房</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">稿紙攤開了，筆還沒落。寫下第一句，或載入範例看看別人怎麼開場。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-gazette);width:110px;flex:none">每日館報</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">（未發佈）明日的館報還在印刷機裡。晨間六點後，報童會把它掛上架。／（未取報）今天還沒取報。選個日期，讓報童跑一趟。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid var(--navy-line);align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-intimarium);width:110px;flex:none">談心專區</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">這裡的話不出這張桌子。想到什麼，就從第一句開始。</span></div>
+        <div style="display:flex;gap:16px;padding:12px 0;align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-atrium);width:110px;flex:none">AI 設定</span><span style="font-size:13px;color:var(--text-primary);line-height:1.8">圖書館員還沒醒。留一把金鑰，或用月幣喚醒她。</span></div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-secondary);margin-top:10px;line-height:1.9">空狀態版式：置中 · 虛線圓章（廳墨色、rotate -8°）＋一句正文＋一句鉛筆副文＋至多兩顆按鈕（主要一顆）。</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-line) 20%,var(--gold-line) 80%,transparent)"></div>
+      <span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:13px;color:var(--gold-dim)">finis · 互動雛形見「Akasha 全站設計 Mockup」 · 交接見 HANDOFF.md</span>
+      <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold-line) 20%,var(--gold-line) 80%,transparent)"></div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

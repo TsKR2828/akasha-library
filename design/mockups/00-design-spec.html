@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Akasha UI Redesign — 設計規格</title>
+<link rel="stylesheet" href="mock-shared.css">
+<style>
+  body { overflow-y: auto; background: var(--navy-deep); }
+  .spec-wrap { max-width: 1080px; margin: 0 auto; padding: 56px 32px 120px; }
+  .spec-hero { text-align: center; margin-bottom: 64px; }
+  .spec-hero__en { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.3em; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 14px; }
+  .spec-hero__title { font-family: var(--serif-zh); font-weight: 900; font-size: 34px; letter-spacing: 2px; color: var(--cream); margin-bottom: 12px; }
+  .spec-hero__sub { font-family: var(--serif-en); font-style: italic; font-size: 16px; color: var(--gold); }
+  .spec-hero__desc { font-size: 14px; color: var(--text-secondary); max-width: 620px; margin: 20px auto 0; line-height: 2; }
+
+  .spec-h2 { font-family: var(--serif-zh); font-weight: 700; font-size: 21px; letter-spacing: 1.5px; color: var(--cream); margin: 72px 0 8px; display: flex; align-items: baseline; gap: 12px; }
+  .spec-h2 em { font-family: var(--font-mono); font-style: normal; font-size: 10px; letter-spacing: 0.2em; color: var(--gold-dim); text-transform: uppercase; }
+  .spec-lead { color: var(--text-secondary); font-size: 13.5px; line-height: 2; margin-bottom: 28px; max-width: 720px; }
+  .spec-lead b { color: var(--gold-bright); font-weight: 400; }
+
+  /* 概念圖：書房與紙 */
+  .concept { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .concept__card { border: 1px solid var(--navy-line); border-radius: var(--r-card); overflow: hidden; }
+  .concept__head { padding: 12px 18px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-tertiary); border-bottom: 1px solid var(--navy-line); }
+  .concept__body { padding: 22px 18px; font-size: 13px; line-height: 2; color: var(--text-secondary); min-height: 130px; }
+  .concept__body.paper-demo { background: var(--page-bg); color: var(--page-ink-mid);
+    background-image: repeating-linear-gradient(transparent, transparent 27px, var(--page-rule) 27px, var(--page-rule) 28px); }
+  .concept__body b { color: var(--gold-bright); font-weight: 400; }
+  .concept__body.paper-demo b { color: var(--ink-gazette); }
+
+  /* 分區墨色表 */
+  .zones { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  .zone { border: 1px solid var(--navy-line); border-radius: var(--r-soft); padding: 14px 10px 12px; text-align: center; }
+  .zone__swatch { width: 34px; height: 34px; border-radius: 50%; margin: 0 auto 10px; box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
+  .zone__zh { font-size: 12.5px; color: var(--cream); letter-spacing: 0.05em; }
+  .zone__latin { font-family: var(--serif-en); font-style: italic; font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+  .zone__hex { font-family: var(--font-mono); font-size: 8.5px; color: var(--text-tertiary); margin-top: 6px; letter-spacing: 0.06em; }
+
+  /* 標題契約 diagram */
+  .contract { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .contract__col { border: 1px solid var(--navy-line); border-radius: var(--r-card); overflow: hidden; }
+  .contract__tag { padding: 10px 16px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; border-bottom: 1px solid var(--navy-line); }
+  .contract__tag.bad { color: var(--danger); } .contract__tag.good { color: var(--success); }
+  .mini-row { padding: 9px 16px; font-size: 11.5px; border-bottom: 1px dashed var(--navy-line); color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+  .mini-row:last-child { border-bottom: none; }
+  .mini-row .who { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px; flex-shrink: 0; }
+  .who--shell { background: rgba(201,168,106,0.15); color: var(--gold); }
+  .who--mod { background: rgba(74,128,168,0.2); color: #7fb0d8; }
+  .mini-row.dup { color: var(--danger); text-decoration: line-through; text-decoration-color: rgba(196,96,79,0.5); }
+  .mini-row .note { margin-left: auto; font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); text-decoration: none; }
+
+  /* 元件標本 */
+  .specimen { border: 1px solid var(--navy-line); border-radius: var(--r-card); padding: 24px 22px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .specimen--paper { background: var(--page-bg); }
+
+  /* 模組對照表 */
+  .map-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .map-table th { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-tertiary); text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--gold-line); }
+  .map-table td { padding: 11px 14px; border-bottom: 1px solid var(--navy-line); color: var(--text-secondary); vertical-align: top; line-height: 1.7; }
+  .map-table td:first-child { white-space: nowrap; }
+  .map-table .zdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+  .map-table b { color: var(--cream); font-weight: 400; }
+  .surface-chip { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 2px; white-space: nowrap; }
+  .surface-chip.paper { background: #f3ede0; color: #6a5d4e; }
+  .surface-chip.dark { background: var(--navy-light); color: var(--text-secondary); border: 1px solid var(--navy-line); }
+</style>
+</head>
+<body>
+<div class="spec-wrap">
+
+  <div class="spec-hero">
+    <div class="spec-hero__en">Akasha Library · UI Redesign Proposal · 2026.07</div>
+    <div class="spec-hero__title">深夜書房，攤開的紙頁</div>
+    <div class="spec-hero__sub">The Midnight Study &amp; The Open Page</div>
+    <p class="spec-hero__desc">
+      整棟圖書館（外殼）永遠是深夜的 navy 與黃銅——它負責所有導航、所有標題。
+      打開一份文件，就像在檯燈下攤開一頁亮的筆記紙——閱讀與書寫的內容區切換成
+      Charta 手帳紙頁。差異不再是意外，而是系統：每一廳有自己的墨水色。
+    </p>
+  </div>
+
+  <h2 class="spec-h2">一、兩種材質 <em>Two Surfaces</em></h2>
+  <p class="spec-lead">全站只有兩種表面。<b>書房（深）</b>：導航、儀器類工具；<b>紙頁（亮）</b>：所有閱讀與書寫的內容。混亂的來源是過去每個模組自己發明表面——現在只能二選一。</p>
+  <div class="concept">
+    <div class="concept__card">
+      <div class="concept__head" style="color:var(--gold)">書房 The Study — navy + 黃銅</div>
+      <div class="concept__body">上列、側欄、標題、工具列、Table Forge、試算表、設定。<b>深色是家具</b>，不與內容搶眼。</div>
+    </div>
+    <div class="concept__card">
+      <div class="concept__head" style="background:var(--page-bg); color:var(--page-pencil); border-color:var(--page-card-border)">紙頁 The Page — 手帳紙 + 六色墨水</div>
+      <div class="concept__body paper-demo">Code&amp;Data 的文章、館報、劇本稿紙、談心對話。<b>亮色是紙</b>，字用襯線墨色，旁註用手寫體。</div>
+    </div>
+  </div>
+
+  <h2 class="spec-h2">二、分區墨色 <em>Zone Inks</em></h2>
+  <p class="spec-lead">每一廳一個墨水色，用在：側欄圓點、麵包屑尾字、標題底線、模組內強調色。<b>模組間的差異由墨色承擔</b>，版式完全一致——這就是「一致又有個性」的解法。</p>
+  <div class="zones">
+    <div class="zone"><div class="zone__swatch" style="background:#c9a86a"></div><div class="zone__zh">大廳</div><div class="zone__latin">Atrium</div><div class="zone__hex">#C9A86A</div></div>
+    <div class="zone"><div class="zone__swatch" style="background:#4a80a8"></div><div class="zone__zh">Code &amp; Data</div><div class="zone__latin">Manuscripta</div><div class="zone__hex">#4A80A8</div></div>
+    <div class="zone"><div class="zone__swatch" style="background:#c8962e"></div><div class="zone__zh">PDF 閱讀器</div><div class="zone__latin">Lectorium</div><div class="zone__hex">#C8962E</div></div>
+    <div class="zone"><div class="zone__swatch" style="background:#5a8a4a"></div><div class="zone__zh">表格雙器</div><div class="zone__latin">Tabularium</div><div class="zone__hex">#5A8A4A</div></div>
+    <div class="zone"><div class="zone__swatch" style="background:#b84058"></div><div class="zone__zh">劇本工房</div><div class="zone__latin">Dramaturgica</div><div class="zone__hex">#B84058</div></div>
+    <div class="zone"><div class="zone__swatch" style="background:#d4763a"></div><div class="zone__zh">每日館報</div><div class="zone__latin">Gazette</div><div class="zone__hex">#D4763A</div></div>
+    <div class="zone"><div class="zone__swatch" style="background:#7a5898"></div><div class="zone__zh">談心專區</div><div class="zone__latin">Intimarium</div><div class="zone__hex">#7A5898</div></div>
+  </div>
+
+  <h2 class="spec-h2">三、標題契約 <em>The Masthead Contract</em></h2>
+  <p class="spec-lead">「組合肉感」的最大元兇：殼畫一次標題，模組又畫一次（PDF、館報、談心、設定都在犯）。新規則：<b>標題只存在一份，殼負責</b>；模組只擁有一條 44px 的「書桌列」，放動作，禁止放名字。</p>
+  <div class="contract">
+    <div class="contract__col">
+      <div class="contract__tag bad">現況 — 每個模組堆 2〜4 層</div>
+      <div class="mini-row"><span class="who who--shell">SHELL</span> AKASHA LIBRARY » TOOLS » PDF 閱讀器</div>
+      <div class="mini-row"><span class="who who--shell">SHELL</span> PDF 閱讀器 · <i>Lectorium</i></div>
+      <div class="mini-row dup"><span class="who who--mod">MODULE</span> READING HALL · 閱讀廳</div>
+      <div class="mini-row dup"><span class="who who--mod">MODULE</span> PDF 閱讀器 · <i>Akasha Library Reader</i></div>
+      <div class="mini-row"><span class="who who--mod">MODULE</span> PAGES / CUT / MARK / LIB …</div>
+    </div>
+    <div class="contract__col">
+      <div class="contract__tag good">新契約 — 全站固定三層</div>
+      <div class="mini-row"><span class="who who--shell">SHELL</span> 上列：品牌＋全域搜尋＋圖書館員 <span class="note">52px</span></div>
+      <div class="mini-row"><span class="who who--shell">SHELL</span> 刊頭：麵包屑＋標題＋拉丁名＋墨色底線 <span class="note">唯一標題</span></div>
+      <div class="mini-row"><span class="who who--mod">MODULE</span> 書桌列：狀態＋動作（≤5顆＋更多▾） <span class="note">44px 固定</span></div>
+      <div class="mini-row" style="color:var(--text-tertiary)">↓ 內容：紙頁或儀器面板</div>
+    </div>
+  </div>
+
+  <h2 class="spec-h2">四、元件標本 <em>Component Specimens</em></h2>
+  <p class="spec-lead">書房側元件（按鈕 30px、分段切換、搜尋）與紙頁側元件（筆記紙、旁註、便利貼、washi、藏書章）。</p>
+  <div class="specimen" style="margin-bottom:14px">
+    <button class="btn">開啟檔案</button>
+    <button class="btn btn--gold">存檔至書庫</button>
+    <button class="btn btn--ghost">更多 ▾</button>
+    <div class="seg">
+      <button class="seg__opt is-active">速寫 <em>Write</em></button>
+      <button class="seg__opt">編輯 <em>Editor</em></button>
+      <button class="seg__opt">閱讀 <em>Reader</em></button>
+    </div>
+    <div class="desk-search">⌕ 搜尋內容…</div>
+  </div>
+  <div class="specimen specimen--paper" style="--zone-ink:#4a80a8">
+    <div style="flex:1; min-width: 300px">
+      <div class="margin-note"><div class="margin-note__text">↳ 旁註用手寫體，給 AI 圖書館員的眉批用</div></div>
+      <div class="washi" style="margin: 14px 0"><div class="washi__strip" style="background:#d4763a"></div><div class="washi__strip" style="background:#4a80a8"></div></div>
+      <div class="nb-code" style="margin:0"><span class="tok-k">const</span> <span class="tok-f">akasha</span> = <span class="tok-s">'程式碼是舊紙標本'</span>;</div>
+    </div>
+    <div class="postit postit--yellow" style="width:170px; transform:rotate(-1deg)">
+      <div class="postit__title">Notes</div>
+      <div class="postit__body">便利貼：檔案資訊、月幣餘額、語音稿都住這裡</div>
+    </div>
+  </div>
+
+  <h2 class="spec-h2">五、模組對照 <em>Module Mapping</em></h2>
+  <p class="spec-lead">每個模組屬於哪種表面、用哪色墨水、書桌列放什麼。功能一項不減，只是歸位。</p>
+  <table class="map-table">
+    <tr><th>廳室</th><th>表面</th><th>書桌列（常駐動作）</th><th>收進「更多 ▾」</th></tr>
+    <tr>
+      <td><span class="zdot" style="background:#c9a86a"></span><b>大廳</b> Atrium</td>
+      <td><span class="surface-chip dark">書房・深</span></td>
+      <td>—（卡片目錄＋最近檔案帳簿）</td><td>—</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#4a80a8"></span><b>Code &amp; Data</b></td>
+      <td><span class="surface-chip paper">紙頁・亮</span></td>
+      <td>開啟檔案・編輯模式・複製・搜尋</td>
+      <td>復原/重做、變更標示、下載、DOCX/PDF/摘要匯出、Sheets×4、送 Table Forge</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#c8962e"></span><b>PDF 閱讀器</b></td>
+      <td><span class="surface-chip dark">書房・深</span>（PDF 本身就是紙）</td>
+      <td>開啟・縮放・書籤・截圖・摘錄</td>
+      <td>匯出、切割（Range/每N頁/自訂）；側欄四籤 頁/切/籤/庫 保留</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#5a8a4a"></span><b>Table Forge／試算表</b></td>
+      <td><span class="surface-chip dark">儀器・深</span></td>
+      <td>匯入・匯出・清除</td><td>Meta、HINTS、Diff</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#b84058"></span><b>劇本工房</b></td>
+      <td><span class="surface-chip paper">稿紙・亮</span>＋深色索引卡</td>
+      <td>速寫/搜尋/編輯/閱讀・體裁切換・AI</td>
+      <td>從劇本、範例、清空、說明；角色格→索引卡 CAST 籤</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#d4763a"></span><b>每日館報</b></td>
+      <td><span class="surface-chip paper">報紙・亮</span></td>
+      <td>日期・載入館報・朗讀/暫停/停止</td>
+      <td>開啟本地檔、來源網址、貼上整理（舊路）、匯出 MD/JSON、歷史</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#7a5898"></span><b>談心專區</b></td>
+      <td><span class="surface-chip paper">信紙・亮</span></td>
+      <td>不留痕・手札・清除對話</td>
+      <td>手札匯出 MD/JSON；免責聲明縮為紙頁頁腳一行鉛筆字</td>
+    </tr>
+    <tr>
+      <td><span class="zdot" style="background:#9aa1ad"></span><b>AI 設定／公共書庫</b></td>
+      <td><span class="surface-chip dark">儀器・深</span></td>
+      <td>BYOK/月幣 模式切換</td><td>—（表單面板統一 .panel 規格）</td>
+    </tr>
+  </table>
+
+  <p class="spec-lead" style="margin-top:56px; text-align:center; color:var(--text-tertiary)">
+    → 接著看四張實景：<b>01 大廳・02 Code&amp;Data・03 劇本工房・04 每日館報</b>
+  </p>
+</div>
+</body>
+</html>

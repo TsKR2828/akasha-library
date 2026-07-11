@@ -1,21 +1,27 @@
-/* AKASHA LIBRARY — Design Tokens
-   深夜大學圖書館：navy + brass + cream + 木質 + 黃銅 */
+/* AKASHA LIBRARY — Design Tokens v2（全站重設計 2026-07）
+   深夜書房，攤開的紙頁 — The Midnight Study & The Open Page
+   ─────────────────────────────────────────────────────────
+   兩種材質：
+   · 書房（深）＝殼、儀器類模組 → --navy 系＋--gold 系
+   · 紙頁（亮）＝一切閱讀與書寫的內容面 → --page-* 系
+   紙頁不跟深淺模式反轉：紙頁永遠是亮的（檯燈下的紙）。
+   深淺模式只影響「書房」家具。 */
 
 :root {
-  /* Base — deepened navy with warm undertone */
+  /* ── Base — deepened navy with warm undertone ── */
   --navy: #181d28;
   --navy-deep: #11151d;
   --navy-light: #232a37;
   --navy-hover: #2e3645;
   --navy-line: #313a4b;
 
-  /* Wood + leather notes — used for module accents, side rails */
+  /* ── Wood + leather ── */
   --wood: #3a2a1c;
   --wood-shadow: #1f160e;
   --leather: #5b3a2a;
   --oxblood: #6b2c2c;
 
-  /* Brass / gold */
+  /* ── Brass / gold ── */
   --gold: #c9a86a;
   --gold-bright: #e3c486;
   --gold-dim: #a08550;
@@ -23,51 +29,92 @@
   --gold-glow: rgba(201,168,106,0.14);
   --gold-line: rgba(201,168,106,0.22);
 
-  /* Paper / text */
+  /* ── Shell text ── */
   --cream: #f1ead6;
   --cream-dim: #d6cfb8;
-  --paper: #f5efe1;
   --text-primary: #ece5cf;
   --text-secondary: #9aa1ad;
   --text-tertiary: #646b78;
 
-  /* States */
+  /* ── States ── */
   --danger: #c4604f;
   --success: #6aae7f;
   --info: #c9a86a;
 
-  /* Type */
+  /* ══ NEW · 紙頁系 The Open Page ══
+     用於：Code&Data 閱讀面、館報、劇本稿紙、談心對話紙。
+     不隨 data-mode 反轉。 */
+  --page-bg: #FAF4E5;        /* 桌上紙堆底色（雙模式不翻轉） */
+  --page-card: #FFFFFF;      /* 一張紙 */
+  --page-old: #F3EDE0;       /* 舊紙標本（程式碼、引用） */
+  --page-ink: #1C1610;       /* 正文墨 */
+  --page-ink-mid: #3E352A;   /* 次級墨 */
+  --page-pencil: #8A7A66;    /* 鉛筆字（功能小字、頁腳） */
+  --page-border: #E8E3DA;    /* 紙邊 */
+  --page-old-border: #E0D6C2;
+  --page-line: rgba(0,0,0,0.035);       /* 橫線，32px 一格 */
+  --page-margin-line: rgba(212,118,58,0.13); /* 左紅邊線 */
+  --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
+
+  /* 便利貼（沿用 Charta） */
+  --postit-yellow: #FFF8DC;
+  --postit-pink:  #FDE8E8;
+  --postit-blue:  #E5F0FA;
+  --postit-green: #E8F4E5;
+  --postit-lavender: #F0E8F5;
+  --postit-peach: #FDF0E5;
+
+  /* ══ NEW · 七廳墨色 Zone Inks ══
+     用在：側欄圓點、麵包屑尾字、刊頭底線、模組內強調色。
+     深淺模式同值（墨不換色）。 */
+  --ink-atrium:      #C9A86A;  /* 大廳 Atrium — 黃銅 */
+  --ink-manuscripta: #4A80A8;  /* Code & Data — 靛青 */
+  --ink-lectorium:   #C8962E;  /* PDF 閱讀器 — 蜂蜜 */
+  --ink-tabularium:  #5A8A4A;  /* Table Forge／試算表 — 葉綠 */
+  --ink-dramaturgica:#B84058;  /* 劇本工房 — 莓紅 */
+  --ink-gazette:     #D4763A;  /* 每日館報 — 胡蘿蔔 */
+  --ink-intimarium:  #7A5898;  /* 談心專區 — 李紫 */
+
+  /* ── Type ── */
   --font-serif-en: "Cormorant Garamond", "EB Garamond", Garamond, serif;
   --font-serif-tc: "Noto Serif TC", "Source Han Serif TC", "PingFang TC", serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", monospace;
+  --font-hand: "Sorts Mill Goudy", "Cormorant Garamond", Georgia, serif; /* NEW 手寫體：只給人味註記 */
   --font-display: var(--font-serif-en);
   --font-body: var(--font-serif-tc);
 
-  /* Sizing — restrained, library-document scale */
+  /* ── Sizing ── */
   --r-sharp: 2px;
   --r-soft: 4px;
   --r-card: 6px;
 
-  /* Shadows — like depth in a wood-panelled room */
+  /* ── Shadows ── */
   --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px -12px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.3);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.06) inset, 0 18px 40px -20px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.35);
   --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
 
-  /* Layout */
-  --sidebar-w: 268px;
-  --topbar-h: 56px;
+  /* ══ 標題契約 Layout（定案值）══
+     上列 52px（殼）→ 刊頭 masthead（殼，唯一標題）→ 書桌列 44px（模組唯一 chrome）*/
+  --topbar-h: 52px;
+  --deskbar-h: 44px;
+  --sidebar-w: 240px;
 
-  /* Density */
   --density: 1;
+
+  /* 廳面底色（儀器類畫面）與書桌列底色 */
+  --hall-bg: var(--navy-deep);
+  --desk-bg: var(--navy);
 }
 
-/* Light mode — cream paper inversion */
+/* ── Light mode — 白日書房：家具轉米色，紙頁不變 ── */
 :root[data-mode="light"] {
-  --navy: #efe7d3;
-  --navy-deep: #e6dcc3;
-  --navy-light: #f5efe1;
-  --navy-hover: #ddd1b3;
-  --navy-line: #cfc2a3;
+  --navy: #F4EEDD;
+  --navy-deep: #EFE7D3;
+  --navy-light: #f7f2e4;
+  --navy-hover: #e5dcc2;
+  --navy-line: #d5c9aa;
+  --hall-bg: #FAF4E5;
+  --desk-bg: #F4EEDD;
 
   --text-primary: #2a2118;
   --text-secondary: #6b5d49;
@@ -81,78 +128,53 @@
   --gold-line: rgba(138,111,48,0.28);
 
   --cream: #2a2118;
+  --page-shadow: 2px 3px 10px rgba(60,40,10,0.08);
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
 }
 
-/* Texture overlay — paper grain on dark */
-.tex-paper {
+/* ── 紙頁橫線＋左紅邊，用法：<div class="page-sheet"> ── */
+.page-sheet {
+  background: var(--page-card);
+  border: 1px solid var(--page-border);
+  box-shadow: var(--page-shadow);
+  background-image: repeating-linear-gradient(transparent, transparent 31px, var(--page-line) 31px, var(--page-line) 32px);
+  background-position: 0 16px;
   position: relative;
 }
+.page-sheet::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 52px;
+  width: 1px; background: var(--page-margin-line);
+}
+
+/* ── Brass rules ── */
+.brass-rule { height: 1px; background: linear-gradient(90deg, transparent 0%, var(--gold-dim) 15%, var(--gold) 50%, var(--gold-dim) 85%, transparent 100%); opacity: 0.5; }
+.brass-rule--thin { height: 1px; background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent); opacity: 0.7; }
+
+/* ── Texture ── */
+.tex-paper { position: relative; }
 .tex-paper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  mix-blend-mode: overlay;
-  background-image:
-    radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
-    radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 2px;
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  opacity: 0.06; mix-blend-mode: overlay;
+  background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px; background-position: 0 0, 1px 2px;
 }
 
-/* Brass rule — used as section dividers */
-.brass-rule {
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--gold-dim) 15%,
-    var(--gold) 50%,
-    var(--gold-dim) 85%,
-    transparent 100%);
-  opacity: 0.5;
-}
+/* ── Scrollbar / selection ── */
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(201,168,106,0.18); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(201,168,106,0.36); }
+::selection { background: var(--gold-glow); color: var(--gold-bright); }
 
-.brass-rule--thin {
-  background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
-  opacity: 0.7;
-}
-
-/* Custom scrollbar — narrow brass */
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-*::-webkit-scrollbar-thumb {
-  background: rgba(201,168,106,0.18);
-  border-radius: 3px;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: rgba(201,168,106,0.36);
-}
-
-/* Selection */
-::selection {
-  background: var(--gold-glow);
-  color: var(--gold-bright);
-}
-
-/* Reset basics */
+/* ── Reset ── */
 * { box-sizing: border-box; }
 html, body {
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
   font-family: var(--font-body);
   background: var(--navy-deep);
   color: var(--text-primary);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 button { font-family: inherit; cursor: pointer; }

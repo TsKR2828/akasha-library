@@ -27,6 +27,14 @@ const MODE_CONFIG = {
   notes:  { label: "Notes",  zh: "筆記",   badge: "Notes",        defaultPreviewTab: "outline" },
 };
 
+const PREVIEW_TAB_LABELS = {
+  blocks:  { en: "PARA",  zh: "段落" },
+  stats:   { en: "STATS", zh: "統計" },
+  outline: { en: "OUTL",  zh: "大綱" },
+  voice:   { en: "VOICE", zh: "語音" },
+  bgm:     { en: "BGM",   zh: "配樂" },
+};
+
 function normalizeMode(mode) { return WRITE_MODES.includes(mode) ? mode : "script"; }
 function modeKey(workId) { return workId ? `${MODE_BASE}_${workId}` : MODE_BASE; }
 function draftKey(workId, mode = "script") {
@@ -87,7 +95,7 @@ function initialContentForMode(workId, mode, blocks, characters) {
   return "";
 }
 
-export default function WriteTab({ blocks, setBlocks, characters, workId }) {
+const WriteTab = React.forwardRef(function WriteTab({ blocks, setBlocks, characters, workId, onModeChange }, ref) {
   /* ---------- initial textarea content ----------
      1) localStorage draft 優先（user-authored 不該被 Lohengrin 覆寫）
      2) 否則用 blocks 反向產生（讓 Reader/Editor 載入的劇本能在 Write 看見）
@@ -607,156 +615,157 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
     if (content && !confirm("以範例覆蓋目前草稿？")) return;
     setContent(SEED);
   };
+  const onLoadFromBlocks = () => {
+    if (!Array.isArray(blocks) || blocks.length === 0) return;
+    if (content && !confirm("以目前劇本覆蓋草稿？")) return;
+    const text = blocksToPlainScript(blocks, characters);
+    setContent(text);
+    saveDraft(text, workId, writeMode);
+  };
+
+  /* deskbar (App.jsx) lives above this component and needs to know the
+     current write mode (to show/hide 從劇本回填／範例) and needs to trigger
+     these actions — exposed via ref since the deskbar is now the module's
+     only chrome row (HANDOFF §5), not a toolbar drawn inside WriteTab. */
+  React.useEffect(() => { onModeChange?.(writeMode); }, [writeMode, onModeChange]);
+  React.useImperativeHandle(ref, () => ({
+    loadFromBlocks: onLoadFromBlocks,
+    loadSeed: onResetSeed,
+    clearDraft: onClearDraft,
+  }));
 
   return (
-    <div style={{
+    <div className="sw-write-root" style={{
       flex: 1,
       display: "grid",
-      gridTemplateColumns: "1fr 360px",
-      gridTemplateRows: "auto auto 1fr auto",
+      gridTemplateColumns: "1fr 300px",
+      gridTemplateRows: "1fr auto",
       overflow: "hidden",
       animation: "swFade 200ms ease",
-      background: "var(--navy-deep)",
+      background: "var(--page-bg)",
     }}>
-      {/* ───── top toolbar (left, row 1) ───── */}
-      <div style={{
-        gridColumn: "1 / 2",
-        gridRow: "1 / 2",
-        display: "flex", alignItems: "center", gap: 12,
-        padding: "8px 16px",
-        background: "var(--navy)",
-        borderBottom: "1px solid var(--navy-line)",
-      }}>
-        <span style={{
-          fontFamily: "var(--font-serif-en)",
-          fontSize: 10.5, letterSpacing: "0.28em",
-          color: "var(--gold)",
-          fontVariant: "small-caps", textTransform: "uppercase",
-        }}>Scriptorium · Calamus</span>
-        <div style={{
-          display: "inline-flex",
-          border: "1px solid var(--navy-line)",
-          borderRadius: 3,
-          overflow: "hidden",
-          flexShrink: 0,
-        }}>
+      {/* ───── manuscript column (left) — paper-clip genre tabs + ruled
+             manuscript paper + pen-tray persona slots, HANDOFF §5 ───── */}
+      <div className="sw-manuscript-col" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
+        <div className="sw-genre-tabs seg seg--tab" role="tablist" aria-label="體裁">
           {WRITE_MODES.map(mode => {
             const active = writeMode === mode;
             const cfg = MODE_CONFIG[mode];
             return (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => switchWriteMode(mode)}
-                title={cfg.zh}
-                style={{
-                  padding: "3px 9px",
-                  background: active ? "var(--gold-glow)" : "transparent",
-                  border: "none",
-                  borderRight: mode !== WRITE_MODES[WRITE_MODES.length - 1] ? "1px solid var(--navy-line)" : "none",
-                  color: active ? "var(--gold-bright)" : "var(--text-tertiary)",
-                  fontFamily: "var(--font-serif-en)",
-                  fontSize: 10.5,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  cursor: "pointer",
-                }}
-              >
-                {cfg.label}
+              <button key={mode} type="button" role="tab" aria-selected={active}
+                className={"seg__opt" + (active ? " is-active" : "")}
+                onClick={() => switchWriteMode(mode)} title={cfg.label}>
+                {cfg.zh}
               </button>
             );
           })}
         </div>
-        <span style={{ fontSize: 11, color: "var(--text-tertiary)", letterSpacing: "0.06em" }}>
-          {contentStats.charCount.toLocaleString()} 字 · {contentStats.lineCount} 行 · ≈{contentStats.readingMin} 分鐘
-        </span>
-        <span style={{ flex: 1 }} />
-        {isScriptMode && (
-          <>
-            <button
-              onClick={() => {
-                if (!Array.isArray(blocks) || blocks.length === 0) return;
-                if (content && !confirm("以目前劇本覆蓋草稿？")) return;
-                const text = blocksToPlainScript(blocks, characters);
-                setContent(text);
-                saveDraft(text, workId, writeMode);
-              }}
-              disabled={!Array.isArray(blocks) || blocks.length === 0}
-              style={tbBtnStyle}
-              title="從 Editor/Reader 的劇本載入到速寫區"
-            >↺ 從劇本</button>
-            <button
-              onClick={onResetSeed}
-              style={tbBtnStyle}
-              title="以範例覆蓋"
-            >範例</button>
-          </>
-        )}
-        <button
-          onClick={onClearDraft}
-          style={{ ...tbBtnStyle, color: "var(--danger)", borderColor: "rgba(196,96,79,0.3)" }}
-          title="清除草稿"
-        >清空</button>
-      </div>
 
-      {/* ───── preview tabs (right, row 1) ───── */}
-      <div style={{
-        gridColumn: "2 / 3",
-        gridRow: "1 / 2",
-        display: "flex",
-        background: "var(--navy)",
-        borderBottom: "1px solid var(--navy-line)",
-        borderLeft: "1px solid var(--navy-line)",
-      }}>
-        {availablePreviewTabs.map(id => {
-          const active = previewTab === id;
-          return (
-            <button key={id} onClick={() => setPreviewTab(id)}
-                    className={active ? "se-tab is-active" : "se-tab"}>
-              {id}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ───── slot badges row (left, row 2) — v2-4 ───── */}
-      {isScriptMode && (
-        <div style={{
-          gridColumn: "1 / 2",
-          gridRow: "2 / 3",
-          display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center",
-          padding: "8px 16px",
-          background: "var(--navy-deep)",
-          borderBottom: "1px solid var(--navy-line)",
-        }}>
-          <span style={{
-            fontFamily: "var(--font-serif-en)", fontSize: 10,
-            letterSpacing: "0.22em", color: "var(--gold-dim)",
-            fontVariant: "small-caps", textTransform: "uppercase",
-            marginRight: 4,
-          }}>Persona Slots ·</span>
-          <span style={{ fontSize: 9.5, color: "var(--text-tertiary)", letterSpacing: "0.04em", marginRight: 4 }}>（點一下可指派／清除）</span>
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
-            <SlotBadge
-              key={n}
-              n={n}
-              label={slotLabels[n]}
-              locked={isLocked(n)}
-              onClick={(e) => onSlotContext(e, n)}
-              onDoubleClick={() => { if (slotLabels[n]) insertSpeakerPrefix(n); }}
-              onContextMenu={(e) => onSlotContext(e, n)}
-            />
-          ))}
-          {overflow.length > 0 && (
-            <span style={{
-              fontSize: 10.5, color: "var(--text-tertiary)",
-              fontFamily: "var(--font-serif-en)",
-              letterSpacing: "0.08em",
-              marginLeft: 4,
-            }} title={overflow.join("、")}>⋯ +{overflow.length}</span>
-          )}
+        <div className="sw-manuscript">
+          <div className="sw-manuscript-stats">
+            {contentStats.charCount.toLocaleString()} 字 · {contentStats.lineCount} 行 · 約 {contentStats.readingMin} 分鐘
+          </div>
+          <textarea
+            ref={taRef}
+            className="sw-manuscript-textarea"
+            value={chapterView.text}
+            onChange={onTextChange}
+            onKeyDown={onKeyDown}
+            onKeyUp={(e) => { onCaretMove(e); anchorCaretView(); }}
+            onClick={(e) => { onCaretMove(e); anchorCaretView(); }}
+            onSelect={onCaretMove}
+            onInput={() => requestAnimationFrame(anchorCaretView)}
+            spellCheck={false}
+            placeholder={isScriptMode
+              ? `輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`
+              : `${activeModeConfig.zh}模式 — 可使用 Markdown 標題建立大綱\n# 第一章\n## 場景或段落\n\n直接開始書寫內容。`}
+          />
         </div>
-      )}
+
+        {/* ───── pen tray (bottom edge) — PERSONA SLOTS, v2-4 ───── */}
+        {isScriptMode && (
+          <div className="sw-pen-tray">
+            <span className="sw-pen-tray__label">ALT＋</span>
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => (
+              <SlotBadge
+                key={n}
+                n={n}
+                label={slotLabels[n]}
+                locked={isLocked(n)}
+                onClick={(e) => onSlotContext(e, n)}
+                onDoubleClick={() => { if (slotLabels[n]) insertSpeakerPrefix(n); }}
+                onContextMenu={(e) => onSlotContext(e, n)}
+              />
+            ))}
+            {overflow.length > 0 && (
+              <span className="sw-pen-tray__overflow" title={overflow.join("、")}>⋯ +{overflow.length}</span>
+            )}
+            <span className="sw-pen-tray__hint">the pen tray · 右鍵可鎖定</span>
+          </div>
+        )}
+      </div>
+
+      {/* ───── index rail (right) — 5 preview tabs as index cards ───── */}
+      <div className="sw-index-rail" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
+        <div className="sw-index-tabs" role="tablist" aria-label="預覽">
+          {availablePreviewTabs.map(id => {
+            const active = previewTab === id;
+            const meta = PREVIEW_TAB_LABELS[id];
+            return (
+              <button key={id} type="button" role="tab" aria-selected={active}
+                className={"sw-index-tab" + (active ? " is-active" : "")}
+                onClick={() => setPreviewTab(id)}>
+                <span className="sw-index-tab__en">{meta.en}</span>
+                <span className="sw-index-tab__zh">{meta.zh}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="sw-index-card">
+          {previewTab === "blocks" && isScriptMode && <BlocksPreview blocks={parsedBlocks} voice={voice} />}
+          {previewTab === "stats"  && (isScriptMode ? <StatsPreview stats={stats} /> : <TextStatsPreview stats={contentStats} headings={headingOutline} mode={activeModeConfig} />)}
+          {previewTab === "voice"  && isScriptMode && <VoicePanel blocks={parsedBlocks} voice={voice} />}
+          {previewTab === "bgm"    && isScriptMode && <BgmPanel blocks={parsedBlocks} />}
+          {previewTab === "outline" && <OutlinePanel outline={sceneOutline} headings={headingOutline} onJump={jumpToLine} activeLine={globalLine} showSceneHint={isScriptMode} />}
+        </div>
+      </div>
+
+      {/* ───── status bar (row 2, spans both cols) — dark 28px, HANDOFF §5 ───── */}
+      <div className="sw-statusbar" style={{ gridColumn: "1 / 3", gridRow: "2 / 3" }}>
+        <span>LN {line} · COL {col}</span>
+        {activeChapter != null && chapters[activeChapter] && (
+          <span onClick={() => setActiveChapter(null)} title="點擊回到全部"
+            className="sw-statusbar__chip" style={{ cursor: "pointer" }}>
+            ◂ {chapters[activeChapter].label}
+          </span>
+        )}
+        <span className="sw-statusbar__chip">{activeModeConfig.badge}</span>
+        {isScriptMode ? (
+          <>
+            <span>{parsedBlocks.length} BLOCKS PARSED</span>
+            {syncStatus === "pushing" && (
+              <span style={{ color: "var(--gold-dim)" }}>↻ SYNC→</span>
+            )}
+            {syncStatus === "external" && (
+              <span style={{ color: "rgb(168,156,216)" }}>← PULLED FROM EDITOR</span>
+            )}
+            {syncStatus === "idle" && setBlocks && (
+              <span className="sw-statusbar__ok" title="Forward & reverse sync 已連通">⇄ SYNCED</span>
+            )}
+            {voice.state.queueActive && (
+              <span className="sw-statusbar__live">▶ VOICE {voice.state.queueIdx + 1}/{voice.state.queueTotal}</span>
+            )}
+            {!voice.state.queueActive && voice.state.speaking && (
+              <span className="sw-statusbar__live">▶ SPEAKING</span>
+            )}
+          </>
+        ) : (
+          <span>{headingOutline.length} HEADINGS</span>
+        )}
+        <span style={{ flex: 1 }} />
+        <span className="sw-statusbar__ok">● AUTO-SAVE</span>
+        <span>打字機模式 ON</span>
+      </div>
 
       {/* ───── slot context menu ───── */}
       {isScriptMode && ctxMenu && (
@@ -823,144 +832,15 @@ export default function WriteTab({ blocks, setBlocks, characters, workId }) {
       )}
 
       {/* chapter bar removed — scene navigation is in the Outline panel (right) */}
-
-      {/* ───── textarea (left, row 4)
-            v2-fix5: 打字機捲動 — paddingBottom 60vh 留白 + anchorCaretView 雙向錨定
-                     游標保持在視窗 ~42% 位置，下方大片空白不傷眼 ───── */}
-      <textarea
-        ref={taRef}
-        value={chapterView.text}
-        onChange={onTextChange}
-        onKeyDown={onKeyDown}
-        onKeyUp={(e) => { onCaretMove(e); anchorCaretView(); }}
-        onClick={(e) => { onCaretMove(e); anchorCaretView(); }}
-        onSelect={onCaretMove}
-        onInput={() => requestAnimationFrame(anchorCaretView)}
-        spellCheck={false}
-        placeholder={isScriptMode
-          ? `輸入 Plain Script — 例：\n#scene：第一幕\n旁白：天色將明……\n角色名：「對白」\n#bgm：piano_morning\n\n快捷鍵：Alt+1 場景 / Alt+2 旁白 / Alt+3~9 角色`
-          : `${activeModeConfig.zh}模式 — 可使用 Markdown 標題建立大綱\n# 第一章\n## 場景或段落\n\n直接開始書寫內容。`}
-        style={{
-          gridColumn: "1 / 2",
-          gridRow: "3 / 4",
-          width: "100%",
-          height: "100%",
-          padding: "20px 28px 60vh",
-          background: "var(--navy-deep)",
-          color: "var(--text-primary)",
-          border: "none",
-          outline: "none",
-          resize: "none",
-          fontFamily: "var(--font-serif-tc)",
-          fontSize: 14.5,
-          lineHeight: 1.85,
-          letterSpacing: "0.02em",
-          tabSize: 4,
-          whiteSpace: "pre-wrap",
-          scrollPaddingBottom: "60vh",
-        }}
-      />
-
-      {/* ───── preview body (right, rows 2-3 — spans the slot-badges row on left) ───── */}
-      <div style={{
-        gridColumn: "2 / 3",
-        gridRow: "2 / 4",
-        overflowY: "auto",
-        background: "var(--navy)",
-        borderLeft: "1px solid var(--navy-line)",
-        padding: "12px 14px",
-      }}>
-        {previewTab === "blocks" && isScriptMode && <BlocksPreview blocks={parsedBlocks} voice={voice} />}
-        {previewTab === "stats"  && (isScriptMode ? <StatsPreview stats={stats} /> : <TextStatsPreview stats={contentStats} headings={headingOutline} mode={activeModeConfig} />)}
-        {previewTab === "voice"  && isScriptMode && <VoicePanel blocks={parsedBlocks} voice={voice} />}
-        {previewTab === "bgm"    && isScriptMode && <BgmPanel blocks={parsedBlocks} />}
-        {previewTab === "outline" && <OutlinePanel outline={sceneOutline} headings={headingOutline} onJump={jumpToLine} activeLine={globalLine} showSceneHint={isScriptMode} />}
-      </div>
-
-      {/* ───── status bar (row 5, spans both cols) ───── */}
-      <div style={{
-        gridColumn: "1 / 3",
-        gridRow: "4 / 5",
-        display: "flex", alignItems: "center", gap: 14,
-        padding: "5px 16px",
-        background: "var(--navy)",
-        borderTop: "1px solid var(--navy-line)",
-        fontSize: 11, color: "var(--text-tertiary)",
-        letterSpacing: "0.06em",
-        fontFamily: "var(--font-serif-en)",
-      }}>
-        <span>Ln {line} · Col {col}</span>
-        {activeChapter != null && chapters[activeChapter] && (
-          <span onClick={() => setActiveChapter(null)} title="點擊回到全部"
-            style={{...badgeStyle, cursor: "pointer", borderColor: "var(--gold-dim)"}}>
-            ◂ {chapters[activeChapter].label}
-          </span>
-        )}
-        <span style={badgeStyle}>{activeModeConfig.badge}</span>
-        {isScriptMode ? (
-          <>
-            <span>{parsedBlocks.length} blocks parsed</span>
-            {syncStatus === "pushing" && (
-              <span style={{ color: "var(--gold-dim)" }}>↻ Sync→</span>
-            )}
-            {syncStatus === "external" && (
-              <span style={{ color: "rgb(168,156,216)" }}>← Pulled from Editor</span>
-            )}
-            {syncStatus === "idle" && setBlocks && (
-              <span style={{ color: "var(--success)" }} title="Forward & reverse sync 已連通">⇄ Synced</span>
-            )}
-            {voice.state.queueActive && (
-              <span style={{ color: "var(--gold)", animation: "blink 1.2s infinite" }}>
-                ▶ Voice {voice.state.queueIdx + 1}/{voice.state.queueTotal}
-              </span>
-            )}
-            {!voice.state.queueActive && voice.state.speaking && (
-              <span style={{ color: "var(--gold)", animation: "blink 1.2s infinite" }}>▶ Speaking</span>
-            )}
-          </>
-        ) : (
-          <span>{headingOutline.length} headings</span>
-        )}
-        <span style={{ flex: 1 }} />
-        <span style={{ color: "var(--success)" }}>● Auto-save</span>
-      </div>
     </div>
   );
-}
+});
 
-const tbBtnStyle = {
-  padding: "3px 10px",
-  background: "transparent",
-  border: "1px solid var(--navy-line)",
-  borderRadius: 2,
-  color: "var(--text-secondary)",
-  fontSize: 11,
-  letterSpacing: "0.06em",
-  cursor: "pointer",
-  fontFamily: "var(--font-serif-tc)",
-};
-const badgeStyle = {
-  padding: "1px 8px",
-  background: "var(--navy-light)",
-  borderRadius: 2,
-  color: "var(--gold-dim)",
-  fontSize: 10.5,
-  letterSpacing: "0.16em",
-  textTransform: "uppercase",
-};
+export default WriteTab;
 
-/* ============= Slot Badge (v2-4 + fix5) ============= */
+/* ============= Slot Badge → pen-tray chip (v2-4 + fix5, HANDOFF §5 restyle) ============= */
 function SlotBadge({ n, label, locked, onClick, onDoubleClick, onContextMenu }) {
   const filled = !!label;
-  const color = filled
-    ? (locked ? "var(--gold-bright)" : "var(--gold)")
-    : "var(--text-tertiary)";
-  const border = filled
-    ? (locked ? "rgba(227,196,134,0.35)" : "var(--gold-line)")
-    : "var(--navy-line)";
-  const bg = filled
-    ? (locked ? "rgba(227,196,134,0.12)" : "rgba(201,168,106,0.06)")
-    : "transparent";
 
   return (
     <button
@@ -971,32 +851,10 @@ function SlotBadge({ n, label, locked, onClick, onDoubleClick, onContextMenu }) 
       title={filled
         ? `單擊管理 · 雙擊插入「${label}：」· Alt+${n}${locked ? "（已鎖定）" : ""}`
         : `單擊指派角色到 Alt+${n}`}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: 5,
-        padding: "3px 8px 3px 6px",
-        background: bg,
-        border: `1px solid ${border}`,
-        borderRadius: 2,
-        color,
-        cursor: "pointer",
-        fontSize: 11.5,
-        fontFamily: "var(--font-serif-tc)",
-        letterSpacing: "0.04em",
-        transition: "background 150ms, border-color 150ms",
-        opacity: filled ? 1 : 0.65,
-      }}
+      className={"sw-slot-chip" + (filled ? " is-filled" : "") + (locked ? " is-locked" : "")}
     >
-      <span style={{
-        fontFamily: "var(--font-serif-en)",
-        fontSize: 9.5,
-        letterSpacing: "0.14em",
-        color: filled ? "var(--gold-dim)" : "var(--text-tertiary)",
-        fontVariant: "small-caps",
-        textTransform: "uppercase",
-      }}>{locked ? "🔒" : MOD_KEY}{n}</span>
-      <span style={{ maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {label || "—"}
-      </span>
+      <span className="sw-slot-chip__n">{locked ? "🔒" : MOD_KEY}{n}</span>
+      <span className="sw-slot-chip__label">{label || "—"}</span>
     </button>
   );
 }

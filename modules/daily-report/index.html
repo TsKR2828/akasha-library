@@ -5,339 +5,158 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>每日館報 — 阿卡夏圖書館</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/styles/shared.css">
   <style>
+    /* shared.css 已載入全域字體（含 Sorts Mill Goudy／JetBrains Mono／Noto Serif TC／
+       Cormorant Garamond），本檔不重複 <link> Google Fonts。 */
     * { box-sizing: border-box; margin: 0; }
+    html, body {
+      height: 100%;
+    }
     body {
-      font-family: var(--font-body);
-      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      /* 廳墨色：本模組全域套用，供 shared.css 內所有 var(--zone-ink, …) 元件自動取色 */
+      --zone-ink: var(--ink-gazette);
+    }
+
+    /* ===== Deskbar date chip（今日／選日期）===== */
+    .desk-date-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: none;
+    }
+    .desk-date-chip input[type="date"] {
+      height: 24px;
       background: var(--navy-deep);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    /* ===== Header ===== */
-    /* .module-header / .mh-title / .mh-sub / .mh-spacer / .mh-actions 由 shared.css 提供（表頭統一標準） */
-
-    /* Shared button */
-    .btn {
-      appearance: none;
       border: 1px solid var(--navy-line);
-      background: var(--navy-light);
-      color: var(--text-secondary);
-      padding: 5px 10px;
-      border-radius: var(--r-card);
-      font-size: 11px;
-      font-family: inherit;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
-      white-space: nowrap;
-    }
-    .btn:hover {
-      border-color: var(--gold-dim);
-      color: var(--text-primary);
-    }
-    .btn--primary {
-      background: var(--gold-glow);
-      border-color: var(--gold-dim);
-      color: var(--gold);
-    }
-    .btn--primary:hover {
-      background: rgba(201,168,106,0.22);
-    }
-    .btn--primary:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-    .btn--danger:hover {
-      border-color: var(--oxblood);
-      color: var(--danger);
-    }
-    .btn--sm {
-      padding: 3px 8px;
-      font-size: 10px;
       border-radius: var(--r-sharp);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 0 6px;
+      outline: none;
+      color-scheme: dark;
     }
-
-    /* ===== Main Layout ===== */
-    .main {
-      flex: 1;
-      display: flex;
+    :root[data-mode="light"] .desk-date-chip input[type="date"] { color-scheme: light; }
+    .desk-date-chip input[type="date"]:focus { border-color: var(--gold-dim); }
+    .desk-feed-status {
+      max-width: 220px;
       overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-tertiary);
     }
+    .desk-feed-status.is-error { color: var(--danger); }
 
-    /* ===== Input Panel (Left) ===== */
-    .input-panel {
-      width: 380px;
-      border-right: 1px solid var(--navy-line);
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-    }
-    .input-header {
-      padding: 12px 16px;
+    /* ===== Drawers（來源網址設定／貼上→AI整理／歷史清單，收合預設關閉）===== */
+    .gz-drawer {
+      background: var(--navy);
       border-bottom: 1px solid var(--navy-line);
-      font-family: var(--font-display);
-      font-size: 13px;
-      color: var(--gold);
-    }
-    .input-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 12px 16px;
-      gap: 10px;
+      padding: 14px 28px;
+      flex-shrink: 0;
+      max-height: 42vh;
       overflow-y: auto;
     }
-    .input-textarea {
+    .gz-drawer[hidden] { display: none; }
+    .gz-drawer-title {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      color: var(--gold-dim);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .gz-drawer-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .gz-drawer input[type="text"] {
       flex: 1;
-      min-height: 200px;
-      background: var(--navy-light);
+      min-width: 0;
+      height: 28px;
+      background: var(--navy-deep);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-soft);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0 10px;
+      outline: none;
+    }
+    .gz-drawer input[type="text"]:focus { border-color: var(--gold-dim); }
+    .gz-drawer textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--navy-deep);
       border: 1px solid var(--navy-line);
       border-radius: var(--r-card);
       color: var(--text-primary);
       font-family: inherit;
       font-size: 13px;
-      padding: 12px;
-      resize: none;
+      padding: 10px 12px;
+      resize: vertical;
       outline: none;
       line-height: 1.7;
     }
-    .input-textarea:focus { border-color: var(--gold-dim); }
-    .input-textarea::placeholder { color: var(--text-tertiary); }
-    .input-hint {
+    .gz-drawer textarea:focus { border-color: var(--gold-dim); }
+    .gz-drawer textarea::placeholder { color: var(--text-tertiary); }
+    .gz-drawer-hint {
       font-size: 11px;
       color: var(--text-tertiary);
       line-height: 1.5;
-    }
-    .input-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .input-date {
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      color: var(--text-secondary);
-      font-family: inherit;
-      font-size: 11px;
-      padding: 4px 8px;
-      outline: none;
-    }
-    .input-date:focus { border-color: var(--gold-dim); }
-
-    /* ===== Feed Loading (新增：接館報管線) ===== */
-    .feed-load-section {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--navy-line);
-      margin-bottom: 2px;
-    }
-    .feed-load-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .feed-load-row .input-date { flex-shrink: 0; }
-    .feed-status {
-      font-size: 11px;
-      color: var(--text-tertiary);
-      line-height: 1.5;
-      min-height: 14px;
-    }
-    .feed-status.is-error { color: var(--danger); }
-    .feed-settings {
-      font-size: 11px;
-      color: var(--text-tertiary);
-    }
-    .feed-settings summary {
-      cursor: pointer;
-      color: var(--text-secondary);
-      user-select: none;
-      padding: 2px 0;
-    }
-    .feed-settings summary:hover { color: var(--text-primary); }
-    .feed-settings-body {
-      display: flex;
-      gap: 6px;
-      align-items: center;
       margin-top: 8px;
     }
-    .feed-base-input {
-      flex: 1;
-      min-width: 0;
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      color: var(--text-primary);
-      font-family: inherit;
-      font-size: 11px;
-      padding: 5px 8px;
-      outline: none;
-    }
-    .feed-base-input:focus { border-color: var(--gold-dim); }
+    #manualPanel summary { display: none; } /* 抽屜已提供標題，summary 只保留給 CSS/DOM 相容 */
+    .manual-panel-body { display: flex; flex-direction: column; }
 
-    /* ===== Manual Panel (details，手動貼上素材，預設收合) ===== */
-    #manualPanel {
+    .gz-history-list {
       display: flex;
       flex-direction: column;
-      flex: 1;
-      min-height: 0;
+      gap: 1px;
+      max-height: 220px;
+      overflow-y: auto;
     }
-    #manualPanel summary {
-      cursor: pointer;
-      font-size: 12px;
-      color: var(--text-secondary);
-      user-select: none;
-      padding: 6px 0;
-    }
-    #manualPanel summary:hover { color: var(--text-primary); }
-    #manualPanel[open] {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 0;
-    }
-    .manual-panel-body {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
-      min-height: 0;
-      padding-top: 4px;
-    }
-    .input-textarea { min-height: 160px; }
-
-    /* Report notice（RSS 報告 status/warnings 提示列） */
-    .report-notice {
-      background: rgba(201,168,106,0.08);
-      border: 1px solid var(--gold-dim);
-      color: var(--gold);
-      font-size: 11px;
-      line-height: 1.6;
-      padding: 8px 12px;
-      border-radius: var(--r-card);
-      margin-bottom: 14px;
-    }
-    .report-notice-warning { color: var(--text-secondary); }
-
-    /* ===== Report Panel (Right) ===== */
-    .report-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-    .report-header {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--navy-line);
+    .history-item {
       display: flex;
       align-items: center;
       gap: 8px;
+      padding: 7px 8px;
+      cursor: pointer;
+      border-radius: var(--r-sharp);
+      transition: background 0.15s;
     }
-    .report-title {
-      font-family: var(--font-display);
-      font-size: 13px;
-      color: var(--gold);
-      flex: 1;
+    .history-item:hover { background: var(--navy-light); }
+    .history-item-date {
+      font-size: 11px;
+      color: var(--ink-gazette);
+      white-space: nowrap;
+      font-family: var(--font-mono);
     }
-    .report-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-
-    /* Empty state */
-    .report-empty {
-      color: var(--text-tertiary);
-      font-size: 12px;
-      text-align: center;
-      padding: 48px 16px;
-      line-height: 1.8;
-    }
-
-    /* Loading */
-    .report-loading {
-      text-align: center;
-      padding: 48px 16px;
-      color: var(--text-tertiary);
-      font-size: 13px;
-    }
-    .report-loading::after {
-      content: '';
-      display: inline-block;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--gold-dim);
-      margin-left: 8px;
-      animation: pulse-dot 1s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 1; }
-    }
-
-    /* Report Rendered */
-    .report-date-line {
-      font-family: var(--font-display);
-      font-size: 18px;
-      color: var(--gold);
-      margin-bottom: 16px;
-      font-weight: 500;
-    }
-    .report-section {
-      margin-bottom: 20px;
-    }
-    .report-section-title {
-      font-family: var(--font-display);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-primary);
-      padding-bottom: 6px;
-      border-bottom: 1px solid var(--navy-line);
-      margin-bottom: 10px;
-    }
-    .report-item {
-      background: var(--navy-light);
-      border: 1px solid var(--navy-line);
-      border-radius: var(--r-card);
-      padding: 10px 14px;
-      margin-bottom: 8px;
-      transition: border-color 0.15s;
-    }
-    .report-item:hover { border-color: var(--gold-dim); }
-    .report-item-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-    .report-item-summary {
+    .history-item-title {
       font-size: 12px;
       color: var(--text-secondary);
-      line-height: 1.6;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .report-item-source {
-      font-size: 10px;
+    .history-empty {
+      padding: 12px 4px;
+      font-size: 11px;
       color: var(--text-tertiary);
-      margin-top: 4px;
+      text-align: center;
     }
-    .report-item-source a {
-      color: var(--gold-dim);
-      text-decoration: underline;
-    }
-    .report-actions {
-      display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      border-top: 1px solid var(--navy-line);
-      flex-shrink: 0;
+    /* shared.css 未定義 .btn--sm，本檔僅用於歷史清單的小型「刪除」鈕 */
+    .btn--sm {
+      height: 22px;
+      min-height: 22px;
+      padding: 0 8px;
+      font-size: 10.5px;
+      border-radius: var(--r-sharp);
     }
 
     /* ===== Voice Playback Bar ===== */
@@ -345,9 +164,9 @@
       display: none;
       align-items: center;
       gap: 8px;
-      padding: 8px 16px;
+      padding: 6px 28px;
       border-bottom: 1px solid var(--navy-line);
-      background: rgba(201,168,106,0.06);
+      background: var(--gold-glow);
       font-size: 11px;
       color: var(--text-secondary);
       flex-shrink: 0;
@@ -374,189 +193,393 @@
       color: var(--text-secondary);
       font-family: inherit;
       font-size: 10px;
-      padding: 2px 6px;
+      height: 24px;
+      padding: 0 6px;
       outline: none;
       cursor: pointer;
     }
     .bgm-select:focus { border-color: var(--gold-dim); }
 
-    /* ===== History Panel (Bottom of input) ===== */
-    .history-section {
-      border-top: 1px solid var(--navy-line);
-      flex-shrink: 0;
-      max-height: 240px;
+    /* ===== Content: 真報紙 ===== */
+    .gazette-layout {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 250px;
+      gap: 26px;
+      align-items: start;
+    }
+    .gazette-card {
+      background: var(--page-card);
+      border: 1px solid var(--page-border);
+      box-shadow: var(--page-shadow);
+      padding: 34px 42px 44px;
+    }
+    .gazette-card--empty {
+      padding: 70px 42px;
       display: flex;
       flex-direction: column;
-    }
-    .history-header {
-      padding: 8px 16px;
-      font-family: var(--font-display);
-      font-size: 11px;
-      color: var(--text-tertiary);
-      border-bottom: 1px solid var(--navy-line);
-    }
-    .history-scroll {
-      overflow-y: auto;
-      flex: 1;
-    }
-    .history-item {
-      display: flex;
       align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      cursor: pointer;
-      transition: background 0.15s;
-      border-bottom: 1px solid rgba(255,255,255,0.03);
-    }
-    .history-item:hover { background: var(--navy-light); }
-    .history-item-date {
-      font-size: 11px;
-      color: var(--gold-dim);
-      white-space: nowrap;
-      font-family: var(--font-display);
-    }
-    .history-item-title {
-      font-size: 12px;
-      color: var(--text-secondary);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .history-empty {
-      padding: 16px;
-      font-size: 11px;
-      color: var(--text-tertiary);
+      gap: 14px;
       text-align: center;
     }
 
-    /* ===== Toast ===== */
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: var(--navy-light);
-      border: 1px solid var(--gold-dim);
-      color: var(--text-primary);
-      padding: 10px 20px;
-      border-radius: var(--r-card);
-      font-size: 13px;
-      z-index: 200;
-      opacity: 0;
-      transition: transform 0.3s, opacity 0.3s;
-      pointer-events: none;
+    /* 刊頭：三線 double-rule masthead */
+    .gz-masthead {
+      text-align: center;
+      border-top: 3px double var(--page-ink);
+      border-bottom: 3px double var(--page-ink);
+      padding: 16px 0 14px;
     }
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
+    .gz-masthead__cn {
+      font-family: var(--font-serif-tc);
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 0.18em;
+      color: var(--page-ink);
+      line-height: 1.1;
+    }
+    .gz-masthead__la {
+      font-family: var(--font-serif-en);
+      font-style: italic;
+      font-size: 14px;
+      color: var(--ink-gazette);
+      margin-top: 4px;
+    }
+    .gz-issue-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 2px;
+      border-bottom: 1px solid var(--page-border);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      color: var(--page-pencil);
+    }
+    .gz-issue-line span:nth-child(2) { flex: 1; text-align: center; }
+
+    .gz-notice {
+      margin-top: 18px;
+      padding: 8px 12px;
+      border: 1px dashed var(--ink-gazette);
+      color: var(--page-ink-mid);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      line-height: 1.7;
+    }
+    .gz-notice b { color: var(--ink-gazette); }
+
+    .gz-section { margin-top: 22px; }
+    .gz-section:first-of-type { margin-top: 22px; }
+    .gz-section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .gz-emoji { font-size: 16px; line-height: 1; }
+    .gz-section-title {
+      font-family: var(--font-serif-tc);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--page-ink);
+    }
+    .gz-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      letter-spacing: 0.18em;
+      color: var(--ink-gazette);
+    }
+    .gz-section-body {
+      font-family: var(--font-serif-tc);
+      font-size: 13.5px;
+      line-height: 2;
+      color: var(--page-ink-mid);
+    }
+    .gz-item-title { font-weight: 700; color: var(--page-ink); }
+    .gz-source {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--ink-gazette);
+      text-decoration: none;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+    .gz-source:hover { text-decoration: underline; }
+    .gz-source-text {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--page-pencil);
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
+    .gz-footer {
+      margin-top: 30px;
+      padding-top: 12px;
+      border-top: 1px solid var(--page-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .gz-footer__hand {
+      font-family: var(--font-hand);
+      font-style: italic;
+      font-size: 12px;
+      color: var(--page-pencil);
+    }
+    .gz-footer__file {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      color: var(--page-pencil);
+    }
+
+    .report-loading {
+      text-align: center;
+      color: var(--page-pencil);
+      font-size: 13px;
+      font-family: var(--font-body);
+    }
+    .report-loading::after {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--ink-gazette);
+      margin-left: 8px;
+      animation: pulse-dot 1s ease-in-out infinite;
+    }
+    @keyframes pulse-dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    /* 404／未付印章：三行文字（GAZETTE / 未付印 / 日期） */
+    .gz-stamp {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 2px dashed var(--ink-gazette);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transform: rotate(-8deg);
+      opacity: 0.85;
+    }
+    .gz-stamp__eyebrow {
+      font-family: var(--font-mono);
+      font-size: 7px;
+      letter-spacing: 0.2em;
+      color: var(--ink-gazette);
+    }
+    .gz-stamp__word {
+      font-family: var(--font-serif-tc);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink-gazette);
+    }
+    .gz-stamp__date {
+      font-family: var(--font-mono);
+      font-size: 7.5px;
+      color: var(--ink-gazette);
+    }
+    .gazette-card--empty .empty-state__line { color: var(--page-ink); font-family: var(--font-serif-tc); font-size: 16px; font-weight: 600; }
+    .gazette-card--empty .empty-state__sub { color: var(--page-pencil); font-family: var(--font-serif-tc); font-size: 13px; line-height: 1.9; max-width: 340px; }
+    .gazette-card--empty .empty-state__actions { display: flex; gap: 10px; margin-top: 2px; }
+    .gz-stamp-footnote {
+      font-family: var(--font-hand);
+      font-style: italic;
+      font-size: 11.5px;
+      color: var(--page-pencil);
+      margin-top: 2px;
+    }
+
+    /* 右軌 */
+    .gazette-rail {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: sticky;
+      top: 20px;
+    }
+    .gz-voice-postit { display: flex; align-items: center; gap: 9px; }
+    .gz-voice-play {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--page-card);
+      border: 1px solid var(--ink-gazette);
+      color: var(--ink-gazette);
+      font-size: 10px;
+      line-height: 1;
+      flex: none;
+      cursor: pointer;
+    }
+    .gz-voice-meta {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--page-ink-mid);
+      line-height: 1.5;
+    }
+    .gz-voice-meta small { color: var(--page-pencil); }
+    .gz-coin-body {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      line-height: 1.9;
+      color: var(--page-ink-mid);
+    }
+    .gz-rail-archive-item {
+      display: flex;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .gz-rail-archive-item:hover { opacity: 0.7; }
+    .gz-rail-archive-item span:first-child { font-size: 12px; color: var(--page-ink); }
+    .gz-rail-archive-item span:last-child {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--ink-gazette);
+    }
+    .gz-rail-more {
+      margin-top: 8px;
+      width: 100%;
+      justify-content: center;
     }
 
     /* ===== Responsive ===== */
     @media (max-width: 768px) {
-      .main { flex-direction: column; }
-      .input-panel {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--navy-line);
-        max-height: 45vh;
-      }
-      .input-textarea { min-height: 100px; }
-      .history-section { max-height: 140px; }
+      .gazette-layout { grid-template-columns: 1fr; }
+      .gazette-rail { position: static; }
+      .gazette-card { padding: 24px 20px 30px; }
+      .gz-masthead__cn { font-size: 26px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Header -->
-<header class="module-header">
-  <h1 class="mh-title">每日館報</h1>
-  <span class="mh-sub">Diurnalis</span>
-  <span class="mh-spacer"></span>
+<!-- Deskbar — 模組唯一 chrome 列；殼負責標題，這裡不放模組名字 -->
+<header class="deskbar">
+  <span class="desk-status">
+    <span class="desk-dot zone-ink"></span>
+    <span class="desk-date-chip">
+      <button class="btn btn--ghost" id="btnToday" title="回到今天">今日</button>
+      <input type="date" id="reportDate" title="選日期">
+    </span>
+    <button class="btn" id="btnLoadFeed">載入館報</button>
+    <span class="desk-feed-status" id="feedStatus"></span>
+  </span>
+  <span class="desk-spacer"></span>
+  <div class="desk-actions">
+    <select class="bgm-select" id="bgmSelect" style="display:none" title="伴讀 BGM">
+      <option value="">無 BGM</option>
+      <option value="quiet_archive_piano">靜謐書庫</option>
+      <option value="gentle_yangqin">柔風揚琴</option>
+      <option value="meditative_drum">冥想空靈鼓</option>
+      <option value="flowing_chime">流水水鐘</option>
+    </select>
+    <button class="btn btn--gold" id="btnRead" style="display:none" title="朗讀館報">▶ 朗讀</button>
+    <button class="btn" id="btnPause" style="display:none">暫停</button>
+    <button class="btn btn--danger" id="btnVoiceStop" style="display:none">停止</button>
+    <div class="mh-sep"></div>
+    <div class="mh-more" id="exportMoreWrap" style="display:none">
+      <button class="btn" id="btnExportToggle" aria-haspopup="true" aria-expanded="false">匯出 ▾</button>
+      <div class="mh-menu" id="exportMenu">
+        <button class="btn" id="btnExportMd">匯出 MD</button>
+        <button class="btn" id="btnExportJson">匯出 JSON</button>
+      </div>
+    </div>
+    <button class="btn btn--gold" id="btnSave" style="display:none">存書庫</button>
+    <div class="mh-more">
+      <button class="btn" id="btnMore" aria-haspopup="true" aria-expanded="false">更多 ▾</button>
+      <div class="mh-menu" id="mhMenu">
+        <div class="mh-menu-label">來源</div>
+        <button class="btn" id="btnOpenFile">開啟本地檔案</button>
+        <button class="btn" id="btnToggleSourceSettings">來源網址設定</button>
+        <hr class="mh-menu-hr">
+        <div class="mh-menu-label">整理</div>
+        <button class="btn" id="btnToggleManualPanel">貼上→AI 整理</button>
+        <hr class="mh-menu-hr">
+        <div class="mh-menu-label">歷史</div>
+        <button class="btn" id="btnToggleHistory">歷史清單</button>
+      </div>
+    </div>
+    <input type="file" id="feedFileInput" accept=".json,.md" hidden>
+  </div>
 </header>
 
-<!-- Main -->
-<div class="main">
-
-  <!-- Input Panel (Left) -->
-  <div class="input-panel">
-    <div class="input-header">載入館報</div>
-    <div class="input-body">
-
-      <!-- 載入館報（主要路徑） -->
-      <div class="feed-load-section">
-        <div class="feed-load-row">
-          <input type="date" class="input-date" id="reportDate">
-          <button class="btn btn--primary" id="btnLoadFeed">載入館報</button>
-          <button class="btn" id="btnOpenFile">開啟館報檔案</button>
-          <input type="file" id="feedFileInput" accept=".json,.md" hidden>
-        </div>
-        <div class="feed-status" id="feedStatus"></div>
-        <details class="feed-settings" id="feedSettings">
-          <summary>來源設定</summary>
-          <div class="feed-settings-body">
-            <input type="text" class="feed-base-input" id="feedBaseInput" placeholder="館報來源 base URL">
-            <button class="btn btn--sm" id="btnSaveFeedBase">儲存</button>
-          </div>
-        </details>
-      </div>
-
-      <!-- 手動貼上素材（AI 整理，降級路徑，預設收合） -->
-      <details id="manualPanel">
-        <summary>手動貼上素材（AI 整理）</summary>
-        <div class="manual-panel-body">
-          <textarea class="input-textarea" id="sourceInput" placeholder="將文章、新聞片段或筆記貼在這裡，零韻會幫你整理成結構化的每日館報。&#10;&#10;可以一次貼入多段，會自動分類歸組。"></textarea>
-          <div class="input-actions">
-            <div style="flex:1"></div>
-            <button class="btn btn--primary" id="btnGenerate">整理成館報</button>
-          </div>
-          <div class="input-hint">貼上文字後點「整理成館報」，零韻會分類、摘要，產出 §12.3 格式的結構化報告。</div>
-        </div>
-      </details>
-    </div>
-
-    <!-- History -->
-    <div class="history-section">
-      <div class="history-header">過往館報</div>
-      <div class="history-scroll" id="historyScroll">
-        <div class="history-empty" id="historyEmpty">尚無歷史館報</div>
-      </div>
-    </div>
+<!-- 抽屜：來源網址設定 -->
+<div class="gz-drawer" id="sourceSettingsDrawer" hidden>
+  <div class="gz-drawer-title">來源網址設定</div>
+  <div class="gz-drawer-row">
+    <input type="text" id="feedBaseInput" placeholder="館報來源 base URL">
+    <button class="btn btn--gold" id="btnSaveFeedBase">儲存</button>
   </div>
+  <div class="gz-drawer-hint">館報管線會抓取 <code>base URL + daily_YYYYMMDD.json</code>。留空並儲存可還原預設來源。</div>
+</div>
 
-  <!-- Report Panel (Right) -->
-  <div class="report-panel">
-    <div class="report-header">
-      <span class="report-title" id="reportHeaderTitle">報告預覽</span>
-      <select class="bgm-select" id="bgmSelect" style="display:none" title="伴讀 BGM">
-        <option value="">無 BGM</option>
-        <option value="quiet_archive_piano">靜謐書庫</option>
-        <option value="gentle_yangqin">柔風揚琴</option>
-        <option value="meditative_drum">冥想空靈鼓</option>
-        <option value="flowing_chime">流水水鐘</option>
-      </select>
-      <button class="btn btn--sm btn--primary" id="btnRead" style="display:none" title="朗讀館報">朗讀</button>
-      <button class="btn btn--sm" id="btnPause" style="display:none">暫停</button>
-      <button class="btn btn--sm btn--danger" id="btnVoiceStop" style="display:none">停止</button>
-      <button class="btn btn--sm" id="btnExportMd" style="display:none">匯出 MD</button>
-      <button class="btn btn--sm" id="btnExportJson" style="display:none">匯出 JSON</button>
-      <button class="btn btn--sm btn--primary" id="btnSave" style="display:none">儲存</button>
-    </div>
-    <div class="voice-bar" id="voiceBar">
-      <span class="voice-bar-progress" id="voiceProgress"></span>
-      <span class="voice-bar-text" id="voiceText"></span>
-    </div>
-    <div class="report-scroll" id="reportScroll">
-      <div class="report-empty" id="reportEmpty">
-        選擇日期後點「載入館報」，或開啟本機館報檔案。也可展開下方面板貼上素材由零韻整理。
+<!-- 抽屜：貼上→AI 整理（<details> 流程保留，僅收合開關改由更多▾ 觸發） -->
+<div class="gz-drawer" id="manualDrawer" hidden>
+  <div class="gz-drawer-title">貼上→AI 整理</div>
+  <details id="manualPanel" open>
+    <summary>手動貼上素材（AI 整理）</summary>
+    <div class="manual-panel-body">
+      <textarea id="sourceInput" placeholder="將文章、新聞片段或筆記貼在這裡，零韻會幫你整理成結構化的每日館報。&#10;&#10;可以一次貼入多段，會自動分類歸組。"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+        <div style="flex:1"></div>
+        <button class="btn btn--gold" id="btnGenerate">整理成館報</button>
       </div>
+      <div class="gz-drawer-hint">貼上文字後點「整理成館報」，零韻會分類、摘要，產出 §12.3 格式的結構化報告。</div>
     </div>
-  </div>
+  </details>
+</div>
 
+<!-- 抽屜：歷史清單 -->
+<div class="gz-drawer" id="historyDrawer" hidden>
+  <div class="gz-drawer-title">過往館報（歷史清單）</div>
+  <div class="gz-history-list" id="historyScroll">
+    <div class="history-empty" id="historyEmpty">尚無歷史館報</div>
+  </div>
+</div>
+
+<!-- Voice Playback Bar -->
+<div class="voice-bar" id="voiceBar">
+  <span class="voice-bar-progress" id="voiceProgress"></span>
+  <span class="voice-bar-text" id="voiceText"></span>
+</div>
+
+<!-- Main: 真報紙 -->
+<div class="page-room" style="flex:1;overflow-y:auto">
+  <div class="gazette-layout">
+    <div class="gazette-card gazette-card--empty" id="reportScroll"></div>
+
+    <aside class="gazette-rail">
+      <div class="postit postit--yellow gz-voice-postit">
+        <div>
+          <div class="postit__title">語音稿</div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <button class="gz-voice-play" id="btnRailVoicePlay" title="播放語音稿" style="display:none">▶</button>
+            <span class="gz-voice-meta" id="railVoiceMeta">尚無可播放的語音稿</span>
+          </div>
+        </div>
+      </div>
+      <div class="postit postit--blue">
+        <div class="postit__title">月幣</div>
+        <div class="gz-coin-body" id="railCoinBody">餘額－枚<br>本篇整理花費－枚</div>
+      </div>
+      <div class="index-card" id="railArchive">
+        <div class="index-card__label">ARCHIVE · 過刊</div>
+        <div id="railArchiveList">
+          <div class="history-empty">尚無過刊</div>
+        </div>
+        <button class="btn btn--ghost btn gz-rail-more" id="btnRailMoreHistory">查看全部過刊</button>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <!-- Toast -->
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" style="display:none"></div>
 
 <script type="module">
 // postMessage type 對照表（本檔為零 import 的 inline module script；加相對 import 會使 file:// 情境整檔失效，
@@ -589,12 +612,14 @@ const state = {
 const $ = id => document.getElementById(id);
 const sourceInput = $('sourceInput');
 const reportDate = $('reportDate');
+const btnToday = $('btnToday');
 const btnGenerate = $('btnGenerate');
 const reportScroll = $('reportScroll');
 const historyScroll = $('historyScroll');
 const btnSave = $('btnSave');
 const btnExportMd = $('btnExportMd');
 const btnExportJson = $('btnExportJson');
+const exportMoreWrap = $('exportMoreWrap');
 const btnRead = $('btnRead');
 const btnPause = $('btnPause');
 const btnVoiceStop = $('btnVoiceStop');
@@ -609,6 +634,9 @@ const feedFileInput = $('feedFileInput');
 const feedStatus = $('feedStatus');
 const feedBaseInput = $('feedBaseInput');
 const btnSaveFeedBase = $('btnSaveFeedBase');
+const btnRailVoicePlay = $('btnRailVoicePlay');
+const railVoiceMeta = $('railVoiceMeta');
+const railArchiveList = $('railArchiveList');
 
 // Set default date to today (local time, not UTC)
 function localDateStr(date) {
@@ -618,13 +646,17 @@ function localDateStr(date) {
 reportDate.value = localDateStr();
 state.loadingFeed = false;
 
+btnToday.addEventListener('click', () => {
+  reportDate.value = localDateStr();
+});
+
 // ===== Toast =====
 let toastTimer = null;
 function showToast(msg, ms = 2200) {
   toastEl.textContent = msg;
-  toastEl.classList.add('show');
+  toastEl.style.display = '';
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
+  toastTimer = setTimeout(() => { toastEl.style.display = 'none'; }, ms);
 }
 
 // ===== Escape =====
@@ -734,6 +766,110 @@ window.addEventListener('message', (e) => {
   }
 });
 
+// ===== 抽屜（來源設定／手動整理／歷史清單）開關 =====
+const drawers = {
+  source: $('sourceSettingsDrawer'),
+  manual: $('manualDrawer'),
+  history: $('historyDrawer'),
+};
+function openDrawer(name) {
+  for (const key in drawers) {
+    if (key === name) {
+      drawers[key].hidden = false;
+    } else {
+      drawers[key].hidden = true;
+    }
+  }
+  if (name === 'manual') {
+    const panel = $('manualPanel');
+    if (panel) panel.open = true;
+  }
+}
+function toggleDrawer(name) {
+  const isOpen = !drawers[name].hidden;
+  // 全部先關閉
+  for (const key in drawers) drawers[key].hidden = true;
+  if (!isOpen) openDrawer(name);
+}
+$('btnToggleSourceSettings').addEventListener('click', () => { closeAllMenus(); toggleDrawer('source'); });
+$('btnToggleManualPanel').addEventListener('click', () => { closeAllMenus(); toggleDrawer('manual'); });
+$('btnToggleHistory').addEventListener('click', () => { closeAllMenus(); toggleDrawer('history'); });
+$('btnRailMoreHistory').addEventListener('click', () => toggleDrawer('history'));
+
+// ===== 更多▾ / 匯出▾ 選單開關（同一套邏輯，支援多組 .mh-more） =====
+function closeAllMenus() {
+  document.querySelectorAll('.mh-menu.open').forEach(m => {
+    m.classList.remove('open');
+    const btn = m.previousElementSibling;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  });
+}
+document.querySelectorAll('.mh-more').forEach(wrap => {
+  const btn = wrap.querySelector('button');
+  const menu = wrap.querySelector('.mh-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const willOpen = !menu.classList.contains('open');
+    closeAllMenus();
+    if (willOpen) {
+      menu.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  });
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.mh-more')) closeAllMenus();
+});
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAllMenus(); });
+
+// ===== 解析標題前導 emoji（分節：emoji + 節名 + mono 眉字） =====
+function splitEmojiTitle(title) {
+  const str = String(title || '').trim();
+  const m = str.match(/^(\p{Extended_Pictographic}(?:️)?)\s*(.*)$/u);
+  if (m && m[2]) return { emoji: m[1], text: m[2] };
+  return { emoji: '📰', text: str || '（未命名段落）' };
+}
+function sectionEyebrow(section, idx) {
+  if (section.beat) return String(section.beat).replace(/[_-]+/g, ' ').toUpperCase();
+  return `SECTION ${String(idx + 1).padStart(2, '0')}`;
+}
+
+// ===== 近似節氣（裝飾用途，非精確天文計算） =====
+const SOLAR_TERMS = [
+  [1,5,'小寒'],[1,20,'大寒'],[2,4,'立春'],[2,19,'雨水'],[3,5,'驚蟄'],[3,20,'春分'],
+  [4,5,'清明'],[4,20,'穀雨'],[5,5,'立夏'],[5,21,'小滿'],[6,5,'芒種'],[6,21,'夏至'],
+  [7,7,'小暑'],[7,22,'大暑'],[8,7,'立秋'],[8,23,'處暑'],[9,7,'白露'],[9,23,'秋分'],
+  [10,8,'寒露'],[10,23,'霜降'],[11,7,'立冬'],[11,22,'小雪'],[12,7,'大雪'],[12,22,'冬至'],
+];
+function approxSolarTerm(d) {
+  const val = (d.getMonth() + 1) * 100 + d.getDate();
+  let chosen = SOLAR_TERMS[SOLAR_TERMS.length - 1][2];
+  for (const [mm, dd, name] of SOLAR_TERMS) {
+    if (val >= mm * 100 + dd) chosen = name;
+  }
+  return chosen;
+}
+const WEEKDAY_ZH = ['日', '一', '二', '三', '四', '五', '六'];
+function issueLineParts(report) {
+  const d = new Date((report.date || localDateStr()) + 'T00:00:00');
+  const valid = !isNaN(d);
+  const dateText = valid
+    ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 星期${WEEKDAY_ZH[d.getDay()]} · ${approxSolarTerm(d)}`
+    : (report.date || '');
+  let issueNo = report.reportId;
+  if (!issueNo && valid) {
+    const epoch = new Date('2026-01-01T00:00:00');
+    issueNo = Math.max(1, Math.round((d - epoch) / 86400000) + 1);
+  }
+  let printedAt = '晨六時付印';
+  if (report.generated_at) {
+    const g = new Date(report.generated_at);
+    if (!isNaN(g)) printedAt = `${g.getHours()} 時 ${String(g.getMinutes()).padStart(2, '0')} 分付印`;
+  }
+  return { no: issueNo ? `NO. ${escapeHtml(issueNo)}` : 'NO. —', dateText, printedAt };
+}
+
 // ===== Generate =====
 btnGenerate.addEventListener('click', async () => {
   const text = sourceInput.value.trim();
@@ -744,7 +880,7 @@ btnGenerate.addEventListener('click', async () => {
   btnGenerate.disabled = true;
   btnGenerate.textContent = '整理中…';
 
-  reportScroll.innerHTML = '<div class="report-loading">零韻正在整理素材</div>';
+  showLoadingState('零韻正在整理素材');
   toggleReportActions(false);
 
   try {
@@ -756,7 +892,7 @@ btnGenerate.addEventListener('click', async () => {
     toggleReportActions(true);
     showToast('館報已整理完成');
   } catch (err) {
-    reportScroll.innerHTML = `<div class="report-empty">整理失敗：${escapeHtml(err.message)}</div>`;
+    showErrorState('整理失敗：' + err.message);
   } finally {
     state.generating = false;
     btnGenerate.disabled = false;
@@ -818,13 +954,30 @@ function adaptRssItem(item) {
   item = item && typeof item === 'object' ? item : {};
 
   const title = String(item.title || item.headline || item.name || '（無標題）');
-  const summary = String(item.summary || item.description || item.excerpt || item.text || '');
-  const source = String(item.source || item.source_name || item.feed || item.site || '');
-  const rawUrl = item.url || item.link || item.href;
-  const url = (typeof rawUrl === 'string' && /^https?:\/\//i.test(rawUrl)) ? rawUrl : '';
+  // rss-news 實際 schema：內文在 context，TTS 稿在 voice_text
+  const summary = String(item.summary || item.context || item.description || item.excerpt || item.text || '');
+  const voice = typeof item.voice_text === 'string' ? item.voice_text.trim() : '';
+
+  // rss-news 實際 schema：來源是 sources[]（{name, publisher, url}），舊單數欄位保留為 fallback
+  let source = String(item.source || item.source_name || item.feed || item.site || '');
+  const rawSources = Array.isArray(item.sources) ? item.sources : [];
+  if (!source && rawSources.length) {
+    const names = rawSources
+      .map(s => (s && typeof s === 'object') ? String(s.name || s.publisher || '') : '')
+      .filter(Boolean);
+    source = [...new Set(names)].join(' · ');
+  }
+
+  const isHttp = (u) => typeof u === 'string' && /^https?:\/\//i.test(u);
+  let url = [item.url, item.link, item.href].find(isHttp) || '';
+  if (!url) {
+    const src = rawSources.find(s => s && typeof s === 'object' && isHttp(s.url));
+    if (src) url = src.url;
+  }
 
   const out = { title };
   if (summary) out.summary = summary;
+  if (voice) out.voice = voice;
   if (source) out.source = source;
   if (url) out.url = url;
   return out;
@@ -893,66 +1046,134 @@ function parseMdReport(text, fallbackDate) {
   return { date, sections };
 }
 
-// ===== Render Report =====
+// ===== Render States（讀取中／未取報／未付印(404)／錯誤） =====
+function showEmptyState() {
+  reportScroll.classList.add('gazette-card--empty');
+  reportScroll.innerHTML = `
+    <div class="empty-state__stamp">報</div>
+    <div class="empty-state__line">今天還沒取報。</div>
+    <div class="empty-state__sub">選個日期，讓報童跑一趟，或從「更多▾」開啟本機的館報檔案。</div>
+  `;
+}
+
+function showLoadingState(msg) {
+  reportScroll.classList.add('gazette-card--empty');
+  reportScroll.innerHTML = `<div class="report-loading">${escapeHtml(msg || '讀取中')}</div>`;
+}
+
+function showErrorState(msg) {
+  reportScroll.classList.add('gazette-card--empty');
+  reportScroll.innerHTML = `
+    <div class="empty-state__stamp" style="--zone-ink:var(--danger);border-color:var(--danger);color:var(--danger)">！</div>
+    <div class="empty-state__line">沒能取到館報</div>
+    <div class="empty-state__sub">${escapeHtml(msg || '')}</div>
+  `;
+}
+
+function show404State(dateValue) {
+  reportScroll.classList.add('gazette-card--empty');
+  const shortDate = /^\d{4}-\d{2}-\d{2}$/.test(dateValue || '') ? dateValue.slice(5) : '';
+  reportScroll.innerHTML = `
+    <div class="gz-stamp">
+      <span class="gz-stamp__eyebrow">GAZETTE</span>
+      <span class="gz-stamp__word">未付印</span>
+      <span class="gz-stamp__date">${escapeHtml(shortDate)}</span>
+    </div>
+    <div class="empty-state__line">明日的館報還在印刷機裡。</div>
+    <div class="empty-state__sub">晨間六點後，報童會把它掛上架。<br>要不要先翻翻過刊，或自己帶一份來？</div>
+    <div class="empty-state__actions">
+      <button class="btn" id="btn404History">查看過刊</button>
+      <button class="btn" id="btn404OpenFile">開啟本地 .json / .md</button>
+    </div>
+    <div class="gz-stamp-footnote">— the paperboy is still asleep —</div>
+  `;
+  $('btn404History').addEventListener('click', () => openDrawer('history'));
+  $('btn404OpenFile').addEventListener('click', () => feedFileInput.click());
+}
+
+// ===== Render Report（真報紙排版） =====
 function renderReport(report) {
   if (!report?.sections?.length) {
-    reportScroll.innerHTML = '<div class="report-empty">報告內容為空</div>';
+    showErrorState('報告內容為空');
     return;
   }
+  reportScroll.classList.remove('gazette-card--empty');
 
-  $('reportHeaderTitle').textContent = `館報 — ${report.date || ''}`;
+  $('reportHeaderTitle') && ($('reportHeaderTitle').textContent = `館報 — ${report.date || ''}`);
 
-  let html = `<div class="report-date-line">${escapeHtml(report.date || '')}</div>`;
+  const issue = issueLineParts(report);
+  let html = `
+    <div class="gz-masthead">
+      <div class="gz-masthead__cn">每日館報</div>
+      <div class="gz-masthead__la">The Akasha Gazette</div>
+    </div>
+    <div class="gz-issue-line">
+      <span>${issue.no}</span><span>${escapeHtml(issue.dateText)}</span><span>${escapeHtml(issue.printedAt)}</span>
+    </div>
+  `;
 
   if ((report.status && report.status !== 'ok') || (report.warnings && report.warnings.length)) {
-    html += `<div class="report-notice">`;
+    html += `<div class="gz-notice">`;
     if (report.status && report.status !== 'ok') {
-      html += `來源標記狀態：${escapeHtml(report.status)}`;
+      html += `<b>來源標記狀態：</b>${escapeHtml(report.status)}`;
     }
     if (report.warnings && report.warnings.length) {
-      html += `${report.status && report.status !== 'ok' ? '；' : ''}警告 ${report.warnings.length} 則`;
-      html += '<div class="report-notice-warning">';
-      for (const w of report.warnings) {
-        html += `・${escapeHtml(w)}<br>`;
-      }
-      html += '</div>';
+      html += `${report.status && report.status !== 'ok' ? '　' : ''}<b>警告 ${report.warnings.length} 則：</b>`;
+      html += report.warnings.map(w => `・${escapeHtml(w)}`).join('<br>');
     }
     html += `</div>`;
   }
 
-  for (const section of report.sections) {
-    html += `<div class="report-section">`;
-    html += `<div class="report-section-title">${escapeHtml(section.title)}</div>`;
-
+  report.sections.forEach((section, idx) => {
+    const { emoji, text } = splitEmojiTitle(section.title);
+    const eyebrow = sectionEyebrow(section, idx);
+    html += `<div class="gz-section">`;
+    html += `<div class="gz-section-head"><span class="gz-emoji">${escapeHtml(emoji)}</span><span class="gz-section-title">${escapeHtml(text)}</span><span class="gz-eyebrow">${escapeHtml(eyebrow)}</span></div>`;
+    html += `<div class="gz-section-body">`;
     for (const item of (section.items || [])) {
-      html += `<div class="report-item">`;
-      html += `<div class="report-item-title">${escapeHtml(item.title)}</div>`;
-      if (item.summary) {
-        html += `<div class="report-item-summary">${escapeHtml(item.summary)}</div>`;
+      html += `・<span class="gz-item-title">${escapeHtml(item.title)}</span>`;
+      if (item.summary) html += ` — ${escapeHtml(item.summary)}`;
+      if (item.url) {
+        html += `<a href="${escapeHtml(item.url)}" class="gz-source" target="_blank" rel="noopener">SOURCE ↗</a>`;
+      } else if (item.source) {
+        html += `<span class="gz-source-text">來源：${escapeHtml(item.source)}</span>`;
       }
-      if (item.source || item.url) {
-        html += `<div class="report-item-source">`;
-        if (item.url) {
-          html += `來源：<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener">${escapeHtml(item.source || item.url)}</a>`;
-        } else {
-          html += `來源：${escapeHtml(item.source)}`;
-        }
-        html += `</div>`;
-      }
-      html += `</div>`;
+      html += `<br>`;
     }
+    html += `</div></div>`;
+    if (idx < report.sections.length - 1) {
+      html += `<div class="washi"><span></span><span></span></div>`;
+    }
+  });
 
-    html += `</div>`;
-  }
+  const ymd = (report.date || '').replace(/-/g, '');
+  html += `
+    <div class="gz-footer">
+      <span class="gz-footer__hand">printed at the midnight press</span>
+      <span class="gz-footer__file">daily_${escapeHtml(ymd)}.json</span>
+    </div>
+  `;
 
   reportScroll.innerHTML = html;
+  updateVoiceRail(report);
 }
+
+function updateVoiceRail(report) {
+  if (!report) {
+    btnRailVoicePlay.style.display = 'none';
+    railVoiceMeta.textContent = '尚無可播放的語音稿';
+    return;
+  }
+  const ymd = (report.date || '').replace(/-/g, '');
+  btnRailVoicePlay.style.display = '';
+  railVoiceMeta.innerHTML = `voice_${escapeHtml(ymd)}.txt<br><small>零韻朗讀 · 點▶開始</small>`;
+}
+btnRailVoicePlay.addEventListener('click', () => btnRead.click());
 
 function toggleReportActions(show) {
   const d = show ? '' : 'none';
   btnSave.style.display = d;
-  btnExportMd.style.display = d;
-  btnExportJson.style.display = d;
+  exportMoreWrap.style.display = d;
   btnRead.style.display = show && !voicePlaying ? '' : 'none';
   bgmSelect.style.display = d;
 }
@@ -990,6 +1211,7 @@ async function loadFeedByDate() {
   btnLoadFeed.disabled = true;
   feedStatus.classList.remove('is-error');
   feedStatus.textContent = '載入中…';
+  showLoadingState('報童正在路上');
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -1001,11 +1223,13 @@ async function loadFeedByDate() {
     if (res.status === 404) {
       feedStatus.classList.add('is-error');
       feedStatus.textContent = '這一天的館報尚未發佈';
+      show404State(dateValue);
       return;
     }
     if (!res.ok) {
       feedStatus.classList.add('is-error');
       feedStatus.textContent = `館報伺服器回應異常（HTTP ${res.status}）`;
+      showErrorState(`館報伺服器回應異常（HTTP ${res.status}）`);
       return;
     }
 
@@ -1015,6 +1239,7 @@ async function loadFeedByDate() {
     } catch {
       feedStatus.classList.add('is-error');
       feedStatus.textContent = '館報檔案格式無法解析';
+      showErrorState('館報檔案格式無法解析');
       return;
     }
 
@@ -1030,6 +1255,7 @@ async function loadFeedByDate() {
     clearTimeout(timeoutId);
     feedStatus.classList.add('is-error');
     feedStatus.textContent = '無法連線館報來源，請檢查網路或來源設定';
+    showErrorState('無法連線館報來源，請檢查網路或來源設定');
   } finally {
     state.loadingFeed = false;
     btnLoadFeed.disabled = false;
@@ -1039,7 +1265,7 @@ async function loadFeedByDate() {
 btnLoadFeed.addEventListener('click', loadFeedByDate);
 
 // ===== 載入館報：本機檔案 =====
-btnOpenFile.addEventListener('click', () => feedFileInput.click());
+btnOpenFile.addEventListener('click', () => { closeAllMenus(); feedFileInput.click(); });
 
 feedFileInput.addEventListener('change', async () => {
   const file = feedFileInput.files && feedFileInput.files[0];
@@ -1060,6 +1286,7 @@ feedFileInput.addEventListener('change', async () => {
       } catch {
         feedStatus.classList.add('is-error');
         feedStatus.textContent = '館報檔案格式無法解析';
+        showErrorState('館報檔案格式無法解析');
         return;
       }
       report = adaptRssReport(json, dateValue);
@@ -1075,6 +1302,7 @@ feedFileInput.addEventListener('change', async () => {
   } catch (err) {
     feedStatus.classList.add('is-error');
     feedStatus.textContent = '館報檔案格式無法解析';
+    showErrorState('館報檔案格式無法解析');
   } finally {
     feedFileInput.value = '';
   }
@@ -1141,8 +1369,8 @@ function exportReport(fmt) {
   showToast('已匯出 ' + filename);
 }
 
-btnExportMd.addEventListener('click', () => exportReport('md'));
-btnExportJson.addEventListener('click', () => exportReport('json'));
+btnExportMd.addEventListener('click', () => { closeAllMenus(); exportReport('md'); });
+btnExportJson.addEventListener('click', () => { closeAllMenus(); exportReport('json'); });
 
 // ===== History =====
 async function loadHistory() {
@@ -1158,33 +1386,61 @@ async function loadHistory() {
   }
 }
 
+function historyDateLabel(h) {
+  const tags = (h.tags || []).filter(t => t !== '館報');
+  return tags[0] || formatDate(h.createdAt);
+}
+
 function renderHistory() {
+  // 抽屜內完整清單（含刪除）
   const empty = $('historyEmpty');
   if (state.history.length === 0) {
     historyScroll.innerHTML = '';
     historyScroll.appendChild(empty);
     empty.style.display = '';
-    return;
-  }
-
-  empty.style.display = 'none';
-  historyScroll.innerHTML = state.history.map(h => {
-    const tags = (h.tags || []).filter(t => t !== '館報');
-    const dateLabel = tags[0] || formatDate(h.createdAt);
-    return `
+  } else {
+    empty.style.display = 'none';
+    historyScroll.innerHTML = state.history.map(h => `
       <div class="history-item" data-id="${escapeHtml(h.id)}">
-        <span class="history-item-date">${escapeHtml(dateLabel)}</span>
+        <span class="history-item-date">${escapeHtml(historyDateLabel(h))}</span>
         <span class="history-item-title">${escapeHtml(h.title)}</span>
         <button class="btn btn--sm btn--danger" data-delete="${escapeHtml(h.id)}">刪除</button>
       </div>
-    `;
-  }).join('');
+    `).join('');
+  }
+
+  // 右軌過刊索引卡（精簡版，前 5 筆）
+  if (state.history.length === 0) {
+    railArchiveList.innerHTML = '<div class="history-empty">尚無過刊</div>';
+  } else {
+    railArchiveList.innerHTML = state.history.slice(0, 5).map((h, i) => {
+      const label = historyDateLabel(h);
+      const d = /^\d{4}-\d{2}-\d{2}$/.test(label) ? new Date(label + 'T00:00:00') : null;
+      const shown = d ? `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} · 週${WEEKDAY_ZH[d.getDay()]}刊` : label;
+      const no = d ? issueLineParts({ date: label }).no.replace('NO. ', 'NO.') : '';
+      return `<div class="gz-rail-archive-item" data-id="${escapeHtml(h.id)}"><span>${escapeHtml(shown)}</span><span>${escapeHtml(no)}</span></div>`;
+    }).join('');
+  }
 }
 
 function formatDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
   return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+async function loadHistoryRecordById(id) {
+  const record = state.history.find(h => h.id === id);
+  if (!record) return;
+  try {
+    const report = JSON.parse(record.content);
+    state.currentReport = report;
+    state.currentReportId = id;
+    renderReport(report);
+    toggleReportActions(true);
+  } catch {
+    showToast('無法解析該館報');
+  }
 }
 
 historyScroll.addEventListener('click', async (e) => {
@@ -1199,9 +1455,9 @@ historyScroll.addEventListener('click', async (e) => {
       if (state.currentReportId === delBtn.dataset.delete) {
         state.currentReport = null;
         state.currentReportId = null;
-        reportScroll.innerHTML = '<div class="report-empty">選擇日期後點「載入館報」，或開啟本機館報檔案。也可展開下方面板貼上素材由零韻整理。</div>';
+        showEmptyState();
         toggleReportActions(false);
-        $('reportHeaderTitle').textContent = '報告預覽';
+        $('reportHeaderTitle') && ($('reportHeaderTitle').textContent = '報告預覽');
       }
       await loadHistory();
     } catch (err) {
@@ -1213,19 +1469,13 @@ historyScroll.addEventListener('click', async (e) => {
   // Load
   const item = e.target.closest('.history-item');
   if (!item) return;
-  const id = item.dataset.id;
-  const record = state.history.find(h => h.id === id);
-  if (!record) return;
+  await loadHistoryRecordById(item.dataset.id);
+});
 
-  try {
-    const report = JSON.parse(record.content);
-    state.currentReport = report;
-    state.currentReportId = id;
-    renderReport(report);
-    toggleReportActions(true);
-  } catch {
-    showToast('無法解析該館報');
-  }
+railArchiveList.addEventListener('click', (e) => {
+  const item = e.target.closest('.gz-rail-archive-item');
+  if (!item) return;
+  loadHistoryRecordById(item.dataset.id);
 });
 
 // ===== Voice Playback =====
@@ -1298,6 +1548,16 @@ window.addEventListener('message', (e) => {
 });
 
 // ===== Init =====
+// reportHeaderTitle：內部書帳用（AI context 摘要等曾參照），不在畫面上顯示，避免違反「模組內不放標題」鐵則
+if (!$('reportHeaderTitle')) {
+  const hiddenTitle = document.createElement('span');
+  hiddenTitle.id = 'reportHeaderTitle';
+  hiddenTitle.hidden = true;
+  hiddenTitle.textContent = '報告預覽';
+  document.body.appendChild(hiddenTitle);
+}
+showEmptyState();
+updateVoiceRail(null);
 loadHistory();
 </script>
 </body>

@@ -1,0 +1,389 @@
+/* ============================================================
+   AKASHA LIBRARY — UI REDESIGN MOCKUP SHARED STYLES
+   Concept: 深夜書房（殼）＋攤開的紙頁（內容）
+   The Midnight Study & The Open Page
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+TC:wght@400;600;700;900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400&family=Sorts+Mill+Goudy:ital@0;1&display=swap');
+
+:root {
+  /* ===== 殼：深夜書房（沿用現有 tokens.css） ===== */
+  --navy: #181d28;
+  --navy-deep: #11151d;
+  --navy-light: #232a37;
+  --navy-hover: #2e3645;
+  --navy-line: #313a4b;
+  --gold: #c9a86a;
+  --gold-bright: #e3c486;
+  --gold-dim: #a08550;
+  --gold-glow: rgba(201,168,106,0.14);
+  --gold-line: rgba(201,168,106,0.22);
+  --cream: #f1ead6;
+  --cream-dim: #d6cfb8;
+  --text-primary: #ece5cf;
+  --text-secondary: #9aa1ad;
+  --text-tertiary: #646b78;
+  --danger: #c4604f;
+  --success: #6aae7f;
+
+  /* ===== 紙頁：攤開的手帳（新增，源自 Charta Lab） ===== */
+  --page-bg: #FAF8F3;            /* 紙房間底色 */
+  --page-card: #FFFFFF;          /* 紙張本體 */
+  --page-card-border: #E8E3DA;
+  --page-old: #F3EDE0;           /* 舊紙（程式碼塊/器材架） */
+  --page-old-border: #E0D6C2;
+  --page-ink: #1c1610;           /* 主墨 */
+  --page-ink-mid: #3e352a;
+  --page-ink-light: #6a5d4e;
+  --page-pencil: #8a7a66;        /* 鉛筆註記 */
+  --page-rule: rgba(0,0,0,0.035);/* 筆記本橫線 */
+
+  /* ===== 分區墨色 ZONE INKS：每一廳一個墨水 ===== */
+  --ink-hall: #c9a86a;           /* 大廳 = 黃銅 */
+  --ink-manuscripta: #4a80a8;    /* Code & Data = 靛青 sky */
+  --ink-lectorium: #c8962e;      /* PDF 閱讀器 = 蜂蜜 honey */
+  --ink-tabularium: #5a8a4a;     /* Table Forge / 試算表 = 葉綠 leaf */
+  --ink-dramaturgica: #b84058;   /* 劇本工房 = 莓紅 berry */
+  --ink-gazette: #d4763a;        /* 每日館報 = 胡蘿蔔 carrot */
+  --ink-intimarium: #7a5898;     /* 談心專區 = 李紫 plum */
+
+  /* ===== 字體 ===== */
+  --serif-en: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  --serif-zh: 'Noto Serif TC', 'Songti TC', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-hand: 'Sorts Mill Goudy', 'Cormorant Garamond', Georgia, serif;
+
+  --r-sharp: 2px;
+  --r-soft: 4px;
+  --r-card: 6px;
+  --sidebar-w: 232px;
+  --topbar-h: 52px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: var(--serif-zh);
+  background: var(--navy-deep);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; }
+
+/* ============================================================
+   APP FRAME：上列 + 側欄 + 舞台
+   ============================================================ */
+.frame { display: grid; grid-template-rows: var(--topbar-h) 1fr; height: 100vh; overflow: hidden; }
+.frame__body { display: grid; grid-template-columns: var(--sidebar-w) 1fr; overflow: hidden; }
+
+/* ----- 上列：全域，永遠只有「館」的事 ----- */
+.topbar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 20px;
+  background: var(--navy-deep);
+  border-bottom: 1px solid var(--navy-line);
+}
+.topbar__brand { display: flex; align-items: baseline; gap: 10px; }
+.topbar__logo {
+  font-family: var(--serif-en); font-weight: 700; font-size: 17px;
+  letter-spacing: 0.14em; color: var(--gold);
+}
+.topbar__motto {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+  color: var(--text-tertiary); text-transform: uppercase;
+}
+.topbar__spacer { flex: 1; }
+.topbar__search {
+  display: flex; align-items: center; gap: 8px;
+  height: 30px; padding: 0 12px; min-width: 220px;
+  background: var(--navy); border: 1px solid var(--navy-line); border-radius: var(--r-soft);
+  color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px;
+}
+.topbar__icon {
+  width: 30px; height: 30px; display: grid; place-items: center;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-soft);
+  color: var(--text-secondary); font-size: 14px;
+}
+.topbar__icon:hover { border-color: var(--navy-line); color: var(--cream); }
+.topbar__librarian {
+  display: flex; align-items: center; gap: 8px;
+  height: 30px; padding: 0 14px;
+  background: linear-gradient(180deg, rgba(201,168,106,0.16), rgba(201,168,106,0.08));
+  border: 1px solid var(--gold-line); border-radius: var(--r-soft);
+  color: var(--gold-bright); font-size: 12.5px; letter-spacing: 0.05em;
+}
+
+/* ----- 側欄：房間清單 ----- */
+.sidebar {
+  background: var(--navy);
+  border-right: 1px solid var(--navy-line);
+  padding: 18px 0;
+  overflow-y: auto;
+}
+.side-label {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  padding: 0 20px; margin: 18px 0 8px;
+}
+.side-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 20px 7px 17px;
+  border-left: 3px solid transparent;
+  color: var(--text-secondary); font-size: 13px;
+  cursor: pointer; white-space: nowrap;
+}
+.side-item:hover { color: var(--cream); background: rgba(255,255,255,0.02); }
+.side-item.is-active {
+  color: var(--cream);
+  border-left-color: var(--zone-ink, var(--gold));
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), transparent);
+}
+.side-item__dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--zone-ink, var(--text-tertiary));
+  opacity: 0.85; flex-shrink: 0;
+}
+.side-item__latin {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.08em;
+  color: var(--text-tertiary); text-transform: uppercase; margin-left: auto;
+}
+
+/* ----- 舞台 ----- */
+.stage { display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; background: var(--navy); }
+
+/* ============================================================
+   標題契約 MASTHEAD：全站唯一的模組標題，殼負責，只此一份
+   ============================================================ */
+.masthead {
+  padding: 14px 26px 12px;
+  background: var(--navy);
+  border-bottom: 1px solid var(--navy-line);
+  position: relative;
+}
+.masthead__crumb {
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--text-tertiary);
+  margin-bottom: 3px;
+}
+.masthead__crumb b { color: var(--zone-ink, var(--gold)); font-weight: 400; }
+.masthead__row { display: flex; align-items: baseline; gap: 12px; }
+.masthead__title {
+  font-family: var(--serif-zh); font-weight: 700; font-size: 19px;
+  letter-spacing: 0.06em; color: var(--cream);
+}
+.masthead__latin {
+  font-family: var(--serif-en); font-style: italic; font-size: 13px;
+  color: var(--text-tertiary);
+}
+.masthead::after {
+  content: ''; position: absolute; left: 26px; bottom: -1px;
+  width: 42px; height: 2px; background: var(--zone-ink, var(--gold));
+}
+
+/* ============================================================
+   書桌列 DESK BAR：模組唯一的工具列。同高、同距、無標題。
+   ============================================================ */
+.deskbar {
+  display: flex; align-items: center; gap: 8px;
+  height: 44px; padding: 0 26px;
+  background: var(--navy-deep);
+  border-bottom: 1px solid var(--navy-line);
+}
+.deskbar__context {
+  font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary);
+  display: flex; align-items: center; gap: 10px; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.desk-search { white-space: nowrap; flex-shrink: 0; }
+.deskbar__context b { color: var(--text-secondary); font-weight: 400; }
+.deskbar__spacer { flex: 1; }
+
+/* 按鈕規格：30px 高，全站同款 */
+.btn {
+  height: 30px; padding: 0 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--navy-light); border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft); color: var(--text-secondary);
+  font-family: var(--serif-zh); font-size: 12.5px; letter-spacing: 0.04em;
+  white-space: nowrap; flex-shrink: 0;
+}
+.btn:hover { color: var(--cream); border-color: var(--gold-line); }
+.btn--gold {
+  background: linear-gradient(180deg, rgba(201,168,106,0.18), rgba(201,168,106,0.08));
+  border-color: var(--gold-line); color: var(--gold-bright);
+}
+.btn--ghost { background: transparent; border-color: transparent; }
+.btn--ghost:hover { border-color: var(--navy-line); }
+
+/* 分段切換（模式 tabs）：燙金書籤 */
+.seg { display: flex; align-items: center; height: 30px; border: 1px solid var(--navy-line); border-radius: var(--r-soft); overflow: hidden; }
+.seg__opt {
+  height: 100%; padding: 0 13px; display: inline-flex; align-items: center; gap: 6px;
+  background: transparent; border: none; color: var(--text-tertiary);
+  font-family: var(--serif-zh); font-size: 12.5px; letter-spacing: 0.04em;
+  border-right: 1px solid var(--navy-line);
+  white-space: nowrap;
+}
+.seg__opt:last-child { border-right: none; }
+.seg__opt em { font-family: var(--font-mono); font-style: normal; font-size: 8.5px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.6; }
+.seg__opt.is-active { background: var(--gold-glow); color: var(--gold-bright); }
+.seg__opt:hover:not(.is-active) { color: var(--cream); }
+
+/* 搜尋輸入 */
+.desk-search {
+  display: flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 10px; width: 190px;
+  background: var(--navy); border: 1px solid var(--navy-line); border-radius: var(--r-soft);
+  color: var(--text-tertiary); font-family: var(--font-mono); font-size: 11px;
+}
+
+/* ============================================================
+   紙頁 PAPER：內容 = 檯燈下攤開的筆記紙
+   ============================================================ */
+.paper-room {
+  background: var(--page-bg);
+  overflow-y: auto;
+  position: relative;
+  /* 檯燈光落在桌上：頂部一道暖光暈 */
+  box-shadow: inset 0 14px 30px -18px rgba(20,15,5,0.5);
+}
+.paper-room__inner {
+  max-width: 1060px; margin: 0 auto;
+  padding: 36px 32px 72px;
+  display: grid; grid-template-columns: 1fr 248px; gap: 40px;
+  align-items: start;
+}
+.paper-room__inner--single { grid-template-columns: 1fr; max-width: 880px; }
+
+/* 筆記本紙張 */
+.notebook {
+  background: var(--page-card);
+  border: 1px solid var(--page-card-border);
+  box-shadow: 2px 3px 12px rgba(0,0,0,0.05);
+  padding: 44px 48px 56px 92px;
+  position: relative;
+  background-image: repeating-linear-gradient(transparent, transparent 31px, var(--page-rule) 31px, var(--page-rule) 32px);
+  background-position: 0 14px;
+  min-height: 400px;
+  color: var(--page-ink-mid);
+}
+.notebook::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 52px;
+  width: 1px; background: rgba(212,118,58,0.13);
+}
+.nb-h1 {
+  font-family: var(--serif-zh); font-weight: 900; font-size: 26px; line-height: 1.5;
+  letter-spacing: 1px; color: var(--page-ink); margin: 0 0 8px;
+}
+.nb-h2 {
+  font-family: var(--serif-zh); font-weight: 700; font-size: 20px; line-height: 1.6;
+  letter-spacing: 1px; color: var(--page-ink); margin: 36px 0 16px;
+}
+.nb-h2:first-child { margin-top: 0; }
+.nb-p {
+  font-family: var(--serif-zh); font-size: 15px; line-height: 2.13;
+  letter-spacing: 0.4px; color: var(--page-ink-mid); margin: 0 0 16px;
+}
+.nb-meta {
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em;
+  color: var(--page-pencil); margin-bottom: 26px;
+}
+.hl { background: rgba(220,190,90,0.25); padding: 0 3px; }
+
+/* 程式碼塊 = 舊紙標本 */
+.nb-code {
+  background: var(--page-old);
+  border: 1px solid var(--page-old-border);
+  border-left: 3px solid var(--zone-ink, var(--page-pencil));
+  padding: 14px 18px; margin: 20px 0;
+  font-family: var(--font-mono); font-size: 12px; line-height: 1.8;
+  color: var(--page-ink-mid);
+  overflow-x: auto; white-space: pre;
+}
+.nb-code .tok-k { color: #7a5898; } .nb-code .tok-s { color: #5a8a4a; } .nb-code .tok-f { color: #4a80a8; } .nb-code .tok-c { color: #8a7a66; font-style: italic; }
+
+/* 旁註（手寫體） */
+.margin-note {
+  border-left: 2px solid var(--zone-ink, #4a80a8);
+  padding: 6px 0 6px 16px; margin: 20px 0;
+  transform: rotate(-0.3deg);
+}
+.margin-note__text { font-family: var(--font-hand); font-style: italic; font-size: 16px; line-height: 1.55; color: var(--zone-ink, #4a80a8); }
+
+/* washi 紙膠帶分隔 */
+.washi { display: flex; margin: 32px 0; height: 9px; overflow: hidden; }
+.washi__strip { flex: 1; opacity: 0.35; }
+
+/* 便利貼 */
+.postit {
+  padding: 15px 17px 18px;
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.06);
+  font-family: var(--font-hand);
+  color: var(--page-ink-mid);
+}
+.postit__title { font-weight: 700; font-size: 15px; margin-bottom: 7px; color: var(--page-ink); }
+.postit__body { font-size: 14.5px; line-height: 1.55; font-style: italic; }
+.postit--yellow { background: #FFF8DC; } .postit--blue { background: #E5F0FA; }
+.postit--green { background: #E8F4E5; } .postit--pink { background: #FDE8E8; }
+.postit--lavender { background: #F0E8F5; } .postit--peach { background: #FDF0E5; }
+
+/* 紙頁側欄（右軌） */
+.paper-rail { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 16px; }
+.rail-card {
+  background: var(--page-card); border: 1px solid var(--page-card-border);
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.04); padding: 16px 18px;
+}
+.rail-card__label {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--page-pencil); margin-bottom: 10px;
+}
+.rail-toc { list-style: none; }
+.rail-toc li {
+  font-family: var(--serif-zh); font-size: 12.5px; line-height: 1.7;
+  color: var(--page-ink-light); padding: 3px 0 3px 12px;
+  border-left: 2px solid transparent; cursor: pointer;
+}
+.rail-toc li:hover { color: var(--page-ink); }
+.rail-toc li.is-active { border-left-color: var(--zone-ink, #4a80a8); color: var(--page-ink); }
+.rail-toc li.lv2 { padding-left: 26px; font-size: 12px; }
+
+/* 藏書章 */
+.ex-libris { display: flex; flex-direction: column; align-items: center; margin: 48px 0 8px; transform: rotate(-6deg); }
+.ex-libris__circle {
+  width: 64px; height: 64px; border-radius: 50%;
+  border: 2px solid var(--zone-ink, #d4763a);
+  display: grid; place-items: center; position: relative;
+  font-family: var(--font-mono); color: var(--zone-ink, #d4763a);
+}
+.ex-libris__circle span.top { position: absolute; top: 7px; font-size: 5.5px; letter-spacing: 0.12em; }
+.ex-libris__circle span.mid { font-size: 15px; }
+.ex-libris__circle span.bot { position: absolute; bottom: 7px; font-size: 6.5px; letter-spacing: 0.08em; }
+.ex-libris__date { font-family: var(--font-mono); font-size: 9.5px; color: var(--page-pencil); margin-top: 8px; transform: rotate(6deg); }
+
+/* ============================================================
+   儀器面板（table-forge / spreadsheet / 設定 等保持深色的模組）
+   ============================================================ */
+.instrument {
+  background: var(--navy); overflow-y: auto; padding: 24px 26px;
+}
+.panel {
+  background: var(--navy-light); border: 1px solid var(--navy-line);
+  border-radius: var(--r-card); padding: 18px 20px;
+}
+.panel__label {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 12px;
+}
+
+/* ============================================================
+   註解用（mockup 說明標籤，非設計本體）
+   ============================================================ */
+.spec-note {
+  position: absolute; z-index: 50;
+  font-family: var(--font-mono); font-size: 9.5px; line-height: 1.5;
+  background: #b84058; color: #fff; padding: 4px 8px; border-radius: 2px;
+  opacity: 0.92; pointer-events: none; letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.spec-note::before { content: '◆ '; }

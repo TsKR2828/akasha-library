@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Mockup 02 — Code &amp; Data · Manuscripta</title>
+<link rel="stylesheet" href="mock-shared.css">
+<style>
+  body { --zone-ink: var(--ink-manuscripta); }
+  /* 更多▾ 選單（展開示意） */
+  .more-menu {
+    position: absolute; top: 40px; right: 26px; z-index: 40;
+    width: 230px; background: var(--navy-light); border: 1px solid var(--navy-line);
+    border-radius: var(--r-card); box-shadow: 0 18px 40px -14px rgba(0,0,0,0.85);
+    padding: 6px 0; font-size: 12.5px;
+  }
+  .more-menu__label { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-tertiary); padding: 8px 16px 4px; }
+  .more-menu__item { padding: 7px 16px; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .more-menu__item:hover { background: rgba(255,255,255,0.04); color: var(--cream); }
+  .more-menu__item kbd { margin-left: auto; font-family: var(--font-mono); font-size: 9px; color: var(--text-tertiary); }
+  .more-menu__hr { height: 1px; background: var(--navy-line); margin: 5px 0; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="topbar">
+    <div class="topbar__brand"><span class="topbar__logo">AKASHA</span><span class="topbar__motto">bibliotheca nocturna</span></div>
+    <div class="topbar__spacer"></div>
+    <div class="topbar__search">⌕ 搜尋整座圖書館…<span style="margin-left:auto;opacity:.5">⌘K</span></div>
+    <button class="topbar__icon">⬆</button><button class="topbar__icon">✚</button><button class="topbar__icon">☾</button>
+    <button class="topbar__librarian">✦ 召喚圖書館員</button>
+  </div>
+
+  <div class="frame__body">
+    <div class="sidebar">
+      <div class="side-label">Atrium · 大廳</div>
+      <div class="side-item" style="--zone-ink:#c9a86a"><span class="side-item__dot"></span>總覽大廳<span class="side-item__latin">Atrium</span></div>
+      <div class="side-label">Halls · 五廳</div>
+      <div class="side-item is-active" style="--zone-ink:#4a80a8"><span class="side-item__dot"></span>Code &amp; Data<span class="side-item__latin">MSS</span></div>
+      <div class="side-item" style="--zone-ink:#c8962e"><span class="side-item__dot"></span>PDF 閱讀器<span class="side-item__latin">LECT</span></div>
+      <div class="side-item" style="--zone-ink:#5a8a4a"><span class="side-item__dot"></span>Table Forge<span class="side-item__latin">TAB</span></div>
+      <div class="side-item" style="--zone-ink:#5a8a4a"><span class="side-item__dot"></span>試算表<span class="side-item__latin">TAB</span></div>
+      <div class="side-item" style="--zone-ink:#b84058"><span class="side-item__dot"></span>劇本工房<span class="side-item__latin">DRAM</span></div>
+      <div class="side-item" style="--zone-ink:#d4763a"><span class="side-item__dot"></span>每日館報<span class="side-item__latin">GAZ</span></div>
+      <div class="side-item" style="--zone-ink:#7a5898"><span class="side-item__dot"></span>談心專區<span class="side-item__latin">INT</span></div>
+      <div class="side-label">Collections · 館藏</div>
+      <div class="side-item"><span class="side-item__dot" style="background:var(--text-tertiary)"></span>公共書庫<span class="side-item__latin">PUB</span></div>
+      <div class="side-item"><span class="side-item__dot" style="background:var(--text-tertiary)"></span>AI 設定<span class="side-item__latin">CFG</span></div>
+    </div>
+
+    <div class="stage">
+      <!-- 刊頭：殼負責，唯一的標題 -->
+      <div class="masthead">
+        <div class="masthead__crumb">AKASHA LIBRARY » HALLS » <b>MANUSCRIPTA</b></div>
+        <div class="masthead__row">
+          <span class="masthead__title">Code &amp; Data</span>
+          <span class="masthead__latin">Manuscripta · 手稿廳</span>
+        </div>
+      </div>
+
+      <!-- 書桌列：模組唯一的一條，只放動作 -->
+      <div class="deskbar" style="position:relative">
+        <div class="deskbar__context"><b>seo-pipeline-notes.md</b> · 3,412 字 · 已編輯 ●</div>
+        <div class="deskbar__spacer"></div>
+        <button class="btn">開啟檔案</button>
+        <button class="btn btn--gold">編輯模式</button>
+        <button class="btn">複製視圖</button>
+        <div class="desk-search">⌕ 搜尋內容…</div>
+        <button class="btn btn--ghost">更多 ▾</button>
+
+        <!-- 更多▾ 展開示意（實際為點擊展開） -->
+        <div class="more-menu">
+          <div class="more-menu__label">編輯</div>
+          <div class="more-menu__item">↩ 復原 <kbd>⌘Z</kbd></div>
+          <div class="more-menu__item">變更標示 / 清除標示</div>
+          <div class="more-menu__item">下載新檔 · 存檔至書庫</div>
+          <div class="more-menu__hr"></div>
+          <div class="more-menu__label">匯出</div>
+          <div class="more-menu__item">DOCX · 劇本 DOCX · 劇本 PDF</div>
+          <div class="more-menu__item">AI 摘要 → 存入書庫</div>
+          <div class="more-menu__hr"></div>
+          <div class="more-menu__label">送往</div>
+          <div class="more-menu__item">→ Google Sheets（4 種）</div>
+          <div class="more-menu__item">→ Table Forge</div>
+        </div>
+      </div>
+
+      <!-- 內容：紙頁 -->
+      <div class="paper-room">
+        <div class="paper-room__inner">
+          <div class="notebook">
+            <h1 class="nb-h1">SEO Pipeline 六步流程筆記</h1>
+            <div class="nb-meta">seo-pipeline-notes.md · 最後編輯 2026-07-05 · 3,412 字 · ≈ 9 分鐘</div>
+
+            <h2 class="nb-h2">Step 1 — 關鍵字叢集</h2>
+            <p class="nb-p">先把主題拆成叢集，每個叢集對應一個 pillar page 加上若干支撐文章。叢集之間的內鏈結構決定了權重的流向，<span class="hl">寧可叢集小而深，不要大而淺</span>。</p>
+
+            <div class="margin-note"><div class="margin-note__text">↳ 圖書館員眉批：這一段可以直接餵給 Table Forge 抽成表格</div></div>
+
+            <h2 class="nb-h2">Step 2 — 抓取與解析</h2>
+            <p class="nb-p">解析器的核心邏輯如下，注意 fallback 鏈的順序：</p>
+            <div class="nb-code"><span class="tok-c"># 程式碼 = 舊紙標本，左邊一道分區墨色</span>
+<span class="tok-k">def</span> <span class="tok-f">parse_serp</span>(html, *, depth=3):
+    tree = extract(html) <span class="tok-k">or</span> fallback(html)
+    <span class="tok-k">return</span> [Cluster(<span class="tok-s">'pillar'</span>, c) <span class="tok-k">for</span> c <span class="tok-k">in</span> tree]</div>
+
+            <div class="washi"><div class="washi__strip" style="background:#4a80a8"></div><div class="washi__strip" style="background:#c9a86a"></div></div>
+
+            <h2 class="nb-h2">Step 3 — 內容生成</h2>
+            <p class="nb-p">產出走 Charta 筆記本區塊系統：margin-note 放田野觀察、tangent 放離題補充。發佈前一律過人工審稿，AI 只負責初稿與結構。</p>
+
+            <div class="ex-libris">
+              <div class="ex-libris__circle"><span class="top">ex libris</span><span class="mid">☾</span><span class="bot">akasha</span></div>
+              <div class="ex-libris__date">2026.07.06</div>
+            </div>
+          </div>
+
+          <!-- 右軌：目次卡＋檔案便利貼 -->
+          <div class="paper-rail">
+            <div class="rail-card">
+              <div class="rail-card__label">Index · 目次</div>
+              <ul class="rail-toc">
+                <li class="is-active">Step 1 — 關鍵字叢集</li>
+                <li>Step 2 — 抓取與解析</li>
+                <li class="lv2">解析器 fallback 鏈</li>
+                <li>Step 3 — 內容生成</li>
+              </ul>
+            </div>
+            <div class="postit postit--blue" style="transform:rotate(-0.8deg)">
+              <div class="postit__title">檔案</div>
+              <div class="postit__body">.md · 12 KB<br>書庫已存 · Drive 已同步 ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

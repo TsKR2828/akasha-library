@@ -7,69 +7,40 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Noto+Serif+TC:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../assets/styles/shared.css">
   <style>
+    /* ── Tabularium 葉綠：module accent for .panel__label / .seg / empty-state stamp etc ── */
     body {
       margin: 0;
       font-family: var(--font-body);
       color: var(--text-primary);
-      background: var(--navy-deep);
+      background: var(--hall-bg);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      --zone-ink: var(--ink-tabularium);
+      --zone-ink-glow: rgba(90,138,74,.16);
+      --zone-ink-line: rgba(90,138,74,.5);
     }
 
-    /* --- Buttons --- */
-    .btn {
-      appearance: none;
-      border: 1px solid var(--navy-line);
-      background: var(--navy-light);
-      color: var(--text-primary);
-      padding: 7px 10px;
-      border-radius: var(--r-card);
-      font-size: 12px;
-      font-family: inherit;
-      line-height: 1;
-      min-height: 30px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-
-    .btn:hover { border-color: var(--gold-dim); background: var(--navy-hover); }
-
-    .btn--gold {
-      background: var(--gold-glow);
-      border-color: var(--gold-dim);
-      color: var(--gold);
-    }
-
-    .btn--gold:hover {
-      background: rgba(201,168,106,0.22);
-      border-color: var(--gold);
-    }
-
-    .btn--danger {
-      background: rgba(196,96,79,0.1);
-      border-color: rgba(196,96,79,0.3);
-      color: var(--danger);
-    }
-
-    .btn--danger:hover {
-      background: rgba(196,96,79,0.2);
-      border-color: var(--danger);
-    }
+    /* .btn / .btn--gold / .btn--danger / .seg / .mh-menu / .panel / .empty-state come from shared.css.
+       Only module-specific pieces below. */
 
     label.file-label {
       appearance: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      min-height: 28px;
+      padding: 0 10px;
       border: 1px solid var(--gold-dim);
       background: var(--gold-glow);
       color: var(--gold);
-      padding: 7px 10px;
-      border-radius: var(--r-card);
+      border-radius: var(--r-soft);
       font-size: 12px;
       font-family: inherit;
       line-height: 1;
-      min-height: 30px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: border-color 0.15s, background 0.15s;
     }
 
     label.file-label:hover {
@@ -77,20 +48,22 @@
       border-color: var(--gold);
     }
 
-    /* --- Import Panel --- */
-    #import-panel {
-      padding: 16px;
-      border-bottom: 1px solid var(--navy-line);
+    /* --- Tool panels (匯入 / 匯出) — style guide 06 · .panel 儀器面板 --- */
+    .tf-toolpanel {
+      margin: 14px 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-
-    #import-panel.hidden { display: none; }
+    .tf-toolpanel.hidden { display: none; }
+    .tf-toolpanel:last-of-type { margin-bottom: 14px; }
 
     #import-textarea {
       width: 100%;
       min-height: 120px;
       max-height: 300px;
       resize: vertical;
-      background: var(--navy);
+      background: var(--navy-deep);
       color: var(--text-primary);
       border: 1px solid var(--navy-line);
       border-radius: var(--r-card);
@@ -102,13 +75,13 @@
     }
 
     #import-textarea::placeholder { color: var(--text-tertiary); }
-    #import-textarea:focus { outline: none; border-color: var(--gold-dim); }
+    #import-textarea:focus { outline: none; border-color: var(--zone-ink); }
 
     .import-actions {
       display: flex;
       gap: 8px;
       align-items: center;
-      margin-top: 8px;
+      flex-wrap: wrap;
     }
 
     .import-actions input[type="file"] { display: none; }
@@ -116,34 +89,35 @@
     #import-error {
       color: var(--danger);
       font-size: 12px;
-      margin-top: 6px;
     }
 
     #import-error:empty { display: none; }
+
+    .tf-panel-foot {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: var(--text-tertiary);
+    }
+    .tf-panel-foot .dot { color: var(--zone-ink); }
 
     /* --- Table Area --- */
     #table-area {
       flex: 1;
       overflow: auto;
-      padding: 16px;
+      padding: 16px 20px;
     }
 
-    #empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 300px;
-      color: var(--text-tertiary);
-      font-size: 14px;
-      gap: 12px;
-    }
-
-    #empty-state .hint { font-size: 12px; }
+    /* empty-state uses shared .empty-state / __stamp / __line / __sub */
 
     /* --- Editable Table --- */
     .tf-table-wrap {
       overflow-x: auto;
+      background: var(--navy);
+      border: 1px solid var(--navy-line);
+      border-radius: var(--r-card);
     }
 
     .tf-table {
@@ -168,7 +142,7 @@
       top: 0;
       z-index: 2;
       background: var(--navy-light);
-      color: var(--gold);
+      color: var(--zone-ink);
       font-weight: 500;
       font-size: 12px;
       cursor: text;
@@ -180,7 +154,7 @@
     }
 
     .tf-table td:focus {
-      outline: 2px solid var(--gold-dim);
+      outline: 2px solid var(--zone-ink);
       outline-offset: -2px;
       background: var(--navy-light);
     }
@@ -228,8 +202,8 @@
 
     .tf-add-row:hover,
     .tf-add-col:hover {
-      color: var(--gold);
-      border-color: var(--gold-dim);
+      color: var(--zone-ink);
+      border-color: var(--zone-ink-line);
     }
 
     .tf-table-actions {
@@ -238,14 +212,7 @@
       margin-top: 8px;
     }
 
-    /* --- Export Panel --- */
-    #export-panel {
-      padding: 16px;
-      border-top: 1px solid var(--navy-line);
-    }
-
-    #export-panel.hidden { display: none; }
-
+    /* --- Export panel specifics --- */
     .export-actions {
       display: flex;
       gap: 8px;
@@ -254,8 +221,7 @@
     }
 
     #export-preview {
-      margin-top: 10px;
-      background: var(--navy);
+      background: var(--navy-deep);
       border: 1px solid var(--navy-line);
       border-radius: var(--r-card);
       padding: 10px;
@@ -271,14 +237,16 @@
 
     #export-preview:empty { display: none; }
 
-    .toast-container {
+    /* --- Toast (module-local stacking system; namespaced to avoid
+       colliding with shared.css's single bottom-right .toast) --- */
+    .tf-toast-container {
       position: fixed;
       top: 12px;
       right: 12px;
       z-index: 9999;
       pointer-events: none;
     }
-    .toast {
+    .tf-toast {
       background: var(--navy-light);
       border: 1px solid var(--gold-dim);
       border-radius: var(--r-card);
@@ -291,8 +259,8 @@
       transition: opacity 300ms, transform 300ms;
       margin-bottom: 6px;
     }
-    .toast.show { opacity: 1; transform: translateY(0); }
-    .toast .toast-check { color: #6fcf97; margin-right: 4px; }
+    .tf-toast.show { opacity: 1; transform: translateY(0); }
+    .tf-toast .toast-check { color: var(--success); margin-right: 4px; }
 
     /* Mobile popover */
     .mobile-popover {
@@ -316,7 +284,7 @@
     .mobile-popover .pop-label { color: var(--gold); font-weight: 600; display: block; margin-bottom: 2px; }
 
     /* Extract panel (Phase 9) */
-    .extract-panel { padding: 6px 16px 10px; border-bottom: 1px solid var(--navy-line); }
+    .extract-panel { padding-top: 6px; border-top: 1px dashed var(--navy-line); }
     .extract-panel.hidden { display: none; }
     .extract-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 6px; }
     .extract-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -332,9 +300,9 @@
       cursor: pointer;
       transition: all 0.15s;
     }
-    .extract-btn:hover { border-color: var(--gold-dim); color: var(--gold); background: var(--gold-glow); }
+    .extract-btn:hover { border-color: var(--zone-ink-line); color: var(--zone-ink); background: var(--zone-ink-glow); }
     .extract-btn .count { color: var(--text-tertiary); font-size: 10px; margin-left: 2px; }
-    .extract-btn:hover .count { color: var(--gold-dim); }
+    .extract-btn:hover .count { color: var(--zone-ink); }
     .diff-line { margin: 0; padding: 0; white-space: pre; }
     .diff-del { color: #e06c75; }
     .diff-add { color: #98c379; }
@@ -342,7 +310,7 @@
 
     /* HINTS 聯動系統 */
     .hints-bar {
-      padding: 8px 14px;
+      padding: 8px 20px;
       border-bottom: 1px solid var(--navy-line);
       background: rgba(24,29,40,0.6);
       font-size: 12px;
@@ -353,7 +321,7 @@
     }
     .hints-bar.collapsed {
       max-height: 0;
-      padding: 0 14px;
+      padding: 0 20px;
       opacity: 0;
       border-bottom-color: transparent;
     }
@@ -365,7 +333,7 @@
       font-size: 11.5px;
     }
     .hints-info .info-label {
-      color: var(--gold);
+      color: var(--zone-ink);
       font-weight: 500;
     }
     .hints-divider {
@@ -376,9 +344,9 @@
     .hints-op-record {
       font-size: 11.5px;
       line-height: 1.6;
-      color: var(--gold);
+      color: var(--zone-ink);
     }
-    .hints-op-record .op-check { color: #6fcf97; margin-right: 2px; }
+    .hints-op-record .op-check { color: var(--success); margin-right: 2px; }
     .hints-op-record .op-time { color: var(--text-tertiary); font-size: 10.5px; margin-left: 4px; }
     .hints-hover-desc {
       font-size: 11.5px;
@@ -392,20 +360,24 @@
     }
     .hints-hover-desc .hover-label::before {
       content: '▸ ';
-      color: var(--gold);
+      color: var(--zone-ink);
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <header class="module-header">
-    <h1 class="mh-title">Table Forge</h1>
-    <div class="header-actions mh-actions">
-      <button class="btn btn--gold" id="btn-toggle-import" title="貼上或開啟檔案匯入表格資料">匯入</button>
-      <button class="btn btn--gold" id="btn-toggle-export" disabled title="將表格匯出為 Markdown、JSON 或 CSV">匯出</button>
-      <button class="btn btn--danger" id="btn-clear" disabled title="清除目前表格所有資料">清除</button>
+  <!-- Deskbar — 44px 唯一 chrome，左狀態／右動作，禁止出現模組名字 -->
+  <header class="deskbar">
+    <div class="desk-status">
+      <span class="desk-dot" id="deskStatusDot"></span>
+      <span id="deskStatusText">尚未載入資料</span>
+    </div>
+    <div class="desk-actions">
+      <button class="btn" id="btn-toggle-import" title="貼上或開啟檔案匯入表格資料">匯入 ▾</button>
       <button class="btn" id="btn-meta" disabled title="加入 source / editedBy 欄位標記資料來源與編輯者">Meta</button>
       <button class="btn" id="btn-hints" title="顯示或隱藏操作提示面板">HINTS</button>
+      <button class="btn" id="btn-diff" title="比對原始資料與目前表格的差異">Diff</button>
+      <button class="btn" id="btn-toggle-export" disabled title="將表格匯出為 Markdown、JSON 或 CSV">匯出 ▾</button>
+      <button class="btn btn--danger" id="btn-clear" disabled title="清除目前表格所有資料">清除</button>
     </div>
   </header>
 
@@ -417,56 +389,62 @@
     <div class="hints-hover-desc" id="hintsHoverDesc"></div>
   </div>
 
-  <!-- Import Panel -->
-  <div id="import-panel">
+  <!-- Import Panel — instrument · style guide 06 -->
+  <div id="import-panel" class="panel tf-toolpanel">
+    <div class="panel__label">匯入 · IMPORT</div>
     <textarea id="import-textarea" placeholder="貼上 Markdown Table、JSON Array 或 CSV⋯⋯"></textarea>
     <div class="import-actions">
-      <button class="btn btn--gold" id="btn-parse" title="解析貼上的文字為表格">解析</button>
+      <button class="btn btn--gold" id="btn-parse" title="解析貼上的文字為表格">貼上解析</button>
       <label class="file-label" for="import-file" title="從本機開啟 CSV / JSON / Markdown 檔案">開啟檔案</label>
       <input type="file" id="import-file" accept=".md,.json,.csv,.txt,.tsv">
-      <button class="btn" id="btn-extract" title="分析 Markdown 結構並抽取為表格（章節、大綱、表格清單等）">抽取</button>
+      <button class="btn" id="btn-extract" title="分析 Markdown 結構並抽取為表格（章節、大綱、表格清單等）">從 MD 抽取</button>
       <span id="import-error"></span>
     </div>
     <div id="extract-panel" class="extract-panel hidden">
       <div class="extract-label">Markdown 結構可抽取為表格：</div>
       <div id="extract-buttons" class="extract-buttons"></div>
     </div>
+    <div class="tf-panel-foot"><span class="dot">◆</span>解析器：CSV FSM · RFC 4180</div>
   </div>
 
   <!-- Table Area -->
   <div id="table-area">
-    <div id="empty-state">
-      <span>尚未載入資料</span>
-      <span class="hint">貼上文字或開啟檔案開始</span>
+    <div id="empty-state" class="empty-state">
+      <div class="empty-state__stamp">TABULARIUM</div>
+      <div class="empty-state__line">鍛台是冷的</div>
+      <div class="empty-state__sub">貼上一段 CSV，或從手稿抽一張表過來。</div>
     </div>
     <div id="table-container"></div>
   </div>
 
-  <!-- Export Panel -->
-  <div id="export-panel" class="hidden">
+  <!-- Export Panel — instrument · style guide 06 -->
+  <div id="export-panel" class="panel tf-toolpanel hidden">
+    <div class="panel__label">匯出 · EXPORT</div>
     <div class="export-actions">
-      <button class="btn" id="btn-export-md" title="預覽 Markdown 表格格式">Markdown</button>
-      <button class="btn" id="btn-export-json" title="預覽 JSON 陣列格式">JSON</button>
-      <button class="btn" id="btn-export-csv" title="預覽 CSV 純文字格式">CSV</button>
-      <button class="btn" id="btn-diff" title="比對原始資料與目前表格的差異">Diff</button>
+      <span class="seg">
+        <button class="seg__opt" id="btn-export-md" title="預覽 Markdown 表格格式">Markdown</button>
+        <button class="seg__opt" id="btn-export-json" title="預覽 JSON 陣列格式">JSON</button>
+        <button class="seg__opt" id="btn-export-csv" title="預覽 CSV 純文字格式">CSV</button>
+      </span>
       <span style="margin-left:auto"></span>
-      <button class="btn btn--gold" id="btn-copy" title="複製匯出內容到剪貼簿">複製</button>
+      <button class="btn" id="btn-copy" title="複製匯出內容到剪貼簿">複製</button>
       <button class="btn btn--gold" id="btn-download" title="下載匯出檔案">下載</button>
     </div>
     <pre id="export-preview"></pre>
   </div>
 
   <!-- Toast -->
-  <div class="toast-container" id="toastContainer"></div>
+  <div class="tf-toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
   <script>
-    // Toast system (shared pattern with Code & Data)
+    // Toast system (module-local stacking toasts; namespaced .tf-toast to avoid
+    // colliding with shared.css's global single bottom-right .toast)
     function showToast(text, duration) {
       duration = duration || 2500;
       var container = document.getElementById('toastContainer');
       var el = document.createElement('div');
-      el.className = 'toast';
+      el.className = 'tf-toast';
       el.innerHTML = '<span class="toast-check">✓</span> ' + text;
       container.appendChild(el);
       requestAnimationFrame(function() {
@@ -484,6 +462,7 @@
     var hintsDivider = null;
     var hintsOpRecord = null;
     var hintsHoverDesc = null;
+    var deskStatusText = null;
     var lastOpText = '';
     var lastOpTime = 0;
     var opTimerInterval = null;
@@ -523,6 +502,10 @@
     }
 
     function updateHintsInfo(label, detail) {
+      // Deskbar 左側狀態字：短版
+      if (deskStatusText) {
+        deskStatusText.textContent = label ? (label + (detail ? ' · ' + detail : '')) : '尚未載入資料';
+      }
       if (!hintsInfo) return;
       if (!label) {
         hintsInfo.textContent = '尚未載入資料。貼上文字或開啟檔案開始。';
@@ -575,6 +558,7 @@
       hintsDivider = document.getElementById('hintsDivider');
       hintsOpRecord = document.getElementById('hintsOpRecord');
       hintsHoverDesc = document.getElementById('hintsHoverDesc');
+      deskStatusText = document.getElementById('deskStatusText');
 
       // HINTS toggle
       var hintsBar = document.getElementById('hintsBar');
@@ -587,7 +571,7 @@
       }
 
       // Wire hover hints + mobile popover on all buttons with titles
-      var buttons = document.querySelectorAll('.btn, .file-label');
+      var buttons = document.querySelectorAll('.btn, .file-label, .seg__opt');
       buttons.forEach(function(btn) {
         var title = btn.getAttribute('title');
         if (!title) return;

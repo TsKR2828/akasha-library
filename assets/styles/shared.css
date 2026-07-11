@@ -1,21 +1,42 @@
-/* AKASHA LIBRARY — Design Tokens
-   深夜大學圖書館：navy + brass + cream + 木質 + 黃銅 */
+/* ════════════════════════════════════════════════════════════════════
+   AKASHA LIBRARY — shared.css
+   全站重設計 v2（2026-07）· The Midnight Study & The Open Page
+   權威來源：design/from-claude-design/HANDOFF.md（§0 全域）
+             design/from-claude-design/style-guide.html（01/04/05/06/07）
+             design/from-claude-design/mockup.html（互動雛形，各模組書桌列）
+             design/styles/tokens.css（v2 token 權威定義）
 
+   NOTE ─ tokens.css is NOT shipped to _site/ (scripts/build.js excludes the
+   whole `design/` directory, and no module currently <link>s
+   design/styles/tokens.css). Every module DOES load this file, so the full
+   v2 token set is embedded below to guarantee it reaches production. If a
+   later step also wires design/styles/tokens.css directly, the duplicate
+   :root block is harmless (identical values, last one wins).
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ── Font loading — adds Sorts Mill Goudy (手寫體 · 眉批/便利貼/藏書章) to
+   the family already used across index.html / modules (Cormorant Garamond,
+   Noto Serif TC, JetBrains Mono). @import must stay first in the file. ── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Noto+Serif+TC:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&family=Sorts+Mill+Goudy:ital@0;1&display=swap');
+
+/* ════════════════════════════════════════════════════════════════════
+   TOKENS v2 (mirrors design/styles/tokens.css)
+   ════════════════════════════════════════════════════════════════════ */
 :root {
-  /* Base — deepened navy with warm undertone */
+  /* ── Base — deepened navy with warm undertone ── */
   --navy: #181d28;
   --navy-deep: #11151d;
   --navy-light: #232a37;
   --navy-hover: #2e3645;
   --navy-line: #313a4b;
 
-  /* Wood + leather notes — used for module accents, side rails */
+  /* ── Wood + leather ── */
   --wood: #3a2a1c;
   --wood-shadow: #1f160e;
   --leather: #5b3a2a;
   --oxblood: #6b2c2c;
 
-  /* Brass / gold */
+  /* ── Brass / gold ── */
   --gold: #c9a86a;
   --gold-bright: #e3c486;
   --gold-dim: #a08550;
@@ -23,51 +44,92 @@
   --gold-glow: rgba(201,168,106,0.14);
   --gold-line: rgba(201,168,106,0.22);
 
-  /* Paper / text */
+  /* ── Shell text ── */
   --cream: #f1ead6;
   --cream-dim: #d6cfb8;
+  /* Legacy token still consumed directly by modules/pdf-reader/index.html
+     (thumb-card placeholder + #pdf-canvas background). Does not invert with
+     data-mode, same as the --page-* set below — kept out of the light-mode
+     override block on purpose. */
   --paper: #f5efe1;
   --text-primary: #ece5cf;
   --text-secondary: #9aa1ad;
   --text-tertiary: #646b78;
 
-  /* States */
+  /* ── States ── */
   --danger: #c4604f;
   --success: #6aae7f;
   --info: #c9a86a;
 
-  /* Type */
+  /* ══ 紙頁系 The Open Page ══
+     用於：Code&Data 閱讀面、館報、劇本稿紙、談心對話紙。不隨 data-mode 反轉。 */
+  --page-bg: #FAF4E5;
+  --page-card: #FFFFFF;
+  --page-old: #F3EDE0;
+  --page-ink: #1C1610;
+  --page-ink-mid: #3E352A;
+  --page-pencil: #8A7A66;
+  --page-border: #E8E3DA;
+  --page-old-border: #E0D6C2;
+  --page-line: rgba(0,0,0,0.035);
+  --page-margin-line: rgba(212,118,58,0.13);
+  --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
+
+  /* 便利貼 */
+  --postit-yellow: #FFF8DC;
+  --postit-pink:  #FDE8E8;
+  --postit-blue:  #E5F0FA;
+  --postit-green: #E8F4E5;
+  --postit-lavender: #F0E8F5;
+  --postit-peach: #FDF0E5;
+
+  /* ══ 七廳墨色 Zone Inks ══ 深淺模式同值。 */
+  --ink-atrium:      #C9A86A;
+  --ink-manuscripta: #4A80A8;
+  --ink-lectorium:   #C8962E;
+  --ink-tabularium:  #5A8A4A;
+  --ink-dramaturgica:#B84058;
+  --ink-gazette:     #D4763A;
+  --ink-intimarium:  #7A5898;
+
+  /* ── Type ── */
   --font-serif-en: "Cormorant Garamond", "EB Garamond", Garamond, serif;
   --font-serif-tc: "Noto Serif TC", "Source Han Serif TC", "PingFang TC", serif;
   --font-mono: "JetBrains Mono", "IBM Plex Mono", "SF Mono", monospace;
+  --font-hand: "Sorts Mill Goudy", "Cormorant Garamond", Georgia, serif;
   --font-display: var(--font-serif-en);
   --font-body: var(--font-serif-tc);
 
-  /* Sizing — restrained, library-document scale */
+  /* ── Sizing ── */
   --r-sharp: 2px;
   --r-soft: 4px;
   --r-card: 6px;
 
-  /* Shadows — like depth in a wood-panelled room */
+  /* ── Shadows ── */
   --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 6px 20px -12px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.3);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.06) inset, 0 18px 40px -20px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.35);
   --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
 
-  /* Layout */
-  --sidebar-w: 268px;
-  --topbar-h: 56px;
+  /* ══ 標題契約 Layout（定案值）══ */
+  --topbar-h: 52px;
+  --deskbar-h: 44px;
+  --sidebar-w: 240px;
 
-  /* Density */
   --density: 1;
+
+  --hall-bg: var(--navy-deep);
+  --desk-bg: var(--navy);
 }
 
-/* Light mode — cream paper inversion */
+/* ── Light mode — 白日書房：家具轉米色，紙頁不變 ── */
 :root[data-mode="light"] {
-  --navy: #efe7d3;
-  --navy-deep: #e6dcc3;
-  --navy-light: #f5efe1;
-  --navy-hover: #ddd1b3;
-  --navy-line: #cfc2a3;
+  --navy: #F4EEDD;
+  --navy-deep: #EFE7D3;
+  --navy-light: #f7f2e4;
+  --navy-hover: #e5dcc2;
+  --navy-line: #d5c9aa;
+  --hall-bg: #FAF4E5;
+  --desk-bg: #F4EEDD;
 
   --text-primary: #2a2118;
   --text-secondary: #6b5d49;
@@ -81,228 +143,331 @@
   --gold-line: rgba(138,111,48,0.28);
 
   --cream: #2a2118;
+  --cream-dim: #4d4232;
+  --page-shadow: 2px 3px 10px rgba(60,40,10,0.08);
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
 }
 
-/* Texture overlay — paper grain on dark */
-.tex-paper {
-  position: relative;
-}
+/* ── Texture / rules / scrollbar / selection ── */
+.tex-paper { position: relative; }
 .tex-paper::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  mix-blend-mode: overlay;
-  background-image:
-    radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px),
-    radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 2px;
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  opacity: 0.06; mix-blend-mode: overlay;
+  background-image: radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px), radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px; background-position: 0 0, 1px 2px;
 }
+.brass-rule { height: 1px; background: linear-gradient(90deg, transparent 0%, var(--gold-dim) 15%, var(--gold) 50%, var(--gold-dim) 85%, transparent 100%); opacity: 0.5; }
+.brass-rule--thin { height: 1px; background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent); opacity: 0.7; }
 
-/* Brass rule — used as section dividers */
-.brass-rule {
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    var(--gold-dim) 15%,
-    var(--gold) 50%,
-    var(--gold-dim) 85%,
-    transparent 100%);
-  opacity: 0.5;
-}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(201,168,106,0.18); border-radius: 3px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(201,168,106,0.36); }
+::selection { background: var(--gold-glow); color: var(--gold-bright); }
 
-.brass-rule--thin {
-  background: linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent);
-  opacity: 0.7;
-}
-
-/* Custom scrollbar — narrow brass */
-*::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
-}
-*::-webkit-scrollbar-thumb {
-  background: rgba(201,168,106,0.18);
-  border-radius: 3px;
-}
-*::-webkit-scrollbar-thumb:hover {
-  background: rgba(201,168,106,0.36);
-}
-
-/* Selection */
-::selection {
-  background: var(--gold-glow);
-  color: var(--gold-bright);
-}
-
-/* Reset basics */
+/* ── Reset ── */
 * { box-sizing: border-box; }
 html, body {
-  margin: 0;
-  padding: 0;
+  margin: 0; padding: 0;
   font-family: var(--font-body);
   background: var(--navy-deep);
   color: var(--text-primary);
-  font-size: 14px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  font-size: 14px; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
 }
 button { font-family: inherit; cursor: pointer; }
+input, textarea { font-family: inherit; }
 
-/* ====================================================================
-   MODULE HEADER — 模組表頭標準元件（表頭統一工項）
-   用法：<header class="module-header">
-           <h1 class="mh-title">標題</h1>
-           <span class="mh-sub">副標</span>
-           <span class="mh-spacer"></span>
-           <div class="mh-actions"> …按鈕… <div class="mh-more">…</div> </div>
-         </header>
-   ==================================================================== */
+/* ════════════════════════════════════════════════════════════════════
+   01 · DESKBAR — 模組唯一 chrome · 44px
+   標準用法：
+   <header class="deskbar">
+     <span class="desk-status"><span class="desk-dot"></span>狀態文字</span>
+     <span class="desk-spacer"></span>
+     <div class="desk-actions"> …按鈕… <div class="mh-more">…</div> </div>
+   </header>
+
+   相容殼：`.module-header` 是舊表頭類名，映到同一套 44px 書桌列外觀，讓尚未
+   完成標題刪除工項的模組（見 HANDOFF §1）不會在切版瞬間變醜。`.mh-title` /
+   `.mh-sub` 在新契約下不該再出現在書桌列裡（標題只活在殼的刊頭），故縮小為
+   不搶戲的狀態字級，等各模組工項把它們刪掉即可原生變乾淨。
+   ════════════════════════════════════════════════════════════════════ */
+.deskbar,
 .module-header {
-  position: sticky;
-  top: 0;
-  z-index: 50;
+  position: relative;
+  z-index: 40;
   display: flex;
   align-items: center;
-  min-height: var(--topbar-h);           /* 56px */
+  height: var(--deskbar-h);
+  min-height: var(--deskbar-h);
   padding: 0 28px;
-  gap: 16px;
+  gap: 8px;
+  background: var(--desk-bg);
+  border-top: 1px solid var(--navy-line);
   border-bottom: 1px solid var(--navy-line);
-  background: rgba(24,29,40,0.96);
-  backdrop-filter: blur(8px);
 }
-:root[data-mode="light"] .module-header {
-  background: rgba(245,239,225,0.96);
+/* 模組作為 iframe 獨立文件時通常是頁面第一列，不需要黏頂殼列的雙層陰影模糊 */
+.deskbar:first-child,
+.module-header:first-child {
+  border-top: none;
 }
 
-.mh-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 500;
-  color: var(--gold);
-  letter-spacing: 0.04em;
+/* 左側狀態字：mono 10.5px + 5px 墨點 */
+.desk-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
   white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-secondary);
 }
-.mh-sub {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  white-space: nowrap;
+.desk-dot,
+.zone-ink {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  flex: none;
 }
+.desk-dot--live,
+.zone-ink--live {
+  animation: akasha-breathe 3s ease-in-out infinite;
+}
+@keyframes akasha-breathe { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+
+.desk-spacer,
 .mh-spacer { flex: 1 1 auto; }
 
+.desk-actions,
 .mh-actions {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-left: auto;
+  min-width: 0;
 }
 .mh-group {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.mh-group--sep {                          /* 需要左側分隔線的群組 */
+.mh-group--sep {
   padding-left: 16px;
   border-left: 1px solid var(--navy-line);
 }
-.mh-sep {                                 /* 獨立分隔線元素 */
+.mh-sep {
   width: 1px;
-  height: 20px;
+  height: 18px;
   background: var(--navy-line);
   flex: none;
 }
 
-/* ---- 標準按鈕 baseline（模組自有同名定義會覆蓋顏色，屬預期）---- */
+/* 舊標題殘留（模組刪除工項完成前的過渡樣式）── 不佔書桌列的視覺重量 */
+.mh-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.mh-sub {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   02 · BUTTONS — 一套四種，不再漂移（style guide 04）
+   .btn 預設 · .btn--gold 主要 · .btn--danger 危險 · .btn--ghost 幽靈
+   書桌列內高 28px；radius 4px；字 12px；gap 8px between buttons。
+   ════════════════════════════════════════════════════════════════════ */
 .btn {
   appearance: none;
-  border: 1px solid var(--navy-line);
-  background: var(--navy-light);
-  color: var(--text-primary);
-  padding: 7px 10px;
-  border-radius: var(--r-card);
-  font-size: 12px;
-  font-family: inherit;
-  line-height: 1;
-  min-height: 30px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  background: var(--navy-light);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
 }
 .btn:hover { border-color: var(--gold-dim); background: var(--navy-hover); }
+
 .btn--gold {
   background: var(--gold-glow);
   border-color: var(--gold-dim);
   color: var(--gold);
+  padding: 0 12px;
 }
-.btn--gold:hover { background: rgba(201,168,106,0.22); border-color: var(--gold); }
+.btn--gold:hover { background: rgba(201,168,106,0.24); border-color: var(--gold); }
+
 .btn--danger {
-  background: rgba(196,96,79,0.1);
-  border-color: rgba(196,96,79,0.3);
+  background: transparent;
+  border-color: rgba(196,96,79,0.35);
   color: var(--danger);
 }
-.btn--danger:hover { background: rgba(196,96,79,0.2); border-color: var(--danger); }
-.btn[disabled], .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn--danger:hover { background: rgba(196,96,79,0.12); border-color: var(--danger); }
 
-/* ---- 表頭內按鈕尺寸鐵則：30px 高、gap 8px。
-       只鎖尺寸不鎖顏色，(0,2,0) 特異度壓過模組自有 .btn (0,1,0) ---- */
-.module-header .btn,
-.module-header .file-label {
-  min-height: 30px;
-  padding: 7px 10px;
-  font-size: 12px;
-  line-height: 1;
-  border-radius: var(--r-card);
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+.btn--ghost:hover { background: var(--navy-light); color: var(--text-primary); border-color: transparent; }
+
+.btn[disabled], .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn[disabled]:hover, .btn:disabled:hover {
+  background: var(--navy-light);
+  border-color: var(--navy-line);
 }
 
-/* ---- 溢出下拉選單 ---- */
+/* 紙頁面上的按鈕略高一級（30px），與 .page-sheet / .rail-card / .postit / .index-card 語境對齊 */
+.page-sheet .btn,
+.rail-card .btn,
+.index-card .btn,
+.postit .btn {
+  height: 30px;
+  min-height: 30px;
+}
+
+/* 快捷鍵字樣（配 .btn 內） */
+.btn kbd,
+.btn .kbd {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-tertiary);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   03 · SEG — 分段切換（速寫/搜尋/編輯/閱讀 · 體裁三切…）
+   用法：<span class="seg"><button class="seg__opt is-active">…</button>…</span>
+   選中＝墨色 16% 底 ＋ 1px 內框（inset）；廳墨色可透過 --zone-ink 覆蓋。
+   ════════════════════════════════════════════════════════════════════ */
+.seg {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--navy-deep);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+}
+.seg__opt,
+.seg-btn {
+  height: 24px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11.5px;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.seg__opt:hover,
+.seg-btn:hover { color: var(--text-primary); }
+.seg__opt.is-active,
+.seg-btn.is-active,
+.seg__opt[aria-selected="true"],
+.seg-btn[aria-selected="true"] {
+  background: var(--zone-ink-glow, var(--gold-glow));
+  color: var(--zone-ink, var(--gold-bright));
+  box-shadow: inset 0 0 0 1px var(--zone-ink-line, var(--gold-line));
+}
+
+/* 紙夾籤變體（劇本工房體裁三切：稿紙上緣紙夾籤，rotate ±0.6°） */
+.seg--tab {
+  padding-left: 26px;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.seg--tab .seg__opt,
+.seg--tab .seg-btn {
+  height: 30px;
+  padding: 0 14px;
+  background: var(--page-old);
+  border: 1px solid var(--page-old-border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  color: var(--page-pencil);
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+.seg--tab .seg__opt:nth-child(odd) { transform: rotate(-0.6deg); }
+.seg--tab .seg__opt:nth-child(even) { transform: rotate(0.6deg); }
+.seg--tab .seg__opt.is-active,
+.seg--tab .seg-btn.is-active {
+  background: var(--page-card);
+  color: var(--zone-ink, var(--ink-dramaturgica));
+  box-shadow: none;
+  transform: none;
+  z-index: 2;
+  position: relative;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   04 · MH-MENU — 溢出下拉選單（更多 ▾）
+   class 名沿用既有 DOM（.mh-more / .mh-menu / .mh-menu-group /
+   .mh-menu-label / .mh-menu-hr），僅重新上色與量體：
+   min-width 238px · 項高 28px · 分組 mono 標籤。
+   ════════════════════════════════════════════════════════════════════ */
 .mh-more { position: relative; }
 .mh-menu {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 230px;
-  max-height: min(70vh, 520px);
+  min-width: 238px;
+  max-height: min(70vh, 540px);
   overflow-y: auto;
+  overflow-x: hidden;
   display: none;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   padding: 6px;
   background: var(--navy-light);
   border: 1px solid var(--navy-line);
   border-radius: var(--r-card);
   box-shadow: var(--shadow-lift);
-  z-index: 60;
+  z-index: 90;
 }
 .mh-menu.open { display: flex; }
 
-/* 選單內按鈕轉直排：只改排版，不動顏色語意（.btn--gold 文字仍為金色） */
 .mh-menu .btn,
 .mh-menu .file-label {
   width: 100%;
+  height: 28px;
+  min-height: 28px;
   justify-content: flex-start;
   text-align: left;
   background: transparent;
   border-color: transparent;
-  min-height: 30px;
-  padding: 7px 10px;
+  padding: 0 9px;
   font-size: 12px;
-  border-radius: var(--r-soft);
+  border-radius: 3px;
 }
 .mh-menu .btn:hover,
 .mh-menu .file-label:hover {
@@ -310,12 +475,12 @@ button { font-family: inherit; cursor: pointer; }
   border-color: transparent;
 }
 .mh-menu-label {
-  font-family: var(--font-display);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
-  padding: 6px 8px 2px;
+  color: var(--gold-dim);
+  padding: 6px 9px 3px;
 }
 .mh-menu-hr {
   height: 1px;
@@ -326,11 +491,382 @@ button { font-family: inherit; cursor: pointer; }
 .mh-menu-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
-/* ---- 窄螢幕 ---- */
+/* ════════════════════════════════════════════════════════════════════
+   05 · 紙頁語言 — the open page（style guide 05）
+   紙頁不隨深淺模式反轉；使用 --page-* token。
+   ════════════════════════════════════════════════════════════════════ */
+
+/* 房間：包住紙頁內容的可捲動區，桌燈從上方灑落的淡淡光暈 */
+.page-room {
+  position: relative;
+  min-height: 100%;
+  background: var(--page-bg);
+  padding: 26px 36px 44px;
+}
+.page-room::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 240px;
+  background: radial-gradient(ellipse 60% 100% at 50% -20%, rgba(255,248,224,0.55), transparent 72%);
+  pointer-events: none;
+}
+
+/* 一張紙：白紙 + 32px 橫線 + 左紅邊 @54px（.page-sheet 為基礎，.notebook 是常用別名） */
+.page-sheet,
+.notebook {
+  position: relative;
+  background: var(--page-card);
+  border: 1px solid var(--page-border);
+  box-shadow: var(--page-shadow);
+  background-image: repeating-linear-gradient(transparent, transparent 31px, var(--page-line) 31px, var(--page-line) 32px);
+  background-position: 0 14px;
+  padding: 34px 46px 44px 82px;
+}
+.page-sheet::before,
+.notebook::before {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; left: 54px;
+  width: 1px;
+  background: var(--page-margin-line);
+}
+.page-sheet h1, .notebook h1,
+.page-sheet h2, .notebook h2,
+.page-sheet h3, .notebook h3 {
+  margin: 0 0 16px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  color: var(--page-ink);
+  line-height: 32px;
+}
+.page-sheet p, .notebook p {
+  margin: 0 0 14px;
+  font-family: var(--font-body);
+  font-size: 14.5px;
+  line-height: 32px;
+  letter-spacing: 0.03em;
+  color: var(--page-ink-mid);
+}
+
+/* 編輯模式紙：靛青系框線 + 等寬字（mono 12.5px），供載檔後 diff 編輯用 */
+.notebook--edit {
+  border-color: var(--ink-manuscripta);
+  box-shadow: var(--page-shadow), 0 0 0 3px rgba(74,128,168,0.08);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 32px;
+  color: var(--page-ink-mid);
+  white-space: pre-wrap;
+}
+.diff-add {
+  display: block;
+  background: rgba(90,138,74,0.13);
+  box-shadow: inset 2px 0 0 var(--ink-tabularium);
+}
+.diff-del {
+  display: block;
+  background: rgba(196,96,79,0.1);
+  box-shadow: inset 2px 0 0 var(--danger);
+  text-decoration: line-through;
+  color: var(--page-pencil);
+}
+
+/* 舊紙標本（程式碼、引用） */
+.page-old-block {
+  background: var(--page-old);
+  border: 1px solid var(--page-old-border);
+  border-left: 3px solid var(--page-ink);
+  padding: 12px 16px;
+  margin: 18px 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.9;
+  color: var(--page-ink-mid);
+  overflow-x: auto;
+}
+
+/* 重點標記 */
+.hl { background: rgba(220,190,90,0.25); padding: 0 3px; }
+.hl--carrot { background: rgba(212,118,58,0.12); padding: 0 3px; }
+
+/* 眉批：手寫體 + 廳墨色，AI 眉批專用 */
+.margin-note {
+  border-left: 2px solid var(--zone-ink, var(--ink-manuscripta));
+  padding: 5px 0 5px 14px;
+  margin: 18px 0;
+  transform: rotate(-0.3deg);
+  font-family: var(--font-hand);
+  font-style: italic;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--zone-ink, var(--ink-manuscripta));
+}
+
+/* 便利貼：六色，rotate ±1°，無圓角 */
+.postit {
+  background: var(--postit-yellow);
+  box-shadow: 2px 3px 6px rgba(0,0,0,0.07);
+  padding: 13px 15px;
+  transform: rotate(-1deg);
+}
+.postit--yellow  { background: var(--postit-yellow); }
+.postit--pink    { background: var(--postit-pink); }
+.postit--blue    { background: var(--postit-blue); }
+.postit--green   { background: var(--postit-green); }
+.postit--lavender{ background: var(--postit-lavender); }
+.postit--peach   { background: var(--postit-peach); }
+.postit:nth-of-type(2n)   { transform: rotate(0.8deg); }
+.postit:nth-of-type(3n)   { transform: rotate(-0.6deg); }
+.postit__title {
+  font-family: var(--font-hand);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--page-ink);
+  margin-bottom: 6px;
+}
+.postit__body {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.8;
+  color: var(--page-ink-mid);
+}
+
+/* 紙膠帶分隔：8px 高 · 兩色 · 30% 透明 */
+.washi {
+  display: flex;
+  height: 8px;
+  margin: 20px 0;
+  overflow: hidden;
+}
+.washi > span { flex: 1; opacity: 0.3; }
+.washi > span:nth-child(1) { background: var(--zone-ink, var(--ink-manuscripta)); }
+.washi > span:nth-child(2) { background: var(--ink-atrium); }
+
+/* 藏書章 · 頁尾 · 廳墨色 */
+.ex-libris {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 26px 0 0;
+  transform: rotate(-6deg);
+}
+.ex-libris__seal {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--zone-ink, var(--ink-manuscripta));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  opacity: 0.75;
+  font-family: var(--font-mono);
+  font-size: 6px;
+  letter-spacing: 0.14em;
+  color: var(--zone-ink, var(--ink-manuscripta));
+}
+.ex-libris__seal em,
+.ex-libris__seal .ex-libris__la {
+  font-family: var(--font-serif-en);
+  font-style: italic;
+  font-size: 12px;
+}
+.ex-libris__date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--page-pencil);
+  margin-top: 7px;
+  transform: rotate(6deg);
+}
+
+/* 索引卡：目次、預覽分頁、過刊選單。選中＝左墨條＋左移 4px */
+.index-card,
+.rail-card {
+  background: var(--page-card);
+  border: 1px solid var(--page-border);
+  box-shadow: 2px 3px 8px rgba(0,0,0,0.05);
+  padding: 14px 16px;
+}
+.index-card__label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  color: var(--page-pencil);
+  margin-bottom: 9px;
+}
+.index-card__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--page-ink);
+  cursor: pointer;
+  padding: 2px 0;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.index-card__item:hover { opacity: 0.75; }
+.index-card__item.is-active,
+.index-card__item[aria-selected="true"] {
+  box-shadow: inset 2px 0 0 var(--zone-ink, var(--ink-dramaturgica));
+  transform: translateX(4px);
+  padding-left: 6px;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   06 · 儀器面板 · 狀態列 · toast（style guide 06）
+   Table Forge、試算表、AI 設定、公共書庫一律用這套。
+   ════════════════════════════════════════════════════════════════════ */
+.panel {
+  background: var(--navy);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-card);
+  padding: 14px 16px;
+}
+.panel--brass {
+  border-color: var(--gold-line);
+  box-shadow: 0 0 24px -8px var(--gold-glow);
+}
+.panel__label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.22em;
+  color: var(--zone-ink, var(--gold-dim));
+  margin-bottom: 9px;
+  text-transform: uppercase;
+}
+.panel__field { display: flex; flex-direction: column; gap: 4px; }
+.panel__field-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: var(--text-tertiary);
+}
+.panel input,
+.panel select,
+.panel__value {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: var(--navy-deep);
+  border: 1px solid var(--navy-line);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.statusbar {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  background: var(--navy-deep);
+  border: 1px solid var(--navy-line);
+  border-radius: var(--r-soft);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-tertiary);
+}
+.statusbar--full {
+  width: 100%;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  padding: 0 28px;
+}
+.statusbar .success,
+.statusbar__ok { color: var(--success); }
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 34px;
+  padding: 0 14px;
+  background: var(--navy-light);
+  border: 1px solid var(--gold-line);
+  border-radius: var(--r-soft);
+  box-shadow: 0 8px 24px -10px rgba(0,0,0,0.7);
+  font-size: 12px;
+  color: var(--text-primary);
+  z-index: 200;
+  animation: akasha-toast-fade 3s ease forwards;
+}
+.toast__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+  flex: none;
+}
+@keyframes akasha-toast-fade {
+  0% { opacity: 0; transform: translateY(6px); }
+  10%, 80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(6px); }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   07 · 空狀態（style guide 07）— 世界觀語氣文案的容器骨架
+   ════════════════════════════════════════════════════════════════════ */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 60px 20px;
+}
+.empty-state__stamp {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: 2px dashed var(--zone-ink, var(--gold-dim));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-8deg);
+  opacity: 0.8;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--zone-ink, var(--gold-dim));
+}
+.empty-state__line {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.empty-state__sub,
+.page-room .empty-state__sub {
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-tertiary);
+}
+.page-room .empty-state__line { color: var(--page-ink); }
+.page-room .empty-state__sub { color: var(--page-pencil); }
+.empty-state__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ── 窄螢幕 ── */
 @media (max-width: 760px) {
-  .module-header { padding: 8px 16px; gap: 10px; flex-wrap: wrap; }
+  .deskbar, .module-header { padding: 8px 16px; gap: 10px; flex-wrap: wrap; height: auto; }
   .mh-sub { display: none; }
+  .page-room { padding: 18px 16px 28px; }
+  .page-sheet, .notebook { padding: 26px 20px 30px 46px; }
+  .page-sheet::before, .notebook::before { left: 20px; }
 }

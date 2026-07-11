@@ -26,94 +26,49 @@
     flex-direction: column;
   }
 
-  /* ===== TOPBAR ===== */
-  .topbar {
-    height: var(--topbar-h);
-    min-height: var(--topbar-h);
-    background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%);
-    border-bottom: 1px solid var(--navy-line);
+  /* ===== DESKBAR (module's only chrome — see shared.css §01) ===== */
+  /* .deskbar / .btn / .btn--gold / .btn--danger / .btn--ghost / .mh-* come from shared.css. */
+  .zone-ink { background: var(--ink-lectorium); }
+
+  /* Zoom group — one fused capsule: −/100%/+/適頁 */
+  .zoom-capsule {
     display: flex;
-    align-items: center;
-    padding: 0 28px;
-    gap: 16px;
-    position: relative;
-    flex-shrink: 0;
-    z-index: 100;
-  }
-  .topbar::after {
-    content: "";
-    position: absolute;
-    left: 28px; right: 28px; bottom: -1px; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--gold-line) 25%, var(--gold-line) 75%, transparent);
-  }
-  .topbar-back {
-    background: transparent;
+    align-items: stretch;
+    height: 28px;
     border: 1px solid var(--navy-line);
     border-radius: var(--r-soft);
-    color: var(--text-secondary);
-    padding: 6px 8px;
-    display: flex; align-items: center;
-  }
-  .topbar-back:hover { border-color: var(--gold-dim); color: var(--gold); }
-  .topbar-info { display: flex; flex-direction: column; line-height: 1.15; }
-  .topbar-breadcrumb {
-    font-family: var(--font-serif-en);
-    font-size: 10.5px; letter-spacing: 0.3em;
-    color: var(--text-tertiary);
-    text-transform: uppercase;
-    margin-bottom: 3px;
-  }
-  .topbar-title {
-    font-family: var(--font-serif-tc);
-    font-size: 15.5px; color: var(--text-primary);
-    letter-spacing: 0.06em;
-    display: flex; align-items: baseline; gap: 10px;
-  }
-  .topbar-subtitle {
-    font-family: var(--font-serif-en);
-    font-style: italic;
-    font-size: 12px; color: var(--text-tertiary);
-    letter-spacing: 0.04em;
-  }
-  .topbar-spacer { flex: 1; }
-  .topbar-actions { display: flex; align-items: center; gap: 8px; }
-
-  /* ===== BUTTONS ===== */
-  .btn {
-    font-family: var(--font-serif-tc);
-    font-size: 12px;
-    padding: 7px 10px;
-    border-radius: var(--r-card);
-    border: 1px solid var(--navy-line);
     background: var(--navy-light);
+    overflow: hidden;
+    flex: none;
+  }
+  .zoom-capsule button {
+    background: transparent;
+    border: none;
     color: var(--text-primary);
-    display: inline-flex; align-items: center; gap: 7px;
-    min-height: 30px;
-    line-height: 1;
-    transition: border-color 0.15s, background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    width: 28px;
     cursor: pointer;
+    transition: background 0.15s, color 0.15s;
   }
-  .btn:hover { background: var(--navy-hover); border-color: var(--gold-dim); color: var(--gold-bright); }
-  .btn--gold {
-    background: var(--gold-glow);
-    border: 1px solid var(--gold-dim);
-    color: var(--gold);
+  .zoom-capsule button:hover { background: var(--navy-hover); color: var(--ink-lectorium); }
+  .zoom-capsule .zoom-fit-btn {
+    width: auto;
+    padding: 0 10px;
+    gap: 4px;
+    font-family: var(--font-serif-tc);
+    font-size: 11.5px;
+    white-space: nowrap;
   }
-  .btn--gold:hover { background: rgba(201,168,106,0.22); border-color: var(--gold); }
-  .btn-danger { border-color: rgba(196,96,79,0.3); background: rgba(196,96,79,0.1); color: var(--danger); }
-  .btn-danger:hover { background: rgba(196,96,79,0.2); border-color: var(--danger); }
-  .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
-
   .zoom-display {
-    font-family: var(--font-mono); font-size: 11.5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     color: var(--text-secondary);
-    padding: 0 8px; letter-spacing: 0.06em;
-    min-width: 48px; text-align: center;
-  }
-  .topbar-sep {
-    width: 1px; height: 20px;
-    background: var(--navy-line);
-    margin: 0 6px;
+    letter-spacing: 0.04em;
+    min-width: 44px;
+    text-align: center;
+    display: flex; align-items: center; justify-content: center;
+    border-left: 1px solid var(--navy-line);
+    border-right: 1px solid var(--navy-line);
   }
 
   /* ===== MAIN LAYOUT ===== */
@@ -144,24 +99,36 @@
   }
   .sidebar-tab {
     flex: 1;
-    padding: 9px 6px;
-    font-family: var(--font-serif-en);
-    font-size: 10.5px; letter-spacing: 0.22em;
-    text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 4px 7px;
     text-align: center;
-    color: var(--text-tertiary);
     border: none;
     border-bottom: 2px solid transparent;
     background: transparent;
     cursor: pointer;
     transition: all 160ms;
   }
-  .sidebar-tab.active {
-    color: var(--gold-bright);
-    border-bottom-color: var(--gold);
-    background: rgba(201,168,106,0.04);
+  .sidebar-tab .tab-en {
+    font-family: var(--font-mono);
+    font-size: 8px; letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
   }
-  .sidebar-tab:hover { color: var(--text-primary); }
+  .sidebar-tab .tab-zh {
+    font-family: var(--font-serif-tc);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+  .sidebar-tab.active {
+    border-bottom-color: var(--ink-lectorium);
+    background: rgba(200,150,46,0.06);
+  }
+  .sidebar-tab.active .tab-en,
+  .sidebar-tab.active .tab-zh { color: var(--ink-lectorium); }
+  .sidebar-tab:hover .tab-zh { color: var(--text-primary); }
 
   .sidebar-content {
     flex: 1;
@@ -724,37 +691,24 @@
     overflow: hidden;
   }
 
-  /* Dialogue box */
+  /* Dialogue box — RAG message card: left 2px honey bar (style guide 05 · index-card language) */
   .ai-dialogue {
     position: relative;
     margin: 8px 12px 0;
-    padding: 20px 18px 16px;
-    background: rgba(15,18,25,0.92);
-    border: 1px solid var(--gold-line);
+    padding: 18px 16px 16px;
+    background: var(--navy-deep);
+    border: 1px solid var(--navy-line);
+    border-left: 2px solid var(--ink-lectorium);
+    border-radius: 0 4px 4px 0;
     min-height: 110px;
   }
-  .ai-dialogue-ornament {
-    position: absolute;
-    top: -1px; left: -1px; right: -1px; height: 4px;
-    background: linear-gradient(90deg, var(--gold-deep), var(--gold), var(--gold-deep));
-    opacity: 0.7;
-  }
-  .ai-dialogue-corner {
-    position: absolute;
-    width: 10px; height: 10px;
-  }
-  .ai-dialogue-corner--tl { top: -1px; left: -1px; border-top: 1px solid var(--gold); border-left: 1px solid var(--gold); }
-  .ai-dialogue-corner--tr { top: -1px; right: -1px; border-top: 1px solid var(--gold); border-right: 1px solid var(--gold); }
-  .ai-dialogue-corner--bl { bottom: -1px; left: -1px; border-bottom: 1px solid var(--gold); border-left: 1px solid var(--gold); }
-  .ai-dialogue-corner--br { bottom: -1px; right: -1px; border-bottom: 1px solid var(--gold); border-right: 1px solid var(--gold); }
-
   .ai-dialogue-speaker {
     position: absolute;
-    top: -10px; left: 18px;
+    top: -10px; left: 16px;
     background: var(--navy-deep);
     padding: 0 10px;
     font-family: var(--font-serif-tc);
-    font-size: 13px; color: var(--gold-bright);
+    font-size: 13px; color: var(--ink-lectorium);
     letter-spacing: 0.18em;
   }
   .ai-dialogue-text {
@@ -768,7 +722,7 @@
   .ai-cursor {
     display: inline-block;
     width: 6px; height: 14px;
-    background: var(--gold);
+    background: var(--ink-lectorium);
     margin-left: 2px;
     vertical-align: middle;
     animation: blink 1s steps(2) infinite;
@@ -907,12 +861,10 @@
     .sidebar {
       position: absolute;
       z-index: 90;
-      height: calc(100vh - var(--topbar-h));
+      height: calc(100vh - var(--deskbar-h));
       width: 200px;
     }
     .sidebar.collapsed { margin-left: -200px; }
-    .topbar { padding: 0 16px; gap: 10px; }
-    .topbar-breadcrumb { display: none; }
     .reader-viewport { padding: 16px 12px 48px; }
     .welcome-screen { padding: 24px; }
     .drop-zone { width: 100%; padding: 32px 20px; }
@@ -938,7 +890,7 @@
   }
 
   @supports (padding: env(safe-area-inset-top)) {
-    .topbar { padding-top: env(safe-area-inset-top); }
+    .deskbar { padding-top: env(safe-area-inset-top); }
     .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
   }
 
@@ -1035,68 +987,67 @@
     padding: 4px 10px; cursor: pointer; white-space: nowrap;
   }
   .bookmark-add-form button:hover { border-color: var(--gold); color: var(--gold-bright); }
-  .btn-bookmark-active svg { fill: var(--gold); stroke: var(--gold); }
+  .btn-bookmark-active svg { fill: var(--ink-lectorium); stroke: var(--ink-lectorium); }
 </style>
 </head>
 <body>
 
-<!-- Top Bar -->
-<div class="topbar">
-  <div class="topbar-info">
-    <div class="topbar-breadcrumb">Reading Hall · 閱讀廳</div>
-    <div class="topbar-title">
-      <span id="currentFileName">PDF 閱讀器</span>
-      <span class="topbar-subtitle" id="topbarSubtitle">Akasha Library Reader</span>
-    </div>
-  </div>
-  <div class="topbar-spacer"></div>
-  <div class="topbar-actions">
-    <button class="btn" onclick="window.zoomOut()" title="縮小">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4M8 11h6"/></svg>
-    </button>
-    <span class="zoom-display" id="zoomDisplay">100%</span>
-    <button class="btn" onclick="window.zoomIn()" title="放大">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4M11 8v6M8 11h6"/></svg>
-    </button>
-    <button class="btn" onclick="window.zoomFit()" title="符合畫面">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-    </button>
-    <div class="topbar-sep"></div>
+<!-- Deskbar — module's only chrome row. No module title/brand here (shell owns that). -->
+<header class="deskbar">
+  <span class="desk-status">
+    <span class="desk-dot zone-ink"></span>
+    <span id="currentFileName">尚未開啟</span><span id="topbarSubtitle" style="display:none"></span>
+  </span>
+  <span class="desk-spacer"></span>
+  <div class="desk-actions">
     <button class="btn" onclick="document.getElementById('file-input').click()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
       開啟
     </button>
-    <button class="btn" id="btnDownload" onclick="window.downloadCurrent()" style="display:none">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
-      匯出
-    </button>
+    <div class="mh-sep"></div>
+    <span class="zoom-capsule">
+      <button onclick="window.zoomOut()" title="縮小">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4M8 11h6"/></svg>
+      </button>
+      <span class="zoom-display" id="zoomDisplay">100%</span>
+      <button onclick="window.zoomIn()" title="放大">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l4 4M11 8v6M8 11h6"/></svg>
+      </button>
+      <button class="zoom-fit-btn" onclick="window.zoomFit()" title="符合畫面">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        適頁
+      </button>
+    </span>
+    <div class="mh-sep"></div>
     <button class="btn" id="btnBookmark" onclick="window.toggleBookmark()" style="display:none" title="書籤">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-4-7 4V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+      書籤
     </button>
     <button class="btn" id="btnCrop" onclick="window.startCrop()" style="display:none" title="截圖框選：在頁面上拖拉選取區域存為筆記">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v4H2M18 2v4h4M6 22v-4H2M18 22v-4h4M6 6h12v12H6z"/></svg>
+      截圖框選
     </button>
     <button class="btn" id="btnOCR" onclick="window.startOCR()" style="display:none" title="文字摘錄：擷取當前頁面文字">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/><path d="M7 10h2M11 10h6M7 14h10"/></svg>
-      摘錄
+      OCR 摘錄
     </button>
-    <div class="topbar-sep"></div>
-    <button class="btn" onclick="toggleDarkMode()" title="切換明暗模式">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 5 5 5 10a5 5 0 11-10 0c0-2 1-3 2-4 0 2 2 3 3 1 0-3-1-5 0-7z"/></svg>
+    <button class="btn btn--gold" id="btnDownload" onclick="window.downloadCurrent()" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
+      匯出
     </button>
     <input type="file" id="file-input" accept=".pdf">
   </div>
-</div>
+</header>
 
 <!-- Main -->
 <div class="main-container">
   <!-- Left Sidebar -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-tabs">
-      <button class="sidebar-tab active" data-tab="pages" onclick="switchTab('pages')">Pages · 頁</button>
-      <button class="sidebar-tab" data-tab="split" onclick="switchTab('split')">Cut · 切割</button>
-      <button class="sidebar-tab" data-tab="bookmarks" onclick="switchTab('bookmarks')">Mark · 書籤</button>
-      <button class="sidebar-tab" data-tab="library" onclick="switchTab('library')">Lib · 書庫</button>
+      <button class="sidebar-tab active" data-tab="pages" onclick="switchTab('pages')"><span class="tab-en">PAGES</span><span class="tab-zh">頁</span></button>
+      <button class="sidebar-tab" data-tab="split" onclick="switchTab('split')"><span class="tab-en">CUT</span><span class="tab-zh">切割</span></button>
+      <button class="sidebar-tab" data-tab="bookmarks" onclick="switchTab('bookmarks')"><span class="tab-en">MARK</span><span class="tab-zh">書籤</span></button>
+      <button class="sidebar-tab" data-tab="library" onclick="switchTab('library')"><span class="tab-en">LIB</span><span class="tab-zh">書庫</span></button>
     </div>
 
     <!-- Pages Tab -->
@@ -1206,10 +1157,9 @@
       <div class="welcome-icon">
         <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5z"/><path d="M19 19v2H6a2 2 0 010-4"/><path d="M9 7h7"/></svg>
       </div>
-      <div class="welcome-title">Akasha Library</div>
+      <div class="welcome-title">閱讀架上沒有書</div>
       <div class="welcome-sub">
-        輕量 PDF 閱讀器 · 內建切割工具<br>
-        拖放檔案或點擊下方開啟
+        開啟一份 PDF，燈已經幫妳點好了。
       </div>
       <div class="drop-zone" id="dropZone">
         <div class="drop-zone-text">
@@ -1371,11 +1321,6 @@
 
     <!-- Dialogue Box -->
     <div class="ai-dialogue" id="aiDialogue">
-      <div class="ai-dialogue-ornament"></div>
-      <div class="ai-dialogue-corner ai-dialogue-corner--tl"></div>
-      <div class="ai-dialogue-corner ai-dialogue-corner--tr"></div>
-      <div class="ai-dialogue-corner ai-dialogue-corner--bl"></div>
-      <div class="ai-dialogue-corner ai-dialogue-corner--br"></div>
       <div class="ai-dialogue-speaker" id="aiDialogueSpeaker">圖書館員 · 月上零韻</div>
       <div class="ai-dialogue-text" id="aiDialogueText">
         歡迎來到阿卡夏圖書館。開啟一本書後，我可以為你解說任何段落或回答疑問。<span class="ai-cursor"></span>
@@ -1486,13 +1431,6 @@
   window.toggleSidebar = toggleSidebar;
   window.goToPage = (p) => { currentPage = p; renderPage(); switchTab('pages'); };
   window.downloadCurrent = downloadCurrent;
-
-  // ===== Dark/Light Mode Toggle =====
-  window.toggleDarkMode = function() {
-    const html = document.documentElement;
-    const current = html.getAttribute('data-mode');
-    html.setAttribute('data-mode', current === 'light' ? 'dark' : 'light');
-  };
 
   // ===== File Input =====
   const fileInput = document.getElementById('file-input');

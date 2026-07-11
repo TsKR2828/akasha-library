@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>Mockup 03 — 劇本工房 · Dramaturgica</title>
+<link rel="stylesheet" href="mock-shared.css">
+<style>
+  body { --zone-ink: var(--ink-dramaturgica); }
+  .stage { grid-template-rows: auto auto 1fr auto; }
+
+  /* 寫作間：稿紙 + 索引卡桌面 */
+  .writeroom { background: var(--page-bg); overflow-y: auto; box-shadow: inset 0 14px 30px -18px rgba(20,15,5,0.5); }
+  .writeroom__inner {
+    max-width: 1120px; margin: 0 auto; padding: 30px 32px 60px;
+    display: grid; grid-template-columns: 1fr 300px; gap: 34px; align-items: start;
+  }
+
+  /* 體裁籤：長在稿紙上緣的紙夾籤，不是 chrome */
+  .genre-tabs { display: flex; gap: 6px; padding-left: 22px; }
+  .genre-tab {
+    padding: 7px 18px 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    background: #efe9dc; border: 1px solid var(--page-card-border); border-bottom: none;
+    border-radius: 4px 4px 0 0; color: var(--page-pencil); cursor: pointer;
+  }
+  .genre-tab.is-active { background: var(--page-card); color: var(--ink-dramaturgica); font-weight: 700; position: relative; }
+  .genre-tab.is-active::after { content:''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--page-card); }
+
+  /* 稿紙 */
+  .manuscript {
+    background: var(--page-card); border: 1px solid var(--page-card-border);
+    box-shadow: 2px 3px 12px rgba(0,0,0,0.05);
+    padding: 34px 40px 46px 78px; position: relative; min-height: 560px;
+    background-image: repeating-linear-gradient(transparent, transparent 33px, var(--page-rule) 33px, var(--page-rule) 34px);
+    background-position: 0 10px;
+  }
+  .manuscript::before { content: ''; position: absolute; top: 0; bottom: 0; left: 46px; width: 1px; background: rgba(184,64,88,0.12); }
+  .ms-head {
+    display: flex; align-items: baseline; gap: 14px; margin-bottom: 22px;
+    font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--page-pencil);
+  }
+  .ms-head b { font-family: var(--serif-zh); font-size: 15px; font-weight: 700; color: var(--page-ink); letter-spacing: 1px; }
+
+  /* 劇本行 */
+  .ms-line { font-family: var(--serif-zh); font-size: 15px; line-height: 34px; color: var(--page-ink-mid); letter-spacing: 0.4px; }
+  .ms-line .spk { color: var(--ink-dramaturgica); font-weight: 700; }
+  .ms-line.cmd { font-family: var(--font-mono); font-size: 12px; color: var(--page-pencil); }
+  .ms-line.cursor-line { background: rgba(184,64,88,0.045); margin: 0 -14px; padding: 0 14px; }
+  .ms-caret { display: inline-block; width: 1.5px; height: 18px; background: var(--ink-dramaturgica); vertical-align: -3px; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* 角色鉛筆盤：稿紙下緣的筆盤 */
+  .cast-tray {
+    display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+    margin-top: 14px; padding: 10px 14px;
+    background: #f3ede0; border: 1px solid var(--page-old-border);
+  }
+  .cast-tray__label { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--page-pencil); margin-right: 4px; }
+  .cast-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; background: var(--page-card); border: 1px solid var(--page-old-border); border-radius: 3px;
+    font-size: 12px; color: var(--page-ink-mid); cursor: pointer;
+  }
+  .cast-chip kbd { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.06em; color: var(--page-card); background: var(--ink-dramaturgica); opacity: 0.75; padding: 1px 5px; border-radius: 2px; }
+  .cast-chip.is-locked { border-color: var(--ink-dramaturgica); }
+  .cast-chip .lock { font-size: 9px; color: var(--ink-dramaturgica); }
+
+  /* 索引卡（右軌）：預覽面板 = 桌上一疊索引卡 */
+  .index-stack { position: sticky; top: 22px; }
+  .index-tabs { display: flex; gap: 4px; padding-left: 12px; }
+  .index-tab {
+    padding: 6px 13px 5px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+    background: #efe9dc; border: 1px solid var(--page-card-border); border-bottom: none;
+    border-radius: 4px 4px 0 0; color: var(--page-pencil); cursor: pointer;
+  }
+  .index-tab.is-active { background: #FFFDF5; color: var(--ink-dramaturgica); font-weight: 700; }
+  .index-card {
+    background: #FFFDF5; border: 1px solid var(--page-card-border);
+    box-shadow: 2px 3px 10px rgba(0,0,0,0.06);
+    padding: 16px; min-height: 420px;
+    background-image: repeating-linear-gradient(transparent, transparent 25px, rgba(74,128,168,0.08) 25px, rgba(74,128,168,0.08) 26px);
+    background-position: 0 40px;
+  }
+  .ic-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; margin-bottom: 4px; border-radius: 3px;
+    font-size: 12px; color: var(--page-ink-mid); cursor: pointer;
+  }
+  .ic-row:hover { background: rgba(184,64,88,0.05); }
+  .ic-row.is-active { background: rgba(184,64,88,0.08); }
+  .ic-row__type { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.1em; padding: 2px 6px; border-radius: 2px; flex-shrink: 0; }
+  .t-scene { background: rgba(138,122,102,0.15); color: #6a5d4e; }
+  .t-dlg { background: rgba(184,64,88,0.12); color: #b84058; }
+  .t-nar { background: rgba(74,128,168,0.12); color: #4a80a8; }
+  .ic-row__text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ic-row__play { margin-left: auto; color: var(--page-pencil); font-size: 10px; }
+  .ic-row__num { font-family: var(--font-mono); font-size: 8.5px; color: var(--page-pencil); }
+
+  /* 底部狀態列（深色桌沿） */
+  .statusbar {
+    display: flex; align-items: center; gap: 18px;
+    height: 28px; padding: 0 26px;
+    background: var(--navy-deep); border-top: 1px solid var(--navy-line);
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-tertiary);
+  }
+  .statusbar .ok { color: var(--success); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="topbar">
+    <div class="topbar__brand"><span class="topbar__logo">AKASHA</span><span class="topbar__motto">bibliotheca nocturna</span></div>
+    <div class="topbar__spacer"></div>
+    <div class="topbar__search">⌕ 搜尋整座圖書館…<span style="margin-left:auto;opacity:.5">⌘K</span></div>
+    <button class="topbar__icon">⬆</button><button class="topbar__icon">✚</button><button class="topbar__icon">☾</button>
+    <button class="topbar__librarian">✦ 召喚圖書館員</button>
+  </div>
+
+  <div class="frame__body">
+    <div class="sidebar">
+      <div class="side-label">Atrium · 大廳</div>
+      <div class="side-item" style="--zone-ink:#c9a86a"><span class="side-item__dot"></span>總覽大廳<span class="side-item__latin">Atrium</span></div>
+      <div class="side-label">Halls · 五廳</div>
+      <div class="side-item" style="--zone-ink:#4a80a8"><span class="side-item__dot"></span>Code &amp; Data<span class="side-item__latin">MSS</span></div>
+      <div class="side-item" style="--zone-ink:#c8962e"><span class="side-item__dot"></span>PDF 閱讀器<span class="side-item__latin">LECT</span></div>
+      <div class="side-item" style="--zone-ink:#5a8a4a"><span class="side-item__dot"></span>Table Forge<span class="side-item__latin">TAB</span></div>
+      <div class="side-item" style="--zone-ink:#5a8a4a"><span class="side-item__dot"></span>試算表<span class="side-item__latin">TAB</span></div>
+      <div class="side-item is-active" style="--zone-ink:#b84058"><span class="side-item__dot"></span>劇本工房<span class="side-item__latin">DRAM</span></div>
+      <div class="side-item" style="--zone-ink:#d4763a"><span class="side-item__dot"></span>每日館報<span class="side-item__latin">GAZ</span></div>
+      <div class="side-item" style="--zone-ink:#7a5898"><span class="side-item__dot"></span>談心專區<span class="side-item__latin">INT</span></div>
+      <div class="side-label">Collections · 館藏</div>
+      <div class="side-item"><span class="side-item__dot" style="background:var(--text-tertiary)"></span>公共書庫<span class="side-item__latin">PUB</span></div>
+      <div class="side-item"><span class="side-item__dot" style="background:var(--text-tertiary)"></span>AI 設定<span class="side-item__latin">CFG</span></div>
+    </div>
+
+    <div class="stage">
+      <!-- 刊頭：唯一標題。原本的「SCRIPT WORKSHOP · IV / 劇本工房 — Dramaturgica」「SCRIPTORIUM · CALAMUS」兩層全部收掉 -->
+      <div class="masthead">
+        <div class="masthead__crumb">AKASHA LIBRARY » HALLS » <b>DRAMATURGICA</b></div>
+        <div class="masthead__row">
+          <span class="masthead__title">劇本工房</span>
+          <span class="masthead__latin">Dramaturgica · 羅恩格林（Lohengrin）</span>
+        </div>
+      </div>
+
+      <!-- 書桌列：四模式 + 字數 + 角色/AI/更多，一列收完 -->
+      <div class="deskbar">
+        <div class="seg">
+          <button class="seg__opt is-active">✎ 速寫 <em>Write</em></button>
+          <button class="seg__opt">⌕ 搜尋 <em>Search</em></button>
+          <button class="seg__opt">✦ 編輯 <em>Editor</em></button>
+          <button class="seg__opt">☰ 閱讀 <em>Reader</em></button>
+        </div>
+        <div class="deskbar__context" style="margin-left:8px">2,747 字 · 47 行 · ≈7 分鐘</div>
+        <div class="deskbar__spacer"></div>
+        <button class="btn">作品：羅恩格林 ▾</button>
+        <button class="btn btn--gold">☾ AI</button>
+        <button class="btn btn--ghost">更多 ▾</button><!-- 從劇本・範例・清空・說明 -->
+      </div>
+
+      <!-- 寫作間 -->
+      <div class="writeroom">
+        <div class="writeroom__inner">
+          <!-- 左：稿紙 -->
+          <div>
+            <div class="genre-tabs">
+              <div class="genre-tab">Novel · 小說</div>
+              <div class="genre-tab is-active">Script · 劇本</div>
+              <div class="genre-tab">Notes · 筆記</div>
+            </div>
+            <div class="manuscript">
+              <div class="ms-head"><b>第二幕 · 城堡前庭</b><span>ACT II · SC. 03</span></div>
+              <div class="ms-line cmd">#scene：安特衛普城堡前庭，夜</div>
+              <div class="ms-line"><span class="spk">旁白：</span>夜霧自斯海爾德河上漫過來，火把在城垛上明滅。</div>
+              <div class="ms-line"><span class="spk">傳令官：</span>國王有令——比武審判，以天意斷是非！</div>
+              <div class="ms-line"><span class="spk">艾爾莎：</span>我夢見一位騎士，天鵝引著他的小舟而來。</div>
+              <div class="ms-line cmd">#bgm：swan-theme, pp, 弦樂震音</div>
+              <div class="ms-line cursor-line"><span class="spk">羅恩格林：</span>艾爾莎，我來為你而戰。只是永遠不要問我的名字<span class="ms-caret"></span></div>
+              <div class="ms-line" style="color:var(--page-pencil)">　</div>
+            </div>
+            <!-- 角色筆盤：原 PERSONA SLOTS 那一整列，收成稿紙下緣的筆盤 -->
+            <div class="cast-tray">
+              <span class="cast-tray__label">Cast · 筆盤</span>
+              <span class="cast-chip"><kbd>ALT·1</kbd>#scene</span>
+              <span class="cast-chip"><kbd>ALT·2</kbd>旁白</span>
+              <span class="cast-chip is-locked"><kbd>ALT·3</kbd>羅恩格林<span class="lock">🔒</span></span>
+              <span class="cast-chip"><kbd>ALT·4</kbd>艾爾莎</span>
+              <span class="cast-chip"><kbd>ALT·5</kbd>奧特魯德</span>
+              <span class="cast-chip"><kbd>ALT·6</kbd>傳令官</span>
+              <span class="cast-chip" style="color:var(--page-pencil)">…+3</span>
+            </div>
+          </div>
+
+          <!-- 右：索引卡疊（原 BLOCKS/STATS/OUTLINE/VOICE/BGM 五分頁的統一形態） -->
+          <div class="index-stack">
+            <div class="index-tabs">
+              <div class="index-tab is-active">段落</div>
+              <div class="index-tab">大綱</div>
+              <div class="index-tab">統計</div>
+              <div class="index-tab">語音</div>
+              <div class="index-tab">配樂</div>
+            </div>
+            <div class="index-card">
+              <div class="ic-row"><span class="ic-row__type t-scene">SCENE</span><span class="ic-row__text">安特衛普城堡前庭，夜</span><span class="ic-row__num">#1</span></div>
+              <div class="ic-row"><span class="ic-row__type t-nar">旁白</span><span class="ic-row__text">夜霧自斯海爾德河上漫過來…</span><span class="ic-row__play">▶</span></div>
+              <div class="ic-row"><span class="ic-row__type t-dlg">傳令官</span><span class="ic-row__text">國王有令——比武審判…</span><span class="ic-row__play">▶</span></div>
+              <div class="ic-row"><span class="ic-row__type t-dlg">艾爾莎</span><span class="ic-row__text">我夢見一位騎士，天鵝引著…</span><span class="ic-row__play">▶</span></div>
+              <div class="ic-row is-active"><span class="ic-row__type t-dlg">羅恩格林</span><span class="ic-row__text">艾爾莎，我來為你而戰…</span><span class="ic-row__play">▶</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 桌沿狀態列 -->
+      <div class="statusbar">
+        <span>LN 47 · COL 18</span>
+        <span>5 BLOCKS PARSED</span>
+        <span class="ok">⇄ SYNCED</span>
+        <span style="margin-left:auto" class="ok">● AUTO-SAVE</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -605,101 +605,60 @@ function SwBtn({ children, onClick, variant = "ghost", size = "md", icon, title 
   );
 }
 
-// ============= TOPBAR =============
-function SwHeader({ tab, setTab, onAI, workSwitcher }) {
+// ============= DESKBAR (module's only chrome row — HANDOFF §5) =============
+// No module title/subtitle/brand row here (rule: iframes render zero self-drawn
+// titles). LEFT = 4-mode seg (速寫/搜尋/編輯/閱讀, the existing top-level tab
+// switcher). RIGHT = 作品切換▾ + 從劇本回填 + 範例 + 清空 + 更多▾（說明／AI）.
+function SwHeader({ tab, setTab, onAI, workSwitcher, isScriptMode, canLoadFromBlocks, onLoadFromBlocks, onLoadSeed, onClearDraft }) {
   const tabs = [
-    { id: "write",  tc: "速寫", en: "Write",  ic: "quill" },
-    { id: "search", tc: "搜尋", en: "Search", ic: "search" },
-    { id: "editor", tc: "編輯", en: "Editor", ic: "pen" },
-    { id: "reader", tc: "閱讀", en: "Reader", ic: "book" },
+    { id: "write",  tc: "速寫" },
+    { id: "search", tc: "搜尋" },
+    { id: "editor", tc: "編輯" },
+    { id: "reader", tc: "閱讀" },
   ];
-  return (
-    <header style={{
-      height: 64, minHeight: 64,
-      borderBottom: "1px solid var(--navy-line)",
-      background: "linear-gradient(180deg, var(--navy-light) 0%, var(--navy) 100%)",
-      display: "flex", alignItems: "center", padding: "0 24px", gap: 18,
-      position: "relative",
-      flexShrink: 0,
-    }}>
-      <div style={{
-        position: "absolute", left: 24, right: 24, bottom: -1, height: 1,
-        background: "linear-gradient(90deg, transparent, var(--gold-line) 20%, var(--gold-line) 80%, transparent)",
-      }} />
+  const [moreOpen, setMoreOpen] = React.useState(false);
+  React.useEffect(() => {
+    if (!moreOpen) return;
+    const close = () => setMoreOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [moreOpen]);
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-        <span style={{ color: "var(--gold)" }}><SwIcon name="mask" size={22} stroke={1.4} /></span>
-        <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.15 }}>
-          <div style={{
-            fontFamily: "var(--font-serif-en)", fontSize: 10.5,
-            letterSpacing: "0.34em", color: "var(--gold)",
-            fontVariant: "small-caps", textTransform: "uppercase",
-          }}>Script Workshop · IV</div>
-          <div style={{
-            display: "flex", gap: 8, alignItems: "baseline",
-            fontFamily: "var(--font-serif-tc)", fontSize: 16,
-            color: "var(--text-primary)", letterSpacing: "0.16em",
-            whiteSpace: "nowrap",
-          }}>
-            劇本工房
-            <span style={{
-              fontFamily: "var(--font-serif-en)", fontStyle: "italic",
-              fontSize: 12, color: "var(--text-tertiary)", letterSpacing: "0.04em",
-            }}>— Dramaturgica</span>
+  return (
+    <header className="deskbar" style={{
+      "--zone-ink": "var(--ink-dramaturgica)",
+      "--zone-ink-glow": "rgba(184,64,88,0.14)",
+      "--zone-ink-line": "rgba(184,64,88,0.32)",
+    }}>
+      <span className="seg" role="tablist" aria-label="劇本工房模式">
+        {tabs.map(t => (
+          <button key={t.id} type="button" role="tab" aria-selected={tab === t.id}
+            className={"seg__opt" + (tab === t.id ? " is-active" : "")}
+            onClick={() => setTab(t.id)}>{t.tc}</button>
+        ))}
+      </span>
+
+      <span className="desk-spacer" />
+
+      <div className="desk-actions">
+        {workSwitcher}
+        {tab === "write" && isScriptMode && (
+          <>
+            <button type="button" className="btn" disabled={!canLoadFromBlocks}
+              onClick={onLoadFromBlocks} title="從 Editor/Reader 的劇本載入到速寫區">從劇本回填</button>
+            <button type="button" className="btn" onClick={onLoadSeed} title="以範例覆蓋草稿">範例</button>
+          </>
+        )}
+        {tab === "write" && (
+          <button type="button" className="btn btn--danger" onClick={onClearDraft} title="清除草稿">清空</button>
+        )}
+        <div className="mh-more">
+          <button type="button" className="btn" onClick={(e) => { e.stopPropagation(); setMoreOpen(o => !o); }}>更多 ▾</button>
+          <div className={"mh-menu" + (moreOpen ? " open" : "")} onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="btn" onClick={() => { setMoreOpen(false); onAI(); }}>召喚圖書館員 · AI</button>
+            <button type="button" className="btn" onClick={() => { setMoreOpen(false); alert("劇本工房 — 戲劇文本資料庫與劇本編輯器。\n\n快捷鍵：\n• Alt+1~9 快速插入角色（單擊 slot 指派）\n• 雙擊 slot 插入前綴\n• 編輯器內可匯入 / 匯出 JSONL\n• 閱讀模式支援 PDF 匯出（公共領域作品）"); }}>說明</button>
           </div>
         </div>
-      </div>
-
-      <div style={{ flex: 1 }} />
-
-      {/* 3-tab pill switcher */}
-      <div style={{
-        display: "flex", gap: 2,
-        padding: 3,
-        background: "rgba(0,0,0,0.28)",
-        border: "1px solid var(--navy-line)",
-        borderRadius: 2,
-        overflow: "auto",
-        flexShrink: 1,
-        minWidth: 0,
-      }}>
-        {tabs.map(t => {
-          const active = tab === t.id;
-          return (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              style={{
-                background: active ? "var(--gold-glow)" : "transparent",
-                border: "none",
-                padding: "7px 12px",
-                color: active ? "var(--gold-bright)" : "var(--text-secondary)",
-                fontFamily: "var(--font-serif-tc)", fontSize: 12.5,
-                letterSpacing: "0.16em",
-                cursor: "pointer",
-                display: "flex", alignItems: "center", gap: 8,
-                borderBottom: active ? "2px solid var(--gold)" : "2px solid transparent",
-                transition: "all 160ms",
-              }}>
-              <SwIcon name={t.ic} size={13} />
-              {t.tc}
-              <span style={{
-                fontFamily: "var(--font-serif-en)", fontStyle: "italic",
-                fontSize: 10.5, opacity: 0.7, letterSpacing: "0.14em",
-              }}>{t.en}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div style={{ flex: "0 1 24px" }} />
-
-      {/* Work switcher — inline in header */}
-      <div style={{ minWidth: 0, flex: "0 1 auto" }}>
-        {workSwitcher}
-      </div>
-
-      <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-        <SwBtn icon="moon" size="sm" onClick={onAI}>AI</SwBtn>
-        <SwBtn icon="info" size="sm" onClick={() => alert("劇本工房 — 戲劇文本資料庫與劇本編輯器。\n\n快捷鍵：\n• Alt+1~9 快速插入角色（單擊 slot 指派）\n• 雙擊 slot 插入前綴\n• 編輯器內可匯入 / 匯出 JSONL\n• 閱讀模式支援 PDF 匯出（公共領域作品）")}>說明</SwBtn>
       </div>
     </header>
   );
@@ -4556,6 +4515,8 @@ function App() {
   });
   const [showNewWork, setShowNewWork] = React.useState(false);
   const [showAI, setShowAI] = React.useState(false);
+  const [writeMode, setWriteMode] = React.useState("script");
+  const writeTabRef = React.useRef(null);
   const blocksRef = React.useRef(blocks);
   const workIdRef = React.useRef(currentWork);
   React.useEffect(() => { blocksRef.current = blocks; }, [blocks]);
@@ -4781,7 +4742,12 @@ function App() {
       <SwHeader tab={tab} setTab={setTab} onAI={() => setShowAI(true)}
         workSwitcher={<WorkSwitcher currentId={currentWork} onSwitch={switchWork}
           workIndex={workIndex}
-          onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />} />
+          onNewWork={() => setShowNewWork(true)} onDeleteWork={deleteCurrentWork} />}
+        isScriptMode={writeMode === "script"}
+        canLoadFromBlocks={Array.isArray(blocks) && blocks.length > 0}
+        onLoadFromBlocks={() => writeTabRef.current?.loadFromBlocks()}
+        onLoadSeed={() => writeTabRef.current?.loadSeed()}
+        onClearDraft={() => writeTabRef.current?.clearDraft()} />
       {showNewWork && <NewWorkModal onClose={() => setShowNewWork(false)} onCreated={handleWorkCreated} />}
       {showAI && <AiAssistPanel onClose={() => setShowAI(false)} blocks={blocks} characters={characters} />}
       {loading && (
@@ -4793,8 +4759,12 @@ function App() {
           color: "var(--gold)", letterSpacing: "0.1em",
         }}>Loading…</div>
       )}
+      {/* 廳墨色 accent — 劇本工房 = 莓紅（HANDOFF §5: Editor/Reader/Search「apply
+          deskbar + berry ink accents」；套在共用書桌列下方，四個 tab 都吃得到，
+          不必逐一改 Editor/Reader/Search 內部樣式） */}
+      <div style={{ height: 2, flex: "none", background: "var(--ink-dramaturgica)", opacity: 0.55 }} />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", animation: "swFade 200ms ease" }} key={tab + currentWork}>
-        {tab === "write"  && <WriteTab  blocks={blocks} setBlocks={setBlocks} characters={characters} workId={currentWork} />}
+        {tab === "write"  && <WriteTab  ref={writeTabRef} blocks={blocks} setBlocks={setBlocks} characters={characters} workId={currentWork} onModeChange={setWriteMode} />}
         {tab === "search" && <SearchView blocks={blocks} characters={characters} charColors={charColors} work={workMeta} goToEditor={() => setTab("editor")} goToReader={() => setTab("reader")} goToBlock={goToBlock} />}
         {tab === "editor" && <EditorView blocks={blocks} setBlocks={setBlocks} characters={characters} charColors={charColors} setCharacters={setCharacters} setCharColors={setCharColors} script={script} workId={currentWork} work={workMeta} />}
         {tab === "reader" && <ReaderView blocks={blocks} goToBlock={goToBlock} work={workMeta} characters={characters} charColors={charColors} workId={currentWork} />}
