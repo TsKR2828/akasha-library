@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" data-mode="dark">
 <head>
+<script>/* 防閃色：首繪前還原深淺模式（body 尾端的 toggleMode 邏輯仍負責切換與圖示） */(function(){try{document.documentElement.setAttribute('data-mode',localStorage.getItem('akasha-mode')||'dark');}catch(e){}})();</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#181d28">
@@ -189,18 +190,17 @@ body { display: flex; }
   flex: none;
 }
 
-.nav-item-icon {
-  opacity: 0.85;
-  display: flex; align-items: center;
-  color: inherit;
-}
+/* Design mockup 側欄列：圓點＋中文＋右靠拉丁斜體，單行、無 icon */
+.nav-item-icon { display: none; }
 
 .nav-item-text {
-  display: flex; flex-direction: column; line-height: 1.15; flex: 1;
+  display: flex; flex-direction: row; align-items: baseline; gap: 8px;
+  line-height: 1.2; flex: 1; min-width: 0;
 }
 
 .nav-item-title {
   font-size: 13px; letter-spacing: 0.04em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 .nav-item-sub {
@@ -208,7 +208,7 @@ body { display: flex; }
   font-style: italic;
   font-size: 10.5px; letter-spacing: 0.06em;
   color: var(--text-tertiary);
-  margin-top: 2px;
+  margin-left: auto; flex: none;
 }
 
 .nav-item.active .nav-item-sub { color: var(--item-ink, var(--gold-dim)); }
@@ -1428,6 +1428,14 @@ body { display: flex; }
       <span>TOOLS &middot; 館內設施</span>
       <span class="nav-section-rule"></span>
     </div>
+    <button class="nav-item active" data-view="dashboard" style="--item-ink:var(--ink-atrium)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">大廳</span>
+        <span class="nav-item-sub">Atrium</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
     <button class="nav-item" data-module="markdown" style="--item-ink:var(--ink-manuscripta)">
       <span class="nav-item-dot"></span>
       <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg></span>
@@ -1455,6 +1463,14 @@ body { display: flex; }
       </span>
       <span class="nav-active-dot"></span>
     </button>
+    <button class="nav-item" data-module="spreadsheet" style="--item-ink:var(--ink-tabularium)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">試算表</span>
+        <span class="nav-item-sub">Tabularium XL</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
     <button class="nav-item" data-module="script-editor" style="--item-ink:var(--ink-dramaturgica)">
       <span class="nav-item-dot"></span>
       <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg></span>
@@ -1464,21 +1480,19 @@ body { display: flex; }
       </span>
       <span class="nav-active-dot"></span>
     </button>
-    <button class="nav-item" data-module="private-reading-room" style="--item-ink:var(--ink-intimarium)">
-      <span class="nav-item-dot"></span>
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">談心專區</span>
-        <span class="nav-item-sub">Intimarium</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
     <button class="nav-item" data-module="daily-report" style="--item-ink:var(--ink-gazette)">
       <span class="nav-item-dot"></span>
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg></span>
       <span class="nav-item-text">
         <span class="nav-item-title">每日館報</span>
         <span class="nav-item-sub">Gazette</span>
+      </span>
+      <span class="nav-active-dot"></span>
+    </button>
+    <button class="nav-item" data-module="private-reading-room" style="--item-ink:var(--ink-intimarium)">
+      <span class="nav-item-dot"></span>
+      <span class="nav-item-text">
+        <span class="nav-item-title">談心專區</span>
+        <span class="nav-item-sub">Intimarium</span>
       </span>
       <span class="nav-active-dot"></span>
     </button>
@@ -1496,27 +1510,17 @@ body { display: flex; }
       <span>VIEWS &middot; 館別</span>
       <span class="nav-section-rule"></span>
     </div>
-    <button class="nav-item active" data-view="dashboard" style="--item-ink:var(--gold)">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
-      <span class="nav-item-text">
-        <span class="nav-item-title">總覽</span>
-        <span class="nav-item-sub">Overview</span>
-      </span>
-      <span class="nav-active-dot"></span>
-    </button>
     <button class="nav-item" data-view="personal" style="--item-ink:var(--gold)">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/><path d="M8 8v0M12 8v0M16 8v0M8 16v0M12 16v0M16 16v0"/></svg></span>
       <span class="nav-item-text">
-        <span class="nav-item-title">個人書庫</span>
-        <span class="nav-item-sub">My Library</span>
+        <span class="nav-item-title">個人館</span>
+        <span class="nav-item-sub">Private</span>
       </span>
       <span class="nav-active-dot"></span>
     </button>
     <button class="nav-item" data-view="public" style="--item-ink:var(--gold)">
-      <span class="nav-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg></span>
       <span class="nav-item-text">
         <span class="nav-item-title">公共書庫</span>
-        <span class="nav-item-sub">Public Stacks</span>
+        <span class="nav-item-sub">Public ↗</span>
       </span>
       <span class="nav-active-dot"></span>
     </button>
@@ -1628,7 +1632,7 @@ body { display: flex; }
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
             </div>
-            <div class="card-roman">I</div>
+            <div class="card-roman">II</div>
           </div>
           <div>
             <div class="card-title">Code & Data</div>
@@ -1652,7 +1656,7 @@ body { display: flex; }
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
             </div>
-            <div class="card-roman">II</div>
+            <div class="card-roman">III</div>
           </div>
           <div>
             <div class="card-title">PDF 閱讀器</div>
@@ -1673,7 +1677,7 @@ body { display: flex; }
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>
             </div>
-            <div class="card-roman">III</div>
+            <div class="card-roman">IV</div>
           </div>
           <div>
             <div class="card-title">Table Forge</div>
@@ -1689,6 +1693,29 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
+        <!-- Spreadsheet -->
+        <a class="module-card" data-module="spreadsheet">
+          <div class="card-topline"></div>
+          <div class="card-top-row">
+            <div class="card-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg>
+            </div>
+            <div class="card-roman">V</div>
+          </div>
+          <div>
+            <div class="card-title">試算表</div>
+            <div class="card-en">— Tabularium XL</div>
+            <div class="card-desc">公式、儲存格編輯與 XLSX 進出。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">.xlsx</span>
+              <span class="format-tag">.csv</span>
+              <span class="format-tag">fx</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
         <!-- Script Editor -->
         <a class="module-card" data-module="script-editor">
           <div class="card-topline"></div>
@@ -1696,7 +1723,7 @@ body { display: flex; }
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg>
             </div>
-            <div class="card-roman">IV</div>
+            <div class="card-roman">VI</div>
           </div>
           <div>
             <div class="card-title">劇本工房</div>
@@ -1712,6 +1739,28 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
+        <!-- Daily Report -->
+        <a class="module-card" data-module="daily-report" id="card-daily-report">
+          <div class="card-topline"></div>
+          <div class="card-top-row">
+            <div class="card-icon-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
+            </div>
+            <div class="card-roman">VII</div>
+          </div>
+          <div>
+            <div class="card-title">每日館報</div>
+            <div class="card-en">— Gazette</div>
+            <div class="card-desc">晨報送達、朗讀與過刊。</div>
+          </div>
+          <div class="card-footer">
+            <div class="card-formats">
+              <span class="format-tag">report</span>
+              <span class="format-tag">news</span>
+            </div>
+            <div class="card-open-hint">Open &rarr;</div>
+          </div>
+        </a>
         <!-- Reading Room -->
         <a class="module-card" data-module="private-reading-room" id="card-reading-room">
           <div class="card-topline"></div>
@@ -1719,7 +1768,7 @@ body { display: flex; }
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg>
             </div>
-            <div class="card-roman">V</div>
+            <div class="card-roman">VIII</div>
           </div>
           <div>
             <div class="card-title">談心專區</div>
@@ -1734,24 +1783,24 @@ body { display: flex; }
             <div class="card-open-hint">Open &rarr;</div>
           </div>
         </a>
-        <!-- Daily Report -->
-        <a class="module-card" data-module="daily-report" id="card-daily-report">
+        <!-- AI Settings -->
+        <a class="module-card" data-module="ai-settings">
           <div class="card-topline"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
             </div>
-            <div class="card-roman">VI</div>
+            <div class="card-roman">IX</div>
           </div>
           <div>
-            <div class="card-title">每日館報</div>
-            <div class="card-en">— Gazette</div>
-            <div class="card-desc">資訊整理與結構化輸出。貼上素材，產出分類館報。</div>
+            <div class="card-title">AI 設定</div>
+            <div class="card-en">— Aetherium</div>
+            <div class="card-desc">金鑰、月幣與代理狀態。</div>
           </div>
           <div class="card-footer">
             <div class="card-formats">
-              <span class="format-tag">report</span>
-              <span class="format-tag">news</span>
+              <span class="format-tag">byok</span>
+              <span class="format-tag">coin</span>
             </div>
             <div class="card-open-hint">Open &rarr;</div>
           </div>
@@ -2137,16 +2186,17 @@ body { display: flex; }
   // {key, zh, latin, ink, roman}. Reused by: masthead (always), sidebar
   // TOOLS dots (inline --item-ink already set in HTML, synced here),
   // and dashboard hall cards (inline --card-ink synced here).
+  // 編號依 Design mockup HALLS：大廳 Ⅰ 起，九廳 Ⅰ–Ⅸ
   var HALLS = {
-    'atrium':               { zh: '大廳',        latin: 'Atrium',       ink: 'var(--gold)',              roman: '' },
-    'markdown':             { zh: 'Code & Data', latin: 'Manuscripta',  ink: 'var(--ink-manuscripta)',   roman: 'I' },
-    'pdf-reader':           { zh: 'PDF 閱讀器',   latin: 'Lectorium',    ink: 'var(--ink-lectorium)',     roman: 'II' },
-    'table-forge':          { zh: 'Table Forge', latin: 'Tabularium',   ink: 'var(--ink-tabularium)',    roman: 'III' },
-    'spreadsheet':          { zh: '試算表',       latin: 'Tabularium XL',ink: 'var(--ink-tabularium)',    roman: '' },
-    'script-editor':        { zh: '劇本工房',     latin: 'Dramaturgica', ink: 'var(--ink-dramaturgica)',  roman: 'IV' },
-    'private-reading-room': { zh: '談心專區',     latin: 'Intimarium',   ink: 'var(--ink-intimarium)',    roman: 'V' },
-    'daily-report':         { zh: '每日館報',     latin: 'Gazette',      ink: 'var(--ink-gazette)',       roman: 'VI' },
-    'ai-settings':          { zh: 'AI 設定',      latin: 'Aetherium',    ink: 'var(--gold)',              roman: '' },
+    'atrium':               { zh: '大廳',        latin: 'Atrium',       ink: 'var(--ink-atrium)',        roman: 'I' },
+    'markdown':             { zh: 'Code & Data', latin: 'Manuscripta',  ink: 'var(--ink-manuscripta)',   roman: 'II' },
+    'pdf-reader':           { zh: 'PDF 閱讀器',   latin: 'Lectorium',    ink: 'var(--ink-lectorium)',     roman: 'III' },
+    'table-forge':          { zh: 'Table Forge', latin: 'Tabularium',   ink: 'var(--ink-tabularium)',    roman: 'IV' },
+    'spreadsheet':          { zh: '試算表',       latin: 'Tabularium XL',ink: 'var(--ink-tabularium)',    roman: 'V' },
+    'script-editor':        { zh: '劇本工房',     latin: 'Dramaturgica', ink: 'var(--ink-dramaturgica)',  roman: 'VI' },
+    'daily-report':         { zh: '每日館報',     latin: 'Gazette',      ink: 'var(--ink-gazette)',       roman: 'VII' },
+    'private-reading-room': { zh: '談心專區',     latin: 'Intimarium',   ink: 'var(--ink-intimarium)',    roman: 'VIII' },
+    'ai-settings':          { zh: 'AI 設定',      latin: 'Aetherium',    ink: 'var(--gold)',              roman: 'IX' },
   };
   window.HALLS = HALLS;
 

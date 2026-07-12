@@ -563,11 +563,20 @@ window.addEventListener('message', (e) => {
   }
 });
 
-// Tabularium instruments stay dark regardless of shell mode (HANDOFF §4:
-// "both stay dark"). Table Forge no longer mirrors the shell's data-mode —
-// pin to dark so it matches the spreadsheet, which never had a mode-sync
-// listener to begin with. Do not re-add a data-mode sync here.
-document.documentElement.setAttribute('data-mode', 'dark');
+// 深淺模式跟隨殼（Design mockup：淺色模式反轉全部書房家具，儀器不例外；
+// 2026-07-11 月月回報後修正——先前「儀器恆深」判定與 Design 不符）。
+(() => {
+  try {
+    const parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
+    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
+  } catch { /* cross-origin 時維持預設 */ }
+})();
+window.addEventListener('message', (e) => {
+  if (e.origin !== location.origin) return;
+  if (e.data?.type === 'akasha-mode-change' && e.data.mode) {
+    document.documentElement.setAttribute('data-mode', e.data.mode);
+  }
+});
 
 // --- Init ---
 

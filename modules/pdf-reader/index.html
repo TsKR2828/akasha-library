@@ -1392,11 +1392,9 @@
     });
   }
 
-  // Inherit dark/light mode from parent App Shell
-  try {
-    const parentMode = window.parent?.document?.documentElement?.getAttribute('data-mode');
-    if (parentMode) document.documentElement.setAttribute('data-mode', parentMode);
-  } catch(e) {}
+  // Lectorium 殼恆深（HANDOFF §3：PDF 內容本身已是紙，模組殼保持深色）。
+  // 不繼承、不跟隨殼的深淺模式——模組內 64 處深色為刻意設計，
+  // 跟隨切換會變成半亮半暗的混色。data-mode 固定為 html 標籤上的 "dark"。
 
   // ===== PDF.js Setup =====
   const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
@@ -1510,9 +1508,7 @@
         content,
       }, location.origin);
     }
-    if (event.data?.type === MSG_TYPES.MODE_CHANGE) {
-      document.documentElement.setAttribute('data-mode', event.data.mode);
-    }
+    // MODE_CHANGE 刻意不處理：Lectorium 殼恆深（HANDOFF §3），跟隨切換會半亮半暗。
   });
 
   async function loadFromUrl(url, title) {

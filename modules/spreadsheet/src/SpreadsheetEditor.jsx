@@ -386,6 +386,22 @@ export default function SpreadsheetEditor() {
     if (!editing) setFormulaBarValue(cells[id] || "");
   }, [selection, cells, editing]);
 
+  // 深淺模式跟隨殼：載入時讀取父層 data-mode，之後聽 MODE_CHANGE（同 script-editor 模式）
+  useEffect(() => {
+    try {
+      const parentMode = window.parent?.document?.documentElement?.getAttribute("data-mode");
+      if (parentMode) document.documentElement.setAttribute("data-mode", parentMode);
+    } catch { /* cross-origin 時維持預設 */ }
+    const onModeMsg = (e) => {
+      if (e.origin !== location.origin) return;
+      if (e.data?.type === MSG_TYPES.MODE_CHANGE && e.data.mode) {
+        document.documentElement.setAttribute("data-mode", e.data.mode);
+      }
+    };
+    window.addEventListener("message", onModeMsg);
+    return () => window.removeEventListener("message", onModeMsg);
+  }, []);
+
   useEffect(() => {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return;

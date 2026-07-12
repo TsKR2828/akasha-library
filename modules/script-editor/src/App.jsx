@@ -802,7 +802,7 @@ function SearchView({ blocks, characters, charColors, work, goToEditor, goToRead
       {/* Filter Bar */}
       <div style={{
         position: "sticky", top: 0, zIndex: 10,
-        background: "rgba(17,21,29,0.88)",
+        background: "color-mix(in srgb, var(--navy-deep) 88%, transparent)",
         backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
         borderBottom: "1px solid var(--navy-line)",
         padding: "16px 28px",
@@ -865,7 +865,7 @@ function SearchView({ blocks, characters, charColors, work, goToEditor, goToRead
       {filtered.length > 0 && (
         <div style={{
           position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 20,
-          background: "rgba(17,21,29,0.94)", backdropFilter: "blur(8px)",
+          background: "color-mix(in srgb, var(--navy-deep) 94%, transparent)", backdropFilter: "blur(8px)",
           borderTop: "1px solid var(--gold-line)",
           padding: "12px 28px",
           display: "flex", alignItems: "center", gap: 8,
@@ -1033,7 +1033,7 @@ function SpritePreview({ block, characters, charColors = {} }) {
   return (
     <div style={{
       width: "100%", aspectRatio: "16/9",
-      background: "linear-gradient(180deg, #1a1e2a 0%, #0d1119 100%)",
+      background: "linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%)",
       border: "1px solid var(--navy-line)",
       borderRadius: 2, position: "relative", overflow: "hidden",
       marginBottom: 12,
@@ -1644,7 +1644,7 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {}, se
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 100,
-      background: "rgba(13,17,25,0.96)", backdropFilter: "blur(8px)",
+      background: "color-mix(in srgb, var(--navy-deep) 96%, transparent)", backdropFilter: "blur(8px)",
       display: "flex", flexDirection: "column",
       animation: "swFade 150ms ease",
     }}>
@@ -1803,7 +1803,7 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {}, se
         {hoveredChar && !addEdgeOpen && (
           <div style={{
             position: "absolute", top: 16, left: 16,
-            background: "rgba(17,21,29,0.92)", backdropFilter: "blur(6px)",
+            background: "color-mix(in srgb, var(--navy-deep) 92%, transparent)", backdropFilter: "blur(6px)",
             border: "1px solid var(--navy-line)", borderRadius: 3,
             padding: "14px 18px", maxWidth: 280, pointerEvents: "none",
             animation: "swFade 100ms ease",
@@ -1825,7 +1825,7 @@ function RelationshipGraph({ onClose, characters: charsProp, charColors = {}, se
         {editingEdge != null && allEdges[editingEdge] && (
           <div style={{
             position: "absolute", bottom: 16, right: 16,
-            background: "rgba(17,21,29,0.95)", backdropFilter: "blur(6px)",
+            background: "color-mix(in srgb, var(--navy-deep) 95%, transparent)", backdropFilter: "blur(6px)",
             border: "1px solid var(--gold-line)", borderRadius: 4,
             padding: "14px 18px", minWidth: 260,
             animation: "swFade 100ms ease",
@@ -2127,7 +2127,7 @@ function DraftGenerator({ onClose, onInsert, characters, charColors = {}, sceneL
   const selectStyle = {display:"block",width:"100%",marginTop:3,background:"var(--navy-deep)",border:"1px solid var(--navy-line)",color:"var(--cream)",padding:"6px 8px",fontFamily:"var(--font-body)",fontSize:12,borderRadius:2,outline:"none"};
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:100,background:"rgba(13,17,25,0.96)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:100,background:"color-mix(in srgb, var(--navy-deep) 96%, transparent)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
       {/* Header */}
       <div style={{padding:"14px 24px",borderBottom:"1px solid var(--navy-line)",display:"flex",alignItems:"center",gap:12}}>
         <SwIcon name="quill" size={16} />
@@ -2291,7 +2291,7 @@ function HistoryPanel({ workId, onClose, onRestore }) {
   };
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:100,background:"rgba(13,17,25,0.96)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:100,background:"color-mix(in srgb, var(--navy-deep) 96%, transparent)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
       {/* Header */}
       <div style={{padding:"14px 24px",borderBottom:"1px solid var(--navy-line)",display:"flex",alignItems:"center",gap:12}}>
         <SwIcon name="history" size={16} />
@@ -2379,7 +2379,7 @@ function ScriptLinter({ blocks, characters, charColors = {}, onClose, onGoToBloc
   };
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:100,background:"rgba(13,17,25,0.96)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:100,background:"color-mix(in srgb, var(--navy-deep) 96%, transparent)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
       {/* Header */}
       <div style={{padding:"14px 24px",borderBottom:"1px solid var(--navy-line)",display:"flex",alignItems:"center",gap:12}}>
         <SwIcon name="scroll" size={16} />
@@ -2548,7 +2548,7 @@ function SoundPanel({ onClose, onAssign, currentBlockBgm }) {
   const selectStyle = {display:"block",width:"100%",marginTop:3,background:"var(--navy-deep)",border:"1px solid var(--navy-line)",color:"var(--cream)",padding:"6px 8px",fontFamily:"var(--font-body)",fontSize:12,borderRadius:2,outline:"none"};
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:100,background:"rgba(13,17,25,0.96)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
+    <div style={{position:"fixed",inset:0,zIndex:100,background:"color-mix(in srgb, var(--navy-deep) 96%, transparent)",backdropFilter:"blur(8px)",display:"flex",flexDirection:"column",animation:"swFade 150ms ease"}}>
       {/* Header */}
       <div style={{padding:"14px 24px",borderBottom:"1px solid var(--navy-line)",display:"flex",alignItems:"center",gap:12}}>
         <SwIcon name="music" size={16} />
@@ -3000,7 +3000,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       {/* export bar — outside main to avoid overflow clipping */}
       <div style={{
         position: "absolute", left: leftW, right: rightW, bottom: 0, zIndex: 20,
-        background: "rgba(17,21,29,0.94)", backdropFilter: "blur(8px)",
+        background: "color-mix(in srgb, var(--navy-deep) 94%, transparent)", backdropFilter: "blur(8px)",
         borderTop: "1px solid var(--gold-line)",
         padding: "12px 20px",
         display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap",
@@ -3016,7 +3016,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       {importWarnings && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 60,
-          background: "rgba(13,17,25,0.92)", backdropFilter: "blur(6px)",
+          background: "color-mix(in srgb, var(--navy-deep) 92%, transparent)", backdropFilter: "blur(6px)",
           display: "flex", flexDirection: "column",
           animation: "swFade 150ms ease",
         }}>
@@ -3806,13 +3806,13 @@ function ReaderView({ blocks, goToBlock, work, characters, charColors = {}, work
   });
 
   return (
-    <div className="reader-root" style={{ display: "flex", flex: 1, overflow: "hidden", background: "#0d1119", position: "relative" }}>
+    <div className="reader-root" style={{ display: "flex", flex: 1, overflow: "hidden", background: "var(--navy-deep)", position: "relative" }}>
       {/* TOC */}
       <aside className="reader-toc" style={{
         width: 180, minWidth: 180,
         padding: "26px 14px",
         borderRight: "1px solid var(--navy-line)",
-        background: "linear-gradient(180deg, rgba(20,24,33,0.6), rgba(13,17,25,0.6))",
+        background: "linear-gradient(180deg, color-mix(in srgb, var(--navy) 60%, transparent), color-mix(in srgb, var(--navy-deep) 60%, transparent))",
         overflowY: "auto",
       }}>
         <div style={{
@@ -3870,7 +3870,7 @@ function ReaderView({ blocks, goToBlock, work, characters, charColors = {}, work
           padding: "0 0 80px",
           background: `
             radial-gradient(ellipse at 50% -20%, rgba(201,168,106,0.05) 0%, transparent 60%),
-            #0d1119
+            var(--navy-deep)
           `,
         }}>
         <div style={{
@@ -4034,7 +4034,7 @@ function ReaderView({ blocks, goToBlock, work, characters, charColors = {}, work
       {/* PDF export bar */}
       <div className="reader-export-bar" style={{
         position: "absolute", left: 180, right: 0, bottom: 0,
-        background: "rgba(13,17,25,0.94)", backdropFilter: "blur(8px)",
+        background: "color-mix(in srgb, var(--navy-deep) 94%, transparent)", backdropFilter: "blur(8px)",
         borderTop: "1px solid var(--gold-line)",
         padding: "12px 28px",
         display: "flex", alignItems: "center", gap: 10,
@@ -4261,7 +4261,7 @@ function AiAssistPanel({ onClose, blocks, characters }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 250,
-      background: "rgba(13,17,25,0.92)", backdropFilter: "blur(6px)",
+      background: "color-mix(in srgb, var(--navy-deep) 92%, transparent)", backdropFilter: "blur(6px)",
       display: "flex", alignItems: "center", justifyContent: "center",
       animation: "swFade 120ms ease",
     }} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -4368,7 +4368,7 @@ function CharacterModal({ character, onSave, onClose }) {
     onClose();
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(13,17,25,0.85)", display: "flex", alignItems: "center", justifyContent: "center", animation: "swFade 120ms ease" }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "color-mix(in srgb, var(--navy-deep) 85%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", animation: "swFade 120ms ease" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: "var(--navy-light)", border: "1px solid var(--gold-line)", borderRadius: 4, padding: "24px 28px", width: 380, maxHeight: "80vh", overflowY: "auto" }}>
         <div style={{ fontFamily: "var(--font-serif-tc)", fontSize: 15, color: "var(--gold-bright)", marginBottom: 14, letterSpacing: "0.1em" }}>
@@ -4421,7 +4421,7 @@ function NewWorkModal({ onClose, onCreated }) {
     onClose();
   };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(13,17,25,0.85)", display: "flex", alignItems: "center", justifyContent: "center", animation: "swFade 120ms ease" }}
+    <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "color-mix(in srgb, var(--navy-deep) 85%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", animation: "swFade 120ms ease" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: "var(--navy-light)", border: "1px solid var(--gold-line)", borderRadius: 4, padding: "24px 28px", width: 340 }}>
         <div style={{ fontFamily: "var(--font-serif-tc)", fontSize: 15, color: "var(--gold-bright)", marginBottom: 14, letterSpacing: "0.1em" }}>
@@ -4753,7 +4753,7 @@ function App() {
       {loading && (
         <div style={{
           position: "absolute", inset: 0, zIndex: 200,
-          background: "rgba(13,17,25,0.8)", display: "flex",
+          background: "color-mix(in srgb, var(--navy-deep) 80%, transparent)", display: "flex",
           alignItems: "center", justifyContent: "center",
           fontFamily: "var(--font-serif-en)", fontSize: 16,
           color: "var(--gold)", letterSpacing: "0.1em",
