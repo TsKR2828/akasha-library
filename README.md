@@ -16,14 +16,17 @@
 └───────────────┴─────────────────────────┘
 ```
 
-## 五大模組
+## 八大功能廳
 
 | 模組 | 別名 | 功能 | 支援格式 |
 |------|------|------|----------|
 | Code & Data Reader | Manuscripta | 多格式閱讀 / 編輯 / 搜尋 / 匯出摘要 / Sheets 匯出 / DOCX 匯入匯出 / 劇本偵測匯出 / Python 風險掃描 / TsukiSynth Score 儀表板 | .md .txt .py .json .score.json .docx .doc .blocks.jsonl |
-| PDF 閱讀器 | Lectorium | 翻頁閱讀 / 書籤 / 自訂切割 / 截圖框選 / AI 圖書館員（RAG 伴讀） | .pdf |
+| PDF 閱讀器 | Lectorium | 翻頁閱讀 / 書籤 / 自訂切割 / 截圖框選 / OCR 摘錄 / AI 圖書館員（RAG 伴讀） | .pdf |
 | Table Forge | Tabularium | Canvas 表格編輯 / 公式引擎 / 多格式互通匯入匯出 | .csv .tsv（可從 Code & Data 接收 MD / JSON） |
-| 書籍排版器 | Bibliopegia | 視覺化書頁排版 / 封面設計 / 匯出 | .pdf .html |
+| 試算表 | Tabularium XL | Vite + React 試算表：多工作表、公式、匯入匯出、存書庫 | .xlsx .xls .csv |
+| 劇本工房 | Dramaturgica | Vite + React 劇本編輯器：速寫稿紙、角色管理、WriteTab/Blocks 雙向同步、語音預覽、JSONL 匯入匯出 | .txt .jsonl .ks |
+| 每日館報 | Gazette | 每日館報自動抓取（akasha-rss-news）/ 朗讀 / 匯出 / 過刊 | daily_*.json .md |
+| 談心專區 | Intimarium | 私人閱覽室：陪伴對話 / 不留痕模式 / 手札整理與匯出 | — |
 | AI 設定 | Aetherium | API Key 管理（BYOK）/ 模型選擇 / 月幣系統 | — |
 
 ### Code & Data Reader 詳細功能
@@ -67,7 +70,7 @@ modules/table-forge/
 
 ## 技術棧
 
-- **前端**：無框架 HTML / CSS / JS(例外:Script Editor 為 Vite + React,經 iframe 嵌入)
+- **前端**：無框架 HTML / CSS / JS（例外：劇本工房與試算表為 Vite + React，經 iframe 嵌入）
 - **PDF**：pdf.js（閱讀）+ pdf-lib（切割 / 匯出）
 - **AI**：BM25 + Dense Embedding 雙層 RAG，支援多家 LLM API
 - **儲存**：IndexedDB（本地快取）+ Google Drive API（雲端同步）
