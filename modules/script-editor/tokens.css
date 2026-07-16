@@ -56,21 +56,27 @@
   --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
 
   /* ══ v2 · 紙頁系 The Open Page (design/styles/tokens.css) ══
-     不隨 data-mode 反轉：燈再暗，稿紙永遠是亮的。 */
-  --page-bg: #FAF4E5;
-  --page-card: #FFFFFF;
-  --page-old: #F3EDE0;
-  --page-ink: #1C1610;
-  --page-ink-mid: #3E352A;
-  --page-pencil: #8A7A66;
-  --page-border: #E8E3DA;
-  --page-old-border: #E0D6C2;
-  --page-line: rgba(0,0,0,0.035);
-  --page-margin-line: rgba(212,118,58,0.13);
-  --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
+     反轉策略（2026-07 修正）：此 :root 為暗模式基準＝深色紙（夜燈下的舊紙／
+     深羊皮，往 --navy #181d28 的暖一階靠，非純黑）。舊註「燈再暗，稿紙永遠是亮的」
+     已作廢——稿紙改為隨深淺模式反轉，避免亮米色稿紙串進暗模式；亮模式亮紙原值
+     搬到下方 :root[data-mode="light"]。三階明度關係（card 最亮＞bg＞old 最暗）不變。 */
+  --page-bg: #241E18;
+  --page-card: #2B2419;
+  --page-old: #1E1913;
+  --page-ink: #ECE3D0;
+  --page-ink-mid: #C3B49A;
+  --page-pencil: #9A8871;
+  --page-border: #3A3327;
+  --page-old-border: #453B2C;
+  --page-line: rgba(255,255,255,0.05);
+  --page-margin-line: rgba(212,118,58,0.28);
+  --page-shadow: 2px 3px 12px rgba(0,0,0,0.35);
+  --page-chip-bg: rgba(43,36,25,0.82);   /* 稿紙上半透明統計膠囊底（暗模式：深紙膠囊） */
+  --page-card-tint: #322B1F;             /* 索引卡紙（比 --page-card 亮半階，讓卡片浮起） */
 
-  /* ══ v2 · 廳墨色 — 劇本工房 = 莓紅 Dramaturgica ══ */
-  --ink-dramaturgica: #B84058;
+  /* ══ v2 · 廳墨色 — 劇本工房 = 莓紅 Dramaturgica ══
+     暗模式：保留莓紅色相、只提亮度（畫在深紙上可讀）；亮模式原值見 light 區。 */
+  --ink-dramaturgica: #E07E90;
   --zone-ink: var(--ink-dramaturgica);
   --zone-ink-glow: rgba(184,64,88,0.14);
   --zone-ink-line: rgba(184,64,88,0.32);
@@ -84,7 +90,7 @@
   --deskbar-h: 44px;
 }
 
-/* ── Light mode — 白日書房：家具轉米色，紙頁不變（rule 4） ── */
+/* ── Light mode — 白日書房：家具轉米色；紙頁回到亮紙原值（rule 4：亮模式零變化） ── */
 :root[data-mode="light"] {
   --navy: #F4EEDD;
   --navy-deep: #EFE7D3;
@@ -104,6 +110,23 @@
   --gold-line: rgba(138,111,48,0.28);
 
   --cream: #2a2118;
+
+  /* ══ 紙頁系亮模式覆寫 — 亮紙原值原封搬回，保證亮模式零變化 ══ */
+  --page-bg: #FAF4E5;
+  --page-card: #FFFFFF;
+  --page-old: #F3EDE0;
+  --page-ink: #1C1610;
+  --page-ink-mid: #3E352A;
+  --page-pencil: #8A7A66;
+  --page-border: #E8E3DA;
+  --page-old-border: #E0D6C2;
+  --page-line: rgba(0,0,0,0.035);
+  --page-margin-line: rgba(212,118,58,0.13);
+  --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
+  --page-chip-bg: rgba(255,255,255,0.82);
+  --page-card-tint: #FFFDF5;
+  --ink-dramaturgica: #B84058;
+
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
 }
@@ -453,7 +476,7 @@ button.se-panel-row {
   font-size: 9px;
   letter-spacing: 0.04em;
   color: var(--page-pencil);
-  background: rgba(255,255,255,0.82);
+  background: var(--page-chip-bg);
   padding: 2px 7px;
   border-radius: 2px;
 }
@@ -620,7 +643,7 @@ button.se-panel-row {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  background: #FFFDF5;
+  background: var(--page-card-tint);
   border: 1px solid var(--page-border);
   border-radius: 3px;
   box-shadow: var(--page-shadow);

@@ -47,9 +47,12 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 200px;
-      background: radial-gradient(ellipse 60% 100% at 50% -20%, rgba(255,248,224,0.5), transparent 72%);
+      background: radial-gradient(ellipse 60% 100% at 50% -20%, var(--page-glow), transparent 72%);
       pointer-events: none;
     }
+    /* 暗模式取 shared.css 的深色暖光（--page-glow），消除紙面頂端亮米色斑塊；
+       亮模式保留本模組原本的 0.5 米色暖光（比 shared 亮版 0.55 略淡），確保亮模式外觀零變化。 */
+    :root[data-mode="light"] { --page-glow: rgba(255,248,224,0.5); }
 
     .im-paper.page-sheet {
       flex: 1;

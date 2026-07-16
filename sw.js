@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-0791553ebc';
+const CACHE_NAME = 'akasha-library-44a94ed8a5';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -24,10 +24,8 @@ const LOCAL_ASSETS = [
   './core/document-bridge.js',
   './core/drive.js',
   './core/embedding.js',
-  './core/export.js',
   './core/export-core.js',
   './core/export/bridge.js',
-  './core/export/clipboard.js',
   './core/export/fromPayload.js',
   './core/export/toPayload.js',
   './core/notion-connector.js',
@@ -66,10 +64,10 @@ const LOCAL_ASSETS = [
 
   // Built Vite modules
   './dist/spreadsheet/index.html',
-  './dist/spreadsheet/assets/index-BQ_jI8X5.js',
+  './dist/spreadsheet/assets/index-BD3NWUs7.js',
   './dist/script-editor/index.html',
-  './dist/script-editor/assets/index-BSkjvPMz.js',
-  './dist/script-editor/assets/index-CezaCN9g.css',
+  './dist/script-editor/assets/index-BM6_CPoz.js',
+  './dist/script-editor/assets/index-CZO4GUjg.css',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',
   './dist/script-editor/data/works/blackstar_ch1.json',

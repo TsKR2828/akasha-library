@@ -2,10 +2,11 @@
    深夜書房，攤開的紙頁 — The Midnight Study & The Open Page
    ─────────────────────────────────────────────────────────
    兩種材質：
-   · 書房（深）＝殼、儀器類模組 → --navy 系＋--gold 系
-   · 紙頁（亮）＝一切閱讀與書寫的內容面 → --page-* 系
-   紙頁不跟深淺模式反轉：紙頁永遠是亮的（檯燈下的紙）。
-   深淺模式只影響「書房」家具。 */
+   · 書房＝殼、儀器類模組 → --navy 系＋--gold 系
+   · 紙頁＝一切閱讀與書寫的內容面 → --page-* 系
+   紙頁隨深淺模式反轉（2026-07 修正）：亮模式為亮紙（檯燈下的紙），暗模式為
+   深色紙（夜燈下的舊紙／深羊皮），避免亮米色斑塊串進暗模式。
+   深淺模式同時影響「書房」家具與「紙頁」。 */
 
 :root {
   /* ── Base — deepened navy with warm undertone ── */
@@ -43,37 +44,40 @@
 
   /* ══ NEW · 紙頁系 The Open Page ══
      用於：Code&Data 閱讀面、館報、劇本稿紙、談心對話紙。
-     不隨 data-mode 反轉。 */
-  --page-bg: #FAF4E5;        /* 桌上紙堆底色（雙模式不翻轉） */
-  --page-card: #FFFFFF;      /* 一張紙 */
-  --page-old: #F3EDE0;       /* 舊紙標本（程式碼、引用） */
-  --page-ink: #1C1610;       /* 正文墨 */
-  --page-ink-mid: #3E352A;   /* 次級墨 */
-  --page-pencil: #8A7A66;    /* 鉛筆字（功能小字、頁腳） */
-  --page-border: #E8E3DA;    /* 紙邊 */
-  --page-old-border: #E0D6C2;
-  --page-line: rgba(0,0,0,0.035);       /* 橫線，32px 一格 */
-  --page-margin-line: rgba(212,118,58,0.13); /* 左紅邊線 */
-  --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
+     反轉策略（2026-07 修正）：此 :root 為暗模式基準＝深色紙（夜燈下的舊紙／
+     深羊皮，往 --navy #181d28 的暖一階靠，非純黑）。亮模式原始亮紙值搬到下方
+     :root[data-mode="light"]。三階明度關係（card 最亮＞bg＞old 最暗）與亮版一致。 */
+  --page-bg: #241E18;        /* 桌上紙堆底色（暗模式：深暖紙堆） */
+  --page-card: #2B2419;      /* 一張紙（暗模式：最亮的一階深紙） */
+  --page-old: #1E1913;       /* 舊紙標本（程式碼、引用；最暗一階） */
+  --page-ink: #ECE3D0;       /* 正文墨（暗模式：深紙上的亮墨） */
+  --page-ink-mid: #C3B49A;   /* 次級墨 */
+  --page-pencil: #9A8871;    /* 鉛筆字（功能小字、頁腳） */
+  --page-border: #3A3327;    /* 紙邊（暗模式：比紙面亮一階的邊） */
+  --page-old-border: #453B2C;
+  --page-line: rgba(255,255,255,0.05);       /* 橫線，32px 一格（暗模式：亮線） */
+  --page-margin-line: rgba(212,118,58,0.28); /* 左紅邊線（保留色相、提亮度） */
+  --page-shadow: 2px 3px 12px rgba(0,0,0,0.35);
+  --page-glow: rgba(90,76,52,0.22);          /* 頁堆頂端暖光；暗模式＝低調暖光 */
 
-  /* 便利貼（沿用 Charta） */
-  --postit-yellow: #FFF8DC;
-  --postit-pink:  #FDE8E8;
-  --postit-blue:  #E5F0FA;
-  --postit-green: #E8F4E5;
-  --postit-lavender: #F0E8F5;
-  --postit-peach: #FDF0E5;
+  /* 便利貼（沿用 Charta；暗模式：深色便利貼，配已轉亮的 --page-ink 系可讀） */
+  --postit-yellow: #3B3720;
+  --postit-pink:  #3E2828;
+  --postit-blue:  #22303C;
+  --postit-green: #26331F;
+  --postit-lavender: #302A3A;
+  --postit-peach: #3A2C20;
 
   /* ══ NEW · 七廳墨色 Zone Inks ══
      用在：側欄圓點、麵包屑尾字、刊頭底線、模組內強調色。
-     深淺模式同值（墨不換色）。 */
-  --ink-atrium:      #C9A86A;  /* 大廳 Atrium — 黃銅 */
-  --ink-manuscripta: #4A80A8;  /* Code & Data — 靛青 */
-  --ink-lectorium:   #C8962E;  /* PDF 閱讀器 — 蜂蜜 */
-  --ink-tabularium:  #5A8A4A;  /* Table Forge／試算表 — 葉綠 */
-  --ink-dramaturgica:#B84058;  /* 劇本工房 — 莓紅 */
-  --ink-gazette:     #D4763A;  /* 每日館報 — 胡蘿蔔 */
-  --ink-intimarium:  #7A5898;  /* 談心專區 — 李紫 */
+     暗模式：各廳保留原色相、只提亮度（畫在深紙上可讀）；亮模式原值見 light 區。 */
+  --ink-atrium:      #D9BC82;  /* 大廳 Atrium — 黃銅 */
+  --ink-manuscripta: #7FAAD0;  /* Code & Data — 靛青 */
+  --ink-lectorium:   #E0B14E;  /* PDF 閱讀器 — 蜂蜜 */
+  --ink-tabularium:  #85B776;  /* Table Forge／試算表 — 葉綠 */
+  --ink-dramaturgica:#E07E90;  /* 劇本工房 — 莓紅 */
+  --ink-gazette:     #E79B62;  /* 每日館報 — 胡蘿蔔 */
+  --ink-intimarium:  #AB8BC5;  /* 談心專區 — 李紫 */
 
   /* ── Type ── */
   --font-serif-en: "Cormorant Garamond", "EB Garamond", Garamond, serif;
@@ -104,6 +108,18 @@
   /* 廳面底色（儀器類畫面）與書桌列底色 */
   --hall-bg: var(--navy-deep);
   --desk-bg: var(--navy);
+
+  /* ══ AI 面板（零韻）══ 暗模式＝原 index.html 寫死色碼；亮模式覆寫見下方 light 區 */
+  --ai-panel-bg-top: #11151d;
+  --ai-panel-bg-bottom: #0a0d13;
+  --ai-portrait-bg-top: #1a2030;
+  --ai-portrait-bg-bottom: #0d1018;
+  --ai-nameplate-bg-top: #2a1f12;
+  --ai-nameplate-bg-bottom: #1a130a;
+  --ai-nameplate-name: var(--gold-bright);
+  --ai-dialogue-bg: rgba(15,18,25,0.92);
+  --ai-badge-bg: rgba(0,0,0,0.4);
+  --ai-token-bar-bg: rgba(0,0,0,0.4);
 }
 
 /* ── Light mode — 白日書房：家具轉米色，紙頁不變 ── */
@@ -128,9 +144,52 @@
   --gold-line: rgba(138,111,48,0.28);
 
   --cream: #2a2118;
+
+  /* ══ 紙頁系亮模式覆寫 — 白日書房的亮紙（原 :root 值原封搬回，保證亮模式零變化） ══ */
+  --page-bg: #FAF4E5;
+  --page-card: #FFFFFF;
+  --page-old: #F3EDE0;
+  --page-ink: #1C1610;
+  --page-ink-mid: #3E352A;
+  --page-pencil: #8A7A66;
+  --page-border: #E8E3DA;
+  --page-old-border: #E0D6C2;
+  --page-line: rgba(0,0,0,0.035);
+  --page-margin-line: rgba(212,118,58,0.13);
   --page-shadow: 2px 3px 10px rgba(60,40,10,0.08);
+  --page-glow: rgba(255,248,224,0.55);
+
+  /* 便利貼亮模式原值 */
+  --postit-yellow: #FFF8DC;
+  --postit-pink:  #FDE8E8;
+  --postit-blue:  #E5F0FA;
+  --postit-green: #E8F4E5;
+  --postit-lavender: #F0E8F5;
+  --postit-peach: #FDF0E5;
+
+  /* 七廳墨色亮模式原值 */
+  --ink-atrium:      #C9A86A;
+  --ink-manuscripta: #4A80A8;
+  --ink-lectorium:   #C8962E;
+  --ink-tabularium:  #5A8A4A;
+  --ink-dramaturgica:#B84058;
+  --ink-gazette:     #D4763A;
+  --ink-intimarium:  #7A5898;
+
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
+
+  /* ══ AI 面板亮模式 — 白日書房：米色面板、黃銅名牌、近白對話框 ══ */
+  --ai-panel-bg-top: #F6F0DF;
+  --ai-panel-bg-bottom: #ECE3CC;
+  --ai-portrait-bg-top: #EFE7D3;
+  --ai-portrait-bg-bottom: #E2D7BC;
+  --ai-nameplate-bg-top: #CDB47B;
+  --ai-nameplate-bg-bottom: #BBA062;
+  --ai-nameplate-name: #33280E;
+  --ai-dialogue-bg: rgba(250,246,236,0.94);
+  --ai-badge-bg: rgba(255,252,242,0.55);
+  --ai-token-bar-bg: rgba(255,252,242,0.5);
 }
 
 /* ── 紙頁橫線＋左紅邊，用法：<div class="page-sheet"> ── */

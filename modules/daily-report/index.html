@@ -903,7 +903,7 @@ btnGenerate.addEventListener('click', async () => {
 
 // ===== Feed Base URL 設定（接館報管線） =====
 const FEED_BASE_KEY = 'akasha_report_feed_base';
-const FEED_BASE_DEFAULT = 'https://raw.githubusercontent.com/TsKR2828/akasha-rss-news/main/output/';
+const FEED_BASE_DEFAULT = 'https://raw.githubusercontent.com/TsKR2828/akasha-rss-news/daily-reports/output/';
 function getFeedBase() {
   try { return localStorage.getItem(FEED_BASE_KEY) || FEED_BASE_DEFAULT; } catch { return FEED_BASE_DEFAULT; }
 }

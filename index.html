@@ -805,7 +805,7 @@ body { display: flex; }
 /* ===== AI PANEL (零韻) ===== */
 .ai-panel {
   width: 340px; min-width: 0;
-  background: linear-gradient(180deg, #11151d 0%, #0a0d13 100%);
+  background: linear-gradient(180deg, var(--ai-panel-bg-top) 0%, var(--ai-panel-bg-bottom) 100%);
   border-left: 1px solid var(--gold-line);
   display: flex; flex-direction: column;
   overflow: hidden;
@@ -850,7 +850,7 @@ body { display: flex; }
   position: relative; overflow: hidden;
   background:
     radial-gradient(ellipse at 50% 90%, rgba(201,168,106,0.18) 0%, transparent 55%),
-    linear-gradient(180deg, #1a2030 0%, #0d1018 100%);
+    linear-gradient(180deg, var(--ai-portrait-bg-top) 0%, var(--ai-portrait-bg-bottom) 100%);
   display: flex; align-items: flex-end; justify-content: center; cursor: pointer;
 }
 .ai-scene { position: absolute; inset: 0; pointer-events: none; }
@@ -863,13 +863,13 @@ body { display: flex; }
 }
 .ai-nameplate {
   position: absolute; top: 14px; left: 14px;
-  background: linear-gradient(180deg, #2a1f12 0%, #1a130a 100%);
+  background: linear-gradient(180deg, var(--ai-nameplate-bg-top) 0%, var(--ai-nameplate-bg-bottom) 100%);
   border: 1px solid var(--gold-line); padding: 6px 12px 7px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.5), inset 0 1px 0 var(--gold-line);
   display: flex; flex-direction: column; min-width: 110px; z-index: 3;
 }
 .ai-nameplate-name {
-  font-family: var(--font-serif-tc); font-size: 14px; color: var(--gold-bright);
+  font-family: var(--font-serif-tc); font-size: 14px; color: var(--ai-nameplate-name);
   letter-spacing: 0.18em; line-height: 1.1;
 }
 .ai-nameplate-role {
@@ -882,20 +882,20 @@ body { display: flex; }
   font-family: var(--font-serif-en); font-style: italic;
   font-size: 11px; color: var(--gold-dim); letter-spacing: 0.16em;
   text-transform: uppercase; padding: 4px 8px;
-  border: 1px solid var(--gold-line); background: rgba(0,0,0,0.4); z-index: 2;
+  border: 1px solid var(--gold-line); background: var(--ai-badge-bg); z-index: 2;
 }
 .ai-page-badge {
   position: absolute; bottom: 14px; right: 14px;
   font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary);
   letter-spacing: 0.08em; padding: 3px 8px;
-  background: rgba(0,0,0,0.4); border: 1px solid var(--navy-hover);
+  background: var(--ai-badge-bg); border: 1px solid var(--navy-hover);
   border-radius: 2px; z-index: 2;
 }
 .ai-portrait--hidden { min-height: 0; flex: 0 0 0; height: 0; overflow: hidden; }
 
 .ai-dialogue {
   position: relative; margin: 8px 12px 0; padding: 20px 18px 16px;
-  background: rgba(15,18,25,0.92); border: 1px solid var(--gold-line);
+  background: var(--ai-dialogue-bg); border: 1px solid var(--gold-line);
   flex: 1; display: flex; flex-direction: column; min-height: 110px; overflow: hidden;
 }
 .ai-dialogue-ornament {
@@ -1259,7 +1259,7 @@ body { display: flex; }
 
 .ai-token-bar {
   margin: 0 12px; padding: 8px 12px;
-  background: rgba(0,0,0,0.4); border: 1px solid var(--navy-line);
+  background: var(--ai-token-bar-bg); border: 1px solid var(--navy-line);
   border-radius: var(--r-soft);
   display: flex; align-items: center; gap: 10px;
   font-family: var(--font-mono); font-size: 10.5px;
@@ -2800,13 +2800,9 @@ body { display: flex; }
       var aiNav = document.querySelector('.nav-item[data-module="ai-settings"]');
       if (aiNav) aiNav.style.display = 'none';
     }
-    // Gate Daily Report in public build (S2-13: always fails without AI)
-    if (!sec.isFeatureEnabled('ai_panel')) {
-      var drNav = document.querySelector('.nav-item[data-module="daily-report"]');
-      if (drNav) drNav.style.display = 'none';
-      var drCard = document.getElementById('card-daily-report');
-      if (drCard) drCard.style.display = 'none';
-    }
+    // Daily Report stays visible in public build: its remote feed path
+    // (raw.githubusercontent daily_*.json) needs no AI; only the paste→AI
+    // route depends on ai_panel and degrades gracefully without a key.
     // Gate Google Drive login in public build
     if (!sec.isFeatureEnabled('drive_sync')) {
       var authBlock = document.getElementById('auth-block');
