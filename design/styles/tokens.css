@@ -44,29 +44,30 @@
 
   /* ══ NEW · 紙頁系 The Open Page ══
      用於：Code&Data 閱讀面、館報、劇本稿紙、談心對話紙。
-     反轉策略（2026-07 修正）：此 :root 為暗模式基準＝深色紙（夜燈下的舊紙／
-     深羊皮，往 --navy #181d28 的暖一階靠，非純黑）。亮模式原始亮紙值搬到下方
+     反轉策略「夜燈藍紙」（2026-08 定案）：暗模式的紙從 navy 家具色系派生
+     （比家具亮半階、帶一點暖灰），墨用米色 cream 家族——整個暗模式單一冷色系
+     ＋金色點綴，消除暖棕紙與藍黑家具冷暖打架的濁感。亮模式原始亮紙值在下方
      :root[data-mode="light"]。三階明度關係（card 最亮＞bg＞old 最暗）與亮版一致。 */
-  --page-bg: #241E18;        /* 桌上紙堆底色（暗模式：深暖紙堆） */
-  --page-card: #2B2419;      /* 一張紙（暗模式：最亮的一階深紙） */
-  --page-old: #1E1913;       /* 舊紙標本（程式碼、引用；最暗一階） */
-  --page-ink: #ECE3D0;       /* 正文墨（暗模式：深紙上的亮墨） */
-  --page-ink-mid: #C3B49A;   /* 次級墨 */
-  --page-pencil: #9A8871;    /* 鉛筆字（功能小字、頁腳） */
-  --page-border: #3A3327;    /* 紙邊（暗模式：比紙面亮一階的邊） */
-  --page-old-border: #453B2C;
+  --page-bg: #1D222D;        /* 桌上紙堆底色（暗模式：夜燈藍紙堆） */
+  --page-card: #222834;      /* 一張紙（暗模式：最亮的一階藍紙） */
+  --page-old: #181D26;       /* 舊紙標本（程式碼、引用；最暗一階） */
+  --page-ink: #ECE5CF;       /* 正文墨（暗模式：藍紙上的米色墨＝全站 cream） */
+  --page-ink-mid: #BFB9A6;   /* 次級墨 */
+  --page-pencil: #8A93A3;    /* 鉛筆字（功能小字、頁腳；冷灰） */
+  --page-border: #333C4D;    /* 紙邊（暗模式：比紙面亮一階的邊） */
+  --page-old-border: #3D4557;
   --page-line: rgba(255,255,255,0.05);       /* 橫線，32px 一格（暗模式：亮線） */
   --page-margin-line: rgba(212,118,58,0.28); /* 左紅邊線（保留色相、提亮度） */
   --page-shadow: 2px 3px 12px rgba(0,0,0,0.35);
-  --page-glow: rgba(90,76,52,0.22);          /* 頁堆頂端暖光；暗模式＝低調暖光 */
+  --page-glow: rgba(201,168,106,0.10);       /* 頁堆頂端夜燈金暈，低調 */
 
-  /* 便利貼（沿用 Charta；暗模式：深色便利貼，配已轉亮的 --page-ink 系可讀） */
-  --postit-yellow: #3B3720;
-  --postit-pink:  #3E2828;
-  --postit-blue:  #22303C;
-  --postit-green: #26331F;
-  --postit-lavender: #302A3A;
-  --postit-peach: #3A2C20;
+  /* 便利貼（沿用 Charta；暗模式：navy 色域低飽和色片，保色相辨識、壓雜色感） */
+  --postit-yellow: #2E2D21;
+  --postit-pink:  #322830;
+  --postit-blue:  #232E3C;
+  --postit-green: #263023;
+  --postit-lavender: #2C2A39;
+  --postit-peach: #322C23;
 
   /* ══ NEW · 七廳墨色 Zone Inks ══
      用在：側欄圓點、麵包屑尾字、刊頭底線、模組內強調色。

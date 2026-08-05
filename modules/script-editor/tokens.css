@@ -56,23 +56,24 @@
   --shadow-brass: 0 0 0 1px var(--gold-line), 0 0 24px -6px var(--gold-glow);
 
   /* ══ v2 · 紙頁系 The Open Page (design/styles/tokens.css) ══
-     反轉策略（2026-07 修正）：此 :root 為暗模式基準＝深色紙（夜燈下的舊紙／
-     深羊皮，往 --navy #181d28 的暖一階靠，非純黑）。舊註「燈再暗，稿紙永遠是亮的」
-     已作廢——稿紙改為隨深淺模式反轉，避免亮米色稿紙串進暗模式；亮模式亮紙原值
-     搬到下方 :root[data-mode="light"]。三階明度關係（card 最亮＞bg＞old 最暗）不變。 */
-  --page-bg: #241E18;
-  --page-card: #2B2419;
-  --page-old: #1E1913;
-  --page-ink: #ECE3D0;
-  --page-ink-mid: #C3B49A;
-  --page-pencil: #9A8871;
-  --page-border: #3A3327;
-  --page-old-border: #453B2C;
+     反轉策略「夜燈藍紙」（2026-08 定案）：暗模式的稿紙從 navy 家具色系派生
+     （比家具亮半階、帶一點暖灰），墨用米色 cream 家族——單一冷色系＋金色點綴，
+     消除先前暖棕稿紙與藍黑家具冷暖打架的濁感。舊註「燈再暗，稿紙永遠是亮的」
+     已作廢；亮模式亮紙原值在下方 :root[data-mode="light"]。
+     三階明度關係（card 最亮＞bg＞old 最暗）不變。 */
+  --page-bg: #1D222D;
+  --page-card: #222834;
+  --page-old: #181D26;
+  --page-ink: #ECE5CF;
+  --page-ink-mid: #BFB9A6;
+  --page-pencil: #8A93A3;
+  --page-border: #333C4D;
+  --page-old-border: #3D4557;
   --page-line: rgba(255,255,255,0.05);
   --page-margin-line: rgba(212,118,58,0.28);
   --page-shadow: 2px 3px 12px rgba(0,0,0,0.35);
-  --page-chip-bg: rgba(43,36,25,0.82);   /* 稿紙上半透明統計膠囊底（暗模式：深紙膠囊） */
-  --page-card-tint: #322B1F;             /* 索引卡紙（比 --page-card 亮半階，讓卡片浮起） */
+  --page-chip-bg: rgba(34,40,52,0.82);   /* 稿紙上半透明統計膠囊底（暗模式：藍紙膠囊） */
+  --page-card-tint: #28303F;             /* 索引卡紙（比 --page-card 亮半階，讓卡片浮起） */
 
   /* ══ v2 · 廳墨色 — 劇本工房 = 莓紅 Dramaturgica ══
      暗模式：保留莓紅色相、只提亮度（畫在深紙上可讀）；亮模式原值見 light 區。 */

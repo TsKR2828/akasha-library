@@ -63,31 +63,31 @@
 
   /* ══ 紙頁系 The Open Page ══
      用於：Code&Data 閱讀面、館報、劇本稿紙、談心對話紙。
-     反轉策略（2026-07 修正）：此 :root 區為暗模式基準＝深色紙（夜燈下的舊紙／
-     深羊皮，往 --navy #181d28 的暖一階靠，非純黑）。亮模式的原始亮紙值原封搬到
-     下方 :root[data-mode="light"] 覆寫區，保證亮模式零變化。
-     --page-bg / --page-card / --page-old 三者維持與亮版相同的明度階差關係
-     （card 最亮 ＞ bg ＞ old 最暗），只是整組壓進暗區，消除暗模式中央大塊米白。 */
-  --page-bg: #241E18;
-  --page-card: #2B2419;
-  --page-old: #1E1913;
-  --page-ink: #ECE3D0;
-  --page-ink-mid: #C3B49A;
-  --page-pencil: #9A8871;
-  --page-border: #3A3327;
-  --page-old-border: #453B2C;
+     反轉策略「夜燈藍紙」（2026-08 定案）：暗模式的紙從 navy 家具色系派生
+     （比家具亮半階、帶一點暖灰），墨色用全站米色 cream 家族——整個暗模式
+     只剩單一冷色系＋金色點綴，消除先前暖棕紙與藍黑家具冷暖打架的濁感。
+     亮模式原始亮紙值在下方 :root[data-mode="light"] 覆寫區，亮模式零變化。
+     明度階差關係照舊：card 最亮 ＞ bg ＞ old 最暗。 */
+  --page-bg: #1D222D;
+  --page-card: #222834;
+  --page-old: #181D26;
+  --page-ink: #ECE5CF;
+  --page-ink-mid: #BFB9A6;
+  --page-pencil: #8A93A3;
+  --page-border: #333C4D;
+  --page-old-border: #3D4557;
   --page-line: rgba(255,255,255,0.05);
   --page-margin-line: rgba(212,118,58,0.28);
   --page-shadow: 2px 3px 12px rgba(0,0,0,0.35);
-  --page-glow: rgba(90,76,52,0.22);   /* .page-room::before 頁堆頂端暖光；暗模式＝低調暖光，不再是亮米色斑塊 */
+  --page-glow: rgba(201,168,106,0.10);   /* .page-room::before 頁堆頂端夜燈金暈，低調 */
 
-  /* 便利貼（暗模式：深色便利貼，配上方已轉亮的 --page-ink 系墨色仍可讀） */
-  --postit-yellow: #3B3720;
-  --postit-pink:  #3E2828;
-  --postit-blue:  #22303C;
-  --postit-green: #26331F;
-  --postit-lavender: #302A3A;
-  --postit-peach: #3A2C20;
+  /* 便利貼（暗模式：navy 色域裡的低飽和色片，保留色相辨識、壓低雜色感） */
+  --postit-yellow: #2E2D21;
+  --postit-pink:  #322830;
+  --postit-blue:  #232E3C;
+  --postit-green: #263023;
+  --postit-lavender: #2C2A39;
+  --postit-peach: #322C23;
 
   /* ══ 七廳墨色 Zone Inks ══
      暗模式：各廳保留原色相、只提亮度，讓畫在深紙上的墨色可讀。
@@ -127,6 +127,11 @@
 
   --hall-bg: var(--navy-deep);
   --desk-bg: var(--navy);
+
+  /* ══ 側欄底色（2026-08 復舊 3eab2b7 漸層——比 navy-light 起手更沉） ══ */
+  --sidebar-grad-top: #1c2230;
+  --sidebar-grad-mid: #161b25;
+  --sidebar-grad-bot: #11151d;
 
   /* ══ AI 面板（零韻）══
      暗模式基準值＝index.html 原寫死色碼原封搬入，暗模式外觀零變化；
@@ -200,6 +205,11 @@
 
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
+
+  /* 側欄亮模式漸層（沿用亮版家具階） */
+  --sidebar-grad-top: #f7f2e4;
+  --sidebar-grad-mid: #F4EEDD;
+  --sidebar-grad-bot: #EFE7D3;
 
   /* ══ AI 面板亮模式 — 白日書房：米色面板、黃銅名牌、近白對話框 ══ */
   --ai-panel-bg-top: #F6F0DF;
