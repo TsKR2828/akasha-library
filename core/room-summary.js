@@ -16,6 +16,15 @@ const MAX_FILES = 6;
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    // 防首開競態：若本連線搶先於 core/storage.js 觸發資料庫升級，
+    // storage.js 的 onupgradeneeded 就不會執行，導致 room-summaries store 永遠不存在。
+    // 這裡委派建立自己需要的 store（schema 與 core/storage.js 同步）。
+    req.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: 'module' });
+      }
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });

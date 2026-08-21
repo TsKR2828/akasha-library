@@ -20,7 +20,7 @@ const RESPONSES = {
     },
     {
       keywords: ['你能做什麼', '有什麼功能', '功能列表', '能幫我什麼'],
-      response: '阿卡夏圖書館目前有三個主要模組：\n· PDF 閱讀器 — 閱讀 PDF、加書籤、頁面切割、截圖\n· Code & Data — 閱讀程式碼與資料檔（.py .json .md .txt）\n· Table Forge — 表格資料匯入、編輯與匯出\n\n在各模組中開啟檔案後，我可以根據內容回答你的問題。',
+      response: '阿卡夏圖書館目前有八個廳：\n· Code & Data — 閱讀程式碼與資料檔（.py .json .md .txt）\n· PDF 閱讀器 — 閱讀 PDF、加書籤、頁面切割、截圖\n· Table Forge — 表格資料匯入、編輯與匯出\n· 試算表 — 試算表運算與整理\n· 劇本工房 — 劇本編寫、角色管理與 Script Editor\n· 每日館報 — 每日報告彙整與朗讀\n· 談心專區 — 私人對話與零韻手札\n· AI 設定 — 設定 API Key 與 AI 供應商\n\n在各廳中開啟檔案後，我可以根據內容回答你的問題。',
     },
     {
       keywords: ['謝謝', '感謝', 'thanks', 'thank you'],
@@ -94,6 +94,26 @@ const RESPONSES = {
   ],
 };
 
+// 純英數字（含空白/連字號/撇號）的關鍵字視為「詞」，需以詞邊界比對，
+// 避免像 'hi' 誤中 'this' / 'machine' 這種子字串誤判。
+// 含中文或其他符號（如 'score.json'）的關鍵字則維持子字串比對——
+// 中文本身沒有空白斷詞，子字串比對才是正確行為。
+const ASCII_WORD_RE = /^[a-z0-9][a-z0-9\s'-]*$/i;
+
+function escapeRegExp(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function keywordMatches(input, keyword) {
+  const kw = (keyword || '').toLowerCase().trim();
+  if (!kw) return false;
+  if (ASCII_WORD_RE.test(kw)) {
+    const re = new RegExp(`(?:^|[^a-z0-9])${escapeRegExp(kw)}(?:$|[^a-z0-9])`, 'i');
+    return re.test(` ${input} `);
+  }
+  return input.includes(kw);
+}
+
 /**
  * Match user message against prewritten responses.
  * Checks module-specific entries first, then global.
@@ -111,13 +131,13 @@ export function matchPrewritten(text, module) {
   const globalEntries = RESPONSES._global;
 
   for (const entry of moduleEntries) {
-    if (entry.keywords.some(kw => input.includes(kw.toLowerCase()))) {
+    if (entry.keywords.some(kw => keywordMatches(input, kw))) {
       return entry.response;
     }
   }
 
   for (const entry of globalEntries) {
-    if (entry.keywords.some(kw => input.includes(kw.toLowerCase()))) {
+    if (entry.keywords.some(kw => keywordMatches(input, kw))) {
       return entry.response;
     }
   }

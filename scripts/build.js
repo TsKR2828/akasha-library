@@ -50,6 +50,8 @@ const ALWAYS_EXCLUDE_DIRS = new Set([
   'scripts',
   '_site',
   'archive',
+  'docs',
+  'tests',
   // Vite sources — the built outputs are in dist/<module>/
   join('modules', 'spreadsheet'),
   join('modules', 'script-editor'),
@@ -63,6 +65,8 @@ const ALWAYS_EXCLUDE_FILES = new Set([
   'vite.config.script-editor.js',
   '.gitignore',
   '.npmrc',
+  'CLAUDE.md',
+  'TODO.md',
 ]);
 
 /** Always excluded file patterns */

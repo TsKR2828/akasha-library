@@ -12,6 +12,17 @@ const STORE = 'sync-queue';
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    // 防首開競態：若本連線搶先於 core/storage.js 觸發資料庫升級，
+    // storage.js 的 onupgradeneeded 就不會執行，導致 sync-queue store 永遠不存在。
+    // 這裡委派建立自己需要的 store（schema 與 core/storage.js 同步）。
+    req.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const sqStore = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+        sqStore.createIndex('status', 'status', { unique: false });
+        sqStore.createIndex('target', 'target', { unique: false });
+      }
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -84,7 +95,13 @@ export async function markFailed(id, error) {
       if (!r) { resolve(); return; }
       r.retries++;
       r.error = error;
-      if (r.retries >= 3) r.status = 'failed';
+      if (r.retries >= 3) {
+        r.status = 'failed';
+        // 進入終態（重試用盡）才清 payload：markDone 已對成功案例清 payload，
+        // 這裡讓失敗終態同樣不留敏感 payload。retries < 3 時仍會被 getPending()
+        // 撈回重試，payload 保留供下次實際重送用，否則重試會送出空內容。
+        r.payload = null;
+      }
       store.put(r);
       tx.oncomplete = () => resolve();
     };

@@ -53,25 +53,53 @@ export function isConfigured() {
 
 // ===== Notion API (via proxy) =====
 
+const REQUEST_TIMEOUT_MS = 15000;
+const RATE_LIMIT_RETRY_DELAYS_MS = [500, 1500]; // 429 退避重試 2 次
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function notionAPI(method, path, body) {
   const s = getNotionSettings();
   if (!s.proxyUrl || !s.token) throw new Error('Notion 未設定');
 
   const url = s.proxyUrl.replace(/\/$/, '') + path;
-  const res = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Notion-Token': s.token,
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Notion ${res.status}: ${err.message || res.statusText}`);
+  for (let attempt = 0; ; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Notion-Token': s.token,
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        signal: controller.signal,
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error(`Notion 請求逾時（${REQUEST_TIMEOUT_MS / 1000}s）：${path}`);
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (res.status === 429 && attempt < RATE_LIMIT_RETRY_DELAYS_MS.length) {
+      await sleep(RATE_LIMIT_RETRY_DELAYS_MS[attempt]);
+      continue;
+    }
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Notion ${res.status}: ${err.message || res.statusText}`);
+    }
+    return res.json();
   }
-  return res.json();
 }
 
 // ===== Database Operations =====
@@ -140,6 +168,7 @@ async function replacePageBlocks(pageId, blocks) {
   for (const b of existing) {
     if (!newIds.has(b.id)) {
       await notionAPI('DELETE', '/v1/blocks/' + b.id);
+      await sleep(350); // 防速率限制：逐塊 DELETE 之間留間隔
     }
   }
 }
@@ -315,20 +344,49 @@ export function buildConflictDiff(local, remote) {
   return fields;
 }
 
+// ===== Conflict Checks for Manual Sync =====
+// Only meant to be called from a user-initiated sync action (the "同步到
+// Notion" button), not from the unattended background timer — there is no
+// one present there to answer a conflict dialog.
+
+export async function getPendingConflictChecks() {
+  const jobs = await getPending();
+  return jobs.filter((j) => (j.target === 'library' || j.target === 'memory') && j.action !== 'delete' && j.payload);
+}
+
+export async function checkJobConflict(job) {
+  const s = getNotionSettings();
+  const dbId = job.target === 'library' ? s.libraryDbId : s.memoryDbId;
+  if (!dbId) return null;
+  const existing = await findByLocalId(dbId, job.localId || job.payload.id);
+  if (!existing) return null;
+  const remote = job.target === 'library' ? notionToLocalLibrary(existing) : notionToLocalMemory(existing);
+  const status = detectConflict(job.payload, remote);
+  return status === 'remote-newer' ? { local: job.payload, remote, status } : null;
+}
+
+// Removes a job from the queue without pushing it (used when the user picks
+// the Notion version, or defers the decision, in the conflict dialog).
+export async function skipQueuedJob(jobId) {
+  await markDone(jobId);
+}
+
 // ===== Background Sync Processor (11-D) =====
 
 let _syncing = false;
 
-export async function processQueue() {
+export async function processQueue(opts = {}) {
   if (_syncing || !isConfigured()) return { processed: 0, failed: 0, errors: [] };
   _syncing = true;
 
+  const skipIds = new Set(opts.skipIds || []);
   let processed = 0;
   let failed = 0;
   const errors = [];
   try {
     const jobs = await getPending();
     for (const job of jobs) {
+      if (skipIds.has(job.id)) continue;
       try {
         switch (job.target) {
           case 'library':

@@ -227,22 +227,26 @@
 
 ## 已完成（Phase 12 Security Layer）
 
-### 12-A 資料分級常數 ✅
+### 12-A 資料分級常數 ⚠ 未接線（僅函式存在）
 - [x] `DATA_LEVEL`（Public/Personal/Sensitive/Secret/Large Asset 五級）
 - [x] `CLASSIFICATION` map + `classify()` + `requiresEncryption()`
+- [ ] `classify()` / `requiresEncryption()` 全 repo零呼叫端——分級標記存在但沒有任何程式碼實際依它做判斷
 
-### 12-B IndexedDB 敏感欄位加密 ✅
+### 12-B IndexedDB 敏感欄位加密 ⚠ 未接線（僅函式存在）
 - [x] `deriveKey(passphrase, salt)` → PBKDF2 310K iterations → AES-256-GCM
 - [x] `encrypt()` / `decrypt()` — base64(iv‖ct) 格式
 - [x] `encryptFields()` / `decryptFields()` — 欄位級加解密
+- [ ] `encryptFields()` / `decryptFields()` 全 repo 零呼叫端——被標記 `requiresEncryption`（SENSITIVE 以上）的資料（零韻手札、sync-queue payload、persona.md、chat 記錄等）實際仍以明文存進 IndexedDB / localStorage。接線需要金鑰管理決策（passphrase 從哪來、何時要求輸入、遺失如何處理），尚未決定
 
-### 12-C BYOK 加密本地金鑰 ✅
+### 12-C BYOK 加密本地金鑰 ⚠ 未接線（僅函式存在）
 - [x] `persistApiKey()` / `retrieveApiKey()` — 密碼保護本地金鑰
 - [x] `getByokMode()` — none / session / encrypted-local
+- [ ] `persistApiKey()` / `retrieveApiKey()` 全 repo 零呼叫端——目前實際的 BYOK 金鑰儲存路徑未使用這組加密 API，同上待金鑰管理決策
 
-### 12-D Record Stamping ✅
+### 12-D Record Stamping ⚠ 未接線（僅函式存在）
 - [x] `sha256()` + `stampRecord()` — _version / _updatedAt / _checksum / _source
 - [x] `verifyChecksum()` + `markSynced()`
+- [ ] `stampRecord()` / `verifyChecksum()` / `markSynced()` 全 repo 零呼叫端——沒有任何寫入路徑實際幫記錄蓋版本/校驗碼章
 
 ### 12-E Build Mode ✅
 - [x] `BUILD_MODE` + `FEATURE_GATES`（public: 5 on / 8 off, private: all 13 on）

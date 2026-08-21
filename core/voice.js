@@ -66,10 +66,26 @@ export function waitForVoices() {
   });
 }
 
+const _voiceFallbackWarned = new Set();
+
+function warnVoiceFallbackOnce(voiceId, reason) {
+  if (_voiceFallbackWarned.has(voiceId)) return;
+  _voiceFallbackWarned.add(voiceId);
+  console.warn(`voice.js: 聲線 "${voiceId}" ${reason}，退回瀏覽器預設聲線`);
+}
+
 function resolveVoice(voiceId) {
   const voices = getAvailableVoices();
-  if (!voices.length || voiceId === 'reiin_default') return null;
-  return voices.find(v => v.name === voiceId) || null;
+  if (!voices.length) return null;
+  if (voiceId === 'reiin_default') {
+    warnVoiceFallbackOnce(voiceId, '沒有對應的 TTS 引擎');
+    return null;
+  }
+  const found = voices.find(v => v.name === voiceId) || null;
+  if (!found) {
+    warnVoiceFallbackOnce(voiceId, '找不到對應的引擎');
+  }
+  return found;
 }
 
 // ── Playback Engine ───────────────────────────────────────
@@ -173,8 +189,11 @@ export async function playQueue(startIndex = 0) {
     emit('queue-progress', { index: i, total: queue.length, task: queue[i] });
     try {
       await speak(queue[i]);
-    } catch {
-      break;
+    } catch (err) {
+      // 單則播放失敗（例如該行文字被引擎拒絕）不該讓整條佇列停播——
+      // 記警告後跳過，繼續播下一則。
+      console.warn(`voice.js: 佇列第 ${i + 1} 則播放失敗，跳過`, err);
+      continue;
     }
   }
 

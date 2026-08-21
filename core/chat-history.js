@@ -18,14 +18,43 @@ export function getHistory(module) {
 export function addMessage(module, role, text) {
   const key = CHAT_PREFIX + (module || '_default');
   const history = getHistory(module);
-  // Store only essential fields; truncate text to limit sensitive data exposure
-  const truncated = typeof text === 'string' && text.length > 200
-    ? text.slice(0, 200) + '…'
-    : text;
-  history.push({ role, text: truncated, time: Date.now() });
+  history.push({ role, text, time: Date.now() });
   if (history.length > MAX_MESSAGES) history.splice(0, history.length - MAX_MESSAGES);
-  localStorage.setItem(key, JSON.stringify(history));
+  setHistoryWithQuotaGuard(key, history);
   return history;
+}
+
+/**
+ * Write history to localStorage; on QuotaExceededError, drop the oldest half
+ * of the records and retry once instead of silently losing the whole write.
+ * Mutates `history` in place so callers holding the same reference see the trim.
+ */
+function setHistoryWithQuotaGuard(key, history) {
+  try {
+    localStorage.setItem(key, JSON.stringify(history));
+  } catch (err) {
+    if (isQuotaExceededError(err) && history.length > 1) {
+      const kept = history.slice(Math.ceil(history.length / 2));
+      history.length = 0;
+      history.push(...kept);
+      try {
+        localStorage.setItem(key, JSON.stringify(history));
+      } catch (err2) {
+        console.warn('chat-history: localStorage 寫入失敗（已嘗試刪除最舊一半紀錄後重試）', err2);
+      }
+    } else {
+      console.warn('chat-history: localStorage 寫入失敗', err);
+    }
+  }
+}
+
+function isQuotaExceededError(err) {
+  return !!err && (
+    err.name === 'QuotaExceededError' ||
+    err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    err.code === 22 ||
+    err.code === 1014
+  );
 }
 
 export function clearHistory(module) {

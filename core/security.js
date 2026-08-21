@@ -75,6 +75,17 @@ export function requiresEncryption(level) {
 
 
 /* ══════════════════════════════════════════
+   ⚠ 12-B ~ 12-D 尚未接線
+   以下函式（deriveKey / encrypt / decrypt / encryptFields / decryptFields /
+   persistApiKey / retrieveApiKey / stampRecord / verifyChecksum / markSynced 等）
+   目前全 repo 零呼叫端——被 CLASSIFICATION 標記 requiresEncryption(level>=SENSITIVE)
+   的資料（approved-memories、sync-queue、akasha-persona-md、akasha-chat-* 等）
+   實際仍以明文存進 IndexedDB / localStorage。
+   接線需要金鑰管理決策（passphrase 從哪來、何時要求使用者輸入、遺失如何處理），
+   目前尚未決定，見 TODO.md。
+   ══════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════
    12-B  Crypto Primitives (Web Crypto API)
    ══════════════════════════════════════════ */
 
@@ -372,7 +383,11 @@ const FEATURE_GATES = Object.freeze({
  */
 export function isFeatureEnabled(feature) {
   const gates = FEATURE_GATES[BUILD_MODE] || FEATURE_GATES.private;
-  return gates[feature] !== false; // default to enabled if unknown
+  if (!(feature in gates)) {
+    console.warn(`isFeatureEnabled: 未知 feature 名稱 "${feature}"，預設視為停用`);
+    return false; // fail-closed — 未知 feature 一律視為停用
+  }
+  return gates[feature] !== false;
 }
 
 /**

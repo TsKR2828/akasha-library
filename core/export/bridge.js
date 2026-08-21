@@ -4,6 +4,7 @@
 export const MSG_TYPES = {
   // ===== export（既有常數，值為歷史格式，不得正規化為 akasha-*）=====
   READER_EXPORT_TO_SPREADSHEET: 'READER_EXPORT_TO_SPREADSHEET',
+  TABLE_FORGE_EXPORT_TO_SPREADSHEET: 'akasha-tableforge-export-to-spreadsheet',
   SCRIPT_EDITOR_EXPORT_TO_TABLE: 'SCRIPT_EDITOR_EXPORT_TO_TABLE',
   EXPORT_TO_TABLE_FORGE: 'akasha-export-to-table-forge',
   READER_PAYLOAD: 'akasha-reader-payload', // 現僅 table-forge 有接收端，寄送端不存在（legacy，保留相容）

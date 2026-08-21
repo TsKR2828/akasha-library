@@ -224,6 +224,27 @@ ${moduleDirectives}`;
 
 // ===== LLM Calls =====
 
+const LLM_FETCH_TIMEOUT_MS = 60000;
+
+/**
+ * fetch() wrapped with an AbortController timeout, so a hung LLM endpoint
+ * fails loudly instead of leaving the UI stuck waiting forever.
+ */
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), LLM_FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`AI 回應逾時（${LLM_FETCH_TIMEOUT_MS / 1000} 秒），請稍後再試`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /**
  * Call LLM with provider routing.
  * BYOK mode: direct browser API calls.
@@ -259,7 +280,7 @@ export async function callLLM(settings, systemPrompt, messages) {
 
 async function callOpenAI(settings, systemPrompt, msgs) {
   const endpoint = 'https://api.openai.com/v1/chat/completions';
-  const res = await fetch(endpoint, {
+  const res = await fetchWithTimeout(endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${settings.apiKey}`,
@@ -282,12 +303,14 @@ async function callOpenAI(settings, systemPrompt, msgs) {
   }
 
   const json = await res.json();
-  return json.choices[0].message.content;
+  const content = json?.choices?.[0]?.message?.content;
+  if (!content) throw new Error('AI 回應為空或被內容過濾');
+  return content;
 }
 
 async function callAnthropic(settings, systemPrompt, msgs) {
   const endpoint = 'https://api.anthropic.com/v1/messages';
-  const res = await fetch(endpoint, {
+  const res = await fetchWithTimeout(endpoint, {
     method: 'POST',
     headers: {
       'x-api-key': settings.apiKey,
@@ -309,7 +332,9 @@ async function callAnthropic(settings, systemPrompt, msgs) {
   }
 
   const json = await res.json();
-  return json.content[0].text;
+  const content = json?.content?.[0]?.text;
+  if (!content) throw new Error('AI 回應為空或被內容過濾');
+  return content;
 }
 
 async function callGoogle(settings, systemPrompt, msgs) {
@@ -319,7 +344,7 @@ async function callGoogle(settings, systemPrompt, msgs) {
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: m.content }],
   }));
-  const res = await fetch(endpoint, {
+  const res = await fetchWithTimeout(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -338,14 +363,16 @@ async function callGoogle(settings, systemPrompt, msgs) {
   }
 
   const json = await res.json();
-  return json.candidates[0].content.parts[0].text;
+  const content = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!content) throw new Error('AI 回應為空或被內容過濾');
+  return content;
 }
 
 async function callCustom(settings, systemPrompt, msgs) {
   if (!settings.endpoint) throw new Error('自訂端點未設定');
 
   // OpenAI-compatible format (works with Ollama, LM Studio, vLLM, etc.)
-  const res = await fetch(settings.endpoint, {
+  const res = await fetchWithTimeout(settings.endpoint, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${settings.apiKey}`,
@@ -368,7 +395,9 @@ async function callCustom(settings, systemPrompt, msgs) {
   }
 
   const json = await res.json();
-  return json.choices?.[0]?.message?.content || json.content?.[0]?.text || JSON.stringify(json);
+  const content = json.choices?.[0]?.message?.content || json.content?.[0]?.text;
+  if (!content) throw new Error('AI 回應為空或被內容過濾');
+  return content;
 }
 
 async function callViaProxy(settings, systemPrompt, msgs) {
@@ -381,7 +410,7 @@ async function callViaProxy(settings, systemPrompt, msgs) {
     headers['Authorization'] = `Bearer ${sessionToken}`;
   }
 
-  const res = await fetch(`${proxyUrl}/v1/chat`, {
+  const res = await fetchWithTimeout(`${proxyUrl}/v1/chat`, {
     method: 'POST',
     headers,
     body: JSON.stringify({

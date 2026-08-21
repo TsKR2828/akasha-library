@@ -27,7 +27,30 @@ export function getSession(module) {
 
 function save(module, session) {
   const key = PREFIX + (module || '_default');
-  sessionStorage.setItem(key, JSON.stringify(session));
+  try {
+    sessionStorage.setItem(key, JSON.stringify(session));
+  } catch (err) {
+    if (isQuotaExceededError(err) && session.turns.length > 1) {
+      // 空間不足：砍掉最舊一半的 turns 再重試一次，避免整段 session 寫入失敗
+      session.turns = session.turns.slice(Math.ceil(session.turns.length / 2));
+      try {
+        sessionStorage.setItem(key, JSON.stringify(session));
+      } catch (err2) {
+        console.warn('session-memory: sessionStorage 寫入失敗（已嘗試刪除最舊一半 turns 後重試）', err2);
+      }
+    } else {
+      console.warn('session-memory: sessionStorage 寫入失敗', err);
+    }
+  }
+}
+
+function isQuotaExceededError(err) {
+  return !!err && (
+    err.name === 'QuotaExceededError' ||
+    err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+    err.code === 22 ||
+    err.code === 1014
+  );
 }
 
 export function addTurn(module, role, text) {

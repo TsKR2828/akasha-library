@@ -7,6 +7,9 @@
 
 const COIN_KEY = 'akasha-coin-balance';
 const USAGE_KEY = 'akasha-coin-usage';
+// Keep this in sync with DEFAULT_BALANCE / FREE_MONTHLY in workers/src/index.js —
+// same real-world free monthly allowance, defined separately on client and
+// server. Changing one without the other makes the two sides' numbers lie.
 const FREE_MONTHLY = 100;
 const MAX_LOG = 50;
 
@@ -16,11 +19,24 @@ function currentMonth() {
 }
 
 function getCoinData() {
-  const defaults = { balance: FREE_MONTHLY, lastReset: null, serverAuthoritative: false };
+  const defaults = { balance: FREE_MONTHLY, lastReset: currentMonth(), serverAuthoritative: false };
   try {
     const saved = JSON.parse(localStorage.getItem(COIN_KEY));
     if (!saved) { localStorage.setItem(COIN_KEY, JSON.stringify(defaults)); return defaults; }
-    // Do NOT auto-reset monthly — server is the authority
+
+    // Lazy monthly reset: only ever RAISES the local balance floor to
+    // FREE_MONTHLY when the calendar month has rolled over, never lowers it.
+    // The server remains the real authority for the actual number —
+    // syncBalance() overwrites this with the server value whenever it runs.
+    // This exists for BYOK-only users who may never sync with the server and
+    // would otherwise stay stuck at whatever the local estimate last spent
+    // down to, forever.
+    const month = currentMonth();
+    if (saved.lastReset !== month) {
+      saved.balance = Math.max(saved.balance || 0, FREE_MONTHLY);
+      saved.lastReset = month;
+      localStorage.setItem(COIN_KEY, JSON.stringify(saved));
+    }
     return saved;
   } catch { localStorage.setItem(COIN_KEY, JSON.stringify(defaults)); return defaults; }
 }

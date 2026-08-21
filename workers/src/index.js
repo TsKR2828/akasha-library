@@ -35,7 +35,7 @@ function buildCors(request, env) {
     return {
       'Access-Control-Allow-Origin': origin || '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Idempotency-Key',
     };
   }
 
@@ -43,7 +43,7 @@ function buildCors(request, env) {
     return {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Idempotency-Key',
     };
   }
 
@@ -51,7 +51,7 @@ function buildCors(request, env) {
   return {
     'Access-Control-Allow-Origin': list.includes(origin) ? origin : '',
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Idempotency-Key',
     'Vary': 'Origin',
   };
 }
@@ -133,15 +133,67 @@ async function requireAuth(request, env) {
 }
 
 /* ══════════════════════════════════════════
+   Idempotency nonce
+
+   Prefers the client-supplied X-Idempotency-Key header. Falls back to a
+   stable hash of the request's own content — deliberately NOT including any
+   timestamp, so that retrying the exact same request produces the exact
+   same nonce and checkAndDeductCoins' nonce cache actually catches the
+   duplicate instead of charging twice.
+
+   The content hash is always computed and returned alongside the nonce
+   (even when a header key is present), because the header is fully
+   client-controlled: without also checking the content hash on a cache
+   hit, a user could send the same X-Idempotency-Key on every request and
+   ride the nonce cache to get unlimited free chat completions after the
+   first paid one. checkAndDeductCoins uses the content hash to tell "true
+   retry of the same request" apart from "same header key, different
+   request" — see the comment there.
+   ══════════════════════════════════════════ */
+
+async function computeIdempotencyNonce(request, parts) {
+  const material = parts.join(String.fromCharCode(31));
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(material));
+  const contentHash = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+  const headerKey = request.headers.get('X-Idempotency-Key');
+  return { nonce: headerKey || contentHash, contentHash };
+}
+
+/* ══════════════════════════════════════════
    Rate Limiting (in-memory, resets on restart)
    ══════════════════════════════════════════ */
 
 const rateLimits = new Map();
 const RATE_LIMIT = 12;      // requests per minute
 const RATE_WINDOW = 60_000;
+const RATE_LIMIT_MAX_ENTRIES = 5000; // hard cap so a flood of distinct IPs can't grow this without bound
 
+// NOTE: this Map lives in isolate memory only and resets whenever the
+// isolate does. Cloudflare Workers routinely run several isolates at once
+// (different edge colos, or the same colo under load) — this is a
+// best-effort per-isolate limiter, not a true global rate limit across all
+// of a user's requests. A real global limit needs Durable Objects or KV.
 function checkRateLimit(ip) {
   const now = Date.now();
+
+  if (rateLimits.size > RATE_LIMIT_MAX_ENTRIES) {
+    // Sweep expired entries first — most of the time this alone gets us
+    // back under the cap.
+    for (const [key, entry] of rateLimits) {
+      if (now > entry.resetAt) rateLimits.delete(key);
+    }
+    // Still over the cap (all still-active windows) — drop the oldest
+    // entries to make room rather than growing forever.
+    if (rateLimits.size > RATE_LIMIT_MAX_ENTRIES) {
+      const excess = rateLimits.size - RATE_LIMIT_MAX_ENTRIES;
+      let i = 0;
+      for (const key of rateLimits.keys()) {
+        if (i++ >= excess) break;
+        rateLimits.delete(key);
+      }
+    }
+  }
+
   const entry = rateLimits.get(ip) || { count: 0, resetAt: now + RATE_WINDOW };
   if (now > entry.resetAt) {
     entry.count = 0;
@@ -308,6 +360,8 @@ async function handleChat(request, env, respond) {
 
   let key;
   let userId;
+  let chargedAmount = null; // actual amount deducted — refund uses this, not a re-estimate
+  let deductionNonce = null;
 
   if (mode === 'byok') {
     // BYOK: pass through user's API key — no server auth needed
@@ -330,10 +384,9 @@ async function handleChat(request, env, respond) {
 
     // Check + deduct with nonce-based idempotency guard
     const cost = estimateCoinCost(model, system, messages);
-    const nonce = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
-      userId + ':' + Date.now().toString(36) + ':' + JSON.stringify(body.messages?.slice(-1))
-    )).then(buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
-    const deduction = await checkAndDeductCoins(env, userId, cost, `chat:${provider}:${model}`, nonce);
+    const deductionIdem = await computeIdempotencyNonce(request, [userId, model, JSON.stringify(messages)]);
+    deductionNonce = deductionIdem.nonce;
+    const deduction = await checkAndDeductCoins(env, userId, cost, `chat:${provider}:${model}`, deductionNonce, deductionIdem.contentHash);
     if (!deduction.ok) {
       return respond({
         error: deduction.error,
@@ -341,6 +394,7 @@ async function handleChat(request, env, respond) {
         required: deduction.required,
       }, 402);
     }
+    chargedAmount = cost;
 
   } else {
     return respond({ error: 'Invalid mode. Use "byok" or "coin".' }, 400);
@@ -367,9 +421,8 @@ async function handleChat(request, env, respond) {
     }
     return respond(result);
   } catch (err) {
-    if (mode === 'coin' && userId) {
-      const refundAmount = estimateCoinCost(model, system, messages);
-      await refundCoins(env, userId, refundAmount, `refund:${err.message.slice(0, 50)}`);
+    if (mode === 'coin' && userId && chargedAmount != null) {
+      await refundCoins(env, userId, 'refund:' + deductionNonce, chargedAmount, `refund:${err.message.slice(0, 50)}`);
     }
     return respond({ error: err.message }, 502);
   }
@@ -540,6 +593,7 @@ async function handleRagEmbed(body, request, env, respond) {
   let key;
   let userId = null;
   const cost = estimateEmbedCost(texts);
+  let embedNonce = null;
 
   if (mode === 'byok') {
     if (!apiKey) return respond({ error: 'BYOK mode requires apiKey' }, 400);
@@ -552,10 +606,9 @@ async function handleRagEmbed(body, request, env, respond) {
     key = getServerKey(env, provider);
     if (!key) return respond({ error: `Server key not configured for: ${provider}` }, 503);
 
-    const embedNonce = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
-      userId + ':' + Date.now().toString(36) + ':embed:' + texts.length
-    )).then(buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
-    const deduction = await checkAndDeductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`, embedNonce);
+    const embedIdem = await computeIdempotencyNonce(request, [userId, 'embed', provider, model || '', JSON.stringify(texts)]);
+    embedNonce = embedIdem.nonce;
+    const deduction = await checkAndDeductCoins(env, userId, cost, `embed:${provider}:${texts.length}texts`, embedNonce, embedIdem.contentHash);
     if (!deduction.ok) {
       return respond({ error: deduction.error, balance: deduction.balance, required: deduction.required }, 402);
     }
@@ -586,7 +639,7 @@ async function handleRagEmbed(body, request, env, respond) {
   } catch (err) {
     // Refund on failure
     if (mode === 'coin' && userId) {
-      await refundCoins(env, userId, cost, `refund:embed:${err.message.slice(0, 50)}`);
+      await refundCoins(env, userId, 'refund:' + embedNonce, cost, `refund:embed:${err.message.slice(0, 50)}`);
     }
     return respond({ error: err.message }, 502);
   }
@@ -715,10 +768,8 @@ async function handleCoinDeduct(request, env, respond) {
     return respond({ error: 'amount must be a positive number' }, 400);
   }
 
-  const deductNonce = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(
-    userId + ':' + Date.now().toString(36) + ':deduct:' + amount + ':' + (reason || 'manual')
-  )).then(buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join(''));
-  const deduction = await checkAndDeductCoins(env, userId, amount, reason || 'manual', deductNonce);
+  const deductIdem = await computeIdempotencyNonce(request, [userId, 'deduct', String(amount), reason || 'manual']);
+  const deduction = await checkAndDeductCoins(env, userId, amount, reason || 'manual', deductIdem.nonce, deductIdem.contentHash);
   if (!deduction.ok) {
     return respond({ error: deduction.error, balance: deduction.balance, required: deduction.required }, 402);
   }
@@ -732,16 +783,34 @@ async function handleCoinDeduct(request, env, respond) {
    ══════════════════════════════════════════ */
 
 const DEFAULT_BALANCE = 100; // New users start with 100 coins
+// Also the amount granted at each calendar month's lazy reset (see
+// getCoinBalanceRecord / checkAndDeductCoins / getCoinBalance below). Keep
+// this in sync with FREE_MONTHLY in core/billing.js — same real-world free
+// monthly allowance, defined separately on server and client. Changing one
+// without the other makes the two sides' numbers lie.
+const FREE_MONTHLY = DEFAULT_BALANCE;
+
+// Workers run in UTC. core/billing.js's currentMonth() uses the browser's
+// local time zone instead, so the exact reset moment can differ by up to
+// ~24h between client and server near a month boundary — that's a known,
+// unfixed skew, not a balance bug.
+function currentWorkerMonth() {
+  const d = new Date();
+  return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0');
+}
 
 /**
  * Read the versioned balance record for a user.
  * Backward compat: if the stored value is a plain number string (pre-versioning),
- * treat it as { balance: n, version: 0 }.
+ * treat it as { balance: n, version: 0 }. Records written before the monthly
+ * reset feature existed won't have a `month` field — callers treat a missing
+ * month the same as a stale one, which only ever raises the balance, never
+ * lowers it, so this is safe for old records.
  */
 async function getCoinBalanceRecord(env, userId) {
   if (!env.COIN_KV) return { balance: 0, version: 0 };
   const raw = await env.COIN_KV.get(`coin:${userId}:balance`);
-  if (raw === null) return { balance: DEFAULT_BALANCE, version: 0 };
+  if (raw === null) return { balance: DEFAULT_BALANCE, version: 0, month: currentWorkerMonth() };
   try {
     const parsed = JSON.parse(raw);
     if (typeof parsed === 'object' && parsed !== null && 'balance' in parsed && 'version' in parsed) {
@@ -750,11 +819,25 @@ async function getCoinBalanceRecord(env, userId) {
   } catch { /* not JSON — fall through to legacy parse */ }
   // Legacy plain number format
   const num = parseFloat(raw);
-  return { balance: isNaN(num) ? DEFAULT_BALANCE : num, version: 0 };
+  return { balance: isNaN(num) ? DEFAULT_BALANCE : num, version: 0, month: currentWorkerMonth() };
 }
 
+/**
+ * Read the balance for display (/v1/coin/balance, post-request balance
+ * fields). Applies the same lazy monthly reset as checkAndDeductCoins so a
+ * user who only ever checks their balance (never spends) still sees it
+ * refill — and persists the bump so it isn't recomputed on every read.
+ */
 async function getCoinBalance(env, userId) {
   const record = await getCoinBalanceRecord(env, userId);
+  const nowMonth = currentWorkerMonth();
+  if (record.month !== nowMonth && env.COIN_KV) {
+    const balance = Math.max(record.balance, FREE_MONTHLY);
+    await env.COIN_KV.put(`coin:${userId}:balance`, JSON.stringify({
+      balance, version: record.version + 1, month: nowMonth,
+    }));
+    return balance;
+  }
   return record.balance;
 }
 
@@ -764,18 +847,37 @@ async function getCoinHistory(env, userId) {
   return val || [];
 }
 
-// NOTE: KV is eventually consistent. Versioned balance with optimistic
-// concurrency detects most double-spend races, but for guaranteed atomicity
-// in production, migrate to Cloudflare Durable Objects.
+// NOTE: KV is eventually consistent, not transactional — there is a real
+// double-write window between step 1 (read) and step 2 (write) below where
+// two concurrent requests can both read the same starting balance and both
+// "win". The version field lets step 3 detect that after the fact, but
+// detecting it after the write has already landed is the best this CAS
+// (compare-and-swap) loop can do with plain KV. The real fix is Cloudflare
+// Durable Objects (not implemented here) — this is a mitigation, not a fix.
 const DEDUCT_MAX_RETRIES = 2;
 
-async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
+async function checkAndDeductCoins(env, userId, amount, reason, requestNonce, contentHash) {
   if (!env.COIN_KV) return { ok: false, error: 'COIN_KV not configured' };
 
-  // Idempotency guard: if this request was already processed, return cached result
-  if (requestNonce) {
-    const existing = await env.COIN_KV.get('nonce:' + requestNonce, 'json');
-    if (existing) return existing;
+  // Idempotency guard: if this request was already processed, return cached
+  // result. The cache key is namespaced by userId — requestNonce may come
+  // straight from the client-controlled X-Idempotency-Key header, so
+  // without the userId prefix two different users sending the same header
+  // value would read/overwrite each other's cached deduction result (one
+  // user's coins get skipped, or one user's balance leaks to another).
+  // The cached entry also carries the content hash of the request that
+  // created it; a hit is only honored when contentHash matches, so reusing
+  // the same header key for genuinely different requests (different
+  // model/messages) does NOT skip payment — it's treated as a new charge.
+  // This is what makes the header-first nonce in computeIdempotencyNonce
+  // safe: real retries (same key + same content) are free, but a client
+  // that just resends one fixed key forever pays every time.
+  const nonceKey = requestNonce ? `nonce:${userId}:${requestNonce}` : null;
+  if (nonceKey) {
+    const cached = await env.COIN_KV.get(nonceKey, 'json');
+    if (cached && (contentHash == null || cached.contentHash === contentHash)) {
+      return cached.result;
+    }
   }
 
   const balanceKey = `coin:${userId}:balance`;
@@ -783,7 +885,17 @@ async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
   for (let attempt = 0; attempt <= DEDUCT_MAX_RETRIES; attempt++) {
     // 1. Read current balance + version
     const record = await getCoinBalanceRecord(env, userId);
-    const { balance, version } = record;
+    let { balance, version, month } = record;
+
+    // Lazy monthly reset, folded into this same read-modify-write so it
+    // doesn't cost an extra KV round trip: if the stored month is stale,
+    // bump the balance up to the free allowance (never down) before
+    // checking/deducting.
+    const nowMonth = currentWorkerMonth();
+    if (month !== nowMonth) {
+      balance = Math.max(balance, FREE_MONTHLY);
+      month = nowMonth;
+    }
 
     if (balance < amount) {
       return { ok: false, error: '月幣不足', balance, required: amount };
@@ -793,22 +905,35 @@ async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
     const newVersion = version + 1;
 
     // 2. Write new balance with incremented version
-    await env.COIN_KV.put(balanceKey, JSON.stringify({ balance: newBalance, version: newVersion }));
+    await env.COIN_KV.put(balanceKey, JSON.stringify({ balance: newBalance, version: newVersion, month }));
 
     // 3. Re-read to verify no concurrent write changed the version
     const verification = await getCoinBalanceRecord(env, userId);
     if (verification.version !== newVersion) {
       // Concurrent write detected — retry
       if (attempt < DEDUCT_MAX_RETRIES) continue;
+
+      // Retries exhausted. The write in step 2 already landed in KV, but
+      // we're about to tell the caller the deduction failed — without a
+      // rollback that's "already charged, but told it was an error" (money
+      // taken, response says otherwise). Best-effort rollback: write the
+      // pre-deduction balance back. This can itself race with a concurrent
+      // writer (KV still isn't atomic) — it reduces the window, it doesn't
+      // close it. Real fix is Durable Objects (not implemented).
+      try {
+        await env.COIN_KV.put(balanceKey, JSON.stringify({ balance, version: newVersion + 1, month }));
+      } catch { /* best-effort only */ }
       return { ok: false, error: '扣款處理中，請稍後重試' };
     }
 
     // 4. Success — record result
     const result = { ok: true, balance: newBalance };
 
-    // Cache the result by nonce so retries/duplicates get same answer
-    if (requestNonce) {
-      await env.COIN_KV.put('nonce:' + requestNonce, JSON.stringify(result), {
+    // Cache the result by (userId, nonce) so retries/duplicates get the
+    // same answer, along with the content hash needed to detect header-key
+    // reuse across genuinely different requests (see the guard above).
+    if (nonceKey) {
+      await env.COIN_KV.put(nonceKey, JSON.stringify({ result, contentHash }), {
         expirationTtl: 300, // 5 minute TTL
       });
     }
@@ -826,13 +951,38 @@ async function checkAndDeductCoins(env, userId, amount, reason, requestNonce) {
   return { ok: false, error: '扣款處理中，請稍後重試' };
 }
 
-async function refundCoins(env, userId, amount, reason) {
+/**
+ * Refund `amount` coins to `userId`. `nonce` should be derived from the
+ * original charge's own idempotency nonce (callers pass 'refund:' + that
+ * nonce) so that a retried failure — e.g. the client times out and retries
+ * a request whose provider call already failed once — refunds once, not
+ * once per retry.
+ *
+ * The cache key is namespaced by userId for the same reason as in
+ * checkAndDeductCoins: the underlying nonce can trace back to a
+ * client-controlled X-Idempotency-Key header, so without the userId
+ * prefix two different users could collide on the same key and one
+ * user's refund result would leak to, or be skipped for, another.
+ */
+async function refundCoins(env, userId, nonce, amount, reason) {
   if (!env.COIN_KV) return;
+
+  const nonceKey = nonce ? `nonce:${userId}:${nonce}` : null;
+  if (nonceKey) {
+    const existing = await env.COIN_KV.get(nonceKey, 'json');
+    if (existing) return existing;
+  }
 
   const record = await getCoinBalanceRecord(env, userId);
   const newBalance = record.balance + amount;
   const newVersion = record.version + 1;
-  await env.COIN_KV.put(`coin:${userId}:balance`, JSON.stringify({ balance: newBalance, version: newVersion }));
+  const month = record.month || currentWorkerMonth();
+  await env.COIN_KV.put(`coin:${userId}:balance`, JSON.stringify({ balance: newBalance, version: newVersion, month }));
+
+  const result = { ok: true, balance: newBalance };
+  if (nonceKey) {
+    await env.COIN_KV.put(nonceKey, JSON.stringify(result), { expirationTtl: 300 });
+  }
 
   const history = await getCoinHistory(env, userId);
   history.push({
@@ -846,6 +996,8 @@ async function refundCoins(env, userId, amount, reason) {
   await env.COIN_KV.put(`coin:${userId}:history`, JSON.stringify(trimmed), {
     expirationTtl: 86400 * 90,
   });
+
+  return result;
 }
 
 /** Estimate coin cost based on model, system prompt, and messages */
@@ -868,7 +1020,14 @@ function estimateCoinCost(model, system, messages) {
     'gemini-1.5-flash':   0.3,
   };
 
-  const perK = COST_MAP[model] || 2; // default: 2 coins/1K tokens
+  // Unknown model: keep the conservative default rather than guessing a
+  // price, but log it so a real cost tier can be added deliberately later
+  // instead of the model silently being under/over-charged forever.
+  let perK = COST_MAP[model];
+  if (perK === undefined) {
+    console.log(`estimateCoinCost: unknown model "${model}" — using conservative default (2 coins/1K tokens)`);
+    perK = 2;
+  }
   return Math.max(1, Math.ceil((tokenEstimate / 1000) * perK));
 }
 

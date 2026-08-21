@@ -9,12 +9,27 @@ const DB_NAME = 'akasha-library';
 const DB_VERSION = 6;
 
 let dbInstance = null;
+const OPEN_DB_TIMEOUT_MS = 10000;
 
 function openDB() {
   if (dbInstance) return Promise.resolve(dbInstance);
 
   return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('IndexedDB 開啟逾時（10 秒），請重新整理頁面'));
+    }, OPEN_DB_TIMEOUT_MS);
+
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onblocked = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(new Error('資料庫開啟被封鎖，請關閉其他分頁後重新整理頁面'));
+    };
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
@@ -68,17 +83,32 @@ function openDB() {
     };
 
     request.onsuccess = (event) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       dbInstance = event.target.result;
+      // 其他分頁要求升級資料庫版本時，本連線必須關閉，否則會卡住對方的 onupgradeneeded
+      dbInstance.onversionchange = () => {
+        dbInstance.close();
+        dbInstance = null;
+        console.warn('IndexedDB: 偵測到其他分頁要求升級資料庫版本，本分頁連線已關閉，請重新整理頁面');
+      };
       resolve(dbInstance);
     };
 
     request.onerror = (event) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       reject(event.target.error);
     };
   });
 }
 
 function generateId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 }
 
@@ -152,13 +182,18 @@ export async function getFileEntry(id) {
  */
 export async function deleteFileEntry(id) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     const tx = db.transaction(['files', 'blobs'], 'readwrite');
     tx.objectStore('files').delete(id);
     tx.objectStore('blobs').delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror = (e) => reject(e.target.error);
   });
+  // 連動清除該檔案殘留的 embeddings 與 bookmarks，避免刪檔後孤兒資料留在資料庫裡
+  await Promise.all([
+    deleteEmbeddings(id).catch(err => console.warn('deleteFileEntry: deleteEmbeddings 失敗', err)),
+    deleteBookmarksByFile(id).catch(err => console.warn('deleteFileEntry: deleteBookmarksByFile 失敗', err)),
+  ]);
 }
 
 /**

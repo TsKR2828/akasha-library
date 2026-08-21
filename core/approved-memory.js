@@ -13,6 +13,18 @@ const STORE = 'approved-memories';
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    // 防首開競態：若本連線搶先於 core/storage.js 觸發資料庫升級，
+    // storage.js 的 onupgradeneeded 就不會執行，導致 approved-memories store 永遠不存在。
+    // 這裡委派建立自己需要的 store（schema 與 core/storage.js 同步）。
+    req.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        const memStore = db.createObjectStore(STORE, { keyPath: 'id' });
+        memStore.createIndex('module', 'module', { unique: false });
+        memStore.createIndex('scope', 'scope', { unique: false });
+        memStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+      }
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });

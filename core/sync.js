@@ -92,7 +92,16 @@ export async function fullSync() {
     if (remoteIndex) {
       const blob = await downloadFile(remoteIndex.id);
       const text = await blob.text();
-      const remoteData = JSON.parse(text);
+      let remoteData;
+      try {
+        remoteData = JSON.parse(text);
+      } catch (err) {
+        // 遠端索引損毀（例如上次上傳中斷寫出半截 JSON）——視為空索引繼續同步，
+        // 而不是讓整個 fullSync 因為一次 parse 失敗而全部中斷。
+        console.warn('Sync: 遠端索引 JSON 損毀，視為空索引', err);
+        emitStatus('error', '遠端索引已損毀，已略過並視為空索引，將於下次同步重建');
+        remoteData = { entries: [], tombstones: [] };
+      }
       // Backwards-compatible: support both flat array (old format)
       // and {entries, tombstones} object (new format from Fix A).
       const remoteEntries = Array.isArray(remoteData) ? remoteData : (remoteData.entries || []);
@@ -153,15 +162,25 @@ export async function fullSync() {
 
     // 4. Upload local files that aren't synced
     const updatedEntries = await getFileEntries();
+    const uploadFailures = [];
     for (const entry of updatedEntries) {
       if (entry.syncStatus === 'local' || entry.syncStatus === 'pending') {
-        const blob = await getFileBlob(entry.id);
-        if (blob) {
-          const mimeType = getMimeType(entry.type);
-          const result = await uploadFile(entry.name, blob, mimeType, entry.driveId || null);
-          entry.driveId = result.id;
-          entry.syncStatus = 'synced';
-          await saveFileEntry(entry);
+        try {
+          const blob = await getFileBlob(entry.id);
+          if (blob) {
+            const mimeType = getMimeType(entry.type);
+            const result = await uploadFile(entry.name, blob, mimeType, entry.driveId || null);
+            entry.driveId = result.id;
+            entry.syncStatus = 'synced';
+            await saveFileEntry(entry);
+          }
+        } catch (err) {
+          // 單檔上傳失敗不應讓整個上傳迴圈中斷——記入失敗清單，繼續處理下一筆，
+          // 迴圈結束後統一彙總回報。
+          console.warn('Sync: 檔案上傳失敗，略過繼續下一筆', entry.name, err);
+          uploadFailures.push(entry.name);
+          entry.syncStatus = 'pending';
+          try { await saveFileEntry(entry); } catch { /* best effort */ }
         }
       }
     }
@@ -186,7 +205,14 @@ export async function fullSync() {
         console.warn(`Sync: index conflict detected (attempt ${attempt + 1}/${MAX_INDEX_UPLOAD_RETRIES}), re-merging...`);
         const conflictBlob = await downloadFile(currentRemoteIndex.id);
         const conflictText = await conflictBlob.text();
-        const conflictData = JSON.parse(conflictText);
+        let conflictData;
+        try {
+          conflictData = JSON.parse(conflictText);
+        } catch (err) {
+          console.warn('Sync: 衝突索引 JSON 損毀，視為空索引', err);
+          emitStatus('error', '衝突索引已損毀，已略過並視為空索引');
+          conflictData = { entries: [], tombstones: [] };
+        }
         // Handle both old flat-array and new {entries, tombstones} format
         const conflictEntries = Array.isArray(conflictData) ? conflictData : (conflictData.entries || []);
         const freshLocal = await getFileEntries();
@@ -218,7 +244,9 @@ export async function fullSync() {
       break;
     }
 
-    if (indexUploadSucceeded) {
+    if (uploadFailures.length > 0) {
+      emitStatus('error', uploadFailures.length + ' 個檔案上傳失敗：' + uploadFailures.join('、') + '，將於下次同步重試');
+    } else if (indexUploadSucceeded) {
       emitStatus('synced', '同步完成');
     } else {
       emitStatus('error', '索引上傳衝突未解決，將在下次同步重試');
@@ -332,7 +360,13 @@ async function updateDriveIndex() {
     if (remoteIndex) {
       const remoteBlob = await downloadFile(remoteIndex.id);
       const remoteText = await remoteBlob.text();
-      const remoteData = JSON.parse(remoteText);
+      let remoteData;
+      try {
+        remoteData = JSON.parse(remoteText);
+      } catch (err) {
+        console.warn('updateDriveIndex: 遠端索引 JSON 損毀，視為空索引', err);
+        remoteData = { entries: [], tombstones: [] };
+      }
       const remoteEntries = Array.isArray(remoteData) ? remoteData : (remoteData.entries || []);
       mergedEntries = mergeIndices(localEntries, remoteEntries);
       // Carry forward any existing remote tombstones
