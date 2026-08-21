@@ -69,16 +69,17 @@
   --postit-lavender: #2C2A39;
   --postit-peach: #322C23;
 
-  /* ══ NEW · 七廳墨色 Zone Inks ══
+  /* ══ 七廳墨色 Zone Inks ══
      用在：側欄圓點、麵包屑尾字、刊頭底線、模組內強調色。
-     暗模式：各廳保留原色相、只提亮度（畫在深紙上可讀）；亮模式原值見 light 區。 */
-  --ink-atrium:      #D9BC82;  /* 大廳 Atrium — 黃銅 */
-  --ink-manuscripta: #7FAAD0;  /* Code & Data — 靛青 */
-  --ink-lectorium:   #E0B14E;  /* PDF 閱讀器 — 蜂蜜 */
-  --ink-tabularium:  #85B776;  /* Table Forge／試算表 — 葉綠 */
-  --ink-dramaturgica:#E07E90;  /* 劇本工房 — 莓紅 */
-  --ink-gazette:     #E79B62;  /* 每日館報 — 胡蘿蔔 */
-  --ink-intimarium:  #AB8BC5;  /* 談心專區 — 李紫 */
+     2026-08-20 定案：七彩配色廢除，全數收斂回 Charta 一代的黃銅單色系
+     （引用 --gold，深淺模式自動跟隨）。廳別辨識交還給卡片書脊的皮革色。 */
+  --ink-atrium:      var(--gold);
+  --ink-manuscripta: var(--gold);
+  --ink-lectorium:   var(--gold);
+  --ink-tabularium:  var(--gold);
+  --ink-dramaturgica:var(--gold);
+  --ink-gazette:     var(--gold);
+  --ink-intimarium:  var(--gold);
 
   /* ── Type ── */
   --font-serif-en: "Cormorant Garamond", "EB Garamond", Garamond, serif;
@@ -168,14 +169,7 @@
   --postit-lavender: #F0E8F5;
   --postit-peach: #FDF0E5;
 
-  /* 七廳墨色亮模式原值 */
-  --ink-atrium:      #C9A86A;
-  --ink-manuscripta: #4A80A8;
-  --ink-lectorium:   #C8962E;
-  --ink-tabularium:  #5A8A4A;
-  --ink-dramaturgica:#B84058;
-  --ink-gazette:     #D4763A;
-  --ink-intimarium:  #7A5898;
+  /* 七廳墨色：不需覆寫——引用 --gold，亮模式自動跟隨上方的亮版金 */
 
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
