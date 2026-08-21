@@ -627,8 +627,8 @@ function SwHeader({ tab, setTab, onAI, workSwitcher, isScriptMode, canLoadFromBl
   return (
     <header className="deskbar" style={{
       "--zone-ink": "var(--ink-dramaturgica)",
-      "--zone-ink-glow": "rgba(184,64,88,0.14)",
-      "--zone-ink-line": "rgba(184,64,88,0.32)",
+      "--zone-ink-glow": "rgba(201,168,106,0.14)",
+      "--zone-ink-line": "rgba(201,168,106,0.32)",
     }}>
       <span className="seg" role="tablist" aria-label="劇本工房模式">
         {tabs.map(t => (

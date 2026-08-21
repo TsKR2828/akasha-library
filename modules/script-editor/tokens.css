@@ -77,10 +77,10 @@
 
   /* ══ v2 · 廳墨色 — 劇本工房 = 莓紅 Dramaturgica ══
      暗模式：保留莓紅色相、只提亮度（畫在深紙上可讀）；亮模式原值見 light 區。 */
-  --ink-dramaturgica: #E07E90;
+  --ink-dramaturgica: #c9a86a;
   --zone-ink: var(--ink-dramaturgica);
-  --zone-ink-glow: rgba(184,64,88,0.14);
-  --zone-ink-line: rgba(184,64,88,0.32);
+  --zone-ink-glow: rgba(201,168,106,0.14);
+  --zone-ink-line: rgba(201,168,106,0.32);
 
   /* ══ v2 · 手寫體（僅 fallback — Sorts Mill Goudy 未由本模組載入字型，
      見 modules/script-editor/index.html 的 Google Fonts link；
@@ -126,7 +126,7 @@
   --page-shadow: 2px 3px 12px rgba(0,0,0,0.06);
   --page-chip-bg: rgba(255,255,255,0.82);
   --page-card-tint: #FFFDF5;
-  --ink-dramaturgica: #B84058;
+  --ink-dramaturgica: #8a6f30;
 
   --shadow-card: 0 1px 0 rgba(255,255,255,0.6) inset, 0 6px 18px -10px rgba(60,40,10,0.18);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.7) inset, 0 18px 40px -20px rgba(60,40,10,0.25);
@@ -573,7 +573,7 @@ button.se-panel-row {
 .sw-slot-chip.is-filled { opacity: 1; }
 .sw-slot-chip.is-locked {
   border-color: var(--ink-dramaturgica);
-  background: rgba(184,64,88,0.06);
+  background: rgba(201,168,106,0.06);
 }
 .sw-slot-chip__n {
   font-family: var(--font-mono);
@@ -653,7 +653,7 @@ button.se-panel-row {
 
   --navy-deep: var(--page-old);
   --navy-light: var(--page-card);
-  --navy-hover: rgba(184,64,88,0.08);
+  --navy-hover: rgba(201,168,106,0.08);
   --navy-line: var(--page-border);
   --text-primary: var(--page-ink);
   --text-secondary: var(--page-ink-mid);
@@ -661,7 +661,7 @@ button.se-panel-row {
   --gold: var(--ink-dramaturgica);
   --gold-bright: var(--ink-dramaturgica);
   --gold-dim: var(--ink-dramaturgica);
-  --gold-deep: #8a2f42;
-  --gold-glow: rgba(184,64,88,0.10);
-  --gold-line: rgba(184,64,88,0.28);
+  --gold-deep: #a08550;
+  --gold-glow: rgba(201,168,106,0.10);
+  --gold-line: rgba(201,168,106,0.28);
 }
