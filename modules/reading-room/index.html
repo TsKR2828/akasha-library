@@ -26,11 +26,11 @@
 
     /* 李紫 active（不留痕 toggle） */
     .btn.is-active {
-      background: rgba(122,88,152,0.14);
-      border-color: rgba(122,88,152,0.45);
+      background: rgba(201,168,106,0.14);
+      border-color: rgba(138,111,48,0.45);
       color: var(--ink-intimarium);
     }
-    .btn.is-active:hover { background: rgba(122,88,152,0.22); }
+    .btn.is-active:hover { background: rgba(201,168,106,0.22); }
 
     /* ===== Room layout：紙頁（左）＋ 手札軌（右）===== */
     .im-page {
@@ -91,8 +91,8 @@
       max-width: 78%;
     }
     .im-bubble {
-      background: rgba(122,88,152,0.07);
-      border: 1px solid rgba(122,88,152,0.18);
+      background: rgba(201,168,106,0.07);
+      border: 1px solid rgba(201,168,106,0.18);
       border-radius: 6px 0 0 6px;
       padding: 10px 14px;
       font-family: var(--font-serif-tc);
@@ -121,6 +121,16 @@
       color: var(--page-pencil);
       margin-top: 4px;
     }
+    /* 輕量 Markdown 渲染：助理訊息內的 **粗體**／`行內碼`／- 清單 */
+    .im-text code {
+      font-family: var(--font-mono);
+      font-size: 0.9em;
+      background: rgba(201,168,106,0.12);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+    .im-text strong { color: var(--page-ink); font-weight: 700; }
+    .im-text ul { margin: 2px 0; padding-left: 1.4em; }
     .im-msg--assistant .margin-note {
       margin: 6px 0 4px;
       font-size: 14.5px;
@@ -195,8 +205,8 @@
       flex: none;
       height: 32px;
       padding: 0 16px;
-      background: rgba(122,88,152,0.1);
-      border: 1px solid rgba(122,88,152,0.45);
+      background: rgba(201,168,106,0.1);
+      border: 1px solid rgba(138,111,48,0.45);
       border-radius: 4px;
       color: var(--ink-intimarium);
       font-family: inherit;
@@ -205,7 +215,7 @@
       transition: background 0.15s;
       white-space: nowrap;
     }
-    .im-send:hover { background: rgba(122,88,152,0.18); }
+    .im-send:hover { background: rgba(201,168,106,0.18); }
     .im-send:disabled { opacity: 0.4; cursor: default; }
 
     /* ===== Footnote：一行鉛筆小字（原免責聲明橫幅收於此）===== */
@@ -271,8 +281,8 @@
     }
     .im-filter-tag:hover { border-color: var(--ink-intimarium); color: var(--ink-intimarium); }
     .im-filter-tag.is-active {
-      background: rgba(122,88,152,0.1);
-      border-color: rgba(122,88,152,0.3);
+      background: rgba(201,168,106,0.1);
+      border-color: rgba(138,111,48,0.3);
       color: var(--ink-intimarium);
     }
 
@@ -463,6 +473,8 @@
     .im-option input[type="radio"] { accent-color: var(--ink-intimarium); }
     .im-option__label { font-size: 13px; color: var(--text-primary); }
     .im-option__desc { font-size: 11px; color: var(--text-tertiary); }
+    .im-option.is-disabled { opacity: 0.45; cursor: not-allowed; }
+    .im-option.is-disabled:hover { border-color: var(--navy-line); background: none; }
 
     /* ===== Responsive ===== */
     @media (max-width: 760px) {
@@ -574,8 +586,8 @@
           <div class="im-option__desc">存為手札並標記「創作」標籤</div>
         </div>
       </label>
-      <label class="im-option">
-        <input type="radio" name="saveChoice" value="notion">
+      <label class="im-option" id="notionSaveOption">
+        <input type="radio" name="saveChoice" value="notion" id="notionSaveRadio">
         <div>
           <div class="im-option__label">同步到 Notion</div>
           <div class="im-option__desc">存入本機手札，並排入 Notion 同步佇列</div>
@@ -637,6 +649,7 @@
 // We communicate with App Shell via PostMessage for AI calls
 
 const MODULE_NAME = 'private-reading-room';
+const CHAT_STORE_KEY = 'akasha-readingroom-chat';
 
 // ===== State =====
 const state = {
@@ -713,6 +726,32 @@ function formatClock(d) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+// 輕量 Markdown 渲染（無依賴）：先 escapeHtml 再轉 **粗體**、`行內碼`、- 清單、換行
+function inlineMd(escaped) {
+  return escaped
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+}
+function renderMarkdownLite(text) {
+  const lines = escapeHtml(text).split('\n');
+  const out = [];
+  let inList = false;
+  for (const line of lines) {
+    const li = line.match(/^-\s+(.*)$/);
+    if (li) {
+      if (!inList) { out.push('<ul>'); inList = true; }
+      out.push('<li>' + inlineMd(li[1]) + '</li>');
+    } else {
+      if (inList) { out.push('</ul>'); inList = false; }
+      out.push(inlineMd(line));
+    }
+  }
+  if (inList) out.push('</ul>');
+  return out.join('<br>')
+    .replace(/<br>(<\/?ul>)/g, '$1').replace(/(<\/?ul>)<br>/g, '$1')
+    .replace(/<br>(<li>)/g, '$1').replace(/(<\/li>)<br>/g, '$1');
+}
+
 function appendMessage(role, text, animate = true) {
   const wrap = document.createElement('div');
   wrap.className = `im-msg im-msg--${role}`;
@@ -730,7 +769,7 @@ function appendMessage(role, text, animate = true) {
 
   const textEl = document.createElement('div');
   textEl.className = 'im-text';
-  textEl.textContent = text;
+  textEl.innerHTML = renderMarkdownLite(text);
   const sig = document.createElement('div');
   sig.className = 'im-signature';
   sig.textContent = '談心與手札整理員 · 月上零韻 · ' + formatClock(new Date());
@@ -739,6 +778,29 @@ function appendMessage(role, text, animate = true) {
   chatScroll.appendChild(wrap);
   chatScroll.scrollTop = chatScroll.scrollHeight;
   return textEl;
+}
+
+// ===== 對話持久化（sessionStorage，含時間戳；重整分頁不遺失，關分頁即消失）=====
+function persistChat() {
+  try {
+    if (state.noTrace || state.messages.length === 0) {
+      sessionStorage.removeItem(CHAT_STORE_KEY);
+      return;
+    }
+    sessionStorage.setItem(CHAT_STORE_KEY, JSON.stringify({ messages: state.messages, savedAt: Date.now() }));
+  } catch { /* sessionStorage 不可用時略過，不影響對話本身 */ }
+}
+
+function restoreChat() {
+  try {
+    const raw = sessionStorage.getItem(CHAT_STORE_KEY);
+    if (!raw) return false;
+    const saved = JSON.parse(raw);
+    if (!saved || !Array.isArray(saved.messages) || saved.messages.length === 0) return false;
+    state.messages = saved.messages;
+    for (const m of state.messages) appendMessage(m.role, m.text, false);
+    return true;
+  } catch { return false; }
 }
 
 function showThinking() {
@@ -775,7 +837,7 @@ function typewrite(text, target, onDone) {
     } else {
       clearInterval(state.typewriterTimer);
       state.typewriterTimer = null;
-      cursor.remove();
+      target.innerHTML = renderMarkdownLite(text);
       if (onDone) onDone();
     }
   }, 28);
@@ -845,6 +907,7 @@ async function handleSend() {
 
   // Record & render user message
   state.messages.push({ role: 'user', text, time: Date.now() });
+  persistChat();
   appendMessage('user', text);
 
   // Show thinking
@@ -862,10 +925,18 @@ async function handleSend() {
     });
 
     state.messages.push({ role: 'assistant', text: response, time: Date.now() });
+    persistChat();
   } catch (err) {
     removeThinking();
     appendMessage('assistant', '連線時發生了問題：' + err.message);
     state.messages.push({ role: 'assistant', text: '(error: ' + err.message + ')', time: Date.now() });
+    persistChat();
+    if (err.message === 'AI 回應逾時') {
+      // 逾時不該讓使用者剛打的字白白消失——塞回輸入框讓他重送
+      chatInput.value = text;
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+    }
   } finally {
     state.sending = false;
     chatSend.disabled = false;
@@ -893,7 +964,10 @@ function setNoTrace(on) {
   deskStatusText.textContent = on ? '不留痕已開啟 · 對話不寫入記憶' : '在館';
   btnNoTrace.classList.toggle('is-active', on);
   btnNoTrace.textContent = on ? '不留痕：開' : '不留痕模式';
-  if (on) showToast('不留痕模式已開啟 — 對話不會寫入記憶');
+  if (on) {
+    try { sessionStorage.removeItem(CHAT_STORE_KEY); } catch { /* sessionStorage 不可用時略過 */ }
+    showToast('不留痕模式已開啟 — 對話不會寫入記憶');
+  }
 }
 
 btnNoTrace.addEventListener('click', () => setNoTrace(!state.noTrace));
@@ -904,6 +978,7 @@ btnClear.addEventListener('click', () => {
   if (state.messages.length === 0) return;
   if (!confirm('確定要清除本次所有對話嗎？')) return;
   state.messages = [];
+  persistChat();
   chatScroll.innerHTML = '';
   clearInterval(state.typewriterTimer);
   showGreeting();
@@ -1122,8 +1197,29 @@ window._deleteNote = async (id) => {
 // ===== Memory Save Dialog =====
 let pendingSaveContent = '';
 
+// 未設定 Notion 憑證（proxyUrl + enabled，見 core/notion-connector.js SETTINGS_KEY）時，
+// 「同步到 Notion」選項應 disabled，避免存了才發現排不進佇列。
+function isNotionConfigured() {
+  try {
+    const s = JSON.parse(localStorage.getItem('akasha-notion-settings') || '{}');
+    return !!(s.enabled && s.proxyUrl);
+  } catch { return false; }
+}
+
+function updateNotionOptionState() {
+  const radio = $('notionSaveRadio');
+  const label = $('notionSaveOption');
+  if (!radio || !label) return;
+  const configured = isNotionConfigured();
+  radio.disabled = !configured;
+  if (!configured && radio.checked) radio.checked = false;
+  label.classList.toggle('is-disabled', !configured);
+  label.title = configured ? '' : '先到 AI 設定填 Notion 整合';
+}
+
 function showSaveDialog(content) {
   pendingSaveContent = content;
+  updateNotionOptionState();
   saveOverlay.classList.add('active');
 }
 
@@ -1217,7 +1313,7 @@ function maybeSuggestNote(userText, response) {
         const actions = document.createElement('div');
         actions.className = 'im-suggest-actions';
         actions.innerHTML = `
-          <button class="btn btn--xs" id="suggestSave" style="color:var(--ink-intimarium);border-color:rgba(122,88,152,.45)">整理成手札</button>
+          <button class="btn btn--xs" id="suggestSave" style="color:var(--ink-intimarium);border-color:rgba(138,111,48,.45)">整理成手札</button>
           <button class="btn btn--xs btn--ghost" id="suggestSkip">跳過</button>
         `;
         wrap.appendChild(actions);
@@ -1298,7 +1394,8 @@ function showGreeting() {
 }
 
 // ===== Init =====
-showGreeting();
+if (!restoreChat()) showGreeting();
+updateNotionOptionState();
 chatInput.focus();
 
 </script>

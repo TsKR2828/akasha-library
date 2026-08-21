@@ -309,6 +309,19 @@
     .diff-add { color: #98c379; }
     .diff-same { color: var(--text-tertiary); }
 
+    /* Draft restore bar（P6-A） */
+    .draft-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 20px;
+      border-bottom: 1px solid var(--navy-line);
+      background: var(--gold-glow);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .draft-bar.hidden { display: none; }
+
     /* HINTS 聯動系統 */
     .hints-bar {
       padding: 8px 20px;
@@ -376,11 +389,20 @@
       <button class="btn" id="btn-toggle-import" title="貼上或開啟檔案匯入表格資料">匯入 ▾</button>
       <button class="btn" id="btn-meta" disabled title="加入 source / editedBy 欄位標記資料來源與編輯者">Meta</button>
       <button class="btn" id="btn-hints" title="顯示或隱藏操作提示面板">HINTS</button>
-      <button class="btn" id="btn-diff" title="比對原始資料與目前表格的差異">Diff</button>
+      <button class="btn" id="btn-diff" disabled title="比對原始資料與目前表格的差異">Diff</button>
       <button class="btn" id="btn-toggle-export" disabled title="將表格匯出為 Markdown、JSON 或 CSV">匯出 ▾</button>
+      <button class="btn" id="btn-send-spreadsheet" disabled title="把目前表格送到內建試算表">送到試算表</button>
       <button class="btn btn--danger" id="btn-clear" disabled title="清除目前表格所有資料">清除</button>
     </div>
   </header>
+
+  <!-- Draft Restore Bar（P6-A：偵測 localStorage 草稿） -->
+  <div class="draft-bar hidden" id="draft-bar">
+    <span id="draft-bar-text">偵測到未儲存的草稿，是否還原？</span>
+    <span style="margin-left:auto"></span>
+    <button class="btn btn--gold" id="btn-draft-restore">還原</button>
+    <button class="btn" id="btn-draft-discard">捨棄</button>
+  </div>
 
   <!-- HINTS Bar -->
   <div class="hints-bar collapsed" id="hintsBar">

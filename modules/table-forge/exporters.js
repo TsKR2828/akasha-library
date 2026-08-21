@@ -23,7 +23,7 @@ export function exportMarkdown(doc) {
 function escapeMdCell(val) {
   return val
     .replace(/\|/g, '\\|')
-    .replace(/\n/g, ' ');
+    .replace(/\n/g, '<br>');
 }
 
 // --- JSON ---
@@ -58,8 +58,8 @@ function neutralizeFormula(value) {
   if (typeof value !== 'string') return value;
   const trimmed = value.trimStart();
   if (/^[=+\-@]/.test(trimmed)) {
-    // Prefix with single quote to prevent formula interpretation
-    // and wrap in quotes to preserve the leading quote as visible text
+    // Prefix with a leading single quote to prevent formula interpretation —
+    // the spreadsheet convention for forcing a cell to be read as literal text
     return "'" + value;
   }
   return value;

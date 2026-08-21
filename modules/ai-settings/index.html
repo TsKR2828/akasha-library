@@ -297,7 +297,7 @@ body {
 
       <div class="ai-coin-balance">
         <span class="ai-coin-balance__num" id="coinBalance">100</span>
-        <span class="ai-coin-balance__label">枚 · 每月一日子時重置</span>
+        <span class="ai-coin-balance__label">枚 · 每月一日子時重置<br><span style="font-size:9.5px;opacity:.7">本地估算，實際以伺服器為準</span></span>
       </div>
 
       <div class="ai-note" id="coinUnavailable" style="display:none;">
@@ -305,10 +305,6 @@ body {
         <span class="ai-note__text">代理尚未部署——月幣暫時只能看，不能花。部署 Worker 後自動啟用。</span>
       </div>
       <script>(function(){var u=window.__AKASHA_API_BASE;if(!u||String(u).indexOf('your-subdomain')>-1){var el=document.getElementById('coinUnavailable');if(el)el.style.display='';}})();</script>
-
-      <div class="ai-card__actions">
-        <button class="btn" onclick="resetCoins()">重置為免費額度</button>
-      </div>
 
       <div class="ai-sub-label">費率參考</div>
       <div class="ai-rate-list">
@@ -343,18 +339,24 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<script>
-// postMessage type 對照表（本檔為 classic script，file:// 下可運作，禁止 import；
+<script type="module">
+// postMessage type 對照表（本檔為 type="module"，靠 import core/billing.js 取得月幣
+// 邏輯——這代表本檔不再能用 file:// 直接開單檔測試（ES module 在 file:// 下被瀏覽器
+// CORS 政策擋下），必須透過 http(s) 伺服器載入。主殼層 index.html 本身也已用
+// import 載入 core/billing.js，所以整個 app 早已需要伺服器才能跑；
 // 改字串值時必須同步 core/export/bridge.js 的 MSG_TYPES）：
 //   'akasha-apikey-update'(fired in saveByok/clearByok/loadSettings) = MSG_TYPES.APIKEY_UPDATE
 //   'akasha-apikey-request'(loadSettings)         = MSG_TYPES.APIKEY_REQUEST
 //   'akasha-apikey-current'(message listener)     = MSG_TYPES.APIKEY_CURRENT
 //   'akasha-mode-change'(message listener)        = MSG_TYPES.MODE_CHANGE
-// 注意：下方 STORAGE_KEY / KEY_SESSION / COIN_KEY 為 localStorage key，非訊息 type，不在本表範圍。
+// 注意：下方 STORAGE_KEY / KEY_SESSION 為 localStorage key，非訊息 type，不在本表範圍。
+//
+// 月幣餘額/扣款一律 import core/billing.js，本檔不維護第二份 balance/deduct 邏輯
+// （曾經有過，兩份會各自飄移，見下方 import）。
+import { getBalance as billingGetBalance, deductCoins as billingDeductCoins, getUsageLog as billingGetUsageLog } from '../../core/billing.js';
+
 const STORAGE_KEY = 'akasha-ai-settings';
 const KEY_SESSION = 'akasha-ai-apikey';
-const COIN_KEY = 'akasha-coin-balance';
-const USAGE_KEY = 'akasha-coin-usage';
 
 let currentMode = 'byok';
 
@@ -521,47 +523,22 @@ async function testByok() {
   }
 }
 
-// === 月幣系統 ===
+// === 月幣系統（餘額/扣款/月份補幣一律交給 core/billing.js，本檔只管顯示） ===
 function loadCoinBalance() {
-  const data = getCoinData();
-  document.getElementById('coinBalance').textContent = data.balance;
+  document.getElementById('coinBalance').textContent = billingGetBalance();
 }
 
-function getCoinData() {
-  var defaultData = { balance: 100 };
-  try {
-    var saved = JSON.parse(localStorage.getItem(COIN_KEY));
-    if (!saved) return defaultData;
-    return saved;
-  } catch(e) { return defaultData; }
-}
-
+// 薄包裝：實際的讀寫（含月份 lazy reset）都在 billing.js 的 deductCoins 裡；
+// 這裡只是扣完之後把畫面（餘額卡 + 使用紀錄）重繪一次，billing.js 不碰 DOM。
 function deductCoins(amount, description) {
-  const data = getCoinData();
-  if (data.balance < amount) return false;
-
-  data.balance -= amount;
-  localStorage.setItem(COIN_KEY, JSON.stringify(data));
-
-  const usage = JSON.parse(localStorage.getItem(USAGE_KEY) || '[]');
-  usage.unshift({ desc: description, cost: amount, time: Date.now() });
-  if (usage.length > 50) usage.length = 50;
-  localStorage.setItem(USAGE_KEY, JSON.stringify(usage));
-
+  const newBalance = billingDeductCoins(amount, description);
   loadCoinBalance();
   loadUsageLog();
-  return true;
-}
-
-function resetCoins() {
-  const data = { balance: 100, lastReset: new Date().toISOString().slice(0, 7) };
-  localStorage.setItem(COIN_KEY, JSON.stringify(data));
-  loadCoinBalance();
-  showToast('已重置為 100 月幣');
+  return newBalance;
 }
 
 function loadUsageLog() {
-  const usage = JSON.parse(localStorage.getItem(USAGE_KEY) || '[]');
+  const usage = billingGetUsageLog();
   const container = document.getElementById('usageLog');
 
   if (usage.length === 0) {
@@ -616,9 +593,19 @@ window.akashaAI = {
     s.apiKey = document.getElementById('byokKey')?.value || '';
     return s;
   },
-  getBalance: () => getCoinData().balance,
+  getBalance: () => billingGetBalance(),
   deductCoins,
 };
+
+// 上方 HTML 裡的 onclick/onchange/oninput 都是用函式名字在全域找——classic script
+// 的 top-level function 宣告會自動變成 window 屬性，但 type="module" 不會，所以
+// 這裡要手動掛回 window，否則整頁的按鈕會全部靜默失效。
+window.setMode = setMode;
+window.onProviderChange = onProviderChange;
+window.saveByok = saveByok;
+window.testByok = testByok;
+window.clearByok = clearByok;
+window.updateEstimate = updateEstimate;
 
 loadSettings();
 

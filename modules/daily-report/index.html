@@ -405,6 +405,7 @@
       top: 20px;
     }
     .gz-voice-postit { display: flex; align-items: center; gap: 9px; }
+    .gz-voice-postit[hidden] { display: none; }
     .gz-voice-play {
       width: 26px; height: 26px;
       border-radius: 50%;
@@ -423,12 +424,6 @@
       line-height: 1.5;
     }
     .gz-voice-meta small { color: var(--page-pencil); }
-    .gz-coin-body {
-      font-family: var(--font-mono);
-      font-size: 10.5px;
-      line-height: 1.9;
-      color: var(--page-ink-mid);
-    }
     .gz-rail-archive-item {
       display: flex;
       justify-content: space-between;
@@ -555,18 +550,14 @@
     <div class="gazette-card gazette-card--empty" id="reportScroll"></div>
 
     <aside class="gazette-rail">
-      <div class="postit postit--yellow gz-voice-postit">
+      <div class="postit postit--yellow gz-voice-postit" id="voicePostit" hidden>
         <div>
           <div class="postit__title">語音稿</div>
           <div style="display:flex;align-items:center;gap:9px">
-            <button class="gz-voice-play" id="btnRailVoicePlay" title="播放語音稿" style="display:none">▶</button>
-            <span class="gz-voice-meta" id="railVoiceMeta">尚無可播放的語音稿</span>
+            <button class="gz-voice-play" id="btnRailVoicePlay" title="播放語音稿">▶</button>
+            <span class="gz-voice-meta" id="railVoiceMeta"></span>
           </div>
         </div>
-      </div>
-      <div class="postit postit--blue">
-        <div class="postit__title">月幣</div>
-        <div class="gz-coin-body" id="railCoinBody">餘額－枚<br>本篇整理花費－枚</div>
       </div>
       <div class="index-card" id="railArchive">
         <div class="index-card__label">ARCHIVE · 過刊</div>
@@ -599,6 +590,7 @@
 //   'akasha-voice-stop'(1258)                    = MSG_TYPES.VOICE_STOP
 //   'akasha-bgm-stop'(1259,1270)                 = MSG_TYPES.BGM_STOP
 //   'akasha-voice-state-update'(1265)            = MSG_TYPES.VOICE_STATE_UPDATE
+//   'akasha-file-opened'(1338)                   = MSG_TYPES.FILE_OPENED
 const MODULE_NAME = 'daily-report';
 
 // ===== State =====
@@ -637,6 +629,7 @@ const feedBaseInput = $('feedBaseInput');
 const btnSaveFeedBase = $('btnSaveFeedBase');
 const btnRailVoicePlay = $('btnRailVoicePlay');
 const railVoiceMeta = $('railVoiceMeta');
+const voicePostit = $('voicePostit');
 const railArchiveList = $('railArchiveList');
 
 // Set default date to today (local time, not UTC)
@@ -1159,15 +1152,22 @@ function renderReport(report) {
   updateVoiceRail(report);
 }
 
+// 報告內任一條目附有 voice（來源 schema 的 voice_text）才算「備有朗讀稿」，
+// 不再用日期編造檔名（voice_YYYYMMDD.txt 從未真實存在）。
+function reportHasVoice(report) {
+  if (!report?.sections?.length) return false;
+  return report.sections.some(section =>
+    (section.items || []).some(item => typeof item.voice === 'string' && item.voice.trim())
+  );
+}
+
 function updateVoiceRail(report) {
-  if (!report) {
-    btnRailVoicePlay.style.display = 'none';
-    railVoiceMeta.textContent = '尚無可播放的語音稿';
+  if (!reportHasVoice(report)) {
+    voicePostit.hidden = true;
     return;
   }
-  const ymd = (report.date || '').replace(/-/g, '');
-  btnRailVoicePlay.style.display = '';
-  railVoiceMeta.innerHTML = `voice_${escapeHtml(ymd)}.txt<br><small>零韻朗讀 · 點▶開始</small>`;
+  voicePostit.hidden = false;
+  railVoiceMeta.innerHTML = '本篇備有朗讀稿<br><small>零韻朗讀 · 點▶開始</small>';
 }
 btnRailVoicePlay.addEventListener('click', () => btnRead.click());
 
@@ -1275,7 +1275,8 @@ feedFileInput.addEventListener('change', async () => {
   const dateValue = reportDate.value || localDateStr();
 
   try {
-    const text = await file.text();
+    const { decodeFile } = await import('../../core/text-decode.js');
+    const text = await decodeFile(file);
     let report;
 
     if (/\.md$/i.test(file.name)) {
@@ -1328,12 +1329,44 @@ btnSave.addEventListener('click', async () => {
       source: 'daily-report',
     });
     state.currentReportId = saved?.id || state.currentReportId;
+
+    // 同時寫入書庫 IndexedDB（存 .md），其他館才開得到——單靠 memory bridge 只有本模組看得見
+    try {
+      const { saveFileEntry, saveFileBlob } = await import('../../core/storage.js');
+      const md = buildReportMd(report);
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const entry = await saveFileEntry({ name: `館報_${report.date}.md`, type: 'md', size: blob.size });
+      await saveFileBlob(entry.id, blob);
+      if (window.parent !== window) {
+        window.parent.postMessage({ type: 'akasha-file-opened', entry }, location.origin);
+      }
+    } catch (e) {
+      console.warn('Failed to persist report to library:', e);
+    }
+
     showToast('館報已儲存');
     await loadHistory();
   } catch (err) {
     showToast('儲存失敗：' + err.message);
   }
 });
+
+// ===== Markdown 內容組裝（匯出／存書庫共用）=====
+function buildReportMd(report) {
+  const date = report.date || localDateStr();
+  const lines = [`# 每日館報 — ${date}`, ''];
+  for (const section of (report.sections || [])) {
+    lines.push(`## ${section.title}`, '');
+    for (const item of (section.items || [])) {
+      let line = `- **${item.title}**`;
+      if (item.summary) line += ` — ${item.summary}`;
+      if (item.source) line += `（來源：${item.source}）`;
+      lines.push(line);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
+}
 
 // ===== Export =====
 function exportReport(fmt) {
@@ -1343,18 +1376,7 @@ function exportReport(fmt) {
   let blob, filename;
 
   if (fmt === 'md') {
-    const lines = [`# 每日館報 — ${date}`, ''];
-    for (const section of (report.sections || [])) {
-      lines.push(`## ${section.title}`, '');
-      for (const item of (section.items || [])) {
-        let line = `- **${item.title}**`;
-        if (item.summary) line += ` — ${item.summary}`;
-        if (item.source) line += `（來源：${item.source}）`;
-        lines.push(line);
-      }
-      lines.push('');
-    }
-    blob = new Blob([lines.join('\n')], { type: 'text/markdown;charset=utf-8' });
+    blob = new Blob([buildReportMd(report)], { type: 'text/markdown;charset=utf-8' });
     filename = `館報_${date}.md`;
   } else {
     blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json;charset=utf-8' });

@@ -579,29 +579,6 @@
   }
   .ai-close-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
 
-  .ai-mode-row {
-    display: flex; gap: 4px; padding-bottom: 0;
-  }
-  .ai-mode-tab {
-    flex: 1;
-    padding: 8px 6px;
-    font-family: var(--font-serif-tc);
-    font-size: 12px; letter-spacing: 0.16em;
-    color: var(--text-tertiary);
-    border: none;
-    border-bottom: 2px solid transparent;
-    text-align: center;
-    cursor: pointer;
-    background: transparent;
-    transition: all 160ms;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .ai-mode-tab.active {
-    color: var(--gold-bright);
-    border-bottom-color: var(--gold);
-    background: rgba(201,168,106,0.04);
-  }
-
   /* Portrait zone */
   .ai-portrait {
     flex: 1 1 320px;
@@ -774,8 +751,7 @@
     color: var(--text-tertiary);
     letter-spacing: 0.06em;
   }
-  .ai-token-bar .coins { margin-left: auto; color: var(--gold); }
-  .ai-token-bar .remain { color: var(--text-tertiary); }
+  .ai-token-bar .remain { margin-left: auto; color: var(--text-tertiary); }
 
   /* Input row */
   .ai-input-row {
@@ -1029,7 +1005,7 @@
     </button>
     <button class="btn" id="btnOCR" onclick="window.startOCR()" style="display:none" title="文字摘錄：擷取當前頁面文字">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/><path d="M7 10h2M11 10h6M7 14h10"/></svg>
-      OCR 摘錄
+      文字摘錄
     </button>
     <button class="btn btn--gold" id="btnDownload" onclick="window.downloadCurrent()" style="display:none">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 12l6 6 6-6"/><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg>
@@ -1209,20 +1185,6 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
-      <div class="ai-mode-row">
-        <button class="ai-mode-tab active" data-ai-mode="text" onclick="setAIMode('text')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
-          文字
-        </button>
-        <button class="ai-mode-tab" data-ai-mode="voice" onclick="setAIMode('voice')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
-          語音
-        </button>
-        <button class="ai-mode-tab" data-ai-mode="persona" onclick="setAIMode('persona')">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8c0-2 2-4 5-4h8c3 0 5 2 5 4v3a9 9 0 01-18 0z"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/></svg>
-          人設
-        </button>
-      </div>
     </div>
 
     <!-- Portrait Zone -->
@@ -1336,8 +1298,7 @@
     <div class="ai-token-bar">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 7v10M9 9l6 6M9 15l6-6"/></svg>
       <span>預估 ~ <span id="aiTokenEstimate">0</span> tokens</span>
-      <span class="coins">1 月幣</span>
-      <span class="remain">· 餘 <span id="aiCoins">99</span></span>
+      <span class="remain">餘 <span id="aiCoins"></span></span>
     </div>
 
     <!-- Input Row -->
@@ -1356,24 +1317,9 @@
   import { saveFileEntry, saveFileBlob, getFileBlob, getFileEntries, deleteFileEntry, deleteEmbeddings, deleteBookmarksByFile, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
   import { hashFileBytes, findLibraryItem, upsertLibraryItem, removeLibraryItem } from './library-store.js';
   import { extractContextPages, extractPageText } from '../../core/ai.js';
-  import { estimateTokens, coinCost, deductCoins, getBalance, hasSufficientBalance } from '../../core/billing.js';
+  import { estimateTokens, getBalance } from '../../core/billing.js';
   import { indexPDF, queryRelevant, isIndexed, formatRetrievalContext } from '../../core/embedding.js';
   import { MSG_TYPES } from '../../core/export/bridge.js';
-
-  function requestParentAISettings() {
-    return new Promise((resolve) => {
-      const handler = (e) => {
-        if (e.origin !== location.origin) return;
-        if (e.data?.type === MSG_TYPES.PDF_SETTINGS_RESPONSE) {
-          window.removeEventListener('message', handler);
-          resolve(e.data.settings || { mode: 'byok', error: 'no-api-key' });
-        }
-      };
-      window.addEventListener('message', handler);
-      window.parent.postMessage({ type: MSG_TYPES.PDF_SETTINGS_REQUEST }, location.origin);
-      setTimeout(() => { window.removeEventListener('message', handler); resolve({ mode: 'byok', error: 'no-api-key' }); }, 3000);
-    });
-  }
 
   function requestParentLLM(text, context, page, fileName) {
     return new Promise((resolve, reject) => {
@@ -2016,17 +1962,9 @@
   };
   function cancelCrop() { window.cancelCrop(); }
 
-  // ===== OCR Text Extraction (Phase 2-D) =====
+  // ===== 文字摘錄（本地 pdf.js 文字層擷取，非雲端 OCR，不收月幣）=====
   window.startOCR = async function() {
     if (!pdfDoc) return;
-
-    const settings = await requestParentAISettings();
-    const isCoin = settings.mode === 'coin';
-
-    if (isCoin && !hasSufficientBalance(500)) {
-      showToast('月幣不足，無法執行文字摘錄', 'error');
-      return;
-    }
 
     showToast('正在擷取第 ' + currentPage + ' 頁文字…', 'info');
 
@@ -2034,16 +1972,11 @@
       const text = await extractPageText(pdfDoc, currentPage);
 
       if (!text || !text.trim()) {
-        showToast('此頁面無可辨識的文字內容（可能為掃描圖片）', 'error');
+        showToast('此頁沒有文字層（掃描版 PDF 需要外部 OCR 工具）', 'error');
         return;
       }
 
       const tokens = estimateTokens(text);
-      if (isCoin) {
-        const cost = coinCost(tokens);
-        deductCoins(cost, '文字摘錄 · p' + currentPage);
-      }
-
       showOCRPanel(text, currentPage, tokens);
     } catch (err) {
       showToast('文字擷取失敗：' + err.message, 'error');
@@ -2058,15 +1991,13 @@
     overlay.id = 'ocrOverlay';
 
     const lines = text.split('\n').map(l => `<p style="margin:0 0 4px">${escapeHtml(l) || '&nbsp;'}</p>`).join('');
-    const ocrSettings = JSON.parse(localStorage.getItem('akasha-ai-settings') || '{}');
-    const costLabel = ocrSettings.mode === 'coin' ? ` · ${coinCost(tokens)} 月幣` : ' · BYOK';
 
     overlay.innerHTML = `
       <div class="ocr-panel">
         <div class="ocr-header">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M20 7V4h-3M4 17v3h3M20 17v3h-3"/><path d="M7 10h2M11 10h6M7 14h10"/></svg>
           <span class="ocr-header-title">文字摘錄 — 第 ${page} 頁</span>
-          <span class="ocr-header-meta">${tokens} tok${costLabel}</span>
+          <span class="ocr-header-meta">${tokens} tok</span>
         </div>
         <div class="ocr-body" id="ocrBody">${lines}</div>
         <div class="ocr-footer">
@@ -2508,13 +2439,13 @@
 
   // ===== AI PANEL (AVG Visual Novel Style) =====
   let aiPanelOpen = false;
-  let aiMode = 'text';
-  let aiCoins = 99;
+  document.getElementById('aiCoins').textContent = getBalance();
   let aiScriptIdx = 0;
   let aiTypewriterTimer = null;
   let aiTypeDone = true;
   let aiCurrentText = '';
   let aiShownLength = 0;
+  let aiCurrentChoices = [];
 
   const AI_SCRIPT = [
     {
@@ -2541,13 +2472,6 @@
     portrait.classList.toggle('ai-portrait--hidden', !portraitVisible);
     btn.title = portraitVisible ? '隱藏立繪' : '顯示立繪';
     btn.style.opacity = portraitVisible ? '1' : '0.4';
-  };
-
-  window.setAIMode = function(mode) {
-    aiMode = mode;
-    document.querySelectorAll('.ai-mode-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.aiMode === mode);
-    });
   };
 
   // ===== Embedding Index (background) =====
@@ -2591,6 +2515,13 @@
     if (!text) return;
     input.value = '';
 
+    await submitAIText(text);
+  };
+
+  // 送出問題的共用路徑——手動輸入與點選選項（handleAIChoice）都走這裡
+  async function submitAIText(text) {
+    if (isAILoading || !text) return;
+
     if (!pdfDoc) {
       startTypewriter('請先開啟一本 PDF，我才能回答關於書籍內容的問題。', '圖書館員 · 月上零韻', 'calm', []);
       return;
@@ -2627,7 +2558,6 @@
       const result = await requestParentLLM(text, fullContext, currentPage, currentFileName);
 
       if (result.coinsRemaining !== undefined) {
-        aiCoins = result.coinsRemaining;
         document.getElementById('aiCoins').textContent = result.coinsRemaining;
       }
 
@@ -2640,11 +2570,10 @@
       isAILoading = false;
       if (sendBtn) sendBtn.disabled = false;
     }
-  };
+  }
 
   window.aiAdvance = function() {
-    if (!aiTypeDone) return;
-    // Advance to next script item if available
+    if (!aiTypeDone) finishTypewriter();
   };
 
   function startTypewriter(text, speaker, emotion, choices) {
@@ -2662,22 +2591,28 @@
     aiCurrentText = text;
     aiShownLength = 0;
     aiTypeDone = false;
+    aiCurrentChoices = choices || [];
     const textEl = document.getElementById('aiDialogueText');
 
     aiTypewriterTimer = setInterval(() => {
       aiShownLength++;
       if (aiShownLength >= aiCurrentText.length) {
-        clearInterval(aiTypewriterTimer);
-        aiTypeDone = true;
-        textEl.innerHTML = escapeHtml(aiCurrentText) + (choices.length === 0 ? '<span class="ai-cursor ai-cursor--continue">&#9662;</span>' : '');
-        // Show choices
-        if (choices.length > 0) {
-          renderChoices(choices);
-        }
+        finishTypewriter();
       } else {
         textEl.innerHTML = escapeHtml(aiCurrentText.slice(0, aiShownLength)) + '<span class="ai-cursor"></span>';
       }
     }, 22);
+  }
+
+  // 打字機動畫收尾（自然跑完／aiAdvance 跳到全文 共用）：定住全文、視需要接上選項
+  function finishTypewriter() {
+    clearInterval(aiTypewriterTimer);
+    aiTypewriterTimer = null;
+    aiTypeDone = true;
+    const textEl = document.getElementById('aiDialogueText');
+    const choices = aiCurrentChoices;
+    textEl.innerHTML = escapeHtml(aiCurrentText) + (choices.length === 0 ? '<span class="ai-cursor ai-cursor--continue">&#9662;</span>' : '');
+    if (choices.length > 0) renderChoices(choices);
   }
 
   function setCharacterEmotion(emotion) {
@@ -2701,8 +2636,10 @@
   }
 
   window.handleAIChoice = function(id) {
+    const choice = aiCurrentChoices.find(c => c.id === id);
     document.getElementById('aiChoices').innerHTML = '';
-    // placeholder: respond to choice
+    aiCurrentChoices = [];
+    if (choice) submitAIText(choice.text);
   };
 
   function updateAIPageBadge() {

@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import { STORAGE_KEY, MSG_TYPES } from "../../../core/export/bridge.js";
 import { payloadToCells } from "../../../core/export/fromPayload.js";
 import { parseDelimitedText, toNumericValue } from "./lib/spreadsheet-utils.js";
+import { decodeBuffer } from "../../../core/text-decode.js";
 // Design tokens + shared component classes (.deskbar/.btn/.panel/.mh-menu…) —
 // Tabularium 儀器類模組維持深色（不隨殼的淺色模式反轉），見 HANDOFF §4。
 import "../../../assets/styles/shared.css";
@@ -11,6 +12,8 @@ const DEFAULT_ROWS = 50;
 const DEFAULT_COLS = 26;
 const MAX_ROWS = 10000;
 const MAX_COLS = 200;
+const DRAFT_KEY = "akasha-spreadsheet-draft";
+const DRAFT_DEBOUNCE_MS = 2000;
 const colLabel = (i) => {
   let label = '';
   let n = i;
@@ -60,9 +63,16 @@ export default function SpreadsheetEditor() {
   const [notification, setNotification] = useState(null);
   const [gridRows, setGridRows] = useState(DEFAULT_ROWS);
   const [gridCols, setGridCols] = useState(DEFAULT_COLS);
+  const [sourceFilename, setSourceFilename] = useState(null);
+  const [draftBanner, setDraftBanner] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
   const inputRef = useRef(null);
   const formulaRef = useRef(null);
   const tableRef = useRef(null);
+  const skipDirtyRef = useRef(true); // 跳過掛載時的第一次 sheets 變化，避免一開頁就標記為「未儲存」
+  const autosaveTimerRef = useRef(null);
+  const snapshotRef = useRef(null); // 破壞性操作（刪列/刪欄/範圍清除）前的單步快照，供 Ctrl+Z 還原
 
   const sheet = sheets[activeSheet];
   const cells = sheet.cells;
@@ -91,6 +101,31 @@ export default function SpreadsheetEditor() {
   };
 
   const getColWidth = (c) => colWidths[c] ?? DEFAULT_COL_WIDTH;
+
+  // 破壞性操作前存單步快照（不做完整 undo stack，Ctrl+Z 只還原最近一次）
+  const snapshotSheet = () => {
+    snapshotRef.current = {
+      sheetIndex: activeSheet,
+      cells: { ...cells },
+      styles: { ...styles },
+      colWidths: { ...colWidths },
+    };
+  };
+
+  const undoLastDestructive = () => {
+    const snap = snapshotRef.current;
+    if (!snap) { showNotif("沒有可還原的操作"); return; }
+    setSheets((prev) =>
+      prev.map((s, i) =>
+        i === snap.sheetIndex
+          ? { ...s, cells: snap.cells, styles: snap.styles, colWidths: snap.colWidths }
+          : s
+      )
+    );
+    setActiveSheet(snap.sheetIndex);
+    snapshotRef.current = null;
+    showNotif("已還原上一步操作");
+  };
 
   // Formula evaluation
   const evaluate = useCallback(
@@ -347,18 +382,52 @@ export default function SpreadsheetEditor() {
     else if (e.key === "ArrowLeft") { e.preventDefault(); setSelection({ r, c: Math.max(c - 1, 0) }); }
     else if (e.key === "Enter") { startEdit(r, c); }
     else if (e.key === "Delete" || e.key === "Backspace") {
-      const id = cellId(r, c);
+      const hasRange = rangeStart && rangeEnd && (rangeStart.r !== rangeEnd.r || rangeStart.c !== rangeEnd.c);
       const newCells = { ...cells };
-      delete newCells[id];
+      if (hasRange) {
+        snapshotSheet(); // 範圍清除是破壞性操作，先存單步快照供 Ctrl+Z 還原
+        const minR = Math.min(rangeStart.r, rangeEnd.r), maxR = Math.max(rangeStart.r, rangeEnd.r);
+        const minC = Math.min(rangeStart.c, rangeEnd.c), maxC = Math.max(rangeStart.c, rangeEnd.c);
+        for (let rr = minR; rr <= maxR; rr++) {
+          for (let cc = minC; cc <= maxC; cc++) {
+            delete newCells[cellId(rr, cc)];
+          }
+        }
+      } else {
+        const id = cellId(r, c);
+        delete newCells[id];
+      }
       updateSheet("cells", newCells);
     } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       startEdit(r, c, e.key);
     }
 
+    if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z") && !e.shiftKey) {
+      e.preventDefault();
+      undoLastDestructive();
+    }
+
     if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-      const id = cellId(r, c);
-      const val = cells[id] || "";
-      navigator.clipboard?.writeText(String(getDisplay(id) || val));
+      const hasRange = rangeStart && rangeEnd && (rangeStart.r !== rangeEnd.r || rangeStart.c !== rangeEnd.c);
+      if (hasRange) {
+        const minR = Math.min(rangeStart.r, rangeEnd.r), maxR = Math.max(rangeStart.r, rangeEnd.r);
+        const minC = Math.min(rangeStart.c, rangeEnd.c), maxC = Math.max(rangeStart.c, rangeEnd.c);
+        const tsv = [];
+        for (let rr = minR; rr <= maxR; rr++) {
+          const rowVals = [];
+          for (let cc = minC; cc <= maxC; cc++) {
+            const id = cellId(rr, cc);
+            const val = cells[id] || "";
+            rowVals.push(String(getDisplay(id) || val));
+          }
+          tsv.push(rowVals.join("\t"));
+        }
+        navigator.clipboard?.writeText(tsv.join("\n"));
+      } else {
+        const id = cellId(r, c);
+        const val = cells[id] || "";
+        navigator.clipboard?.writeText(String(getDisplay(id) || val));
+      }
     }
     if ((e.ctrlKey || e.metaKey) && e.key === "v") {
       navigator.clipboard?.readText().then((text) => {
@@ -385,6 +454,85 @@ export default function SpreadsheetEditor() {
     const id = cellId(selection.r, selection.c);
     if (!editing) setFormulaBarValue(cells[id] || "");
   }, [selection, cells, editing]);
+
+  // 開啟時偵測是否有上次未儲存的自動儲存草稿（掛載時跑一次即可）
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      const hasContent = Array.isArray(draft?.sheets) &&
+        draft.sheets.some((s) => s.cells && Object.keys(s.cells).length > 0);
+      if (hasContent) {
+        setPendingDraft(draft);
+        setDraftBanner(true);
+      } else {
+        localStorage.removeItem(DRAFT_KEY);
+      }
+    } catch (err) {
+      console.warn("讀取自動儲存草稿失敗：", err);
+    }
+  }, []);
+
+  // 編輯內容 debounce 2 秒寫入 localStorage 草稿（含 sheets/styles/來源檔名），quota 超限時靜默降級
+  useEffect(() => {
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      try {
+        const hasContent = sheets.some((s) => Object.keys(s.cells || {}).length > 0);
+        if (!hasContent) {
+          // 還原列正在顯示中（或使用者尚未決定還原/捨棄）：現在的 sheets 只是初始空白狀態，
+          // 不能因為它是空的就把 localStorage 裡使用者真正的草稿清掉。
+          if (draftBanner || pendingDraft) return;
+          localStorage.removeItem(DRAFT_KEY);
+          return;
+        }
+        const draft = {
+          sheets: sheets.map((s) => ({ name: s.name, cells: s.cells, styles: s.styles, colWidths: s.colWidths })),
+          sourceFilename,
+          savedAt: Date.now(),
+        };
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      } catch (err) {
+        // 例如 localStorage 容量已滿（QuotaExceededError）：不打斷使用者，靜默降級，只留 console 記錄
+        console.warn("自動儲存草稿失敗（可能超出 localStorage 容量）：", err);
+      }
+    }, DRAFT_DEBOUNCE_MS);
+    return () => clearTimeout(autosaveTimerRef.current);
+  }, [sheets, sourceFilename, draftBanner, pendingDraft]);
+
+  // 追蹤「尚未存書庫的變更」，供離開頁面時攔截警告
+  useEffect(() => {
+    if (skipDirtyRef.current) { skipDirtyRef.current = false; return; }
+    setIsDirty(true);
+  }, [sheets]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!isDirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+      return "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const restoreDraft = () => {
+    if (!pendingDraft) return;
+    setSheets(pendingDraft.sheets);
+    setActiveSheet(0);
+    setSourceFilename(pendingDraft.sourceFilename || null);
+    setDraftBanner(false);
+    setPendingDraft(null);
+    showNotif("已還原上次未儲存的內容");
+  };
+
+  const discardDraft = () => {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* 忽略 */ }
+    setDraftBanner(false);
+    setPendingDraft(null);
+  };
 
   // 深淺模式跟隨殼：載入時讀取父層 data-mode，之後聽 MODE_CHANGE（同 script-editor 模式）
   useEffect(() => {
@@ -464,10 +612,12 @@ export default function SpreadsheetEditor() {
           if (newSheets.length > 0) {
             setSheets(newSheets);
             setActiveSheet(0);
+            setSourceFilename(filename);
             showNotif(`已匯入 ${filename}（${newSheets.length} 個工作表）`);
           }
         } else {
-          const text = new TextDecoder().decode(data);
+          // 與 importFile 同樣的編碼問題：固定 UTF-8 解碼會讓 Big5 等編碼的檔案亂碼，改用 decodeBuffer 自動偵測。
+          const { text } = decodeBuffer(data.buffer);
           const rows = parseDelimitedText(text);
           const dataRows = rows.length;
           const dataCols = rows.reduce((max, r) => Math.max(max, r.length), 0);
@@ -484,6 +634,7 @@ export default function SpreadsheetEditor() {
           setSheets((prev) => prev.map((s, i) =>
             i === activeSheet ? { ...s, cells: { ...s.cells, ...newCells } } : s
           ));
+          setSourceFilename(filename);
           showNotif(`已匯入 ${filename}`);
         }
       } catch (err) {
@@ -590,6 +741,7 @@ export default function SpreadsheetEditor() {
   };
 
   const deleteRow = (at) => {
+    snapshotSheet(); // 破壞性操作，先存單步快照供 Ctrl+Z 還原
     const newCells = {};
     const newStyles = {};
     Object.entries(cells).forEach(([id, val]) => {
@@ -606,6 +758,7 @@ export default function SpreadsheetEditor() {
   };
 
   const deleteCol = (at) => {
+    snapshotSheet(); // 破壞性操作，先存單步快照供 Ctrl+Z 還原
     const newCells = {};
     const newStyles = {};
     Object.entries(cells).forEach(([id, val]) => {
@@ -704,6 +857,10 @@ export default function SpreadsheetEditor() {
   };
 
   // ===== 存書庫（IndexedDB，供其他模組後續開啟）=====
+  // 公式必須以 cell.f 寫入 xlsx（而非只寫 evaluate() 後的常數），否則重新開啟時公式已永久蒸發成死值。
+  // 「開啟已存書庫檔案」與「匯入 XLSX」兩條既有路徑都已經支援讀回 cell.f 還原成 '=...' 字串，
+  // 這裡只需比照 exportXLSX 的寫法把公式一併寫進 workbook，即可讓存書庫→重新開啟全程保公式。
+  // 舊檔（存書庫修復前存的）沒有 .f，讀回時就照舊落回 cell.v 的常數值，向下相容。
   const saveToLibrary = async () => {
     try {
       const wb = XLSX.utils.book_new();
@@ -714,14 +871,25 @@ export default function SpreadsheetEditor() {
           if (ref) { maxR = Math.max(maxR, ref.r); maxC = Math.max(maxC, ref.c); }
         });
         const aoa = [];
+        const formulas = [];
         for (let r = 0; r <= maxR; r++) {
           const row = [];
           for (let c = 0; c <= maxC; c++) {
-            row.push(evaluate(sh.cells[cellId(r, c)], sh.cells));
+            const id = cellId(r, c);
+            const raw = sh.cells[id];
+            if (typeof raw === "string" && raw.startsWith("=")) {
+              formulas.push({ r, c, f: raw.slice(1) });
+            }
+            row.push(evaluate(raw, sh.cells));
           }
           aoa.push(row);
         }
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), sh.name);
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        for (let fi = 0; fi < formulas.length; fi++) {
+          const addr = XLSX.utils.encode_cell({ r: formulas[fi].r, c: formulas[fi].c });
+          if (ws[addr]) ws[addr].f = formulas[fi].f;
+        }
+        XLSX.utils.book_append_sheet(wb, ws, sh.name);
       });
       const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const blob = new Blob([arrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
@@ -733,6 +901,9 @@ export default function SpreadsheetEditor() {
       if (window.parent !== window) {
         window.parent.postMessage({ type: "akasha-file-opened", entry }, location.origin);
       }
+      // 已安全落地到書庫，草稿與「未儲存」標記可以清了
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* 忽略 */ }
+      setIsDirty(false);
     } catch (err) {
       console.error("Save to library failed:", err);
       showNotif("存入書庫失敗：" + err.message);
@@ -789,6 +960,7 @@ export default function SpreadsheetEditor() {
             if (newSheets.length > 0) {
               setSheets(newSheets);
               setActiveSheet(0);
+              setSourceFilename(file.name);
               showNotif(`已匯入 ${file.name}（${newSheets.length} 個工作表）`);
             }
           } catch (err) {
@@ -798,28 +970,36 @@ export default function SpreadsheetEditor() {
         };
         reader.readAsArrayBuffer(file);
       } else {
+        // readAsText 預設用 UTF-8 解碼，Big5 等編碼的 CSV/TSV 會整份亂碼。
+        // 改用 ArrayBuffer + core/text-decode.js 的 decodeBuffer 自動偵測編碼（BOM → UTF-8 嚴格 → Big5/Shift-JIS/GB18030 等回退評分）。
         const reader = new FileReader();
         reader.onload = (ev) => {
-          const text = ev.target.result;
-          const rows = parseDelimitedText(text);
-          const fDataRows = rows.length;
-          const fDataCols = rows.reduce((max, r) => Math.max(max, r.length), 0);
-          if (fDataRows > MAX_ROWS || fDataCols > MAX_COLS) {
-            showNotif('檔案過大（' + fDataRows + '×' + fDataCols + '），最多支援 ' + MAX_ROWS + '×' + MAX_COLS);
-            return;
-          }
-          const newCells = {};
-          rows.forEach((vals, r) => {
-            vals.forEach((v, c) => {
-              if (v !== "") {
-                newCells[cellId(r, c)] = v;
-              }
+          try {
+            const { text } = decodeBuffer(ev.target.result);
+            const rows = parseDelimitedText(text);
+            const fDataRows = rows.length;
+            const fDataCols = rows.reduce((max, r) => Math.max(max, r.length), 0);
+            if (fDataRows > MAX_ROWS || fDataCols > MAX_COLS) {
+              showNotif('檔案過大（' + fDataRows + '×' + fDataCols + '），最多支援 ' + MAX_ROWS + '×' + MAX_COLS);
+              return;
+            }
+            const newCells = {};
+            rows.forEach((vals, r) => {
+              vals.forEach((v, c) => {
+                if (v !== "") {
+                  newCells[cellId(r, c)] = v;
+                }
+              });
             });
-          });
-          updateSheet("cells", { ...cells, ...newCells });
-          showNotif(`已匯入 ${file.name}`);
+            updateSheet("cells", { ...cells, ...newCells });
+            setSourceFilename(file.name);
+            showNotif(`已匯入 ${file.name}`);
+          } catch (err) {
+            showNotif("匯入失敗：檔案格式錯誤");
+            console.error(err);
+          }
         };
-        reader.readAsText(file);
+        reader.readAsArrayBuffer(file);
       }
     };
     input.click();
@@ -858,6 +1038,24 @@ export default function SpreadsheetEditor() {
           <button className="btn btn--gold" onClick={saveToLibrary} title="把目前試算表存進圖書館（IndexedDB），供其他模組開啟">存書庫</button>
         </div>
       </header>
+
+      {/* 未儲存草稿還原列 — 非 alert，操作前先讓使用者選擇 */}
+      {draftBanner && (
+        <div style={{
+          background: "var(--navy-light)",
+          borderBottom: "1px solid var(--gold-line)",
+          padding: "6px 12px",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          fontSize: 12.5,
+        }}>
+          <span style={{ color: "var(--text-primary)" }}>偵測到上次未儲存的內容</span>
+          <div style={{ flex: 1 }} />
+          <button className="btn btn--gold" onClick={restoreDraft}>還原</button>
+          <button className="btn" onClick={discardDraft}>捨棄</button>
+        </div>
+      )}
 
       {/* 格式工具列（B/I/U · 對齊 · 字級 · 底色/文字色）*/}
       <div style={{

@@ -49,6 +49,11 @@ const $extractPanel   = document.getElementById('extract-panel');
 const $extractButtons = document.getElementById('extract-buttons');
 const $btnMeta        = document.getElementById('btn-meta');
 const $btnDiff        = document.getElementById('btn-diff');
+const $btnSendSheet   = document.getElementById('btn-send-spreadsheet');
+
+const $draftBar          = document.getElementById('draft-bar');
+const $btnDraftRestore   = document.getElementById('btn-draft-restore');
+const $btnDraftDiscard   = document.getElementById('btn-draft-discard');
 
 // --- Import ---
 
@@ -93,6 +98,7 @@ $btnToggleImport.addEventListener('click', () => {
 
 $btnClear.addEventListener('click', () => {
   currentDoc = null;
+  lastSnapshot = null;
   $tableContainer.innerHTML = '';
   $emptyState.style.display = '';
   $exportPanel.classList.add('hidden');
@@ -103,6 +109,7 @@ $btnClear.addEventListener('click', () => {
   showError('');
   currentExportFormat = 'markdown';
   updateHeaderButtons();
+  clearDraft();
   if (window.updateHintsInfo) window.updateHintsInfo();
   if (window.recordOperation) window.recordOperation('已清除表格');
 });
@@ -118,8 +125,11 @@ function loadDocument(doc) {
   $importPanel.classList.add('hidden');
   $extractPanel.classList.add('hidden');
   $emptyState.style.display = 'none';
+  lastSnapshot = null;
+  hideDraftBar();
   renderTable();
   updateHeaderButtons();
+  scheduleSave();
   // HINTS info
   const sheet = getSheet(doc);
   if (sheet && window.updateHintsInfo) {
@@ -132,6 +142,8 @@ function updateHeaderButtons() {
   $btnToggleExport.disabled = !hasDoc;
   $btnClear.disabled = !hasDoc;
   $btnMeta.disabled = !hasDoc;
+  $btnDiff.disabled = !hasDoc;
+  $btnSendSheet.disabled = !hasDoc;
 }
 
 // --- Table Rendering ---
@@ -177,9 +189,11 @@ function renderTable() {
     btn.title = '刪除欄';
     btn.addEventListener('click', () => {
       const colName = col.name;
+      snapshotBeforeDestruct('刪除欄：' + colName);
       removeColumn(sheet, col.id);
       renderTable();
       refreshExportPreview();
+      scheduleSave();
       if (window.recordOperation) window.recordOperation('已刪除欄：' + colName);
     });
     td.appendChild(btn);
@@ -215,9 +229,11 @@ function renderTable() {
     delBtn.textContent = '×';
     delBtn.title = '刪除列';
     delBtn.addEventListener('click', () => {
+      snapshotBeforeDestruct('刪除列');
       removeRow(sheet, row.id);
       renderTable();
       refreshExportPreview();
+      scheduleSave();
       if (window.recordOperation) window.recordOperation('已刪除列');
     });
     tdAction.appendChild(delBtn);
@@ -239,6 +255,7 @@ function renderTable() {
     addRow(sheet);
     renderTable();
     refreshExportPreview();
+    scheduleSave();
     if (window.recordOperation) window.recordOperation('已新增列');
   });
 
@@ -251,6 +268,7 @@ function renderTable() {
     addColumn(sheet, name.trim());
     renderTable();
     refreshExportPreview();
+    scheduleSave();
     if (window.recordOperation) window.recordOperation('已新增欄：' + name.trim());
   });
 
@@ -275,6 +293,7 @@ function startEditCell(td, rowId, colId) {
     const sheet = getSheet(currentDoc);
     setCellValue(sheet, rowId, colId, td.textContent);
     refreshExportPreview();
+    scheduleSave();
   };
 
   td.addEventListener('blur', finish, { once: true });
@@ -314,6 +333,7 @@ function startEditHeader(th, colId) {
       const sheet = getSheet(currentDoc);
       renameColumn(sheet, colId, newName);
       refreshExportPreview();
+      scheduleSave();
       if (window.recordOperation) window.recordOperation('已重命名欄位：' + original + ' → ' + newName);
     } else {
       th.textContent = original;
@@ -470,6 +490,7 @@ $btnMeta.addEventListener('click', () => {
   addMetadataColumns(currentDoc);
   renderTable();
   refreshExportPreview();
+  scheduleSave();
   if (window.recordOperation) window.recordOperation('已加入 metadata 欄位');
   else showToast('已加入 metadata 欄位');
 });
@@ -502,6 +523,130 @@ function showDiffPreview() {
     $exportPreview.appendChild(div);
   }
 }
+
+// --- Draft Persistence (P6-A) ---
+// currentDoc 任何變更 debounce 2 秒存 localStorage；beforeunload 未存變更時警告。
+
+const DRAFT_KEY = 'akasha-tableforge-draft';
+let saveTimer = null;
+let hasUnsavedChanges = false;
+
+function scheduleSave() {
+  hasUnsavedChanges = true;
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(flushSave, 2000);
+}
+
+function flushSave() {
+  saveTimer = null;
+  hasUnsavedChanges = false;
+  try {
+    if (currentDoc) localStorage.setItem(DRAFT_KEY, JSON.stringify(currentDoc));
+    else localStorage.removeItem(DRAFT_KEY);
+  } catch { /* localStorage 不可用（例如隱私模式）時放棄持久化，不影響操作 */ }
+}
+
+function clearDraft() {
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  hasUnsavedChanges = false;
+  try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
+
+function hideDraftBar() {
+  if ($draftBar) $draftBar.classList.add('hidden');
+}
+
+function checkDraftRestore() {
+  if (currentDoc) return; // 已由 sessionStorage / postMessage 載入資料，不提示還原
+  if (!$draftBar) return;
+  let raw;
+  try { raw = localStorage.getItem(DRAFT_KEY); } catch { raw = null; }
+  if (!raw) return;
+  $draftBar.classList.remove('hidden');
+  $btnDraftRestore.onclick = () => {
+    try {
+      const doc = JSON.parse(raw);
+      loadDocument(doc);
+      if (window.recordOperation) window.recordOperation('已還原草稿');
+      else showToast('已還原草稿');
+    } catch {
+      showError('草稿還原失敗，資料可能已損毀');
+      clearDraft();
+    }
+    hideDraftBar();
+  };
+  $btnDraftDiscard.onclick = () => {
+    clearDraft();
+    hideDraftBar();
+  };
+}
+
+window.addEventListener('beforeunload', (e) => {
+  if (hasUnsavedChanges) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+// --- Undo Destructive Op (P6-B) ---
+// 刪列/刪欄前存單步快照，Ctrl+Z 還原最近一次，不加 confirm。
+
+let lastSnapshot = null; // { doc, label }
+
+function snapshotBeforeDestruct(label) {
+  if (!currentDoc) return;
+  lastSnapshot = { doc: JSON.parse(JSON.stringify(currentDoc)), label };
+}
+
+function undoLastDestruct() {
+  if (!lastSnapshot) return;
+  currentDoc = lastSnapshot.doc;
+  const label = lastSnapshot.label;
+  lastSnapshot = null;
+  renderTable();
+  refreshExportPreview();
+  updateHeaderButtons();
+  scheduleSave();
+  if (window.recordOperation) window.recordOperation('已復原：' + label);
+  else showToast('已復原：' + label);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.key.toLowerCase() !== 'z') return;
+  if (document.activeElement && document.activeElement.isContentEditable) return; // 讓瀏覽器原生 undo 處理文字編輯
+  if (!lastSnapshot) return;
+  e.preventDefault();
+  undoLastDestruct();
+});
+
+// --- Send to Spreadsheet (P6-D) ---
+// 回送橋：走專屬的 TABLE_FORGE_EXPORT_TO_SPREADSHEET 訊息型別，殼層路由直接
+// openModule('spreadsheet')，不經 table-forge 自己的 parseReaderPayload（那條路徑
+// 是給 Reader 用的，欄名去重會吃資料，不適合這裡）。payload 格式沿用
+// core/export/bridge.js 的 blocksToTablePayload 慣例。
+
+$btnSendSheet.addEventListener('click', () => {
+  if (!currentDoc) return;
+  const sheet = getSheet(currentDoc);
+  if (!sheet || sheet.columns.length === 0) return;
+  const head = sheet.columns.map(c => c.name);
+  const body = sheet.rows.map(row => sheet.columns.map(c => String(row.cells[c.id] ?? '')));
+  const title = currentDoc.title || 'Table Forge';
+  const payload = {
+    filename: title,
+    mode: 'json',
+    blocks: [
+      { type: 'heading', level: 2, text: title },
+      { type: 'table', head, body },
+    ],
+  };
+  window.parent.postMessage({
+    type: MSG_TYPES.TABLE_FORGE_EXPORT_TO_SPREADSHEET,
+    payload,
+  }, location.origin);
+  if (window.recordOperation) window.recordOperation('已送到試算表');
+  else showToast('已送到試算表');
+});
 
 // --- Reader Bridge ---
 
@@ -582,3 +727,4 @@ window.addEventListener('message', (e) => {
 
 highlightExportBtn();
 checkReaderPayload();
+checkDraftRestore();
