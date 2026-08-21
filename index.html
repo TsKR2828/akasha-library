@@ -493,7 +493,7 @@ body { display: flex; }
   flex: 1;
   overflow: auto;
   padding: 32px 36px 40px;
-  background: var(--hall-bg);
+  background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
   position: relative;
 }
 .dashboard-inner { max-width: 1140px; margin: 0 auto; }
@@ -566,10 +566,10 @@ body { display: flex; }
 /* Module card */
 .module-card {
   position: relative;
-  background: var(--navy);
+  background: var(--navy-light);
   border: 1px solid var(--navy-line);
   border-radius: var(--r-card);
-  padding: 20px 18px 16px;
+  padding: 20px 18px 16px 24px;
   cursor: pointer;
   transition: transform 200ms cubic-bezier(.2,.8,.2,1), border-color 180ms, box-shadow 200ms;
   box-shadow: var(--shadow-card);
@@ -584,15 +584,20 @@ body { display: flex; }
   box-shadow: var(--shadow-lift);
 }
 
-.card-topline {
-  position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: var(--card-ink, var(--gold));
+/* 書脊直條 — Charta 一代復刻：皮革/木頭深棕族，像書架上一排舊書 */
+.card-spine {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+  background: linear-gradient(180deg, #5b3a2a, #5b3a2acc, #5b3a2a88);
+  box-shadow: 1px 0 0 rgba(0,0,0,0.4), inset 0 0 4px rgba(0,0,0,0.5);
 }
+.cards-row .module-card:nth-child(4n+2) .card-spine { background: linear-gradient(180deg, #3a2818, #3a2818cc, #3a281888); }
+.cards-row .module-card:nth-child(4n+3) .card-spine { background: linear-gradient(180deg, #3d3220, #3d3220cc, #3d322088); }
+.cards-row .module-card:nth-child(4n)   .card-spine { background: linear-gradient(180deg, #4a2828, #4a2828cc, #4a282888); }
 
 .card-roman {
   font-family: var(--font-serif-en);
   font-size: 22px; font-style: italic;
-  color: var(--card-ink, var(--gold-deep));
+  color: var(--gold-deep);
   letter-spacing: 0.05em;
   line-height: 1;
 }
@@ -606,10 +611,11 @@ body { display: flex; }
   border: 1px solid var(--gold-line);
   border-radius: 2px;
   display: flex; align-items: center; justify-content: center;
-  color: var(--card-ink, var(--gold));
+  color: var(--gold);
   background: rgba(201,168,106,0.04);
   transition: all 200ms;
 }
+.module-card:hover .card-icon-box { color: var(--gold-bright); }
 
 .card-title {
   font-family: var(--font-serif-tc);
@@ -622,7 +628,7 @@ body { display: flex; }
 .card-en {
   font-family: var(--font-serif-en);
   font-style: italic;
-  font-size: 11.5px; color: var(--card-ink, var(--gold));
+  font-size: 11.5px; color: var(--gold);
   letter-spacing: 0.1em;
   margin-bottom: 8px;
 }
@@ -636,7 +642,7 @@ body { display: flex; }
 .card-footer {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 14px; padding-top: 10px;
-  border-top: 1px dashed var(--navy-line);
+  border-top: 1px dashed rgba(201,168,106,0.18);
 }
 
 .card-formats { display: flex; gap: 5px; flex-wrap: wrap; }
@@ -659,7 +665,7 @@ body { display: flex; }
   transition: color 180ms;
   flex: none;
 }
-.module-card:hover .card-open-hint { color: var(--card-ink, var(--gold)); }
+.module-card:hover .card-open-hint { color: var(--gold); }
 
 /* Recent files ledger */
 .recent-ledger {
@@ -1662,7 +1668,7 @@ body { display: flex; }
     <div class="cards-row">
         <!-- Markdown -->
         <a class="module-card" data-module="markdown">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 4c-8 0-13 5-13 13v3h3c8 0 13-5 13-13V4z"/><path d="M20 4L4 20M14 10l-7 7"/></svg>
@@ -1686,7 +1692,7 @@ body { display: flex; }
         </a>
         <!-- PDF -->
         <a class="module-card" data-module="pdf-reader">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
@@ -1707,7 +1713,7 @@ body { display: flex; }
         </a>
         <!-- Table Forge -->
         <a class="module-card" data-module="table-forge">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16"/><path d="M3 10h18M3 16h18M9 4v16M15 4v16"/></svg>
@@ -1730,7 +1736,7 @@ body { display: flex; }
         </a>
         <!-- Spreadsheet -->
         <a class="module-card" data-module="spreadsheet">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16M20 4v16M4 12h16M4 4h16M4 20h16"/></svg>
@@ -1753,7 +1759,7 @@ body { display: flex; }
         </a>
         <!-- Script Editor -->
         <a class="module-card" data-module="script-editor">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5z"/><path d="M15 5l4 4"/></svg>
@@ -1776,7 +1782,7 @@ body { display: flex; }
         </a>
         <!-- Daily Report -->
         <a class="module-card" data-module="daily-report" id="card-daily-report">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h10M7 11h10M7 15h6"/></svg>
@@ -1798,7 +1804,7 @@ body { display: flex; }
         </a>
         <!-- Reading Room -->
         <a class="module-card" data-module="private-reading-room" id="card-reading-room">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 110-18 9 9 0 010 18z"/><path d="M12 7v4l2.5 2.5"/><circle cx="12" cy="12" r="1.5"/></svg>
@@ -1820,7 +1826,7 @@ body { display: flex; }
         </a>
         <!-- AI Settings -->
         <a class="module-card" data-module="ai-settings">
-          <div class="card-topline"></div>
+          <div class="card-spine"></div>
           <div class="card-top-row">
             <div class="card-icon-box">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
@@ -2609,12 +2615,35 @@ body { display: flex; }
   }
 
   function openModule(name) {
+    // Guard: module key must be registered in HALLS (single source of
+    // truth for the title contract) and in the modules src table.
+    if (!HALLS[name] || !modules[name]) {
+      if (window.showNoteToast) window.showNoteToast('找不到這個館');
+      return;
+    }
+    // Guard: refuse modules that security.js (or its fail-closed fallback)
+    // gated, even if reached via a route other than the nav/card click.
+    if (window._gatedModules && window._gatedModules.has(name)) {
+      if (window.showNoteToast) window.showNoteToast('此館目前未開放');
+      return;
+    }
     var mod = modules[name];
-    if (!mod) return;
     closeMemoryViewer();
     var dashboard = document.getElementById('view-dashboard');
     var frame = document.getElementById('module-frame');
     dashboard.style.display = 'none';
+
+    var loaded = false;
+    frame.onload = function() { loaded = true; };
+    frame.onerror = function() {
+      if (window.showNoteToast) window.showNoteToast('此館暫時無法開啟');
+    };
+    setTimeout(function() {
+      if (!loaded && frame.src.indexOf(mod.src) !== -1) {
+        if (window.showNoteToast) window.showNoteToast('此館暫時無法開啟');
+      }
+    }, 10000);
+
     frame.src = mod.src;
     frame.classList.add('active');
     updateMasthead(name);
@@ -2818,12 +2847,44 @@ body { display: flex; }
   });
 
   // Feature gate: hide Reading Room in public build (Phase 15-A)
+  // Tracks which HALLS module keys got gated, so openModule() can refuse to
+  // open them even if reached some other way (deep link, postMessage, etc).
+  window._gatedModules = new Set();
+  // Fail-closed fallback: if security.js itself cannot be loaded, we cannot
+  // know which flags are enabled, so every privately-gated entry point is
+  // hidden rather than left exposed (see .catch() below).
+  function hideAllGatedEntryPoints() {
+    var rrNav = document.querySelector('.nav-item[data-module="private-reading-room"]');
+    if (rrNav) rrNav.style.display = 'none';
+    var rrCard = document.getElementById('card-reading-room');
+    if (rrCard) rrCard.style.display = 'none';
+    window._gatedModules.add('private-reading-room');
+
+    var aiPanel = document.getElementById('aiPanel');
+    if (aiPanel) aiPanel.style.display = 'none';
+    var btnSummon = document.getElementById('btn-summon');
+    if (btnSummon) btnSummon.style.display = 'none';
+    var aiNav = document.querySelector('.nav-item[data-module="ai-settings"]');
+    if (aiNav) aiNav.style.display = 'none';
+    window._gatedModules.add('ai-settings');
+
+    var authBlock = document.getElementById('auth-block');
+    if (authBlock) authBlock.style.display = 'none';
+
+    var memBtn = document.getElementById('btnMemoryPanel');
+    if (memBtn) memBtn.style.display = 'none';
+
+    var notionTab = document.querySelector('.mv-tab[data-mv-tab="notion"]');
+    if (notionTab) notionTab.style.display = 'none';
+  }
+
   import('./core/security.js').then(function(sec) {
     if (!sec.isFeatureEnabled('reading_room')) {
       var rrNav = document.querySelector('.nav-item[data-module="private-reading-room"]');
       if (rrNav) rrNav.style.display = 'none';
       var rrCard = document.getElementById('card-reading-room');
       if (rrCard) rrCard.style.display = 'none';
+      window._gatedModules.add('private-reading-room');
     }
 
     // Gate AI features in public build
@@ -2834,6 +2895,7 @@ body { display: flex; }
       if (btnSummon) btnSummon.style.display = 'none';
       var aiNav = document.querySelector('.nav-item[data-module="ai-settings"]');
       if (aiNav) aiNav.style.display = 'none';
+      window._gatedModules.add('ai-settings');
     }
     // Daily Report stays visible in public build: its remote feed path
     // (raw.githubusercontent daily_*.json) needs no AI; only the paste→AI
@@ -2853,7 +2915,12 @@ body { display: flex; }
       var notionTab = document.querySelector('.mv-tab[data-mv-tab="notion"]');
       if (notionTab) notionTab.style.display = 'none';
     }
-  }).catch(function() {});
+  }).catch(function(err) {
+    // security.js failed to load — fail CLOSED, not open: hide every
+    // privately-gated entry point instead of silently leaving them exposed.
+    console.warn('[Akasha] security.js 載入失敗，受控功能已改為預設隱藏（fail-closed）', err);
+    hideAllGatedEntryPoints();
+  });
 
   // Listen for reading progress (no import needed)
   window.addEventListener('message', function(event) {
@@ -3081,6 +3148,14 @@ window.addEventListener('message', async (event) => {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
     openModule('table-forge');
   }
+  if (event.data?.type === MSG_TYPES.TABLE_FORGE_EXPORT_TO_SPREADSHEET) {
+    const frame = document.getElementById('module-frame');
+    if (frame.classList.contains('active') && frame.src.includes('spreadsheet')) {
+      if (!confirm('試算表中的資料將被取代，是否繼續？')) return;
+    }
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(event.data.payload));
+    openModule('spreadsheet');
+  }
   // Phase 5-B: Script Editor → Table Forge bridge
   if (event.data?.type === MSG_TYPES.SCRIPT_EDITOR_EXPORT_TO_TABLE) {
     const payload = blocksToTablePayload(event.data.blocks, event.data.filename);
@@ -3103,7 +3178,7 @@ import { matchPrewritten } from './core/prewritten.js';
 import { addTurn, setFact, getSession, clearSession, clearAllSessions, getSessionModules, buildMessages, buildFactsBlock } from './core/session-memory.js';
 import { flushSession, buildSummaryBlock, isEnabled as isRoomSummaryEnabled, setEnabled as setRoomSummaryEnabled, getRoomSummary, deleteRoomSummary, getAllRoomSummaries } from './core/room-summary.js';
 import { saveMemory, getMemory, deleteMemory, getAllMemories, getMemoryCount, saveSessionOnly, getSessionNotes, autoTitle, autoTags, searchMemories, buildMemoryContext } from './core/approved-memory.js';
-import { getNotionSettings, saveNotionSettings, isConfigured as isNotionConfigured, processQueue, pendingCount, enqueue, pullLibraryEntries, pullMemories, pullPersona, detectConflict, buildConflictDiff, setNotionToken } from './core/notion-connector.js';
+import { getNotionSettings, saveNotionSettings, isConfigured as isNotionConfigured, processQueue, pendingCount, enqueue, pullLibraryEntries, pullMemories, pullPersona, detectConflict, buildConflictDiff, setNotionToken, getPendingConflictChecks, checkJobConflict, skipQueuedJob } from './core/notion-connector.js';
 import { registerApiKeyCheck } from './core/security.js';
 
 // Load persona.md (async, caches for prompt builders)
@@ -3228,11 +3303,20 @@ window.saveNote = async function(target) {
   showNoteToast(toastMsg);
 };
 
-function showNoteToast(msg) {
+function showNoteToast(msg, onClick) {
   const el = document.getElementById('noteToast');
   el.textContent = msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2200);
+  el.onclick = onClick || null;
+  el.style.cursor = onClick ? 'pointer' : '';
+  el.style.pointerEvents = onClick ? 'auto' : '';
+  clearTimeout(el._hideTimer);
+  el._hideTimer = setTimeout(() => {
+    el.classList.remove('show');
+    el.style.pointerEvents = '';
+    el.style.cursor = '';
+    el.onclick = null;
+  }, onClick ? 8000 : 2200);
 }
 window.showNoteToast = showNoteToast;
 
@@ -3529,7 +3613,34 @@ window.syncNow = async function() {
   }
   updateSyncDot('syncing');
   try {
-    const result = await processQueue();
+    // Conflict check — only runs from this user-initiated entry point (not
+    // from the 5-minute background timer below, which has no one present
+    // to answer a dialog). Jobs the user resolves get either pushed
+    // normally by processQueue() below (kept local) or removed from the
+    // queue without pushing (kept Notion / deferred).
+    const skipIds = [];
+    const conflictJobs = await getPendingConflictChecks();
+    for (const job of conflictJobs) {
+      const conflict = await checkJobConflict(job);
+      if (!conflict) continue;
+      const choice = await new Promise((resolve) => {
+        window.openConflictDialog(conflict.local, conflict.remote, resolve);
+      });
+      if (choice === 'remote') {
+        await skipQueuedJob(job.id); // 採用 Notion 版本：不推送本機變更
+        // 把遠端版本寫回本機，否則畫面仍是舊的本機內容，下次編輯又會覆寫回 Notion
+        if (job.target === 'memory') {
+          await saveMemory(conflict.remote);
+        } else if (job.target === 'library') {
+          await saveFileEntry(conflict.remote);
+        }
+      } else if (choice === 'skip') {
+        skipIds.push(job.id); // 這輪先跳過，留在佇列中
+      }
+      // choice === 'local' → 不特別處理，交給下面的 processQueue() 正常推送
+    }
+
+    const result = await processQueue({ skipIds });
     updateSyncDot(result.failed ? 'error' : 'ok');
     if (result.failed) {
       showNoteToast(`同步部分失敗：成功 ${result.processed} 筆，失敗 ${result.failed} 筆`);
@@ -3566,12 +3677,27 @@ window.testNotionConnection = async function() {
   updateSyncDot('syncing');
   try {
     const s = getNotionSettings();
-    if (s.libraryDbId) await pullLibraryEntries();
-    else if (s.memoryDbId) await pullMemories();
-    else if (s.personaPageId) await pullPersona();
-    else throw new Error('請至少填寫一個 Notion 資料庫或 Persona Page ID');
+    if (!s.libraryDbId && !s.memoryDbId && !s.personaPageId) {
+      throw new Error('請至少填寫一個 Notion 資料庫或 Persona Page ID');
+    }
+    const parts = [];
+    if (s.memoryDbId) {
+      const entries = await pullMemories();
+      for (const mem of entries) {
+        await saveMemory(mem); // put by id — 依 id 去重覆蓋本機既有紀錄
+      }
+      parts.push(`記憶 ${entries.length} 筆`);
+    }
+    if (s.libraryDbId) {
+      const entries = await pullLibraryEntries();
+      parts.push(`書目 ${entries.length} 筆`);
+    }
+    if (s.personaPageId) {
+      const persona = await pullPersona();
+      parts.push(persona ? 'Persona 資料' : 'Persona（空）');
+    }
     updateSyncDot('ok');
-    showNoteToast('連線成功！');
+    showNoteToast('連線成功，拉回 ' + parts.join('／'));
   } catch (err) {
     updateSyncDot('error');
     showNoteToast('連線失敗：' + err.message);
@@ -3599,15 +3725,30 @@ window.openConflictDialog = function(local, remote, onResolve) {
     <button class="cf-btn" id="cfUseRemote">使用 Notion 版本</button>
     <button class="cf-btn" id="cfSkip">跳過</button>`;
 
-  document.getElementById('cfUseLocal').onclick = () => { window.closeConflictDialog(); onResolve('local'); };
-  document.getElementById('cfUseRemote').onclick = () => { window.closeConflictDialog(); onResolve('remote'); };
-  document.getElementById('cfSkip').onclick = () => { window.closeConflictDialog(); onResolve('skip'); };
+  // Remember the resolver so closeConflictDialog() can still settle it if the
+  // dialog gets dismissed via the backdrop click instead of a button — a
+  // caller awaiting this Promise (see window.syncNow) would otherwise hang.
+  window._cfPendingResolve = onResolve;
+  function settle(choice) {
+    window._cfPendingResolve = null;
+    window.closeConflictDialog();
+    onResolve(choice);
+  }
+
+  document.getElementById('cfUseLocal').onclick = () => settle('local');
+  document.getElementById('cfUseRemote').onclick = () => settle('remote');
+  document.getElementById('cfSkip').onclick = () => settle('skip');
 
   document.getElementById('cfOverlay').classList.add('show');
 };
 
 window.closeConflictDialog = function() {
   document.getElementById('cfOverlay').classList.remove('show');
+  if (window._cfPendingResolve) {
+    const resolve = window._cfPendingResolve;
+    window._cfPendingResolve = null;
+    resolve('skip'); // 背景關閉視為「跳過」，避免呼叫端的 Promise 永遠不 resolve
+  }
 };
 
 // Disable Notion save button if not configured
@@ -4316,7 +4457,36 @@ window.addEventListener('message', (event) => {
 
 // Service worker
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(() => {});
+  var _swUpdateReloaded = false;
+  var _swUpdateConfirmed = false; // 只有使用者按下更新 toast 之後才會變 true
+  function _reloadForSwUpdate() {
+    if (_swUpdateReloaded) return;
+    _swUpdateReloaded = true;
+    location.reload();
+  }
+  function _onSwUpdateConfirmed() {
+    _swUpdateConfirmed = true;
+    _reloadForSwUpdate();
+  }
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    // sw.js 有 skipWaiting()+clients.claim()，controllerchange 在首次造訪、
+    // 或使用者按下 toast 之前也會自動觸發；未經使用者確認一律忽略，
+    // 避免每個新訪客或更新未確認前就被無故整頁重載
+    if (!_swUpdateConfirmed) return;
+    _reloadForSwUpdate();
+  });
+
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    reg.addEventListener('updatefound', function() {
+      var newWorker = reg.installing;
+      if (!newWorker) return;
+      newWorker.addEventListener('statechange', function() {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          if (window.showNoteToast) window.showNoteToast('圖書館已更新——點此重新載入', _onSwUpdateConfirmed);
+        }
+      });
+    });
+  }).catch(() => {});
 }
 </script>
 </body>
