@@ -76,6 +76,15 @@
       color: var(--text-tertiary);
     }
 
+    .search-count {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--text-tertiary);
+      min-width: 38px;
+      text-align: center;
+      user-select: none;
+    }
+
     .sheets-group {
       display: none;
       gap: 6px;
@@ -435,6 +444,44 @@
     .markdown-body th, .markdown-body td { border: 1px solid var(--page-border); padding: 7px 9px; vertical-align: top; }
     .markdown-body th { background: var(--page-old); color: var(--page-ink); font-weight: 600; }
     .markdown-body .search-hit { background: rgba(220,190,90,0.4); color: var(--page-ink); }
+    .markdown-body .search-hit-current { background: var(--page-ink); color: var(--page-bg); }
+
+    /* B 項：blockquote / hr / 巢狀清單 / task list / 圖片 — 紙頁墨色 token，不硬編碼新色相 */
+    .markdown-body blockquote {
+      margin: 0 0 14px;
+      padding: 2px 16px;
+      border-left: 3px solid var(--page-pencil);
+      color: var(--page-pencil);
+      font-style: italic;
+    }
+    .markdown-body blockquote blockquote {
+      margin: 8px 0 0;
+      border-left-color: var(--page-old-border);
+    }
+    .markdown-body blockquote p { margin: 0 0 10px; }
+    .markdown-body hr {
+      border: none;
+      border-top: 1px solid var(--page-old-border);
+      margin: 20px 0;
+    }
+    .markdown-body ul ul, .markdown-body ul ol,
+    .markdown-body ol ul, .markdown-body ol ol { margin: 3px 0 3px; }
+    .markdown-body li.task-list-item { list-style: none; margin-left: -1.3em; }
+    .markdown-body li.task-list-item input[type="checkbox"] { margin-right: 6px; }
+    .markdown-body img { max-width: 100%; border-radius: 4px; }
+
+    /* C/D 項：無依賴輕量高亮四類 token，統一沿用 --gold/--ink 系（單色系，不新增色相） */
+    .cf-comment { color: var(--text-tertiary); font-style: italic; }
+    .cf-string { color: var(--gold-bright); }
+    .cf-keyword { color: var(--gold); font-weight: 700; }
+    .cf-number { color: var(--gold-dim); }
+    .markdown-body .cf-comment { color: var(--page-pencil); }
+    .markdown-body .cf-string { color: var(--ink-manuscripta); }
+    .markdown-body .cf-keyword { color: var(--page-ink); font-weight: 700; }
+    .markdown-body .cf-number { color: var(--page-ink-mid); }
+
+    /* D 項：通用 code 檢視，沿用 .code-table（HANDOFF 既有 python view 樣式） */
+    .code-view-wrap { overflow-x: auto; }
 
     /* JSON tree */
     .json-tree {
@@ -569,6 +616,12 @@
       color: var(--gold-bright);
     }
 
+    /* E 項：目前命中用不同底色標示，跟一般命中區分 */
+    .search-hit-current {
+      background: var(--gold);
+      color: var(--navy-deep);
+    }
+
     .empty-state {
       max-width: 600px;
       margin: 40px auto;
@@ -670,7 +723,7 @@
     <div class="desk-actions">
       <label class="btn file-label" title="從電腦選一個檔案打開">
         開啟檔案
-        <input id="fileInput" type="file" accept=".py,.json,.jsonl,.md,.markdown,.txt,.score.json,.docx,.doc,text/plain,application/json,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        <input id="fileInput" type="file" accept=".py,.json,.jsonl,.md,.markdown,.txt,.score.json,.docx,.doc,.js,.mjs,.cjs,.jsx,.ts,.tsx,.html,.htm,.css,.scss,.sql,.sh,.bash,.yaml,.yml,.toml,text/plain,application/json,text/markdown,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
       </label>
       <button class="btn" id="btnEditToggle" style="display:none" title="直接修改檔案內容（支援 md / txt / json）">編輯</button>
       <button class="btn btn--gold" id="copyView" title="複製畫面上看到的樣子，符號會變成標題粗體等">複製目前視圖</button>
@@ -678,9 +731,12 @@
       <div class="mh-more" id="searchWrap">
         <button class="btn" id="btnSearchToggle" aria-haspopup="true" aria-expanded="false" title="在檔案中搜尋關鍵字（⌘F / Ctrl+F）">搜尋 <span class="kbd">⌘F</span></button>
         <div class="mh-menu" id="searchMenu">
-          <div style="display:flex;gap:6px;padding:2px;">
+          <div style="display:flex;gap:6px;padding:2px;align-items:center;">
             <input id="searchInput" type="search" placeholder="搜尋 key / 文字 / 程式碼..." title="在檔案中搜尋關鍵字">
             <button class="btn" id="searchBtn" title="在檔案中搜尋關鍵字">搜尋</button>
+            <button class="btn" id="searchPrev" title="上一個符合項">↑</button>
+            <button class="btn" id="searchNext" title="下一個符合項">↓</button>
+            <span id="searchCount" class="search-count"></span>
           </div>
         </div>
       </div>
@@ -785,6 +841,7 @@
         <div id="treeView" class="view"></div>
         <div id="scoreView" class="view"></div>
         <div id="pythonView" class="view"></div>
+        <div id="codeView" class="view"></div>
         <div id="rawView" class="view"><textarea id="rawEditor" spellcheck="false"></textarea></div>
       </section>
     </main>
@@ -823,6 +880,7 @@
       mode: "empty",
       activeTab: "pretty",
       searchTerm: "",
+      searchIndex: 0,
       editMode: false,
       dirty: false,
       _scriptBlocks: null,
@@ -854,6 +912,7 @@
       tree: document.getElementById("treeView"),
       score: document.getElementById("scoreView"),
       python: document.getElementById("pythonView"),
+      code: document.getElementById("codeView"),
       raw: document.getElementById("rawView")
     };
 
@@ -898,11 +957,159 @@
         return `@@RAWHTML${rawAnchors.length - 1}@@`;
       });
       s = escapeHtml(s);
-      s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      s = s.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
-      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      // 強調規則（**/~~/*/_）套用前，先把 inline code、圖片、連結整段抽成佔位符。
+      // 原本順序是先跑強調規則再抽 code/image/link，會導致：
+      // 1. `src/*.js` 這類 code span 內的 * 被 <em> 攔腰打斷，產生跨越 </code> 的破碎標籤
+      // 2. [text](https://x.com/_docs_/p) 的網址被 _斜體_ 規則誤判，改壞連結目的地
+      // 修法：code/image/link 先佔位保護，強調規則只作用在其餘一般文字（連結文字仍套用強調，但網址本身不受影響）
+      const stash = [];
+      function keep(html) { stash.push(html); return `\u0000q${stash.length - 1}q\u0000`; }
+
+      function applyEmphasis(str) {
+        str = str.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+        str = str.replace(/~~(.+?)~~/g, "<del>$1</del>");
+        str = str.replace(/\*(?!\*)([^*\n]+?)\*(?!\*)/g, "<em>$1</em>");
+        str = str.replace(/(?<![\w])_([^_\n]+?)_(?![\w])/g, "<em>$1</em>");
+        return str;
+      }
+
+      // inline code：內容原樣顯示，不套用任何強調規則
+      s = s.replace(/`([^`]+)`/g, (_, inner) => keep(`<code class="inline-code">${inner}</code>`));
+      // 圖片：alt 文字不套用強調規則
+      s = s.replace(/!\[([^\]]*)\]\(([^\s)]+)\)/g, (_, alt, src) => keep(`<img src="${src}" alt="${alt}" loading="lazy" style="max-width:100%">`));
+      // 連結：連結文字仍支援強調規則，但網址（href）本身先佔位保護，不受影響
+      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, href) => keep(`<a href="${href}" target="_blank" rel="noopener noreferrer">${applyEmphasis(label)}</a>`));
+
+      s = applyEmphasis(s);
+
+      // 還原前檢查 stash[idx] 是否存在，找不到就保留原字串，不印出 "undefined"
+      // 巢狀佔位（例如 [![badge](img)](url) 或 [`code`](url)）還原後的內容裡可能又含佔位符，
+      // 單趟 replace 只掃一次，巢狀的內層佔位符不會被還原，因此改成迴圈直到掃不到佔位符為止（設上限防死循環）
+      let restoreGuard = 0;
+      while (/\u0000q\d+q\u0000/.test(s) && restoreGuard < 10) {
+        s = s.replace(/\u0000q(\d+)q\u0000/g, (m, idx) => {
+          const frag = stash[Number(idx)];
+          return frag === undefined ? m : frag;
+        });
+        restoreGuard++;
+      }
+
       rawAnchors.forEach((html, i) => {
         s = s.replace(`@@RAWHTML${i}@@`, sanitizeAnchor(html));
+      });
+      return s;
+    }
+
+    // ═══════════════════════════════════════════
+    //  LIGHTWEIGHT CODE HIGHLIGHT（無依賴，四類 token：comment/string/keyword/number）
+    // ═══════════════════════════════════════════
+    const CODE_LANG_ALIASES = {
+      js: "js", javascript: "js", jsx: "js", mjs: "js", cjs: "js",
+      ts: "ts", typescript: "ts", tsx: "ts",
+      py: "py", python: "py",
+      json: "json",
+      css: "css", scss: "css",
+      html: "html", htm: "html",
+      sql: "sql",
+      sh: "sh", bash: "sh", shell: "sh",
+      yaml: "yaml", yml: "yaml",
+      toml: "toml"
+    };
+
+    function normalizeLangKey(raw) {
+      return CODE_LANG_ALIASES[String(raw || "").trim().toLowerCase()] || "";
+    }
+
+    function codeLangFromExtension(ext) {
+      return normalizeLangKey(String(ext || "").replace(/^\./, ""));
+    }
+
+    const CODE_HL_RULES = {
+      js: {
+        comment: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+        string: /(`[^`]*`|&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|extends|new|this|typeof|instanceof|in|of|try|catch|finally|throw|async|await|import|export|default|from|as|null|undefined|true|false|void|yield|static|get|set|super|delete)\b/g,
+        number: /\b(0[xX][0-9a-fA-F]+|\d+\.?\d*(?:[eE][+-]?\d+)?)\b/g
+      },
+      ts: {
+        comment: [/\/\/.*$/gm, /\/\*[\s\S]*?\*\//g],
+        string: /(`[^`]*`|&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /\b(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|extends|implements|interface|type|enum|namespace|declare|abstract|public|private|protected|readonly|new|this|typeof|instanceof|in|of|try|catch|finally|throw|async|await|import|export|default|from|as|null|undefined|true|false|void|yield|static|get|set|super|delete)\b/g,
+        number: /\b(0[xX][0-9a-fA-F]+|\d+\.?\d*(?:[eE][+-]?\d+)?)\b/g
+      },
+      py: {
+        comment: [/#.*$/gm],
+        string: /(&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /\b(def|class|import|from|as|if|elif|else|for|while|return|try|except|finally|with|lambda|yield|in|is|not|and|or|True|False|None|pass|break|continue|raise|global|nonlocal|assert|del)\b/g,
+        number: /\b\d+(?:\.\d+)?\b/g
+      },
+      json: {
+        comment: null,
+        string: /(&quot;.*?&quot;)/g,
+        keyword: /\b(true|false|null)\b/g,
+        number: /\b-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g
+      },
+      css: {
+        comment: [/\/\*[\s\S]*?\*\//g, /\/\/.*$/gm],
+        string: /(&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /(@[a-zA-Z-]+|#[0-9a-fA-F]{3,8}\b)/g,
+        number: /\b\d+(?:\.\d+)?(?:px|em|rem|%|vh|vw|s|ms|deg)?\b/g
+      },
+      html: {
+        comment: [/&lt;!--[\s\S]*?--&gt;/g],
+        string: /(&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /(&lt;\/?[a-zA-Z][\w-]*|\/?&gt;)/g,
+        number: null
+      },
+      sql: {
+        comment: [/--.*$/gm, /\/\*[\s\S]*?\*\//g],
+        string: /(&#039;.*?&#039;)/g,
+        keyword: /\b(SELECT|FROM|WHERE|INSERT|INTO|VALUES|UPDATE|SET|DELETE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AND|OR|NOT|NULL|IS|IN|LIKE|GROUP|BY|ORDER|HAVING|LIMIT|AS|CREATE|TABLE|ALTER|DROP|PRIMARY|KEY|FOREIGN|REFERENCES|DEFAULT|DISTINCT|UNION|ALL|CASE|WHEN|THEN|END|EXISTS|BETWEEN)\b/gi,
+        number: /\b\d+(?:\.\d+)?\b/g
+      },
+      sh: {
+        comment: [/#.*$/gm],
+        string: /(&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /\b(if|then|else|elif|fi|for|do|done|while|until|case|esac|function|return|export|local|echo|exit|break|continue|in|select)\b/g,
+        number: /\b\d+\b/g
+      },
+      yaml: {
+        comment: [/#.*$/gm],
+        string: /(&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /\b(true|false|null|yes|no|on|off)\b/gi,
+        number: /\b-?\d+(?:\.\d+)?\b/g
+      },
+      toml: {
+        comment: [/#.*$/gm],
+        string: /(&quot;.*?&quot;|&#039;.*?&#039;)/g,
+        keyword: /\b(true|false)\b/g,
+        number: /\b-?\d+(?:\.\d+)?\b/g
+      }
+    };
+
+    // C 項限定四語言家族：js/ts/py/json/css/html；其餘語言 fence 原樣輸出（不高亮）
+    const FENCE_HIGHLIGHT_LANGS = new Set(["js", "ts", "py", "json", "css", "html"]);
+
+    function highlightCode(code, langKey) {
+      const rules = CODE_HL_RULES[langKey];
+      let s = escapeHtml(code);
+      if (!rules) return s;
+      const stash = [];
+      // 佔位符哨兵改用 \u0000...\u0000（escapeHtml 後的原始碼不可能含控制字元），
+      // 避免像 Matrix4x4／idx1x 這類「x+數字+x」原始碼片段被誤判為佔位符而遭吃掉
+      function keep(fragmentHtml) { stash.push(fragmentHtml); return `\u0000q${stash.length - 1}q\u0000`; }
+      // 先吃掉 comment / string，避免關鍵字或數字誤吃到字串/註解內容
+      (rules.comment || []).forEach(re => {
+        s = s.replace(re, m => keep(`<span class="cf-comment">${m}</span>`));
+      });
+      if (rules.string) s = s.replace(rules.string, m => keep(`<span class="cf-string">${m}</span>`));
+      if (rules.keyword) s = s.replace(rules.keyword, m => `<span class="cf-keyword">${m}</span>`);
+      if (rules.number) s = s.replace(rules.number, m => `<span class="cf-number">${m}</span>`);
+      // 還原前檢查 stash[idx] 是否存在，找不到就保留原字串，不印出 "undefined"
+      s = s.replace(/\u0000q(\d+)q\u0000/g, (m, idx) => {
+        const frag = stash[Number(idx)];
+        return frag === undefined ? m : frag;
       });
       return s;
     }
@@ -1067,9 +1274,10 @@
       const lines = md.replace(/\r\n/g, "\n").split("\n");
       let html = "";
       let paragraph = [];
-      let listType = null;
       let inCode = false;
       let codeBuffer = [];
+      let codeLang = "";
+      const listStack = []; // { type: "ul"|"ol", indent: number }，巢狀清單指標堆疊
 
       function flushParagraph() {
         if (paragraph.length) {
@@ -1077,52 +1285,110 @@
           paragraph = [];
         }
       }
-      function closeList() {
-        if (listType) { html += `</${listType}>\n`; listType = null; }
+      function closeAllLists() {
+        while (listStack.length) { html += `</li></${listStack.pop().type}>\n`; }
+      }
+      function renderCodeFence() {
+        const langKey = normalizeLangKey(codeLang);
+        const codeText = codeBuffer.join("\n");
+        const body = FENCE_HIGHLIGHT_LANGS.has(langKey) ? highlightCode(codeText, langKey) : escapeHtml(codeText);
+        const langAttr = codeLang ? ` class="language-${escapeHtml(codeLang)}"` : "";
+        html += `<pre><code${langAttr}>${body}</code></pre>\n`;
+      }
+      // 依縮排堆疊組巢狀 ul/ol：<li> 故意不馬上關閉，讓下一層更深的清單能巢狀寫進同一個 <li> 裡
+      function pushListItem(type, indent, contentHtml, itemClass) {
+        while (listStack.length && indent < listStack[listStack.length - 1].indent) {
+          html += `</li></${listStack.pop().type}>\n`;
+        }
+        if (listStack.length && indent === listStack[listStack.length - 1].indent) {
+          if (listStack[listStack.length - 1].type !== type) {
+            html += `</li></${listStack.pop().type}>\n`;
+            html += `<${type}>\n`;
+            listStack.push({ type, indent });
+          } else {
+            html += `</li>\n`;
+          }
+        } else {
+          html += `<${type}>\n`;
+          listStack.push({ type, indent });
+        }
+        html += `<li${itemClass ? ` class="${itemClass}"` : ""}>${contentHtml}`;
       }
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        if (/^```/.test(line.trim())) {
-          if (!inCode) { flushParagraph(); closeList(); inCode = true; codeBuffer = []; }
-          else { html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`; inCode = false; }
+        const fence = line.trim().match(/^```(\S*)/);
+        if (fence) {
+          if (!inCode) { flushParagraph(); closeAllLists(); inCode = true; codeBuffer = []; codeLang = fence[1] || ""; }
+          else { renderCodeFence(); inCode = false; codeLang = ""; }
           continue;
         }
         if (inCode) { codeBuffer.push(line); continue; }
-        if (line.trim() === "") { flushParagraph(); closeList(); continue; }
+        if (line.trim() === "") { flushParagraph(); closeAllLists(); continue; }
+
+        // 引言塊（> 連續行合併；遞迴呼叫自己以支援巢狀 > >）
+        if (/^\s*>/.test(line)) {
+          flushParagraph(); closeAllLists();
+          const quoteLines = [];
+          while (i < lines.length && /^\s*>/.test(lines[i])) {
+            quoteLines.push(lines[i].replace(/^\s*>\s?/, ""));
+            i++;
+          }
+          i--;
+          html += `<blockquote>${markdownToHtml(quoteLines.join("\n"))}</blockquote>\n`;
+          continue;
+        }
 
         const table = parseTable(lines, i);
-        if (table) { flushParagraph(); closeList(); html += table.html + "\n"; i = table.nextIndex - 1; continue; }
+        if (table) { flushParagraph(); closeAllLists(); html += table.html + "\n"; i = table.nextIndex - 1; continue; }
 
         const heading = line.match(/^(#{1,6})\s+(.+)$/);
         if (heading) {
-          flushParagraph(); closeList();
+          flushParagraph(); closeAllLists();
           const level = heading[1].length;
           html += `<h${level}>${inlineMarkdownToHtml(heading[2].trim())}</h${level}>\n`;
           continue;
         }
 
-        const unordered = line.match(/^\s*[-*]\s+(.+)$/);
-        if (unordered) {
-          flushParagraph();
-          if (listType !== "ul") { closeList(); html += "<ul>\n"; listType = "ul"; }
-          html += `<li>${inlineMarkdownToHtml(unordered[1])}</li>\n`;
+        // 水平線：--- / *** / ___，允許字元間有空白（- - -）
+        if (/^([-*_])(\s*\1){2,}$/.test(line.trim())) {
+          flushParagraph(); closeAllLists();
+          html += "<hr>\n";
           continue;
         }
 
-        const ordered = line.match(/^\s*\d+\.\s+(.+)$/);
+        // Task list：- [ ] / - [x]，需在一般無序清單判斷之前先攔截
+        const task = line.match(/^(\s*)[-*]\s+\[([ xX])\]\s+(.+)$/);
+        if (task) {
+          flushParagraph();
+          const indent = task[1].length;
+          const checked = task[2].toLowerCase() === "x";
+          const content = `<input type="checkbox" disabled${checked ? " checked" : ""}> ${inlineMarkdownToHtml(task[3])}`;
+          pushListItem("ul", indent, content, "task-list-item");
+          continue;
+        }
+
+        // 巢狀無序清單：依縮排空白數決定層級
+        const unordered = line.match(/^(\s*)[-*]\s+(.+)$/);
+        if (unordered) {
+          flushParagraph();
+          pushListItem("ul", unordered[1].length, inlineMarkdownToHtml(unordered[2]));
+          continue;
+        }
+
+        // 巢狀有序清單：依縮排空白數決定層級
+        const ordered = line.match(/^(\s*)\d+\.\s+(.+)$/);
         if (ordered) {
           flushParagraph();
-          if (listType !== "ol") { closeList(); html += "<ol>\n"; listType = "ol"; }
-          html += `<li>${inlineMarkdownToHtml(ordered[1])}</li>\n`;
+          pushListItem("ol", ordered[1].length, inlineMarkdownToHtml(ordered[2]));
           continue;
         }
 
         paragraph.push(line.trim());
       }
       flushParagraph();
-      closeList();
-      if (inCode) html += `<pre><code>${escapeHtml(codeBuffer.join("\n"))}</code></pre>\n`;
+      closeAllLists();
+      if (inCode) renderCodeFence();
       return html;
     }
 
@@ -1317,6 +1583,8 @@
       if (ext === ".py") return "py";
       if (ext === ".json" || ext === ".score.json") return "json";
       if (ext === ".jsonl" || ext === ".blocks.jsonl") return "jsonl";
+      // D 項：js/ts/jsx/tsx/html/css/scss/sql/sh/yaml/toml → 通用 code 檢視（行號＋高亮＋mono），不再落到純文字
+      if (codeLangFromExtension(ext)) return "code";
       return "txt";
     }
 
@@ -1402,6 +1670,7 @@
       }
 
       rawEditor.value = state.content;
+      resetHistoryPointer();
       updateAll(size ?? new Blob([state.content]).size);
       localStorage.setItem("akasha-reader-draft", state.content);
       localStorage.setItem("akasha-reader-filename", state.filename);
@@ -1638,6 +1907,12 @@
 
     // --- Edit history ---
     const MAX_HISTORY = 10;
+    // F 項：undo/redo 改接既有 pushHistory 版本快照，用指標在快照陣列間移動
+    // （document.execCommand('undo') 已廢棄、Firefox 已移除，故不能再靠它）
+    // historyPointer === -1 代表目前顯示的是「還沒存檔的當前草稿」；0..N-1 代表 hist 陣列裡的某個快照
+    let historyPointer = -1;
+    let liveDraftSnapshot = null;
+    function resetHistoryPointer() { historyPointer = -1; liveDraftSnapshot = null; }
     function getHistoryKey() { return "akasha-history-" + state.filename; }
     function getHistory() {
       try { return JSON.parse(localStorage.getItem(getHistoryKey()) || "[]"); }
@@ -1648,6 +1923,7 @@
       hist.unshift({ time: Date.now(), label: label || "手動存檔", content });
       if (hist.length > MAX_HISTORY) hist.length = MAX_HISTORY;
       localStorage.setItem(getHistoryKey(), JSON.stringify(hist));
+      resetHistoryPointer(); // 新存檔點會讓 hist 陣列位移，指標歸零回「目前草稿」
       renderHistory();
     }
     function renderHistory() {
@@ -1730,6 +2006,7 @@
         state.dirty = false;
         rawEditor.value = state.content;
         state.activeTab = "raw";
+        resetHistoryPointer();
         updateEditUI();
         renderTabs();
       }
@@ -1868,13 +2145,61 @@
     }
 
     // --- Undo / Redo ---
+    // F 項：document.execCommand('undo'/'redo') 已廢棄（Firefox 已移除），
+    // 改接既有 pushHistory 版本快照系統，用 historyPointer 在快照間移動（快照式，非逐字元）
+    // 程式化指派 rawEditor.value 不會觸發 input 事件，該事件是全站唯一的重繪＋草稿存檔入口，
+    // 所以 undo/redo 換內容後要自己補呼叫 updateAll() 重繪畫面、並回寫 localStorage 草稿，
+    // 否則預覽／檔案資訊／分頁全部停在舊內容，要等使用者再打一個字才會自癒。
+    // 編輯模式（state.editMode）沿用 input 監聽器原本的邏輯：草稿自動存檔只在非編輯模式生效，
+    // 編輯中的變更維持由 state.dirty 旗標把關，交給既有的存檔／捨棄流程處理。
     function editorUndo() {
       rawEditor.focus();
-      document.execCommand("undo");
+      const hist = getHistory();
+      if (!hist.length) { statusEl.textContent = "沒有可復原的存檔紀錄"; return; }
+      if (historyPointer === -1) liveDraftSnapshot = rawEditor.value;
+      const nextPointer = historyPointer + 1;
+      if (nextPointer >= hist.length) { statusEl.textContent = "已經是最早的存檔紀錄"; return; }
+      historyPointer = nextPointer;
+      rawEditor.value = hist[historyPointer].content;
+      state.content = rawEditor.value;
+      state.dirty = true;
+      if (!state.editMode) {
+        // 復原後內容已換成舊快照，json/jsonl 檔案要重跑一次解析，
+        // 否則 Pretty／樹狀檢視或 blocks 徽章仍停在復原前的結果，與原始碼對不上（不可用 setFile，會打掉歷史指標）
+        if (state.mode === "json") {
+          const parsed = parseJsonWithInfo(state.content);
+          state.parsedJson = parsed.data;
+          state.jsonError = parsed.error;
+        } else if (state.mode === "jsonl") {
+          state._scriptBlocks = parseBlocksJsonl(state.content);
+        }
+        updateAll(new Blob([state.content]).size);
+        localStorage.setItem("akasha-reader-draft", state.content);
+      }
+      statusEl.textContent = "已復原至：" + hist[historyPointer].label;
     }
     function editorRedo() {
       rawEditor.focus();
-      document.execCommand("redo");
+      if (historyPointer <= -1) { statusEl.textContent = "沒有可重做的紀錄"; return; }
+      historyPointer -= 1;
+      const hist = getHistory();
+      rawEditor.value = historyPointer === -1 ? (liveDraftSnapshot ?? state.content) : hist[historyPointer].content;
+      state.content = rawEditor.value;
+      state.dirty = true;
+      if (!state.editMode) {
+        // 重做後內容已換成新快照，json/jsonl 檔案要重跑一次解析，
+        // 否則 Pretty／樹狀檢視或 blocks 徽章仍停在重做前的結果，與原始碼對不上（不可用 setFile，會打掉歷史指標）
+        if (state.mode === "json") {
+          const parsed = parseJsonWithInfo(state.content);
+          state.parsedJson = parsed.data;
+          state.jsonError = parsed.error;
+        } else if (state.mode === "jsonl") {
+          state._scriptBlocks = parseBlocksJsonl(state.content);
+        }
+        updateAll(new Blob([state.content]).size);
+        localStorage.setItem("akasha-reader-draft", state.content);
+      }
+      statusEl.textContent = historyPointer === -1 ? "已重做至目前草稿" : "已重做至：" + hist[historyPointer].label;
     }
 
     function renderTabs() {
@@ -1888,6 +2213,7 @@
         if (state.mode === "json" && !state.jsonError) tabs.push(["pretty", "Pretty JSON"], ["tree", "樹狀 JSON"]);
         if (state.mode === "json" && state.parsedJson && isScoreJson(state.parsedJson)) tabs.push(["score", "Score View"]);
         if (state.mode === "py") tabs.push(["python", "Python View"]);
+        if (state.mode === "code") tabs.push(["code", "Code View"]);
         if (state.mode === "txt") tabs.push(["pretty", "文字閱讀"]);
         tabs.push(["raw", "原始碼"]);
       }
@@ -1910,6 +2236,46 @@
       if (viewWrap) {
         viewWrap.classList.toggle("paper-mode", state.mode === "md" || state.activeTab === "raw");
       }
+      updateSearchNav();
+    }
+
+    // ═══════════════════════════════════════════
+    //  E 項：搜尋命中計數 + 上一個/下一個 + 跳轉置中高亮
+    // ═══════════════════════════════════════════
+    function getActiveSearchHits() {
+      const activeView = document.querySelector(".view.active");
+      return activeView ? Array.from(activeView.querySelectorAll(".search-hit")) : [];
+    }
+
+    function updateSearchNav(options) {
+      options = options || {};
+      const countEl = document.getElementById("searchCount");
+      if (!state.searchTerm.trim()) {
+        if (countEl) countEl.textContent = "";
+        return;
+      }
+      const hits = getActiveSearchHits();
+      hits.forEach((el, idx) => el.setAttribute("data-hit", idx));
+      const total = hits.length;
+      if (total === 0) {
+        if (countEl) countEl.textContent = "0/0";
+        return;
+      }
+      if (state.searchIndex >= total) state.searchIndex = 0;
+      if (state.searchIndex < 0) state.searchIndex = total - 1;
+      hits.forEach((el, idx) => el.classList.toggle("search-hit-current", idx === state.searchIndex));
+      if (countEl) countEl.textContent = `${state.searchIndex + 1}/${total}`;
+      if (options.jump) {
+        const current = hits[state.searchIndex];
+        if (current) current.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+    }
+
+    function searchGoTo(delta) {
+      const hits = getActiveSearchHits();
+      if (!hits.length) return;
+      state.searchIndex = ((state.searchIndex + delta) % hits.length + hits.length) % hits.length;
+      updateSearchNav({ jump: true });
     }
 
     function highlightSearchHtml(html) {
@@ -1952,6 +2318,10 @@
 
       if (state.mode === "py") {
         views.python.innerHTML = renderPythonView(state.content);
+      }
+
+      if (state.mode === "code") {
+        views.code.innerHTML = renderCodeView(state.content, state.filename);
       }
     }
 
@@ -2127,6 +2497,24 @@
     }
 
     // ═══════════════════════════════════════════
+    //  CODE VIEW（D 項：通用 code 檢視，行號＋C 的高亮＋mono 字體）
+    // ═══════════════════════════════════════════
+    function renderCodeView(content, filename) {
+      const langKey = codeLangFromExtension(getExtension(filename));
+      const normalized = content.replace(/\r\n/g, "\n");
+      // 整段一起高亮（不逐行），才能正確吃到跨行的區塊註解 / 樣板字串
+      const highlighted = langKey ? highlightCode(normalized, langKey) : escapeHtml(normalized);
+      const rows = highlighted.split("\n");
+      const lineCount = normalized.split("\n").length;
+      let table = `<table class="code-table"><tbody>`;
+      for (let i = 0; i < lineCount; i++) {
+        table += `<tr><td class="line-no">${i + 1}</td><td class="line-code">${highlightSearchHtml(rows[i] ?? "")}</td></tr>`;
+      }
+      table += `</tbody></table>`;
+      return `<div class="code-view-wrap">${table}</div>`;
+    }
+
+    // ═══════════════════════════════════════════
     //  SUMMARY EXPORT
     // ═══════════════════════════════════════════
     function makeSummary() {
@@ -2242,6 +2630,20 @@
         setFile(state.filename || "edited.txt", state.content);
       } else {
         state.dirty = true;
+      }
+    });
+
+    // F 項：textarea 的 Ctrl+Z / Ctrl+Y 攔截，接去 pushHistory 版本快照式 undo/redo
+    rawEditor.addEventListener("keydown", event => {
+      const ctrl = event.ctrlKey || event.metaKey;
+      if (!ctrl) return;
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) {
+        event.preventDefault();
+        editorUndo();
+      } else if (key === "y" || (key === "z" && event.shiftKey)) {
+        event.preventDefault();
+        editorRedo();
       }
     });
 
@@ -2449,10 +2851,15 @@
     // --- Search ---
     document.getElementById("searchBtn").addEventListener("click", () => {
       state.searchTerm = document.getElementById("searchInput").value;
+      state.searchIndex = 0;
       renderViews();
       renderTabs();
+      updateSearchNav({ jump: true });
       statusEl.textContent = state.searchTerm ? `搜尋：${state.searchTerm}` : "搜尋已清空";
     });
+
+    document.getElementById("searchPrev").addEventListener("click", () => searchGoTo(-1));
+    document.getElementById("searchNext").addEventListener("click", () => searchGoTo(1));
 
     document.getElementById("searchInput").addEventListener("keydown", event => {
       if (event.key === "Enter") document.getElementById("searchBtn").click();

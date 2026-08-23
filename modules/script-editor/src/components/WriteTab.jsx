@@ -638,15 +638,16 @@ const WriteTab = React.forwardRef(function WriteTab({ blocks, setBlocks, charact
     <div className="sw-write-root" style={{
       flex: 1,
       display: "grid",
-      gridTemplateColumns: "1fr 300px",
-      gridTemplateRows: "1fr auto",
+      /* gridTemplateColumns / gridTemplateRows 抽到 tokens.css .sw-write-root
+         （含 @media max-width:900px 響應式堆疊，卡6） */
       overflow: "hidden",
       animation: "swFade 200ms ease",
       background: "var(--page-bg)",
     }}>
       {/* ───── manuscript column (left) — paper-clip genre tabs + ruled
              manuscript paper + pen-tray persona slots, HANDOFF §5 ───── */}
-      <div className="sw-manuscript-col" style={{ gridColumn: "1 / 2", gridRow: "1 / 2" }}>
+      {/* grid-column / grid-row 抽到 tokens.css .sw-manuscript-col（含響應式，卡6） */}
+      <div className="sw-manuscript-col">
         <div className="sw-genre-tabs seg seg--tab" role="tablist" aria-label="體裁">
           {WRITE_MODES.map(mode => {
             const active = writeMode === mode;
@@ -706,7 +707,8 @@ const WriteTab = React.forwardRef(function WriteTab({ blocks, setBlocks, charact
       </div>
 
       {/* ───── index rail (right) — 5 preview tabs as index cards ───── */}
-      <div className="sw-index-rail" style={{ gridColumn: "2 / 3", gridRow: "1 / 2" }}>
+      {/* grid-column / grid-row 抽到 tokens.css .sw-index-rail（含響應式，卡6） */}
+      <div className="sw-index-rail">
         <div className="sw-index-tabs" role="tablist" aria-label="預覽">
           {availablePreviewTabs.map(id => {
             const active = previewTab === id;
@@ -731,7 +733,8 @@ const WriteTab = React.forwardRef(function WriteTab({ blocks, setBlocks, charact
       </div>
 
       {/* ───── status bar (row 2, spans both cols) — dark 28px, HANDOFF §5 ───── */}
-      <div className="sw-statusbar" style={{ gridColumn: "1 / 3", gridRow: "2 / 3" }}>
+      {/* grid-column / grid-row 抽到 tokens.css .sw-statusbar（含響應式，卡6） */}
+      <div className="sw-statusbar">
         <span>LN {line} · COL {col}</span>
         {activeChapter != null && chapters[activeChapter] && (
           <span onClick={() => setActiveChapter(null)} title="點擊回到全部"

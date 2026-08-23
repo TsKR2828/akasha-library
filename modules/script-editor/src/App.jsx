@@ -2138,9 +2138,9 @@ function DraftGenerator({ onClose, onInsert, characters, charColors = {}, sceneL
         <SwBtn icon="close" size="sm" onClick={onClose}>關閉</SwBtn>
       </div>
 
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+      <div className="sw-modal-row" style={{display:"flex",flex:1,overflow:"hidden"}}>
         {/* Left — Config */}
-        <aside style={{width:280,minWidth:280,borderRight:"1px solid var(--navy-line)",padding:"16px 14px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
+        <aside className="sw-modal-aside" style={{width:280,minWidth:280,borderRight:"1px solid var(--navy-line)",padding:"16px 14px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
           {/* Template select */}
           <div>
             <div style={{fontFamily:"var(--font-serif-en)",fontVariant:"small-caps",fontSize:10,letterSpacing:"0.14em",color:"var(--gold-dim)",textTransform:"uppercase",marginBottom:6}}>Template 模板</div>
@@ -2390,9 +2390,9 @@ function ScriptLinter({ blocks, characters, charColors = {}, onClose, onGoToBloc
         <SwBtn icon="close" size="sm" onClick={onClose}>關閉</SwBtn>
       </div>
 
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+      <div className="sw-modal-row" style={{display:"flex",flex:1,overflow:"hidden"}}>
         {/* Left — Summary + Filters */}
-        <aside style={{width:240,minWidth:240,borderRight:"1px solid var(--navy-line)",padding:"16px 14px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
+        <aside className="sw-modal-aside" style={{width:240,minWidth:240,borderRight:"1px solid var(--navy-line)",padding:"16px 14px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
           {/* Summary cards */}
           <div style={{display:"flex",gap:8}}>
             <div onClick={() => setFilterSev(filterSev==="error"?"all":"error")} style={{flex:1,padding:"10px 8px",background:filterSev==="error"?"rgba(224,92,108,0.1)":"rgba(224,92,108,0.03)",border:`1px solid ${filterSev==="error"?"#e05c6c":"var(--navy-line)"}`,borderRadius:3,cursor:"pointer",textAlign:"center"}}>
@@ -2559,9 +2559,9 @@ function SoundPanel({ onClose, onAssign, currentBlockBgm }) {
         <SwBtn icon="close" size="sm" onClick={onClose}>關閉</SwBtn>
       </div>
 
-      <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+      <div className="sw-modal-row" style={{display:"flex",flex:1,overflow:"hidden"}}>
         {/* Left — Filters + 零韻 */}
-        <aside style={{width:260,minWidth:260,borderRight:"1px solid var(--navy-line)",padding:"16px 14px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
+        <aside className="sw-modal-aside" style={{width:260,minWidth:260,borderRight:"1px solid var(--navy-line)",padding:"16px 14px",overflowY:"auto",display:"flex",flexDirection:"column",gap:14}}>
           {/* 零韻 */}
           <div>
             <div style={{fontFamily:"var(--font-serif-en)",fontVariant:"small-caps",fontSize:10,letterSpacing:"0.14em",color:"var(--gold-dim)",textTransform:"uppercase",marginBottom:6}}>零韻 · Zero Rhyme</div>
@@ -2666,7 +2666,7 @@ function SoundPanel({ onClose, onAssign, currentBlockBgm }) {
         </div>
 
         {/* Right — Current assignment info */}
-        <aside style={{width:200,minWidth:200,borderLeft:"1px solid var(--navy-line)",padding:"16px 14px",display:"flex",flexDirection:"column",gap:12}}>
+        <aside className="sw-modal-aside" style={{width:200,minWidth:200,borderLeft:"1px solid var(--navy-line)",padding:"16px 14px",display:"flex",flexDirection:"column",gap:12}}>
           <div style={{fontFamily:"var(--font-serif-en)",fontVariant:"small-caps",fontSize:10,letterSpacing:"0.14em",color:"var(--text-tertiary)",textTransform:"uppercase"}}>Current Block</div>
           {currentBlockBgm ? (
             <div>
@@ -2695,8 +2695,10 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
     const first = blocks.find(b => b.type === "dialogue");
     return first?.id || null;
   });
-  const [leftOpen, setLeftOpen] = React.useState(true);
-  const [rightOpen, setRightOpen] = React.useState(true);
+  // 手機（≤900px）預設收合左右欄，避免兩個 fixed 覆蓋層在載入瞬間疊滿整個
+  // 螢幕、擋住中央 BLOCKS 欄與收合按鈕本身（卡6 響應式）；桌面沿用原預設展開
+  const [leftOpen, setLeftOpen] = React.useState(() => typeof window === "undefined" || window.innerWidth > 900);
+  const [rightOpen, setRightOpen] = React.useState(() => typeof window === "undefined" || window.innerWidth > 900);
   const [forgeOpen, setForgeOpen] = React.useState(false);
   const [graphOpen, setGraphOpen] = React.useState(false);
   const [soundOpen, setSoundOpen] = React.useState(false);
@@ -2705,6 +2707,19 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
   const [historyOpen, setHistoryOpen] = React.useState(false);
   const [charModalOpen, setCharModalOpen] = React.useState(false);
   const [charModalTarget, setCharModalTarget] = React.useState(null);
+
+  // 手機斷點下 Personae/AVG 欄變成覆蓋層時，補 Esc 關閉（退件修復，卡6）；
+  // 桌面版欄位是 in-flow 排版，Esc 沒有「覆蓋層」語意，故只在 ≤900px 生效
+  React.useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== "Escape") return;
+      if (typeof window !== "undefined" && window.innerWidth > 900) return;
+      if (leftOpen) setLeftOpen(false);
+      if (rightOpen) setRightOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [leftOpen, rightOpen]);
 
   const recomputeColors = (chars) => {
     const colors = {};
@@ -2882,16 +2897,22 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
     <div style={{ display: "flex", flex: 1, overflow: "hidden", position: "relative" }}>
       {/* LEFT — PERSONAE */}
       {leftOpen && (
-        <aside style={{
-          width: leftW, minWidth: leftW,
-          borderRight: "1px solid var(--navy-line)",
-          background: "linear-gradient(180deg, var(--navy-light), var(--navy))",
-          display: "flex", flexDirection: "column",
-          overflow: "hidden",
-        }}>
+        <>
+          {/* 手機斷點覆蓋層的關閉面（退件修復，卡6）：桌面 in-flow 版面下
+              CSS 維持 display:none，點擊不會誤觸任何東西 */}
+          <div className="sw-aside-backdrop" onClick={() => setLeftOpen(false)} aria-hidden="true" />
+          <aside className="sw-editor-aside sw-editor-aside--left" style={{
+            width: leftW, minWidth: leftW,
+            borderRight: "1px solid var(--navy-line)",
+            background: "linear-gradient(180deg, var(--navy-light), var(--navy))",
+            display: "flex", flexDirection: "column",
+            overflow: "hidden",
+          }}>
           <div style={{ padding: "16px 18px 12px", display: "flex", alignItems: "center", gap: 6 }}>
             <SectionLabel latin="Personae" zh="角色" />
             <span style={{ flex: 1 }} />
+            <button className="sw-aside-close" onClick={() => setLeftOpen(false)} title="關閉角色欄"
+              style={{ background: "transparent", border: "1px solid var(--navy-line)", color: "var(--text-tertiary)", width: 22, height: 22, borderRadius: 2, cursor: "pointer", alignItems: "center", justifyContent: "center", fontSize: 13, padding: 0 }}>&times;</button>
             <button onClick={() => { setCharModalTarget(null); setCharModalOpen(true); }} title="新增角色"
               style={{ background: "transparent", border: "1px solid var(--navy-line)", color: "var(--gold-dim)", width: 22, height: 22, borderRadius: 2, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, padding: 0 }}>+</button>
             {ch && <button onClick={() => { setCharModalTarget(ch); setCharModalOpen(true); }} title="編輯角色"
@@ -2914,7 +2935,8 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
             {ch && <CharDetail c={ch} notes={notes}
               onAddNote={addNote} onUpdateNote={updateNote} onRemoveNote={removeNote} />}
           </div>
-        </aside>
+          </aside>
+        </>
       )}
 
       {/* MIDDLE — BLOCKS */}
@@ -2998,7 +3020,7 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
       </main>
 
       {/* export bar — outside main to avoid overflow clipping */}
-      <div style={{
+      <div className="sw-editor-exportbar" style={{
         position: "absolute", left: leftW, right: rightW, bottom: 0, zIndex: 20,
         background: "color-mix(in srgb, var(--navy-deep) 94%, transparent)", backdropFilter: "blur(8px)",
         borderTop: "1px solid var(--gold-line)",
@@ -3130,15 +3152,19 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
 
       {/* RIGHT — AVG PANEL (Phase 11) */}
       {rightOpen && (
-        <aside style={{
-          width: rightW, minWidth: rightW,
-          borderLeft: "1px solid var(--navy-line)",
-          background: "linear-gradient(180deg, var(--navy-light), var(--navy))",
-          display: "flex", flexDirection: "column",
-          overflow: "hidden",
-        }}>
-          <div style={{ padding: "16px 16px 12px" }}>
+        <>
+          <div className="sw-aside-backdrop" onClick={() => setRightOpen(false)} aria-hidden="true" />
+          <aside className="sw-editor-aside sw-editor-aside--right" style={{
+            width: rightW, minWidth: rightW,
+            borderLeft: "1px solid var(--navy-line)",
+            background: "linear-gradient(180deg, var(--navy-light), var(--navy))",
+            display: "flex", flexDirection: "column",
+            overflow: "hidden",
+          }}>
+          <div style={{ padding: "16px 16px 12px", position: "relative" }}>
             <SectionLabel latin="Apparatus" zh="AVG 設定" accent="gold" />
+            <button className="sw-aside-close" onClick={() => setRightOpen(false)} title="關閉 AVG 欄"
+              style={{ position: "absolute", top: 12, right: 12, background: "transparent", border: "1px solid var(--navy-line)", color: "var(--text-tertiary)", width: 22, height: 22, borderRadius: 2, cursor: "pointer", alignItems: "center", justifyContent: "center", fontSize: 13, padding: 0 }}>&times;</button>
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "0 14px 16px" }}>
@@ -3188,7 +3214,8 @@ function EditorView({ blocks, setBlocks, characters, charColors, setCharacters, 
               </div>
             )}
           </div>
-        </aside>
+          </aside>
+        </>
       )}
     </div>
   );

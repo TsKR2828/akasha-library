@@ -256,6 +256,30 @@
     }
     .im-rail-head .index-card__label { margin-bottom: 0; }
 
+    .im-notes-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .im-notes-search {
+      flex: 1;
+      min-width: 0;
+      height: 26px;
+      appearance: none;
+      background: var(--page-bg);
+      border: 1px solid var(--page-border);
+      border-radius: var(--r-soft);
+      color: var(--page-ink);
+      font-family: inherit;
+      font-size: 11px;
+      padding: 0 8px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .im-notes-search:focus { border-color: var(--ink-intimarium); }
+    .im-notes-search::placeholder { color: var(--page-pencil); }
+
     .im-filter-bar {
       display: flex;
       flex-wrap: wrap;
@@ -347,6 +371,27 @@
       line-height: 1.7;
       color: var(--page-pencil);
     }
+
+    .im-notes-error {
+      text-align: center;
+      padding: 20px 6px;
+      font-family: var(--font-body);
+      font-size: 12px;
+      line-height: 1.7;
+      color: var(--danger);
+    }
+    .im-notes-error a {
+      color: var(--ink-intimarium);
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .im-notes-loadmore {
+      width: 100%;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    .im-notes-loadmore[hidden] { display: none; }
 
     .im-tea {
       background: var(--postit-lavender);
@@ -534,6 +579,10 @@
         <button class="btn btn--ghost btn--xs" id="btnNewNote" title="新增一篇手札">＋ 新篇</button>
         <button class="btn btn--ghost btn--xs" id="btnCloseNotes" title="關閉手札">✕</button>
       </div>
+      <div class="im-notes-toolbar">
+        <input type="search" id="notesSearch" class="im-notes-search" placeholder="搜尋標題／內文／標籤…" aria-label="搜尋手札">
+        <button class="btn btn--ghost btn--xs" id="btnNotesSort" title="切換排序">新→舊</button>
+      </div>
       <div class="im-filter-bar" id="filterBar"></div>
       <div class="im-notes-scroll" id="notesScroll">
         <div class="im-notes-empty" id="notesEmpty">
@@ -541,6 +590,7 @@
           <div class="im-notes-empty__sub">想到什麼，就從第一句開始——對話中零韻會問要不要整理成手札。</div>
         </div>
       </div>
+      <button class="btn btn--ghost btn--xs im-notes-loadmore" id="btnLoadMoreNotes" hidden>載入更多</button>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn" id="btnExportMd" style="flex:1;justify-content:center">匯出 MD</button>
         <button class="btn" id="btnExportJson" style="flex:1;justify-content:center">匯出 JSON</button>
@@ -650,6 +700,7 @@
 
 const MODULE_NAME = 'private-reading-room';
 const CHAT_STORE_KEY = 'akasha-readingroom-chat';
+const NOTES_PAGE_SIZE = 20;
 
 // ===== State =====
 const state = {
@@ -658,6 +709,9 @@ const state = {
   messages: [],        // { role, text, time }
   notes: [],           // cached from IndexedDB
   filterTag: null,     // active tag filter (null = show all)
+  noteSearch: '',       // 手札搜尋字串（比對標題/內文/tags）
+  noteSort: 'desc',     // 'desc' = 新→舊, 'asc' = 舊→新
+  notesVisible: NOTES_PAGE_SIZE, // 分頁：目前顯示筆數（過濾後重算）
   sending: false,
   typewriterTimer: null,
 };
@@ -679,6 +733,9 @@ const btnNewNote = $('btnNewNote');
 const saveOverlay = $('saveOverlay');
 const editOverlay = $('editOverlay');
 const filterBar = $('filterBar');
+const notesSearchInput = $('notesSearch');
+const btnNotesSort = $('btnNotesSort');
+const btnLoadMoreNotes = $('btnLoadMoreNotes');
 const toastEl = $('toast');
 
 // ===== Toast (shared .toast component) =====
@@ -724,6 +781,15 @@ function escapeHtml(str) {
 
 function formatClock(d) {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+// 輕量 debounce（無依賴）：延遲 ms 後才執行最後一次呼叫
+function debounce(fn, ms) {
+  let timer = null;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
 }
 
 // 輕量 Markdown 渲染（無依賴）：先 escapeHtml 再轉 **粗體**、`行內碼`、- 清單、換行
@@ -1003,13 +1069,16 @@ async function loadNotes() {
     // Use parent window's memory API
     const memories = await callParentMemory('getAll', MODULE_NAME);
     state.notes = memories || [];
+    state.notesVisible = NOTES_PAGE_SIZE;
     renderFilterBar();
     renderNotes();
   } catch (err) {
     console.warn('Failed to load notes:', err);
     state.notes = [];
-    renderFilterBar();
-    renderNotes();
+    filterBar.innerHTML = '';
+    btnLoadMoreNotes.hidden = true;
+    notesScroll.innerHTML = `
+      <div class="im-notes-error">手札載入失敗——<a data-action="retry-notes">重試</a></div>`;
   }
 }
 
@@ -1031,41 +1100,61 @@ function renderFilterBar() {
     const btn = e.target.closest('.im-filter-tag');
     if (!btn) return;
     state.filterTag = btn.dataset.tag || null;
+    state.notesVisible = NOTES_PAGE_SIZE;
     renderFilterBar();
     renderNotes();
   };
 }
 
+// 手札是否符合搜尋字串（比對標題／內文／tags，不分大小寫）
+function noteMatchesSearch(n, q) {
+  if (!q) return true;
+  const hay = `${n.title || ''} ${n.content || ''} ${(n.tags || []).join(' ')}`.toLowerCase();
+  return hay.includes(q);
+}
+
 function renderNotes() {
   const container = notesScroll;
-  const empty = $('notesEmpty');
 
   const sorted = state.notes
     .slice()
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    .sort((a, b) => state.noteSort === 'asc'
+      ? new Date(a.createdAt) - new Date(b.createdAt)
+      : new Date(b.createdAt) - new Date(a.createdAt));
 
-  const filtered = state.filterTag
+  const tagFiltered = state.filterTag
     ? sorted.filter(n => (n.tags || []).includes(state.filterTag))
     : sorted;
 
+  const q = state.noteSearch.trim().toLowerCase();
+  const filtered = q ? tagFiltered.filter(n => noteMatchesSearch(n, q)) : tagFiltered;
+
   if (filtered.length === 0) {
-    container.innerHTML = '';
+    btnLoadMoreNotes.hidden = true;
     if (state.notes.length === 0) {
-      empty.innerHTML = `
-        <div class="im-notes-empty__line">這裡的話不出這張桌子。</div>
-        <div class="im-notes-empty__sub">想到什麼，就從第一句開始——對話中零韻會問要不要整理成手札。</div>`;
+      container.innerHTML = `
+        <div class="im-notes-empty" id="notesEmpty">
+          <div class="im-notes-empty__line">這裡的話不出這張桌子。</div>
+          <div class="im-notes-empty__sub">想到什麼，就從第一句開始——對話中零韻會問要不要整理成手札。</div>
+        </div>`;
+    } else if (q) {
+      container.innerHTML = `
+        <div class="im-notes-empty" id="notesEmpty">
+          <div class="im-notes-empty__line">沒有符合的手札</div>
+          <div class="im-notes-empty__sub">搜尋不到「${escapeHtml(state.noteSearch.trim())}」相關的篇章。</div>
+        </div>`;
     } else {
-      empty.innerHTML = `
-        <div class="im-notes-empty__line">沒有符合的手札</div>
-        <div class="im-notes-empty__sub">找不到標記「#${escapeHtml(state.filterTag)}」的篇章。</div>`;
+      container.innerHTML = `
+        <div class="im-notes-empty" id="notesEmpty">
+          <div class="im-notes-empty__line">沒有符合的手札</div>
+          <div class="im-notes-empty__sub">找不到標記「#${escapeHtml(state.filterTag)}」的篇章。</div>
+        </div>`;
     }
-    container.appendChild(empty);
-    empty.style.display = '';
     return;
   }
 
-  empty.style.display = 'none';
-  container.innerHTML = filtered.map(n => `
+  const visible = filtered.slice(0, state.notesVisible);
+  container.innerHTML = visible.map(n => `
     <div class="im-note" data-id="${escapeHtml(n.id)}">
       <div class="im-note__title">${escapeHtml(n.title || '(無標題)')}</div>
       <div class="im-note__body">${escapeHtml(truncate(n.content, 200))}</div>
@@ -1074,12 +1163,54 @@ function renderNotes() {
         ${(n.tags || []).map(t => '<span>#' + escapeHtml(t) + '</span>').join('')}
       </div>
       <div class="im-note__actions">
-        <button class="btn btn--xs" onclick="window._viewNote('${escapeHtml(n.id)}')">編輯</button>
-        <button class="btn btn--xs btn--danger" onclick="window._deleteNote('${escapeHtml(n.id)}')">刪除</button>
+        <button class="btn btn--xs" data-action="edit">編輯</button>
+        <button class="btn btn--xs btn--danger" data-action="delete">刪除</button>
       </div>
     </div>
   `).join('');
+
+  btnLoadMoreNotes.hidden = filtered.length <= visible.length;
 }
+
+// 事件委派：卡片內的編輯／刪除按鈕，以及錯誤條的重試連結
+notesScroll.addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+
+  if (target.dataset.action === 'retry-notes') {
+    loadNotes();
+    return;
+  }
+
+  const card = target.closest('.im-note');
+  if (!card) return;
+  const id = card.dataset.id;
+
+  if (target.dataset.action === 'edit') {
+    const note = state.notes.find(n => n.id === id);
+    if (note) openEditDialog(note);
+  } else if (target.dataset.action === 'delete') {
+    deleteNote(id);
+  }
+});
+
+notesSearchInput.addEventListener('input', debounce((e) => {
+  state.noteSearch = e.target.value;
+  state.notesVisible = NOTES_PAGE_SIZE;
+  renderNotes();
+}, 200));
+
+btnNotesSort.addEventListener('click', () => {
+  state.noteSort = state.noteSort === 'desc' ? 'asc' : 'desc';
+  btnNotesSort.textContent = state.noteSort === 'desc' ? '新→舊' : '舊→新';
+  state.notesVisible = NOTES_PAGE_SIZE;
+  renderNotes();
+});
+
+btnLoadMoreNotes.addEventListener('click', () => {
+  state.notesVisible += NOTES_PAGE_SIZE;
+  renderNotes();
+});
 
 function truncate(s, n) {
   return (s || '').length > n ? s.slice(0, n) + '…' : (s || '');
@@ -1126,7 +1257,6 @@ window.addEventListener('message', (e) => {
   }
 });
 
-// Global handlers for inline onclick
 let editingNoteId = null; // null = 新篇（建立模式）
 
 function openEditDialog(note) {
@@ -1142,12 +1272,6 @@ function openEditDialog(note) {
   editOverlay.classList.add('active');
   $('editTitle').focus();
 }
-
-window._viewNote = async (id) => {
-  const note = state.notes.find(n => n.id === id);
-  if (!note) return;
-  openEditDialog(note);
-};
 
 btnNewNote.addEventListener('click', () => openEditDialog(null));
 
@@ -1183,7 +1307,7 @@ $('editSave').addEventListener('click', async () => {
   }
 });
 
-window._deleteNote = async (id) => {
+async function deleteNote(id) {
   if (!confirm('確定要刪除這筆手札嗎？')) return;
   try {
     await callParentMemory('delete', id);
@@ -1192,7 +1316,7 @@ window._deleteNote = async (id) => {
   } catch (err) {
     showToast('刪除失敗：' + err.message);
   }
-};
+}
 
 // ===== Memory Save Dialog =====
 let pendingSaveContent = '';

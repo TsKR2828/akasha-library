@@ -236,6 +236,19 @@ async function generateEmbeddings(texts, settings) {
   return null;
 }
 
+// ===== 降級可見化 =====
+
+/**
+ * dense embedding 失敗、靜默降級為 BM25 時，透過事件通知外層 UI（例如顯示提示 badge）。
+ * 降級行為本身不變——RAG 仍會用 BM25 繼續運作，這裡只是讓呼叫端有機會讓使用者知道。
+ */
+function emitDegraded(reason) {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  try {
+    window.dispatchEvent(new CustomEvent('akasha-rag-degraded', { detail: { reason } }));
+  } catch { /* CustomEvent 不可用時安靜略過，不影響降級主流程 */ }
+}
+
 // ===== Cosine Similarity =====
 
 function cosineSim(a, b) {
@@ -306,6 +319,7 @@ export async function indexPDF(pdfDoc, fileId, settings, onProgress) {
       }
     } catch (err) {
       console.warn('Embedding generation failed, using BM25 only:', err.message);
+      emitDegraded(err.message);
     }
   }
 
@@ -349,7 +363,15 @@ export async function queryRelevant(fileId, query, settings, topK = 5) {
       }
     } catch (err) {
       console.warn('Dense retrieval failed, falling back to BM25:', err.message);
+      emitDegraded(err.message);
     }
+  } else {
+    // 沒有進入 dense 檢索分支：可能是未設定 embedding 設定（沒有 BYOK key 或非 coin 模式），
+    // 也可能是索引階段沒有產生向量。這種情況原本會靜默走 BM25，呼叫端完全無從得知——
+    // 這裡一併視為降級並通知外層 UI，維持「降級行為不變、只是變得可見」的原則。
+    emitDegraded(hasDense
+      ? 'dense query unavailable: no embedding provider configured'
+      : 'no dense embeddings indexed, using BM25');
   }
 
   // Tier 1: BM25 keyword search (always works)

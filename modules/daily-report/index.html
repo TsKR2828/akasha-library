@@ -316,6 +316,47 @@
       white-space: nowrap;
     }
 
+    /* parseMdReport 降級路徑產生的 heading/quote/table/text 區塊樣式 */
+    .gz-subhead {
+      font-family: var(--font-serif-tc);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--ink-gazette);
+      margin: 10px 0 4px;
+    }
+    .gz-quote {
+      margin: 8px 0;
+      padding: 4px 12px;
+      border-left: 2px solid var(--page-border);
+      color: var(--page-ink-mid);
+      font-style: italic;
+    }
+    .gz-raw-text {
+      margin: 6px 0;
+      color: var(--page-ink-mid);
+    }
+    .gz-table-wrap {
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+    .gz-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .gz-table th, .gz-table td {
+      border: 1px solid var(--page-border);
+      padding: 4px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    .gz-table th {
+      color: var(--ink-gazette);
+      font-weight: 700;
+      background: color-mix(in srgb, var(--ink-gazette) 8%, transparent);
+    }
+
     .gz-footer {
       margin-top: 30px;
       padding-top: 12px;
@@ -852,6 +893,8 @@ function issueLineParts(report) {
     ? `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 星期${WEEKDAY_ZH[d.getDay()]} · ${approxSolarTerm(d)}`
     : (report.date || '');
   let issueNo = report.reportId;
+  // 期號 NO.：來源沒帶 reportId 時，用固定 epoch 天數推算一個遞增號，純屬版面裝飾用近似值，
+  // 不是正式期號紀錄（換 epoch 或跳過的日子都不會回溯修正）。
   if (!issueNo && valid) {
     const epoch = new Date('2026-01-01T00:00:00');
     issueNo = Math.max(1, Math.round((d - epoch) / 86400000) + 1);
@@ -978,6 +1021,10 @@ function adaptRssItem(item) {
 }
 
 // ===== Markdown 館報 Parser（本機 .md 檔案降級路徑） =====
+// 支援：# 主標題（僅用於抽日期，略過）／## 分節／### 節內小標／
+// - 或 * 列表項（標題／摘要分隔接受 —、-、·；來源標記接受 (source: x)、（來源：x）、尾端「—— x」）／
+// | 表格 |（表頭 + |---|---| 分隔列）／> 引用區塊。
+// 規則外的行不丟棄，聚成 type:'text' 的「原文」段落保留顯示，避免整段憑空消失。
 function parseMdReport(text, fallbackDate) {
   text = String(text || '');
   const lines = text.split(/\r?\n/);
@@ -988,7 +1035,7 @@ function parseMdReport(text, fallbackDate) {
 
   const sections = [];
   let currentSection = null;
-  let currentItem = null;
+  let textBuffer = [];
 
   function ensureDefaultSection() {
     if (!currentSection) {
@@ -998,44 +1045,129 @@ function parseMdReport(text, fallbackDate) {
     return currentSection;
   }
 
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
+  function flushTextBuffer() {
+    if (textBuffer.length) {
+      ensureDefaultSection().items.push({ type: 'text', text: textBuffer.join(' ') });
+      textBuffer = [];
+    }
+  }
+
+  // 判斷是否為表格分隔列，例如 |---|:---:|---|
+  function isTableRule(line) {
+    return /^\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?$/.test(line);
+  }
+  function splitTableRow(line) {
+    let s = line.trim();
+    if (s.startsWith('|')) s = s.slice(1);
+    if (s.endsWith('|')) s = s.slice(0, -1);
+    return s.split('|').map(c => c.trim());
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) { flushTextBuffer(); continue; }
     if (/^#\s+/.test(line)) continue; // 主標題已用於抽日期，略過
 
     const h2 = line.match(/^##\s+(.*)$/);
     if (h2) {
+      flushTextBuffer();
       currentSection = { title: h2[1].trim() || '（未命名段落）', items: [] };
       sections.push(currentSection);
-      currentItem = null;
       continue;
     }
 
-    const li = line.match(/^-\s+(.*)$/);
-    if (li) {
-      const body = li[1];
-      const sec = ensureDefaultSection();
-      const bold = body.match(/^\*\*(.+?)\*\*\s*(?:—\s*(.*?))?(?:(?:（|\()來源[：:]\s*(.*?)(?:）|\)))?$/);
-      if (bold) {
-        currentItem = { title: bold[1].trim() };
-        if (bold[2]) currentItem.summary = bold[2].trim();
-        if (bold[3]) currentItem.source = bold[3].trim();
-      } else {
-        currentItem = { title: body };
+    const h3 = line.match(/^###\s+(.*)$/);
+    if (h3) {
+      flushTextBuffer();
+      ensureDefaultSection().items.push({ type: 'heading', text: h3[1].trim() || '（未命名小標）' });
+      continue;
+    }
+
+    // Markdown 表格：本列以 | 開頭，且下一列是 |---|---| 形式的分隔列
+    if (line.startsWith('|') && i + 1 < lines.length && isTableRule(lines[i + 1].trim())) {
+      flushTextBuffer();
+      const header = splitTableRow(line);
+      const rows = [];
+      i += 2; // 跳過表頭列與分隔列
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        rows.push(splitTableRow(lines[i]));
+        i++;
       }
-      sec.items.push(currentItem);
+      i--; // 迴圈本身還會 +1，這裡退回一格
+      ensureDefaultSection().items.push({ type: 'table', header, rows });
       continue;
     }
 
-    // 其他非空行：併入目前 item 的 summary，若無目前 item 則整行當一個新 item 的 title
-    const sec = ensureDefaultSection();
-    if (currentItem) {
-      currentItem.summary = currentItem.summary ? `${currentItem.summary} ${line}` : line;
-    } else {
-      currentItem = { title: line };
-      sec.items.push(currentItem);
+    const quote = line.match(/^>\s?(.*)$/);
+    if (quote) {
+      flushTextBuffer();
+      const sec = ensureDefaultSection();
+      const last = sec.items[sec.items.length - 1];
+      if (last && last.type === 'quote') {
+        last.text += (last.text ? ' ' : '') + quote[1];
+      } else {
+        sec.items.push({ type: 'quote', text: quote[1] });
+      }
+      continue;
     }
+
+    const li = line.match(/^[-*]\s+(.*)$/);
+    if (li) {
+      flushTextBuffer();
+      const sec = ensureDefaultSection();
+      const body0 = li[1].trim();
+
+      // 整行只有一個 Markdown 連結（真實館報 <details> 來源清單常見的「- [標題](url)」寫法）：
+      // 直接當來源連結處理，不再套用下面的標題/摘要/來源拆分規則，避免整段連結語法掉進 title。
+      const mdLink = body0.match(/^\[(.+)\]\((\S+)\)$/);
+      if (mdLink && /^https?:\/\//i.test(mdLink[2])) {
+        sec.items.push({ title: mdLink[1].trim(), url: mdLink[2] });
+        continue;
+      }
+
+      let body = body0;
+      let source = '';
+
+      // 來源標記，先從整行尾端剝除，支援多種寫法：(source: x) / （來源：x） / 尾端「—— x」。
+      // 「—— x」用 lastIndexOf 找「最後一次」出現的位置做尾端錨定，不用 regex 整行掃描——
+      // 但光是 lastIndexOf 定位還不夠：中文內文常見句中破折號（例：政策——特別是
+      // 稅制——的影響仍待觀察）尾段本身也可能很長、含句讀標點，仍會被誤判成來源。
+      // 因此下面另外檢查尾段長度與是否含句讀標點才判定為真正的來源標記。「--」（ASCII
+      // 雙連字號）不視為來源分隔符：它在中文數字/代號裡太常見（2026--2027、代號 A--B），
+      // 比對整行任意位置只會製造錯位，spec 本身也只要求「—— x」這個寫法。
+      const sourceKvMatch = body.match(/[（(]\s*(?:source|來源)\s*[:：]\s*([^）)]*)[)）]\s*$/i);
+      if (sourceKvMatch) {
+        source = sourceKvMatch[1].trim();
+        body = body.slice(0, sourceKvMatch.index).trim();
+      } else {
+        // 尾段需同時滿足「夠短（≤16 字）」與「不含句讀標點」才視為來源；另外只有整行
+        // 恰好出現一次「——」才判定為尾端來源分隔符——句中夾註式的雙破折號寫法（政策——
+        // 特別是稅制——的影響仍待觀察）會出現兩次「——」，其「尾段」本身也可能短且無標點，
+        // 若不排除出現次數會被誤判成來源，攔腰截斷原句，因此出現多次一律視為句中夾註不剝離。
+        const dashIdx = body.lastIndexOf('——');
+        if (dashIdx !== -1 && dashIdx === body.indexOf('——')) {
+          const tail = body.slice(dashIdx + 2).trim();
+          if (tail && tail.length <= 16 && !/[。！？，；、]/.test(tail)) {
+            source = tail;
+            body = body.slice(0, dashIdx).trim();
+          }
+        }
+      }
+
+      // 標題／摘要分隔符接受 —、-、· 多種寫法；抓不到粗體標題就整行當 title，不拆分造成錯位
+      const bold = body.match(/^\*\*(.+?)\*\*\s*(?:[—\-·]\s*(.*))?$/);
+      const item = bold ? { title: bold[1].trim() } : { title: body };
+      if (bold && bold[2]) item.summary = bold[2].trim();
+      if (source) item.source = source;
+
+      sec.items.push(item);
+      continue;
+    }
+
+    // 規則外的行：不丟棄，累積成「原文」段落，遇到空行或下一個結構標記時輸出
+    textBuffer.push(line);
   }
+  flushTextBuffer();
 
   return { date, sections };
 }
@@ -1085,6 +1217,22 @@ function show404State(dateValue) {
   $('btn404OpenFile').addEventListener('click', () => feedFileInput.click());
 }
 
+// Markdown 表格渲染（parseMdReport 抽出的 { type:'table', header, rows } → <table>）
+function renderMdTable(item) {
+  const header = Array.isArray(item.header) ? item.header : [];
+  const rows = Array.isArray(item.rows) ? item.rows : [];
+  let html = `<div class="gz-table-wrap"><table class="gz-table"><thead><tr>`;
+  header.forEach(h => { html += `<th>${escapeHtml(h)}</th>`; });
+  html += `</tr></thead><tbody>`;
+  rows.forEach(row => {
+    html += `<tr>`;
+    row.forEach(c => { html += `<td>${escapeHtml(c)}</td>`; });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
 // ===== Render Report（真報紙排版） =====
 function renderReport(report) {
   if (!report?.sections?.length) {
@@ -1125,14 +1273,27 @@ function renderReport(report) {
     html += `<div class="gz-section-head"><span class="gz-emoji">${escapeHtml(emoji)}</span><span class="gz-section-title">${escapeHtml(text)}</span><span class="gz-eyebrow">${escapeHtml(eyebrow)}</span></div>`;
     html += `<div class="gz-section-body">`;
     for (const item of (section.items || [])) {
-      html += `・<span class="gz-item-title">${escapeHtml(item.title)}</span>`;
-      if (item.summary) html += ` — ${escapeHtml(item.summary)}`;
-      if (item.url) {
-        html += `<a href="${escapeHtml(item.url)}" class="gz-source" target="_blank" rel="noopener">SOURCE ↗</a>`;
-      } else if (item.source) {
-        html += `<span class="gz-source-text">來源：${escapeHtml(item.source)}</span>`;
+      // item.type 只有 parseMdReport 的降級路徑會產生（heading/quote/table/text）；
+      // RSS 正規來源的 item 沒有 type 欄位，一律走預設的 list 分支。
+      const kind = item.type || 'list';
+      if (kind === 'heading') {
+        html += `<div class="gz-subhead">${escapeHtml(item.text || '')}</div>`;
+      } else if (kind === 'quote') {
+        html += `<blockquote class="gz-quote">${escapeHtml(item.text || '')}</blockquote>`;
+      } else if (kind === 'table') {
+        html += renderMdTable(item);
+      } else if (kind === 'text') {
+        html += `<p class="gz-raw-text">${escapeHtml(item.text || '')}</p>`;
+      } else {
+        html += `・<span class="gz-item-title">${escapeHtml(item.title)}</span>`;
+        if (item.summary) html += ` — ${escapeHtml(item.summary)}`;
+        if (item.url) {
+          html += `<a href="${escapeHtml(item.url)}" class="gz-source" target="_blank" rel="noopener">SOURCE ↗</a>`;
+        } else if (item.source) {
+          html += `<span class="gz-source-text">來源：${escapeHtml(item.source)}</span>`;
+        }
+        html += `<br>`;
       }
-      html += `<br>`;
     }
     html += `</div></div>`;
     if (idx < report.sections.length - 1) {
@@ -1189,16 +1350,58 @@ btnSaveFeedBase.addEventListener('click', () => {
       localStorage.removeItem(FEED_BASE_KEY);
       feedBaseInput.value = FEED_BASE_DEFAULT;
       showToast('已還原預設來源');
-    } else {
-      if (!val.endsWith('/')) val += '/';
-      localStorage.setItem(FEED_BASE_KEY, val);
-      feedBaseInput.value = val;
-      showToast('來源設定已儲存');
+      return;
     }
+    // 來源必須是完整的 http(s) URL，否則之後 fetch 會直接失敗卻難以定位原因，先在這裡擋下
+    if (!/^https?:\/\//i.test(val)) {
+      showToast('來源網址必須以 http:// 或 https:// 開頭，未儲存');
+      return;
+    }
+    if (!val.endsWith('/')) val += '/';
+    localStorage.setItem(FEED_BASE_KEY, val);
+    feedBaseInput.value = val;
+    showToast('來源設定已儲存');
   } catch {
     showToast('無法儲存來源設定');
   }
 });
+
+// ===== 載入館報：per-date 快取（當日 5 分鐘 TTL，歷史日永久有效） =====
+const REPORT_CACHE_KEY_PREFIX = 'akasha_report_cache_';
+const REPORT_CACHE_TTL_MS = 5 * 60 * 1000; // 只對「今天」這一天生效；歷史日期已成定案，不會再變動，快取不過期
+
+function readReportCache(dateValue, ymd) {
+  try {
+    const raw = sessionStorage.getItem(REPORT_CACHE_KEY_PREFIX + ymd);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (!cached || !cached.report) return null;
+    const isToday = dateValue === localDateStr();
+    if (isToday && (Date.now() - (cached.cachedAt || 0) > REPORT_CACHE_TTL_MS)) return null;
+    return cached.report;
+  } catch {
+    return null;
+  }
+}
+
+function writeReportCache(ymd, report) {
+  try {
+    sessionStorage.setItem(REPORT_CACHE_KEY_PREFIX + ymd, JSON.stringify({ report, cachedAt: Date.now() }));
+  } catch {
+    // sessionStorage 滿了或被封鎖：快取失效但不影響本次載入結果，靜默略過
+  }
+}
+
+// 發出一次 fetch，帶 15 秒逾時；網路層錯誤（離線／逾時／DNS 失敗）會 throw，交給呼叫端決定是否重試
+async function fetchFeedOnce(url) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  try {
+    return await fetch(url, { cache: 'no-store', signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // ===== 載入館報：URL fetch =====
 async function loadFeedByDate() {
@@ -1208,18 +1411,33 @@ async function loadFeedByDate() {
   const ymd = dateValue.replace(/-/g, '');
   const url = getFeedBase() + 'daily_' + ymd + '.json';
 
+  const cachedReport = readReportCache(dateValue, ymd);
+  if (cachedReport) {
+    state.currentReport = cachedReport;
+    state.currentReportId = null;
+    renderReport(cachedReport);
+    toggleReportActions(true);
+    feedStatus.classList.remove('is-error');
+    feedStatus.textContent = '';
+    showToast('館報已載入（快取）');
+    return;
+  }
+
   state.loadingFeed = true;
   btnLoadFeed.disabled = true;
   feedStatus.classList.remove('is-error');
   feedStatus.textContent = '載入中…';
   showLoadingState('報童正在路上');
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
-
   try {
-    const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
-    clearTimeout(timeoutId);
+    let res;
+    try {
+      res = await fetchFeedOnce(url);
+    } catch {
+      // 網路層失敗：等 1.5 秒後自動重試一次，仍失敗才落到外層 catch 顯示失敗訊息
+      await new Promise(r => setTimeout(r, 1500));
+      res = await fetchFeedOnce(url);
+    }
 
     if (res.status === 404) {
       feedStatus.classList.add('is-error');
@@ -1251,9 +1469,9 @@ async function loadFeedByDate() {
     toggleReportActions(true);
     feedStatus.classList.remove('is-error');
     feedStatus.textContent = '';
+    writeReportCache(ymd, report);
     showToast('館報已載入');
   } catch (err) {
-    clearTimeout(timeoutId);
     feedStatus.classList.add('is-error');
     feedStatus.textContent = '無法連線館報來源，請檢查網路或來源設定';
     showErrorState('無法連線館報來源，請檢查網路或來源設定');
@@ -1358,10 +1576,30 @@ function buildReportMd(report) {
   for (const section of (report.sections || [])) {
     lines.push(`## ${section.title}`, '');
     for (const item of (section.items || [])) {
-      let line = `- **${item.title}**`;
-      if (item.summary) line += ` — ${item.summary}`;
-      if (item.source) line += `（來源：${item.source}）`;
-      lines.push(line);
+      // item.type 只有 parseMdReport 的降級路徑會產生（heading/quote/table/text），
+      // 需對應 renderReport 的五種渲染分支輸出回 Markdown，否則這些 item 沒有 title，
+      // 會落到下面預設分支印出 undefined。RSS 正規來源與連結型 item 沒有 type 欄位，
+      // 走預設的 list 分支（維持既有輸出格式不變）。
+      const kind = item.type || 'list';
+      if (kind === 'heading') {
+        lines.push(`### ${item.text || ''}`);
+      } else if (kind === 'quote') {
+        lines.push(`> ${item.text || ''}`);
+      } else if (kind === 'table') {
+        const header = Array.isArray(item.header) ? item.header : [];
+        const rows = Array.isArray(item.rows) ? item.rows : [];
+        lines.push(`| ${header.join(' | ')} |`);
+        lines.push(`|${header.map(() => '---').join('|')}|`);
+        rows.forEach(row => lines.push(`| ${row.join(' | ')} |`));
+      } else if (kind === 'text') {
+        lines.push(item.text || '');
+      } else {
+        const title = item.title || '';
+        let line = item.url ? `- **[${title}](${item.url})**` : `- **${title}**`;
+        if (item.summary) line += ` — ${item.summary}`;
+        if (item.source) line += `（來源：${item.source}）`;
+        lines.push(line);
+      }
     }
     lines.push('');
   }

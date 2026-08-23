@@ -376,6 +376,44 @@
       content: '▸ ';
       color: var(--zone-ink);
     }
+
+    /* ── 窄螢幕（≤768px）── 卡6 響應式：390px 寬手機下可用，body 不出現
+       橫向捲動、按鈕可點、核心流程走得完。shared.css 已讓 .deskbar 本身
+       flex-wrap（760px 斷點），這裡補 .desk-actions 內部按鈕列真正換行，
+       並讓匯入/匯出面板與表格容器在窄螢幕下更貼合。 ── */
+    @media (max-width: 768px) {
+      .desk-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        row-gap: 6px;
+      }
+
+      .tf-toolpanel {
+        margin-left: 12px;
+        margin-right: 12px;
+      }
+
+      .import-actions,
+      .export-actions {
+        row-gap: 8px;
+      }
+
+      #import-textarea {
+        min-height: 100px;
+      }
+
+      #table-area {
+        padding: 12px;
+      }
+
+      .tf-table-wrap {
+        -webkit-overflow-scrolling: touch;
+      }
+
+      #export-preview {
+        max-height: 200px;
+      }
+    }
   </style>
 </head>
 <body>

@@ -579,6 +579,35 @@
   }
   .ai-close-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
 
+  /* RAG 降級提示（卡5-C）：每 session 顯示一次，不中斷問答 */
+  .ai-degraded-badge {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 12px 0;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--navy-hover);
+    border-left: 2px solid var(--gold-dim);
+    border-radius: 2px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.02em;
+  }
+  .ai-degraded-badge--visible { display: flex; }
+  .ai-degraded-badge-close {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    padding: 0 2px;
+  }
+  .ai-degraded-badge-close:hover { color: var(--gold); }
+
   /* Portrait zone */
   .ai-portrait {
     flex: 1 1 320px;
@@ -1185,6 +1214,12 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
+    </div>
+
+    <!-- RAG 降級提示：embedding.js dense embedding 失敗時 emit 'akasha-rag-degraded'，這裡顯示一次性提示 -->
+    <div class="ai-degraded-badge" id="aiDegradedBadge">
+      <span>向量檢索不可用——已改用關鍵字比對</span>
+      <button class="ai-degraded-badge-close" onclick="dismissDegradedBadge()" title="關閉">×</button>
     </div>
 
     <!-- Portrait Zone -->
@@ -2472,6 +2507,26 @@
     portrait.classList.toggle('ai-portrait--hidden', !portraitVisible);
     btn.title = portraitVisible ? '隱藏立繪' : '顯示立繪';
     btn.style.opacity = portraitVisible ? '1' : '0.4';
+  };
+
+  // ===== RAG 降級可見化（卡5-C）=====
+  // embedding.js 在 dense embedding 失敗、靜默降級為 BM25 關鍵字比對時會 emit
+  // 'akasha-rag-degraded'；這裡監聽並在 AI 面板顯示一次性提示，每個瀏覽器 session
+  // （sessionStorage 存活期間）只顯示一次，不打斷問答流程。
+  const RAG_DEGRADED_SHOWN_KEY = 'akasha-rag-degraded-shown';
+  window.addEventListener('akasha-rag-degraded', (e) => {
+    console.warn('RAG degraded to BM25:', e.detail && e.detail.reason);
+    let alreadyShown = false;
+    try { alreadyShown = !!sessionStorage.getItem(RAG_DEGRADED_SHOWN_KEY); } catch {}
+    if (alreadyShown) return;
+    try { sessionStorage.setItem(RAG_DEGRADED_SHOWN_KEY, '1'); } catch {}
+    const badge = document.getElementById('aiDegradedBadge');
+    if (badge) badge.classList.add('ai-degraded-badge--visible');
+  });
+
+  window.dismissDegradedBadge = function() {
+    const badge = document.getElementById('aiDegradedBadge');
+    if (badge) badge.classList.remove('ai-degraded-badge--visible');
   };
 
   // ===== Embedding Index (background) =====

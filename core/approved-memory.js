@@ -143,22 +143,61 @@ const MAX_SEARCH_RESULTS = 5;
 const MAX_SNIPPET_LEN = 120;
 
 /**
- * Search approved memories by keyword.
- * Matches against title, content, and tags.
- * Returns only matching snippets, not the full records.
+ * 全形/半形、大小寫正規化（NFKC 統一寬度變體，再轉小寫）。
  */
-export async function searchMemories(query, module) {
-  if (!query || !query.trim()) return [];
+export function normalizeText(text) {
+  return (text || '').normalize('NFKC').toLowerCase();
+}
 
-  const all = await getAllMemories(module);
-  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+/**
+ * 分詞（Unicode-aware，/u flag）：漢字（\p{Script_Extensions=Han}）、假名（平假名+片假名連續段
+ * 視為同一段）、諺文（\p{Script_Extensions=Hangul}）各自的連續段切 bigram（單字段落保留原字，
+ * 用 Script_Extensions 而非 Script 以涵蓋ー々ヶ等跨腳本共用符號）；其餘文字（\p{L}\p{N}
+ * 連續段，涵蓋拉丁/西里爾/希臘/數字）整段小寫當一個 token。
+ * 例：「圖書館」→ [圖書, 書館]；「ノート」→ [ノー, ート]；「hi」→ [hi]
+ * （不會命中「this」這種只是子字串包含的詞）。
+ */
+export function tokenizeText(text) {
+  if (!text) return [];
+  const tokens = [];
+  const re = /\p{Script_Extensions=Han}+|[\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}]+|\p{Script_Extensions=Hangul}+|[\p{L}\p{N}]+/gu;
+  const isCjkBigramSeg = /^[\p{Script_Extensions=Han}\p{Script_Extensions=Hiragana}\p{Script_Extensions=Katakana}\p{Script_Extensions=Hangul}]/u;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const seg = m[0];
+    if (isCjkBigramSeg.test(seg)) {
+      if (seg.length === 1) {
+        tokens.push(seg);
+      } else {
+        for (let i = 0; i < seg.length - 1; i++) {
+          tokens.push(seg.slice(i, i + 2));
+        }
+      }
+    } else {
+      tokens.push(seg.toLowerCase());
+    }
+  }
+  return tokens;
+}
+
+/**
+ * 為一組已載入的 memory 計算 query 命中分數並排序、裁切、映射成 snippet。
+ * 從 searchMemories 抽出的純函式（不碰 IndexedDB），供測試直接驗證排序/加權邏輯。
+ * tag 命中權重 x2，本文命中權重 x1，零分不回傳。
+ */
+export function rankMemoriesByQuery(query, memories) {
+  const queryTokens = [...new Set(tokenizeText(normalizeText(query)))];
+  if (queryTokens.length === 0) return [];
 
   const scored = [];
-  for (const m of all) {
-    const haystack = [m.title, m.content, ...(m.tags || [])].join(' ').toLowerCase();
+  for (const m of memories) {
+    const bodyTokens = new Set(tokenizeText(normalizeText([m.title, m.content].join(' '))));
+    const tagTokens = new Set(tokenizeText(normalizeText((m.tags || []).join(' '))));
+
     let score = 0;
-    for (const t of terms) {
-      if (haystack.includes(t)) score++;
+    for (const t of queryTokens) {
+      if (tagTokens.has(t)) score += 2;
+      else if (bodyTokens.has(t)) score += 1;
     }
     if (score > 0) scored.push({ memory: m, score });
   }
@@ -173,6 +212,21 @@ export async function searchMemories(query, module) {
       (memory.content.length > MAX_SNIPPET_LEN ? '…' : ''),
     tags: memory.tags,
   }));
+}
+
+/**
+ * Search approved memories by keyword.
+ * Matches against title, content, and tags via token overlap (NFKC 正規化 +
+ * CJK bigram / 拉丁 token 分詞)，取代舊版的子字串 includes（會誤命中「hi」⊂「this」）。
+ * tag 命中權重 x2，本文命中權重 x1，零分不回傳。
+ * 個人規模記憶量下 O(n) 全表掃描可接受，不建索引。
+ * Returns only matching snippets, not the full records.
+ */
+export async function searchMemories(query, module) {
+  if (!query || !query.trim()) return [];
+
+  const all = await getAllMemories(module);
+  return rankMemoriesByQuery(query, all);
 }
 
 /**
