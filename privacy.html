@@ -28,7 +28,7 @@ a { color: var(--gold); }
 <body>
 
 <h1>隱私權政策</h1>
-<p class="meta">最後更新：2026-05-05</p>
+<p class="meta">最後更新：2026-08-21</p>
 
 <p>阿卡夏圖書館（以下簡稱「本應用」）尊重您的隱私。本政策說明我們如何處理您的資料。</p>
 
@@ -50,13 +50,16 @@ a { color: var(--gold); }
 <ul>
   <li><strong>本地端：</strong>使用瀏覽器 IndexedDB 儲存，資料不會離開您的裝置</li>
   <li><strong>雲端：</strong>同步至您個人的 Google Drive 帳號（在「Akasha Library」資料夾中）</li>
-  <li><strong>本應用不設伺服器：</strong>我們沒有自己的後端伺服器儲存您的資料</li>
+  <li><strong>伺服器角色：</strong>BYOK 模式下瀏覽器直接連線 AI 服務商，本應用不經手；月幣模式則經由我們自營的 Cloudflare Worker 代理轉發請求——該代理不儲存您的對話內容，只將月幣餘額存放在 Cloudflare KV</li>
 </ul>
 
 <h2>4. 第三方服務</h2>
 <ul>
   <li><strong>Google Drive API：</strong>用於檔案同步，受 <a href="https://policies.google.com/privacy" target="_blank">Google 隱私權政策</a>規範</li>
-  <li><strong>AI 功能（選用）：</strong>若您使用 AI 圖書館員功能，對話內容會傳送至 AI 服務提供商處理。使用 BYOK 模式時，API Key 僅存放在您的瀏覽器本地端</li>
+  <li><strong>AI 功能（選用）：</strong>若您使用 AI 圖書館員功能，對話內容會傳送至 AI 服務提供商處理。BYOK 模式下瀏覽器直連 AI 商，API Key 僅存放在您的瀏覽器本地端；月幣模式下由我們的 Cloudflare Worker 代為轉發，代理伺服器不儲存對話內容，僅記錄月幣餘額（存於 Cloudflare KV）</li>
+  <li><strong>Google Fonts：</strong>用於載入介面字體，Google 會接收您的 IP 位址</li>
+  <li><strong>CDN（cdnjs.cloudflare.com、cdn.jsdelivr.net）：</strong>用於載入部分前端函式庫，該服務商會接收您的 IP 位址</li>
+  <li><strong>raw.githubusercontent.com：</strong>「每日館報」功能由此讀取每日彙整的新聞資料，GitHub 會接收您的 IP 位址</li>
 </ul>
 
 <h2>5. Cookie 與追蹤</h2>
@@ -75,6 +78,8 @@ a { color: var(--gold); }
 
 <h2>8. 聯絡方式</h2>
 <p>如有隱私相關問題，請聯繫：dr1090a@gmail.com</p>
+
+<p style="margin-top: 32px;"><a href="index.html">&larr; 回到圖書館</a></p>
 
 </body>
 </html>

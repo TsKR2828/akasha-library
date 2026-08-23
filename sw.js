@@ -1,9 +1,10 @@
-const CACHE_NAME = 'akasha-library-5db22a5def';
+const CACHE_NAME = 'akasha-library-581b079667';
 const LOCAL_ASSETS = [
   './',
   './index.html',
   './manifest.json',
   './privacy.html',
+  './offline.html',
   './sw.js',
 
   // Icons (may not exist yet — addAll with ignoreErrors)
@@ -65,11 +66,11 @@ const LOCAL_ASSETS = [
   // Built Vite modules
   './dist/spreadsheet/index.html',
   './dist/spreadsheet/assets/index-B9xGcdY4.css',
-  './dist/spreadsheet/assets/index-CKI12aXE.js',
+  './dist/spreadsheet/assets/index-VVtV0VAy.js',
   './dist/spreadsheet/assets/storage-CYqK1_QX.js',
   './dist/script-editor/index.html',
-  './dist/script-editor/assets/index-BESIksUb.js',
-  './dist/script-editor/assets/index-CMLjuUzG.css',
+  './dist/script-editor/assets/index-BPKg5U8R.css',
+  './dist/script-editor/assets/index-Cffs-OZ5.js',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',
   './dist/script-editor/data/works/blackstar_ch1.json',
@@ -147,7 +148,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for navigation (so updates are picked up)
+  // Network-first for navigation (so updates are picked up).
+  // 全斷線時 fetch 會 reject：先找該頁面自己的快取，
+  // 真的什麼都沒有才退到 offline.html 離線頁。
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -158,7 +161,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request))
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('./offline.html')))
     );
     return;
   }

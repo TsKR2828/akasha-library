@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#181d28">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="阿卡夏">
@@ -4453,6 +4454,29 @@ window.addEventListener('message', (event) => {
       if (d?.type === MSG_TYPES.VOICE_STATE) { broadcastState(); }
     });
   } catch {}
+})();
+
+// PWA 安裝提示：瀏覽器判定可安裝時才會觸發 beforeinstallprompt，
+// 先攔下瀏覽器原生提示，改用館內既有的 toast 樣式問一次；
+// 已是 standalone 模式（已安裝）或使用者先前關掉過就不再吵。
+(function() {
+  var INSTALL_DISMISSED_KEY = 'akasha-install-dismissed';
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
+    if (!window.showNoteToast) return;
+
+    var deferredPrompt = e;
+    window.showNoteToast('將圖書館安裝到桌面', function() {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(choice) {
+        if (choice.outcome !== 'accepted') {
+          try { localStorage.setItem(INSTALL_DISMISSED_KEY, '1'); } catch (err) {}
+        }
+      });
+    });
+  });
 })();
 
 // Service worker

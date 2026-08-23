@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#11151d">
+<title>離線中 — 阿卡夏圖書館</title>
+<style>
+/* 自包含頁面：離線 fallback，Service Worker 找不到任何快取回應時才會出現，
+   因此不可依賴 Google Fonts 或 shared.css 等外部/連線資源，一切內嵌。 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #11151d;
+  color: #f1ead6;
+  font-family: Georgia, 'Times New Roman', 'Noto Serif TC', serif;
+  padding: 24px;
+  text-align: center;
+}
+
+.offline-card {
+  max-width: 420px;
+}
+
+.offline-mark {
+  font-size: 40px;
+  color: #c9a86a;
+  margin-bottom: 20px;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  color: #c9a86a;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-bottom: 14px;
+}
+
+p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #d6cfb8;
+  margin-bottom: 28px;
+}
+
+button {
+  font-family: inherit;
+  font-size: 13px;
+  color: #11151d;
+  background: #c9a86a;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 28px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: background 140ms;
+}
+
+button:hover {
+  background: #e3c486;
+}
+</style>
+</head>
+<body>
+<div class="offline-card">
+  <div class="offline-mark">&#10022;</div>
+  <h1>離線中</h1>
+  <p>書仍在架上，網路回來就能開卷。</p>
+  <button onclick="location.reload()">重試連線</button>
+</div>
+</body>
+</html>
