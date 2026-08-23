@@ -1,8 +1,19 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useLayoutEffect } from "react";
 import * as XLSX from "xlsx";
 import { STORAGE_KEY, MSG_TYPES } from "../../../core/export/bridge.js";
 import { payloadToCells } from "../../../core/export/fromPayload.js";
-import { parseDelimitedText, toNumericValue } from "./lib/spreadsheet-utils.js";
+import {
+  parseDelimitedText,
+  colLabel,
+  cellId,
+  parseCellRef,
+  evaluateFormula,
+  sheetToAOA,
+  xlsxCellToRaw,
+  widthsToCols,
+  colsToWidths,
+  rowWindow,
+} from "./lib/spreadsheet-utils.js";
 import { decodeBuffer } from "../../../core/text-decode.js";
 // Design tokens + shared component classes (.deskbar/.btn/.panel/.mh-menu…) —
 // Tabularium 儀器類模組維持深色（不隨殼的淺色模式反轉），見 HANDOFF §4。
@@ -14,23 +25,6 @@ const MAX_ROWS = 10000;
 const MAX_COLS = 200;
 const DRAFT_KEY = "akasha-spreadsheet-draft";
 const DRAFT_DEBOUNCE_MS = 2000;
-const colLabel = (i) => {
-  let label = '';
-  let n = i;
-  while (n >= 0) {
-    label = String.fromCharCode(65 + (n % 26)) + label;
-    n = Math.floor(n / 26) - 1;
-  }
-  return label;
-};
-const cellId = (r, c) => `${colLabel(c)}${r + 1}`;
-const parseCellRef = (ref) => {
-  const m = ref.match(/^([A-Z]+)(\d+)$/);
-  if (!m) return null;
-  let c = 0;
-  for (const ch of m[1]) c = c * 26 + (ch.charCodeAt(0) - 64);
-  return { r: parseInt(m[2]) - 1, c: c - 1 };
-};
 
 const DEFAULT_COL_WIDTH = 100;
 const ROW_HEIGHT = 28;
@@ -67,6 +61,8 @@ export default function SpreadsheetEditor() {
   const [draftBanner, setDraftBanner] = useState(false);
   const [pendingDraft, setPendingDraft] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [scrollTop, setScrollTop] = useState(0); // 虛擬捲動：目前捲動位置，決定可見列窗口
+  const [viewportHeight, setViewportHeight] = useState(0); // 虛擬捲動：容器可視高度
   const inputRef = useRef(null);
   const formulaRef = useRef(null);
   const tableRef = useRef(null);
@@ -127,186 +123,16 @@ export default function SpreadsheetEditor() {
     showNotif("已還原上一步操作");
   };
 
-  // Formula evaluation
-  const evaluate = useCallback(
-    (expr, cellsRef, visited = new Set()) => {
-      if (expr === undefined || expr === null || expr === "") return "";
-      const s = String(expr);
-      if (!s.startsWith("=")) {
-        const n = Number(s);
-        return s === "" ? "" : isNaN(n) ? s : n;
-      }
-
-      // Uppercase function names and refs but preserve string literals
-      let formula = '';
-      let inString = false;
-      let stringChar = '';
-      const raw = s.slice(1).trim();
-      for (let ci = 0; ci < raw.length; ci++) {
-        const ch = raw[ci];
-        if (inString) {
-          formula += ch;
-          if (ch === stringChar) inString = false;
-        } else if (ch === '"' || ch === "'") {
-          inString = true;
-          stringChar = ch;
-          formula += ch;
-        } else {
-          formula += ch.toUpperCase();
-        }
-      }
-
-      const expandRange = (rangeStr) => {
-        const [startRef, endRef] = rangeStr.split(":");
-        const s1 = parseCellRef(startRef), s2 = parseCellRef(endRef);
-        if (!s1 || !s2) return [];
-        const vals = [];
-        for (let r = Math.min(s1.r, s2.r); r <= Math.max(s1.r, s2.r); r++) {
-          for (let c = Math.min(s1.c, s2.c); c <= Math.max(s1.c, s2.c); c++) {
-            const id = cellId(r, c);
-            if (visited.has(id)) return ["#循環!"];
-            visited.add(id);
-            const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-            const numeric = toNumericValue(v);
-            if (numeric !== null) vals.push(numeric);
-          }
-        }
-        return vals;
-      };
-
-      const expandNumericArgs = (args) => {
-        if (args.includes(":")) return expandRange(args);
-        const vals = [];
-        for (const token of args.split(",")) {
-          const ref = parseCellRef(token.trim());
-          if (!ref) continue;
-          const id = cellId(ref.r, ref.c);
-          if (visited.has(id)) return ["#循環!"];
-          const nextVisited = new Set(visited);
-          nextVisited.add(id);
-          const value = evaluate(cellsRef[id], cellsRef, nextVisited);
-          if (value === "#循環!") return ["#循環!"];
-          const numeric = toNumericValue(value);
-          if (numeric !== null) vals.push(numeric);
-        }
-        return vals;
-      };
-
-      let m = formula.match(/^SUM\((.+)\)$/);
-      if (m) {
-        const vals = expandNumericArgs(m[1]);
-        if (vals.includes("#循環!")) return "#循環!";
-        return vals.reduce((a, b) => a + b, 0);
-      }
-
-      m = formula.match(/^AVERAGE\((.+)\)$/);
-      if (m) {
-        const vals = expandNumericArgs(m[1]);
-        if (vals.includes("#循環!")) return "#循環!";
-        return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-      }
-
-      m = formula.match(/^COUNT\((.+)\)$/);
-      if (m) {
-        const vals = expandNumericArgs(m[1]);
-        if (vals.includes("#循環!")) return "#循環!";
-        return vals.length;
-      }
-
-      m = formula.match(/^MAX\((.+)\)$/);
-      if (m) {
-        const vals = expandNumericArgs(m[1]);
-        if (vals.includes("#循環!")) return "#循環!";
-        return vals.length ? Math.max(...vals) : 0;
-      }
-
-      m = formula.match(/^MIN\((.+)\)$/);
-      if (m) {
-        const vals = expandNumericArgs(m[1]);
-        if (vals.includes("#循環!")) return "#循環!";
-        return vals.length ? Math.min(...vals) : 0;
-      }
-
-      m = formula.match(/^IF\((.+)\)$/);
-      if (m) {
-        const args = [];
-        let depth = 0, cur = "", inQuote = false;
-        for (const ch of m[1]) {
-          if (inQuote) {
-            cur += ch;
-            if (ch === '"') inQuote = false;
-          } else if (ch === '"') {
-            inQuote = true;
-            cur += ch;
-          } else if (ch === "(") {
-            depth++;
-            cur += ch;
-          } else if (ch === ")") {
-            depth--;
-            cur += ch;
-          } else if (ch === "," && depth === 0) {
-            args.push(cur.trim());
-            cur = "";
-          } else {
-            cur += ch;
-          }
-        }
-        args.push(cur.trim());
-        if (args.length === 3) {
-          const cond = evaluate("=" + args[0], cellsRef, new Set(visited));
-          return cond ? evaluate("=" + args[1], cellsRef, new Set(visited)) : evaluate("=" + args[2], cellsRef, new Set(visited));
-        }
-      }
-
-      m = formula.match(/^CONCAT\((.+)\)$/);
-      if (m) {
-        return m[1].split(",").map((r) => {
-          const ref = parseCellRef(r.trim());
-          if (!ref) return r.trim().replace(/^"|"$/g, "");
-          const id = cellId(ref.r, ref.c);
-          return String(evaluate(cellsRef[id], cellsRef, new Set(visited)));
-        }).join("");
-      }
-
-      const ref = parseCellRef(formula);
-      if (ref) {
-        const id = cellId(ref.r, ref.c);
-        if (visited.has(id)) return "#循環!";
-        visited.add(id);
-        return evaluate(cellsRef[id], cellsRef, new Set(visited));
-      }
-
-      try {
-        let hasCircular = false;
-        let expanded = formula.replace(/[A-Z]+\d+/g, (match) => {
-          const ref = parseCellRef(match);
-          if (!ref) return "0";
-          const id = cellId(ref.r, ref.c);
-          if (visited.has(id)) { hasCircular = true; return "0"; }
-          visited.add(id);
-          const v = evaluate(cellsRef[id], cellsRef, new Set(visited));
-          if (typeof v === "string" && v.startsWith("#")) { hasCircular = true; return "0"; }
-          return typeof v === "number" ? v : isNaN(Number(v)) ? "0" : Number(v);
-        });
-        if (hasCircular) return "#循環!";
-        expanded = expanded.replace(/>=/g, ">=").replace(/<=/g, "<=").replace(/(?<!=)>(?!=)/g, ">").replace(/(?<!=)<(?!=)/g, "<");
-        if (!/^[\d\s+\-*/%().><=!&|,?:e]+$/i.test(expanded.trim())) return "#不安全!";
-        const result = new Function(`"use strict"; return (${expanded})`)();
-        return typeof result === "boolean" ? result : (isNaN(result) ? "#錯誤!" : result);
-      } catch {
-        return "#錯誤!";
-      }
-    },
-    []
-  );
-
+  // 公式求值：交給 spreadsheet-utils.js 的遞迴下降 parser + 直接求值器
+  // （不用 new Function/eval）。SUM/AVERAGE/IF/COUNT/MIN/MAX/CONCAT/ROUND/ABS/LEN，
+  // 支援巢狀函式呼叫、範圍 A1:B3（僅函式引數位置）、比較運算子、#循環! 偵測。
   const getDisplay = useCallback(
     (id) => {
       const raw = cells[id];
       if (raw === undefined || raw === "") return "";
-      return evaluate(raw, cells);
+      return evaluateFormula(raw, cells);
     },
-    [cells, evaluate]
+    [cells]
   );
 
   const isSelected = (r, c) => selection.r === r && selection.c === c;
@@ -450,6 +276,48 @@ export default function SpreadsheetEditor() {
     recalcGrid(cells);
   }, [cells]);
 
+  // 虛擬捲動：只監聽表格容器的捲動位置與可視高度，選取/範圍/編輯狀態一律用絕對列索引，
+  // 完全不受窗口化影響——捲出視窗再捲回，選取狀態依然在（見卡片要求）。
+  useEffect(() => {
+    const el = tableRef.current;
+    if (!el) return;
+    const onScroll = () => setScrollTop(el.scrollTop);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const el = tableRef.current;
+    if (!el) return;
+    const update = () => setViewportHeight(el.clientHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  // 虛擬捲動：選取/編輯列在視窗外時主動捲回，並「同步」把 scrollTop state 一併更新——
+  // useLayoutEffect + setScrollTop 讓下一次 render 立刻用新捲動位置算窗口，
+  // 保證選取/編輯中的那一列必定已渲染（autoFocus 正常觸發），窗口不必為此撐大。
+  // deps 含 editing 與 selection.c：startEdit 只改 editing、橫向導航只改 selection.c，
+  // 兩者都必須重新觸發捲入檢查。
+  useLayoutEffect(() => {
+    const el = tableRef.current;
+    if (!el || !viewportHeight) return;
+    const rowTop = selection.r * ROW_HEIGHT;
+    const rowBottom = rowTop + ROW_HEIGHT;
+    let newTop = null;
+    if (rowTop < el.scrollTop) {
+      newTop = rowTop;
+    } else if (rowBottom > el.scrollTop + viewportHeight) {
+      newTop = rowBottom - viewportHeight;
+    }
+    if (newTop !== null) {
+      el.scrollTop = newTop;
+      setScrollTop(newTop);
+    }
+  }, [selection.r, selection.c, editing, viewportHeight]);
+
   useEffect(() => {
     const id = cellId(selection.r, selection.c);
     if (!editing) setFormulaBarValue(cells[id] || "");
@@ -577,7 +445,8 @@ export default function SpreadsheetEditor() {
         const filename = event.data.filename || "import.xlsx";
         const ext = filename.split(".").pop().toLowerCase();
         if (ext === "xlsx" || ext === "xls") {
-          const wb = XLSX.read(data, { type: "array" });
+          // cellStyles: true 是 !cols 欄寬能被 parse 出來的必要條件（SheetJS 0.20.3）
+          const wb = XLSX.read(data, { type: "array", cellStyles: true });
           let oversize = false;
           const newSheets = wb.SheetNames.map((name) => {
             const ws = wb.Sheets[name];
@@ -591,20 +460,11 @@ export default function SpreadsheetEditor() {
             for (let r = range.s.r; r <= limitR; r++) {
               for (let c = range.s.c; c <= limitC; c++) {
                 const addr = XLSX.utils.encode_cell({ r, c });
-                const cell = ws[addr];
-                if (cell) {
-                  let cellValue;
-                  if (cell.f) {
-                    // Preserve formula: prefix with = so the evaluator processes it
-                    cellValue = '=' + cell.f;
-                  } else if (cell.v !== undefined && cell.v !== null && cell.v !== '') {
-                    cellValue = String(cell.v);
-                  }
-                  if (cellValue) newCells[cellId(r, c)] = cellValue;
-                }
+                const cellValue = xlsxCellToRaw(ws[addr]);
+                if (cellValue !== undefined) newCells[cellId(r, c)] = cellValue;
               }
             }
-            return { name, cells: newCells, styles: {}, colWidths: {} };
+            return { name, cells: newCells, styles: {}, colWidths: colsToWidths(ws["!cols"]) };
           });
           if (oversize) {
             showNotif('檔案過大，已截斷至 ' + MAX_ROWS + '×' + MAX_COLS);
@@ -796,35 +656,18 @@ export default function SpreadsheetEditor() {
   }, [resizingCol, dragStartX, dragStartWidth]);
 
   // ===== 匯出 XLSX =====
+  // 樣式（粗斜體/底色等 cell style）不會寫進匯出檔：SheetJS 社群版（xlsx npm 套件）只能「讀」
+  // 儲存格樣式，不支援「寫」樣式進 xlsx，這是套件本身的限制，非本模組漏做。
   const exportXLSX = () => {
     const wb = XLSX.utils.book_new();
     sheets.forEach((sh) => {
-      let maxR = 0, maxC = 0;
-      Object.keys(sh.cells).forEach((id) => {
-        const ref = parseCellRef(id);
-        if (ref) { maxR = Math.max(maxR, ref.r); maxC = Math.max(maxC, ref.c); }
-      });
-      const aoa = [];
-      const formulas = [];
-      for (let r = 0; r <= maxR; r++) {
-        const row = [];
-        for (let c = 0; c <= maxC; c++) {
-          const id = cellId(r, c);
-          const raw = sh.cells[id];
-          if (raw === undefined || raw === "") { row.push(""); continue; }
-          if (typeof raw === "string" && raw.startsWith("=")) {
-            formulas.push({ r: r, c: c, f: raw.slice(1) });
-          }
-          const display = evaluate(raw, sh.cells);
-          row.push(display);
-        }
-        aoa.push(row);
-      }
+      const { aoa, formulas, maxC } = sheetToAOA(sh.cells);
       const ws = XLSX.utils.aoa_to_sheet(aoa);
       for (let fi = 0; fi < formulas.length; fi++) {
         const addr = XLSX.utils.encode_cell({ r: formulas[fi].r, c: formulas[fi].c });
         if (ws[addr]) ws[addr].f = formulas[fi].f;
       }
+      ws["!cols"] = widthsToCols(sh.colWidths, maxC);
       XLSX.utils.book_append_sheet(wb, ws, sh.name);
     });
     XLSX.writeFile(wb, "試算表.xlsx");
@@ -857,7 +700,7 @@ export default function SpreadsheetEditor() {
   };
 
   // ===== 存書庫（IndexedDB，供其他模組後續開啟）=====
-  // 公式必須以 cell.f 寫入 xlsx（而非只寫 evaluate() 後的常數），否則重新開啟時公式已永久蒸發成死值。
+  // 公式必須以 cell.f 寫入 xlsx（而非只寫 evaluateFormula() 後的常數），否則重新開啟時公式已永久蒸發成死值。
   // 「開啟已存書庫檔案」與「匯入 XLSX」兩條既有路徑都已經支援讀回 cell.f 還原成 '=...' 字串，
   // 這裡只需比照 exportXLSX 的寫法把公式一併寫進 workbook，即可讓存書庫→重新開啟全程保公式。
   // 舊檔（存書庫修復前存的）沒有 .f，讀回時就照舊落回 cell.v 的常數值，向下相容。
@@ -865,30 +708,13 @@ export default function SpreadsheetEditor() {
     try {
       const wb = XLSX.utils.book_new();
       sheets.forEach((sh) => {
-        let maxR = 0, maxC = 0;
-        Object.keys(sh.cells).forEach((id) => {
-          const ref = parseCellRef(id);
-          if (ref) { maxR = Math.max(maxR, ref.r); maxC = Math.max(maxC, ref.c); }
-        });
-        const aoa = [];
-        const formulas = [];
-        for (let r = 0; r <= maxR; r++) {
-          const row = [];
-          for (let c = 0; c <= maxC; c++) {
-            const id = cellId(r, c);
-            const raw = sh.cells[id];
-            if (typeof raw === "string" && raw.startsWith("=")) {
-              formulas.push({ r, c, f: raw.slice(1) });
-            }
-            row.push(evaluate(raw, sh.cells));
-          }
-          aoa.push(row);
-        }
+        const { aoa, formulas, maxC } = sheetToAOA(sh.cells);
         const ws = XLSX.utils.aoa_to_sheet(aoa);
         for (let fi = 0; fi < formulas.length; fi++) {
           const addr = XLSX.utils.encode_cell({ r: formulas[fi].r, c: formulas[fi].c });
           if (ws[addr]) ws[addr].f = formulas[fi].f;
         }
+        ws["!cols"] = widthsToCols(sh.colWidths, maxC);
         XLSX.utils.book_append_sheet(wb, ws, sh.name);
       });
       const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
@@ -925,7 +751,8 @@ export default function SpreadsheetEditor() {
         reader.onload = (ev) => {
           try {
             const data = new Uint8Array(ev.target.result);
-            const wb = XLSX.read(data, { type: "array" });
+            // cellStyles: true 是 !cols 欄寬能被 parse 出來的必要條件（SheetJS 0.20.3）
+            const wb = XLSX.read(data, { type: "array", cellStyles: true });
             let fileOversize = false;
             const newSheets = wb.SheetNames.map((name) => {
               const ws = wb.Sheets[name];
@@ -939,20 +766,11 @@ export default function SpreadsheetEditor() {
               for (let r = range.s.r; r <= limitR; r++) {
                 for (let c = range.s.c; c <= limitC; c++) {
                   const addr = XLSX.utils.encode_cell({ r, c });
-                  const cell = ws[addr];
-                  if (cell) {
-                    let cellValue;
-                    if (cell.f) {
-                      // Preserve formula: prefix with = so the evaluator processes it
-                      cellValue = '=' + cell.f;
-                    } else if (cell.v !== undefined && cell.v !== null && cell.v !== '') {
-                      cellValue = String(cell.v);
-                    }
-                    if (cellValue) newCells[cellId(r, c)] = cellValue;
-                  }
+                  const cellValue = xlsxCellToRaw(ws[addr]);
+                  if (cellValue !== undefined) newCells[cellId(r, c)] = cellValue;
                 }
               }
-              return { name, cells: newCells, styles: {}, colWidths: {} };
+              return { name, cells: newCells, styles: {}, colWidths: colsToWidths(ws["!cols"]) };
             });
             if (fileOversize) {
               showNotif('檔案過大，已截斷至 ' + MAX_ROWS + '×' + MAX_COLS);
@@ -1008,6 +826,22 @@ export default function SpreadsheetEditor() {
   const currentId = cellId(selection.r, selection.c);
   const currentStyle = getCellStyle(currentId);
 
+  // 虛擬捲動：純依 scrollTop/viewportHeight 算可見列窗口（rowWindow 抽在 lib，含測試）。
+  // 選取列「不」併入窗口——選取/編輯列必在窗口內的保證，由上方 useLayoutEffect 的
+  // scrollTop 同步負責；窗口大小因此永遠有上限，滾輪深捲不會爆量渲染。
+  // r 仍是絕對列索引，handleCellClick/範圍反白/鍵盤導航完全不用改。
+  const ROW_OVERSCAN = 15;
+  const { startRow, endRow, topSpacerHeight, bottomSpacerHeight } = rowWindow({
+    scrollTop,
+    viewportHeight,
+    gridRows,
+    selectionRow: selection.r,
+    rowHeight: ROW_HEIGHT,
+    overscan: ROW_OVERSCAN,
+  });
+  const visibleRowIndexes = [];
+  for (let r = startRow; r <= endRow; r++) visibleRowIndexes.push(r);
+
   return (
     <div
       style={{
@@ -1057,15 +891,14 @@ export default function SpreadsheetEditor() {
         </div>
       )}
 
-      {/* 格式工具列（B/I/U · 對齊 · 字級 · 底色/文字色）*/}
-      <div style={{
+      {/* 格式工具列（B/I/U · 對齊 · 字級 · 底色/文字色）— .ss-toolbar：桌面版換行，@media 768px 以下改橫向捲動省垂直空間 */}
+      <div className="ss-toolbar" style={{
         background: "var(--navy)",
         borderBottom: "1px solid var(--navy-line)",
         padding: "4px 12px",
         display: "flex",
         alignItems: "center",
         gap: 4,
-        flexWrap: "wrap",
       }}>
         <ToolBtn label="B" active={currentStyle.bold} onClick={() => toggleStyle("bold")}
           style={{ fontWeight: 800, width: 30 }} />
@@ -1094,8 +927,8 @@ export default function SpreadsheetEditor() {
           style={{ width: 24, height: 24, border: "none", cursor: "pointer", background: "none" }} />
       </div>
 
-      {/* 公式列（名稱框＋fx）— 進內容區頂，style guide 06 儀器規格 */}
-      <div style={{
+      {/* 公式列（名稱框＋fx）— 進內容區頂，style guide 06 儀器規格；.ss-formula-bar：@media 768px 以下換行，輸入框佔滿全寬 */}
+      <div className="ss-formula-bar" style={{
         background: "var(--navy)",
         borderBottom: "1px solid var(--navy-line)",
         padding: "6px 12px",
@@ -1123,6 +956,7 @@ export default function SpreadsheetEditor() {
         <span style={{ color: "var(--ink-tabularium)", fontWeight: 700, fontSize: 14, fontFamily: "var(--font-serif-en)", fontStyle: "italic" }}>fx</span>
         <input
           ref={formulaRef}
+          className="ss-formula-input"
           value={editing ? editValue : formulaBarValue}
           onChange={(e) => {
             if (editing) {
@@ -1145,7 +979,6 @@ export default function SpreadsheetEditor() {
             }
           }}
           style={{
-            flex: 1,
             height: 28,
             border: "1px solid var(--navy-line)",
             borderRadius: 4,
@@ -1161,7 +994,11 @@ export default function SpreadsheetEditor() {
       </div>
 
       {/* 表格 */}
-      <div ref={tableRef} style={{ flex: 1, overflow: "auto", position: "relative" }}>
+      <div
+        ref={tableRef}
+        className="ss-table-container"
+        style={{ flex: 1, overflow: "auto", position: "relative", WebkitOverflowScrolling: "touch" }}
+      >
         <table style={{ borderCollapse: "collapse", tableLayout: "fixed", minWidth: "100%" }}>
           <thead>
             <tr>
@@ -1188,7 +1025,12 @@ export default function SpreadsheetEditor() {
             </tr>
           </thead>
           <tbody>
-            {Array.from({ length: gridRows }, (_, r) => (
+            {topSpacerHeight > 0 && (
+              <tr aria-hidden="true" style={{ height: topSpacerHeight }}>
+                <td colSpan={gridCols + 1} style={{ padding: 0, border: "none", height: topSpacerHeight }} />
+              </tr>
+            )}
+            {visibleRowIndexes.map((r) => (
               <tr key={r}>
                 <td style={{
                   background: "var(--navy-light)", border: "1px solid var(--navy-line)", textAlign: "center",
@@ -1250,18 +1092,24 @@ export default function SpreadsheetEditor() {
                 })}
               </tr>
             ))}
+            {bottomSpacerHeight > 0 && (
+              <tr aria-hidden="true" style={{ height: bottomSpacerHeight }}>
+                <td colSpan={gridCols + 1} style={{ padding: 0, border: "none", height: bottomSpacerHeight }} />
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      {/* 工作表分頁 */}
-      <div style={{
+      {/* 工作表分頁 — .ss-sheet-tabs：@media 768px 以下橫向捲動，避免分頁擠壓換行 */}
+      <div className="ss-sheet-tabs" style={{
         background: "var(--navy-light)", borderTop: "1px solid var(--navy-line)",
         padding: "4px 12px", display: "flex", alignItems: "center", gap: 4,
       }}>
         {sheets.map((s, i) => (
           <div
             key={i}
+            className="ss-sheet-tab"
             onClick={() => { setActiveSheet(i); setContextMenu(null); }}
             onDoubleClick={() => renameSheet(i)}
             style={{
@@ -1287,7 +1135,7 @@ export default function SpreadsheetEditor() {
         </div>
         <div style={{ flex: 1 }} />
         <span style={{ fontFamily: "var(--font-mono)", fontSize: 9.5, color: "var(--text-tertiary)" }}>
-          {Object.keys(cells).filter((k) => cells[k] !== "").length} 個儲存格 · {sheet.name} · 公式引擎：SUM · AVERAGE · IF · COUNT · MIN · MAX
+          {Object.keys(cells).filter((k) => cells[k] !== "").length} 個儲存格 · {sheet.name} · 公式引擎：SUM · AVERAGE · IF · COUNT · MIN · MAX · CONCAT · ROUND · ABS · LEN
         </span>
       </div>
 
@@ -1333,6 +1181,32 @@ export default function SpreadsheetEditor() {
       <style>{`
         @keyframes tf-ss-fadein { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
         td:hover { background: rgba(90,138,74,0.08) !important; }
+        .ss-toolbar { flex-wrap: wrap; }
+        .ss-formula-bar { flex-wrap: nowrap; }
+        .ss-formula-input { flex: 1; }
+        .ss-sheet-tabs { flex-wrap: nowrap; }
+        /* 響應式：窄螢幕（手機）改橫向捲動/全寬，避免格式工具列與分頁列擠壓換行吃掉垂直空間 */
+        @media (max-width: 768px) {
+          .ss-toolbar {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .ss-formula-bar {
+            flex-wrap: wrap;
+          }
+          .ss-formula-input {
+            flex: 1 1 100%;
+          }
+          .ss-sheet-tabs {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+          .ss-sheet-tab {
+            flex-shrink: 0;
+            white-space: nowrap;
+          }
+        }
       `}</style>
     </div>
   );
@@ -1385,3 +1259,4 @@ function CtxItem({ label, onClick }) {
     </button>
   );
 }
+
