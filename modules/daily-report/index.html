@@ -939,7 +939,8 @@ btnGenerate.addEventListener('click', async () => {
 
 // ===== Feed Base URL 設定（接館報管線） =====
 const FEED_BASE_KEY = 'akasha_report_feed_base';
-const FEED_BASE_DEFAULT = 'https://raw.githubusercontent.com/TsKR2828/akasha-rss-news/daily-reports/output/';
+// 2026-10-18：akasha-rss-news 轉私有，館報成品改由公開鏡像 akasha-daily-public 供檔
+const FEED_BASE_DEFAULT = 'https://raw.githubusercontent.com/TsKR2828/akasha-daily-public/main/output/';
 function getFeedBase() {
   try { return localStorage.getItem(FEED_BASE_KEY) || FEED_BASE_DEFAULT; } catch { return FEED_BASE_DEFAULT; }
 }
