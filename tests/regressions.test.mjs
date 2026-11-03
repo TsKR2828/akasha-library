@@ -340,3 +340,20 @@ test('approved-memory tokenizeText splits katakana long-vowel-mark runs via Scri
   assert.deepEqual(tokenizeText('ノート'), ['ノー', 'ート']);
   assert.deepEqual(tokenizeText(normalizeText('Привет')), ['привет']);
 });
+
+test('tsuki-synth audio stays private: gitignored, excluded from public build, never in dist/ or sw.js', () => {
+  // tsuki-synth 為專有授權：音檔只能出現在私有版（scripts/sync-audio.js → private-assets/）。
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const gitignore = readFileSync(join(root, '.gitignore'), 'utf8');
+  assert.match(gitignore, /^private-assets\/$/m);
+  const build = readFileSync(join(root, 'scripts', 'build.js'), 'utf8');
+  const publicExcl = build.slice(build.indexOf('PUBLIC_EXCLUDE_DIRS'), build.indexOf(']);', build.indexOf('PUBLIC_EXCLUDE_DIRS')));
+  assert.match(publicExcl, /'private-assets'/);
+  const sw = readFileSync(join(root, 'sw.js'), 'utf8');
+  assert.doesNotMatch(sw, /private-assets|\.mp3|\.wav/);
+  const catalog = JSON.parse(readFileSync(join(root, 'modules', 'script-editor', 'src', 'lib', 'soundCatalog.json'), 'utf8'));
+  assert.ok(catalog.length > 0);
+  for (const s of catalog) {
+    assert.deepEqual(Object.keys(s).filter(k => /file|wav|mp3|path|url/i.test(k)), [], `catalog 不可含檔案路徑：${s.id}`);
+  }
+});
