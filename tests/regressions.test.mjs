@@ -357,3 +357,43 @@ test('tsuki-synth audio stays private: gitignored, excluded from public build, n
     assert.deepEqual(Object.keys(s).filter(k => /file|wav|mp3|path|url/i.test(k)), [], `catalog 不可含檔案路徑：${s.id}`);
   }
 });
+
+test('tsuki-synth: 零韻作曲 — 演奏請求判斷、樂譜區塊擷取與圖書館安全限制', async () => {
+  const t = await import('../core/tsuki-synth.js');
+  for (const yes of ['零韻，幫我彈一首小曲', '可以演奏一段音樂嗎', '幫這段劇本作曲', '來一首輕快的曲子', 'please play me a song'])
+    assert.equal(t.isMusicRequest(yes), true, yes);
+  for (const no of ['這本書第三章在講什麼', '幫我整理這張表格', '你好'])
+    assert.equal(t.isMusicRequest(no), false, no);
+
+  const score = { meta: { title: '月下' }, events: [{ time: 0, duration: 1.5, engine: 'string', note: 'C4' }, { time: 2, duration: 3 }] };
+  const reply = '為您彈一首。\n\n```tsuki-score\n' + JSON.stringify(score) + '\n```';
+  const blk = t.extractScoreBlock(reply);
+  assert.equal(blk.found, true);
+  assert.deepEqual(blk.score, score);
+  assert.equal(t.stripScoreBlock(reply), '為您彈一首。');
+  assert.equal(t.extractScoreBlock('沒有樂譜').found, false);
+  assert.match(t.extractScoreBlock('```tsuki-score\n{ bad json,\n```').error, /JSON/);
+
+  assert.equal(t.scoreDurationSec(score), 5);
+  assert.deepEqual(t.checkScoreForLibrary(score), []);
+  assert.equal(t.checkScoreForLibrary({ ...score, layers: [{}] }).length, 1);
+  assert.equal(t.checkScoreForLibrary({ events: [] }).length, 1);
+  assert.match(t.checkScoreForLibrary({ events: [{ time: 100, duration: 5 }] })[0], /太長/);
+
+  // 48 kHz 立體聲 24-bit、1 秒的 WAV 檔頭
+  const buf = new ArrayBuffer(44); const dv = new DataView(buf);
+  const w = (o, s) => [...s].forEach((c, i) => dv.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); w(8, 'WAVE'); w(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(22, 2, true);
+  dv.setUint32(24, 48000, true); dv.setUint16(32, 6, true); w(36, 'data'); dv.setUint32(40, 48000 * 6, true);
+  assert.equal(t.wavDurationSec(buf), 1);
+});
+
+test('tsuki-synth WASM 與樂譜指南只從 private-assets 載入（專有授權，不進公開版）', () => {
+  const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+  const worker = readFileSync(join(root, 'core', 'tsuki-worker.js'), 'utf8');
+  const lib = readFileSync(join(root, 'core', 'tsuki-synth.js'), 'utf8');
+  assert.match(worker, /'\.\.\/private-assets\/tsuki\/'/);
+  assert.match(lib, /'\.\.\/private-assets\/tsuki\/'/);
+  const sw = readFileSync(join(root, 'sw.js'), 'utf8');
+  assert.doesNotMatch(sw, /tsukisynth\.wasm|SCORE_GUIDE/);
+});

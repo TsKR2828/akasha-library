@@ -941,6 +941,34 @@ body { display: flex; }
 .ai-chat-scroll::-webkit-scrollbar-track { background: transparent; }
 .ai-chat-scroll::-webkit-scrollbar-thumb { background: var(--gold-deep); border-radius: 2px; }
 .ai-msg { max-width: 100%; animation: msgFadeIn 0.25s ease; }
+.ai-score-card {
+  margin: 2px 0 6px; padding: 10px 12px;
+  background: var(--navy-light); border: 1px solid var(--gold-line); border-left: 2px solid var(--gold);
+  border-radius: var(--r-soft); animation: msgFadeIn 0.25s ease;
+}
+.ai-score-card.is-playing { box-shadow: 0 0 0 1px var(--gold-line), 0 0 18px -6px var(--gold); }
+.ai-score-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ai-score-title { font-family: var(--font-serif-tc); font-size: 13px; color: var(--gold); }
+.ai-score-meta { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.04em; }
+.ai-score-status { margin-top: 4px; font-size: 11px; color: var(--text-secondary); white-space: pre-wrap; }
+.ai-score-status[data-kind="busy"]::after { content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--gold); animation: blink 0.8s steps(2) infinite; }
+.ai-score-status[data-kind="error"] { color: var(--danger); }
+.ai-score-status[data-kind="ok"] { color: var(--text-tertiary); }
+.ai-score-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.ai-score-btn {
+  height: 26px; padding: 0 10px; font-size: 11.5px; font-family: var(--font-serif-tc);
+  background: var(--navy-deep); color: var(--text-primary);
+  border: 1px solid var(--navy-line); border-radius: var(--r-soft); cursor: pointer;
+}
+.ai-score-btn:hover:not(:disabled) { border-color: var(--gold-line); color: var(--gold); }
+.ai-score-btn:disabled { opacity: 0.45; cursor: default; }
+.ai-score-play { border-color: var(--gold-line); color: var(--gold); }
+.ai-score-src {
+  margin: 8px 0 0; max-height: 220px; overflow: auto; padding: 8px;
+  font-family: var(--font-mono); font-size: 10.5px; line-height: 1.5;
+  background: var(--navy-deep); border: 1px solid var(--navy-line); border-radius: var(--r-sharp);
+  color: var(--text-secondary); white-space: pre;
+}
 .ai-msg--user {
   align-self: flex-end; max-width: 88%;
   background: rgba(201,168,106,0.08); border: 1px solid rgba(201,168,106,0.15);
@@ -2437,12 +2465,17 @@ body { display: flex; }
       msgDiv.className = 'ai-msg ai-msg--' + (msg.role === 'user' ? 'user' : 'assistant');
       var textEl = document.createElement('div');
       textEl.className = 'ai-msg-text';
-      textEl.textContent = msg.text;
+      // 附有 TsukiSynth 樂譜的回覆：文字去掉樂譜，樂譜改成演奏卡片（按 ▶ 才渲染）
+      var tc = window.__tsukiChat;
+      var scoreBlock = (tc && msg.role === 'assistant') ? tc.extractScoreBlock(msg.text) : null;
+      var shownText = (scoreBlock && scoreBlock.found) ? tc.stripScoreBlock(msg.text) : msg.text;
+      textEl.textContent = shownText;
       msgDiv.appendChild(textEl);
       if (msg.role === 'assistant' && window.appendNoteButton) {
-        window.appendNoteButton(msgDiv, msg.text);
+        window.appendNoteButton(msgDiv, shownText);
       }
       scroll.appendChild(msgDiv);
+      if (scoreBlock && scoreBlock.found) tc.appendScoreCard(scroll, scoreBlock, { lazy: true });
     }
     scroll.scrollTop = scroll.scrollHeight;
   }
@@ -3176,6 +3209,9 @@ import { estimateTokens, coinCost, getBalance, hasSufficientBalance, getUsageLog
 import { loadPersona, exportPersonaMd, savePersonaOverride, resetPersona, hasPersonaOverride } from './core/persona.js';
 import { getHistory, addMessage, clearHistory, clearAllHistory } from './core/chat-history.js';
 import { matchPrewritten } from './core/prewritten.js';
+import { isMusicRequest, isTsukiAvailable, buildComposeBlock, buildFixRequest, extractScoreBlock, stripScoreBlock } from './core/tsuki-synth.js';
+import { appendScoreCard, unlockTsukiAudio } from './core/tsuki-chat.js';
+window.__tsukiChat = { appendScoreCard, extractScoreBlock, stripScoreBlock };
 import { addTurn, setFact, getSession, clearSession, clearAllSessions, getSessionModules, buildMessages, buildFactsBlock } from './core/session-memory.js';
 import { flushSession, buildSummaryBlock, isEnabled as isRoomSummaryEnabled, setEnabled as setRoomSummaryEnabled, getRoomSummary, deleteRoomSummary, getAllRoomSummaries } from './core/room-summary.js';
 import { saveMemory, getMemory, deleteMemory, getAllMemories, getMemoryCount, saveSessionOnly, getSessionNotes, autoTitle, autoTags, searchMemories, buildMemoryContext } from './core/approved-memory.js';
@@ -3868,6 +3904,25 @@ function requestModuleContext(timeoutMs = 3000) {
   });
 }
 
+// 顯示零韻的回覆；若附有 ```tsuki-score``` 樂譜，文字照常打字機顯示，樂譜改成演奏卡片
+function deliverAIResponse(response, { speakerLabel, moduleName, text, retry }) {
+  const block = extractScoreBlock(response);
+  if (!block.found) {
+    window.startTypewriter(response, speakerLabel, 'calm', []);
+    addMessage(moduleName, 'assistant', response);
+    addTurn(moduleName, 'user', text);
+    addTurn(moduleName, 'assistant', response);
+    return;
+  }
+  const shown = stripScoreBlock(response) || '（零韻拿起了琴槌。）';
+  const title = block.score?.meta?.title || '小曲';
+  window.startTypewriter(shown, speakerLabel, 'calm', []);
+  addMessage(moduleName, 'assistant', response);   // 完整保留樂譜，重開對話時仍可演奏
+  addTurn(moduleName, 'user', text);
+  addTurn(moduleName, 'assistant', shown + '\n（已附樂譜《' + title + '》並演奏）');
+  appendScoreCard(document.getElementById('aiChatScroll'), block, { autoplay: true, fix: retry });
+}
+
 window._aiSendReal = async function() {
   if (aiLoading) return;
 
@@ -3875,6 +3930,10 @@ window._aiSendReal = async function() {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
+
+  // TsukiSynth 演奏：在按下送出的當下解鎖音訊，渲染完才能自動播放
+  const wantsMusic = isMusicRequest(text);
+  if (wantsMusic) unlockTsukiAudio();
 
   const ctx = window.getAIContext();
   const moduleName = window.getActiveModule();
@@ -3905,8 +3964,11 @@ window._aiSendReal = async function() {
     return;
   }
 
+  // 演奏請求：不需要模組內容，一律走一般模式並附上 TsukiSynth 樂譜指南
+  const music = wantsMusic && await isTsukiAvailable();
+
   // No module active — general mode
-  if (!moduleName || !MODULE_CONTEXTS[moduleName]) {
+  if (music || !moduleName || !MODULE_CONTEXTS[moduleName]) {
     aiLoading = true;
     const sendBtn = document.getElementById('aiSend');
     if (sendBtn) sendBtn.disabled = true;
@@ -3914,7 +3976,8 @@ window._aiSendReal = async function() {
     try {
       const roomBlock = await buildSummaryBlock(moduleName);
       const memBlock = await buildMemoryContext(text, moduleName);
-      const systemPrompt = buildGeneralSystemPrompt() + roomBlock + memBlock + buildFactsBlock(moduleName);
+      let systemPrompt = buildGeneralSystemPrompt() + roomBlock + memBlock + buildFactsBlock(moduleName);
+      if (music) systemPrompt += await buildComposeBlock();
       const msgs = buildMessages(moduleName, text);
       const totalTokens = estimateTokens(systemPrompt) + estimateTokens(text);
       syncTokenBar(totalTokens);
@@ -3934,10 +3997,15 @@ window._aiSendReal = async function() {
       }
 
       removeThinking();
-      window.startTypewriter(response, speakerLabel, 'calm', []);
-      addMessage(moduleName, 'assistant', response);
-      addTurn(moduleName, 'user', text);
-      addTurn(moduleName, 'assistant', response);
+      deliverAIResponse(response, {
+        speakerLabel, moduleName, text,
+        // 引擎退回樂譜時請零韻修正一次
+        retry: (errText) => callLLM(settings, systemPrompt, [
+          ...msgs,
+          { role: 'assistant', content: response },
+          { role: 'user', content: buildFixRequest(errText) },
+        ]),
+      });
     } catch (err) {
       removeThinking();
       window.startTypewriter('連線時發生了問題：' + err.message, speakerLabel, 'thinking', []);

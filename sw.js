@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-754be0d72e';
+const CACHE_NAME = 'akasha-library-638ea2a2a7';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,9 @@ const LOCAL_ASSETS = [
 
   // Core modules
   './core/ai.js',
+  './core/tsuki-synth.js',
+  './core/tsuki-chat.js',
+  './core/tsuki-worker.js',
   './core/auth.js',
   './core/billing.js',
   './core/chat-history.js',
