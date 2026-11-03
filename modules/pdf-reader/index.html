@@ -846,12 +846,9 @@
     font-size: 12px;
     color: var(--text-primary);
     z-index: 999;
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all 0.3s ease;
     max-width: 320px;
   }
-  .toast.visible { transform: translateY(0); opacity: 1; }
+  /* 顯示／隱藏交給 shared.css 的 akasha-toast-fade 動畫，由 showToast 切 display 重播 */
   .toast.error { border-color: var(--danger); }
   .toast.success { border-color: var(--success); }
 
@@ -1346,7 +1343,7 @@
   </aside>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" style="display:none"></div>
 
 <script type="module">
   import { saveFileEntry, saveFileBlob, getFileBlob, getFileEntries, deleteFileEntry, deleteEmbeddings, deleteBookmarksByFile, saveBookmark, getBookmarksByFile, deleteBookmark } from '../../core/storage.js';
@@ -2308,11 +2305,18 @@
     document.getElementById('loadingOverlay').classList.remove('visible');
   }
 
+  // shared.css 的 .toast 動畫只在元素從 display:none 出現時播放，
+  // 所以每次顯示前先藏起來、強制重排，再顯示，讓動畫從頭播。
+  let toastTimer = null;
   function showToast(msg, type = '') {
     const t = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    t.style.display = 'none';
     t.textContent = msg;
-    t.className = 'toast visible ' + type;
-    setTimeout(() => t.classList.remove('visible'), 3000);
+    t.className = 'toast' + (type ? ' ' + type : '');
+    void t.offsetWidth;
+    t.style.display = '';
+    toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
 
   function escapeHtml(str) {
