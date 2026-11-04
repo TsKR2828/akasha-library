@@ -1,0 +1,902 @@
+[
+ {
+  "id": "akashic_bell_001",
+  "name": "Akashic Bell",
+  "name_zh": "阿卡西之鐘",
+  "sound_type": "oneshot",
+  "primary_type": "magic",
+  "subcategory": "bell",
+  "world": "akashic",
+  "mood": "sacred",
+  "energy": "low",
+  "duration_sec": 8.5,
+  "engine": "plate",
+  "tags": [
+   "bell",
+   "mystical",
+   "transition",
+   "reverb-heavy",
+   "sacred"
+  ]
+ },
+ {
+  "id": "rabbit_warning_001",
+  "name": "Rabbit Warning",
+  "name_zh": "兔兔警告",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "alert",
+  "world": "rabbit",
+  "mood": "tense",
+  "energy": "high",
+  "duration_sec": 0.8,
+  "engine": "beam",
+  "tags": [
+   "warning",
+   "alert",
+   "short",
+   "character-sfx",
+   "bright"
+  ]
+ },
+ {
+  "id": "restraint_metal_click_001",
+  "name": "Restraint Metal Click",
+  "name_zh": "拘束扣合",
+  "sound_type": "oneshot",
+  "primary_type": "impact",
+  "subcategory": "mechanical",
+  "world": "restraint",
+  "mood": "ominous",
+  "energy": "medium",
+  "duration_sec": 2,
+  "engine": "string+plate",
+  "tags": [
+   "metal",
+   "click",
+   "mechanical",
+   "dark",
+   "impact",
+   "short"
+  ]
+ },
+ {
+  "id": "akashic_transition_001",
+  "name": "Akashic Gate Open",
+  "name_zh": "阿卡西開門",
+  "sound_type": "oneshot",
+  "primary_type": "magic",
+  "subcategory": "bell",
+  "world": "akashic",
+  "mood": "sacred",
+  "energy": "medium",
+  "duration_sec": 8,
+  "engine": "plate",
+  "tags": [
+   "bell",
+   "mystical",
+   "transition",
+   "reverb-heavy",
+   "sacred"
+  ]
+ },
+ {
+  "id": "akashic_notify_001",
+  "name": "Akashic Record Chime",
+  "name_zh": "紀錄提示",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "chime",
+  "world": "akashic",
+  "mood": "sacred",
+  "energy": "medium",
+  "duration_sec": 1.7,
+  "engine": "beam",
+  "tags": [
+   "chime",
+   "notification",
+   "glass",
+   "sacred",
+   "bright"
+  ]
+ },
+ {
+  "id": "akashic_action_001",
+  "name": "Akashic Page Turn",
+  "name_zh": "翻頁",
+  "sound_type": "oneshot",
+  "primary_type": "foley",
+  "subcategory": "string",
+  "world": "akashic",
+  "mood": "calm",
+  "energy": "low",
+  "duration_sec": 1.2,
+  "engine": "string+plate",
+  "tags": [
+   "string",
+   "page-turn",
+   "gentle",
+   "foley"
+  ]
+ },
+ {
+  "id": "akashic_ambient_001",
+  "name": "Akashic Library Drone",
+  "name_zh": "圖書館低鳴",
+  "sound_type": "oneshot",
+  "primary_type": "ambience",
+  "subcategory": "ambient",
+  "world": "akashic",
+  "mood": "mystical",
+  "energy": "very-low",
+  "duration_sec": 17,
+  "engine": "plate",
+  "tags": [
+   "ambient",
+   "drone",
+   "low",
+   "sacred",
+   "reverb-heavy"
+  ]
+ },
+ {
+  "id": "akashic_ui_001",
+  "name": "Akashic Light Tap",
+  "name_zh": "確認光點",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "chime",
+  "world": "akashic",
+  "mood": "calm",
+  "energy": "low",
+  "duration_sec": 0.4,
+  "engine": "beam",
+  "tags": [
+   "ui",
+   "click",
+   "glass",
+   "short",
+   "bright"
+  ]
+ },
+ {
+  "id": "akashic_transition_var01",
+  "name": "Akashic Gate Open (Dark)",
+  "name_zh": "阿卡西開門（暗）",
+  "sound_type": "variant",
+  "primary_type": "magic",
+  "subcategory": "bell",
+  "world": "akashic",
+  "mood": "ominous",
+  "energy": "medium",
+  "duration_sec": 9,
+  "engine": "plate",
+  "tags": [
+   "bell",
+   "mystical",
+   "transition",
+   "dark",
+   "distorted"
+  ]
+ },
+ {
+  "id": "rabbit_transition_001",
+  "name": "Rabbit Hop Transition",
+  "name_zh": "兔跳轉場",
+  "sound_type": "oneshot",
+  "primary_type": "whoosh",
+  "subcategory": "chime",
+  "world": "rabbit",
+  "mood": "playful",
+  "energy": "high",
+  "duration_sec": 0.8,
+  "engine": "beam",
+  "tags": [
+   "chime",
+   "transition",
+   "playful",
+   "fast",
+   "bright"
+  ]
+ },
+ {
+  "id": "rabbit_notify_001",
+  "name": "Rabbit Ding",
+  "name_zh": "兔兔叮",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "chime",
+  "world": "rabbit",
+  "mood": "playful",
+  "energy": "medium",
+  "duration_sec": 0.8,
+  "engine": "beam",
+  "tags": [
+   "chime",
+   "notification",
+   "cute",
+   "short",
+   "bright"
+  ]
+ },
+ {
+  "id": "rabbit_action_001",
+  "name": "Rabbit Stomp",
+  "name_zh": "暴走踩踏",
+  "sound_type": "oneshot",
+  "primary_type": "impact",
+  "subcategory": "mechanical",
+  "world": "rabbit",
+  "mood": "tense",
+  "energy": "high",
+  "duration_sec": 0.4,
+  "engine": "string",
+  "tags": [
+   "impact",
+   "stomp",
+   "short",
+   "heavy",
+   "angry"
+  ]
+ },
+ {
+  "id": "rabbit_ambient_001",
+  "name": "Rabbit Wind Chimes",
+  "name_zh": "草地風鈴",
+  "sound_type": "oneshot",
+  "primary_type": "ambience",
+  "subcategory": "ambient",
+  "world": "rabbit",
+  "mood": "calm",
+  "energy": "low",
+  "duration_sec": 5.7,
+  "engine": "beam",
+  "tags": [
+   "chime",
+   "ambient",
+   "gentle",
+   "random",
+   "airy"
+  ]
+ },
+ {
+  "id": "rabbit_ui_001",
+  "name": "Rabbit Carrot Button",
+  "name_zh": "蘿蔔按鈕",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "rabbit",
+  "mood": "playful",
+  "energy": "low",
+  "duration_sec": 0.15,
+  "engine": "beam",
+  "tags": [
+   "ui",
+   "click",
+   "wood",
+   "short",
+   "cute"
+  ]
+ },
+ {
+  "id": "rabbit_notify_var01",
+  "name": "Rabbit Ding (Angry)",
+  "name_zh": "兔兔叮（怒）",
+  "sound_type": "variant",
+  "primary_type": "ui",
+  "subcategory": "alert",
+  "world": "rabbit",
+  "mood": "tense",
+  "energy": "high",
+  "duration_sec": 0.6,
+  "engine": "beam",
+  "tags": [
+   "chime",
+   "alert",
+   "angry",
+   "sharp",
+   "metallic"
+  ]
+ },
+ {
+  "id": "restraint_transition_001",
+  "name": "Restraint Chain Drag",
+  "name_zh": "鎖鏈拖行",
+  "sound_type": "oneshot",
+  "primary_type": "whoosh",
+  "subcategory": "mechanical",
+  "world": "restraint",
+  "mood": "ominous",
+  "energy": "medium",
+  "duration_sec": 2.3,
+  "engine": "string+plate",
+  "tags": [
+   "chain",
+   "metal",
+   "transition",
+   "dark",
+   "industrial"
+  ]
+ },
+ {
+  "id": "restraint_notify_001",
+  "name": "Restraint Lock Click",
+  "name_zh": "上鎖扣合",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "restraint",
+  "mood": "tense",
+  "energy": "medium",
+  "duration_sec": 0.3,
+  "engine": "beam",
+  "tags": [
+   "click",
+   "metal",
+   "notification",
+   "short",
+   "dark"
+  ]
+ },
+ {
+  "id": "restraint_action_001",
+  "name": "Restraint Shackle Slam",
+  "name_zh": "枷鎖重擊",
+  "sound_type": "oneshot",
+  "primary_type": "impact",
+  "subcategory": "mechanical",
+  "world": "restraint",
+  "mood": "aggressive",
+  "energy": "very-high",
+  "duration_sec": 0.6,
+  "engine": "plate+string",
+  "tags": [
+   "impact",
+   "slam",
+   "heavy",
+   "metal",
+   "dark"
+  ]
+ },
+ {
+  "id": "restraint_ambient_001",
+  "name": "Restraint Iron Drone",
+  "name_zh": "鐵牢低鳴",
+  "sound_type": "oneshot",
+  "primary_type": "ambience",
+  "subcategory": "ambient",
+  "world": "restraint",
+  "mood": "oppressive",
+  "energy": "very-low",
+  "duration_sec": 10.5,
+  "engine": "string+plate",
+  "tags": [
+   "drone",
+   "ambient",
+   "dark",
+   "low",
+   "industrial"
+  ]
+ },
+ {
+  "id": "restraint_ui_001",
+  "name": "Restraint Bolt Click",
+  "name_zh": "螺栓扣位",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "restraint",
+  "mood": "neutral",
+  "energy": "low",
+  "duration_sec": 0.08,
+  "engine": "beam",
+  "tags": [
+   "ui",
+   "click",
+   "metal",
+   "short",
+   "cold"
+  ]
+ },
+ {
+  "id": "restraint_notify_var01",
+  "name": "Restraint Lock Click (Distorted)",
+  "name_zh": "上鎖扣合（失真）",
+  "sound_type": "variant",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "restraint",
+  "mood": "aggressive",
+  "energy": "high",
+  "duration_sec": 0.3,
+  "engine": "beam",
+  "tags": [
+   "click",
+   "metal",
+   "notification",
+   "distorted",
+   "glitch"
+  ]
+ },
+ {
+  "id": "forest_transition_001",
+  "name": "Forest Leaf Sweep",
+  "name_zh": "落葉掃過",
+  "sound_type": "oneshot",
+  "primary_type": "whoosh",
+  "subcategory": "organic",
+  "world": "forest",
+  "mood": "calm",
+  "energy": "medium",
+  "duration_sec": 2.2,
+  "engine": "beam",
+  "tags": [
+   "wood",
+   "sweep",
+   "transition",
+   "organic",
+   "gentle"
+  ]
+ },
+ {
+  "id": "forest_notify_001",
+  "name": "Forest Bird Call",
+  "name_zh": "鳥鳴提示",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "chime",
+  "world": "forest",
+  "mood": "playful",
+  "energy": "medium",
+  "duration_sec": 0.5,
+  "engine": "beam",
+  "tags": [
+   "bamboo",
+   "notification",
+   "bright",
+   "short",
+   "organic"
+  ]
+ },
+ {
+  "id": "forest_action_001",
+  "name": "Forest Branch Snap",
+  "name_zh": "斷枝",
+  "sound_type": "oneshot",
+  "primary_type": "impact",
+  "subcategory": "organic",
+  "world": "forest",
+  "mood": "neutral",
+  "energy": "high",
+  "duration_sec": 0.12,
+  "engine": "beam",
+  "tags": [
+   "impact",
+   "wood",
+   "snap",
+   "short",
+   "organic"
+  ]
+ },
+ {
+  "id": "forest_ambient_001",
+  "name": "Forest Bamboo Rain",
+  "name_zh": "竹林雨滴",
+  "sound_type": "oneshot",
+  "primary_type": "ambience",
+  "subcategory": "ambient",
+  "world": "forest",
+  "mood": "calm",
+  "energy": "very-low",
+  "duration_sec": 4.8,
+  "engine": "beam",
+  "tags": [
+   "bamboo",
+   "ambient",
+   "rain",
+   "gentle",
+   "random"
+  ]
+ },
+ {
+  "id": "forest_ui_001",
+  "name": "Forest Acorn Tap",
+  "name_zh": "橡果點擊",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "forest",
+  "mood": "playful",
+  "energy": "low",
+  "duration_sec": 0.1,
+  "engine": "beam",
+  "tags": [
+   "ui",
+   "click",
+   "wood",
+   "short",
+   "round"
+  ]
+ },
+ {
+  "id": "forest_notify_var01",
+  "name": "Forest Bird Call (Alarm)",
+  "name_zh": "鳥鳴警報",
+  "sound_type": "variant",
+  "primary_type": "ui",
+  "subcategory": "alert",
+  "world": "forest",
+  "mood": "tense",
+  "energy": "high",
+  "duration_sec": 0.46,
+  "engine": "beam",
+  "tags": [
+   "bamboo",
+   "alert",
+   "fast",
+   "triple",
+   "tense"
+  ]
+ },
+ {
+  "id": "ocean_transition_001",
+  "name": "Ocean Tide Wash",
+  "name_zh": "潮汐湧入",
+  "sound_type": "oneshot",
+  "primary_type": "whoosh",
+  "subcategory": "ambient",
+  "world": "ocean",
+  "mood": "mystical",
+  "energy": "medium",
+  "duration_sec": 3.5,
+  "engine": "string+plate+beam",
+  "tags": [
+   "wave",
+   "sweep",
+   "transition",
+   "deep",
+   "liquid"
+  ]
+ },
+ {
+  "id": "ocean_notify_001",
+  "name": "Ocean Bubble Pop",
+  "name_zh": "氣泡彈出",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "chime",
+  "world": "ocean",
+  "mood": "playful",
+  "energy": "medium",
+  "duration_sec": 0.3,
+  "engine": "beam",
+  "tags": [
+   "bubble",
+   "notification",
+   "short",
+   "bright",
+   "liquid"
+  ]
+ },
+ {
+  "id": "ocean_action_001",
+  "name": "Ocean Depth Slam",
+  "name_zh": "深海壓擊",
+  "sound_type": "oneshot",
+  "primary_type": "impact",
+  "subcategory": "ambient",
+  "world": "ocean",
+  "mood": "tense",
+  "energy": "very-high",
+  "duration_sec": 0.8,
+  "engine": "plate+string",
+  "tags": [
+   "impact",
+   "deep",
+   "heavy",
+   "slam",
+   "underwater"
+  ]
+ },
+ {
+  "id": "ocean_ambient_001",
+  "name": "Ocean Abyss Hum",
+  "name_zh": "深淵低鳴",
+  "sound_type": "oneshot",
+  "primary_type": "ambience",
+  "subcategory": "ambient",
+  "world": "ocean",
+  "mood": "mystical",
+  "energy": "very-low",
+  "duration_sec": 10,
+  "engine": "string+plate",
+  "tags": [
+   "drone",
+   "ambient",
+   "deep",
+   "underwater",
+   "mysterious"
+  ]
+ },
+ {
+  "id": "ocean_ui_001",
+  "name": "Ocean Droplet Tap",
+  "name_zh": "水滴點擊",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "ocean",
+  "mood": "calm",
+  "energy": "low",
+  "duration_sec": 0.15,
+  "engine": "beam",
+  "tags": [
+   "ui",
+   "click",
+   "glass",
+   "short",
+   "liquid"
+  ]
+ },
+ {
+  "id": "ocean_notify_var01",
+  "name": "Ocean Bubble Pop (Deep)",
+  "name_zh": "深水氣泡",
+  "sound_type": "variant",
+  "primary_type": "ui",
+  "subcategory": "chime",
+  "world": "ocean",
+  "mood": "mystical",
+  "energy": "medium",
+  "duration_sec": 0.5,
+  "engine": "beam",
+  "tags": [
+   "bubble",
+   "notification",
+   "deep",
+   "dark",
+   "liquid"
+  ]
+ },
+ {
+  "id": "clockwork_transition_001",
+  "name": "Clockwork Gear Shift",
+  "name_zh": "齒輪換檔",
+  "sound_type": "oneshot",
+  "primary_type": "mechanical",
+  "subcategory": "mechanical",
+  "world": "clockwork",
+  "mood": "neutral",
+  "energy": "medium",
+  "duration_sec": 0.76,
+  "engine": "beam",
+  "tags": [
+   "gear",
+   "mechanical",
+   "transition",
+   "brass",
+   "precise"
+  ]
+ },
+ {
+  "id": "clockwork_notify_001",
+  "name": "Clockwork Bell Strike",
+  "name_zh": "報時敲鐘",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "bell",
+  "world": "clockwork",
+  "mood": "neutral",
+  "energy": "medium",
+  "duration_sec": 1,
+  "engine": "beam",
+  "tags": [
+   "bell",
+   "notification",
+   "brass",
+   "precise",
+   "clear"
+  ]
+ },
+ {
+  "id": "clockwork_action_001",
+  "name": "Clockwork Spring Release",
+  "name_zh": "發條釋放",
+  "sound_type": "oneshot",
+  "primary_type": "mechanical",
+  "subcategory": "mechanical",
+  "world": "clockwork",
+  "mood": "tense",
+  "energy": "high",
+  "duration_sec": 0.4,
+  "engine": "string+beam",
+  "tags": [
+   "spring",
+   "mechanical",
+   "release",
+   "fast",
+   "tense"
+  ]
+ },
+ {
+  "id": "clockwork_ambient_001",
+  "name": "Clockwork Ticking Room",
+  "name_zh": "鐘錶房",
+  "sound_type": "oneshot",
+  "primary_type": "ambience",
+  "subcategory": "ambient",
+  "world": "clockwork",
+  "mood": "neutral",
+  "energy": "low",
+  "duration_sec": 3,
+  "engine": "beam+plate",
+  "tags": [
+   "tick",
+   "ambient",
+   "mechanical",
+   "rhythm",
+   "precise"
+  ]
+ },
+ {
+  "id": "clockwork_ui_001",
+  "name": "Clockwork Gear Click",
+  "name_zh": "齒輪咬合",
+  "sound_type": "oneshot",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "clockwork",
+  "mood": "neutral",
+  "energy": "low",
+  "duration_sec": 0.06,
+  "engine": "beam",
+  "tags": [
+   "ui",
+   "click",
+   "brass",
+   "short",
+   "mechanical"
+  ]
+ },
+ {
+  "id": "clockwork_notify_var01",
+  "name": "Clockwork Bell Strike (Wavefold)",
+  "name_zh": "報時敲鐘（波折）",
+  "sound_type": "variant",
+  "primary_type": "ui",
+  "subcategory": "bell",
+  "world": "clockwork",
+  "mood": "tense",
+  "energy": "high",
+  "duration_sec": 1,
+  "engine": "beam",
+  "tags": [
+   "bell",
+   "notification",
+   "distorted",
+   "wavefold",
+   "glitch"
+  ]
+ },
+ {
+  "id": "akashic_loop_001",
+  "name": "Akashic Meditation Cycle",
+  "name_zh": "阿卡西冥想循環",
+  "sound_type": "loop",
+  "primary_type": "ambience",
+  "subcategory": "bell",
+  "world": "akashic",
+  "mood": "sacred",
+  "energy": "low",
+  "duration_sec": 16,
+  "engine": "plate",
+  "tags": [
+   "loop",
+   "meditation",
+   "bronze",
+   "slow",
+   "sacred"
+  ]
+ },
+ {
+  "id": "rabbit_loop_001",
+  "name": "Rabbit Bounce Loop",
+  "name_zh": "兔兔彈跳循環",
+  "sound_type": "loop",
+  "primary_type": "ui",
+  "subcategory": "click",
+  "world": "rabbit",
+  "mood": "playful",
+  "energy": "high",
+  "duration_sec": 3.43,
+  "engine": "beam",
+  "tags": [
+   "loop",
+   "rhythm",
+   "bounce",
+   "playful",
+   "fast"
+  ]
+ },
+ {
+  "id": "restraint_loop_001",
+  "name": "Restraint Industrial Pulse",
+  "name_zh": "束縛工業脈衝",
+  "sound_type": "loop",
+  "primary_type": "mechanical",
+  "subcategory": "mechanical",
+  "world": "restraint",
+  "mood": "oppressive",
+  "energy": "high",
+  "duration_sec": 4.8,
+  "engine": "plate",
+  "tags": [
+   "loop",
+   "industrial",
+   "pulse",
+   "heavy",
+   "dark"
+  ]
+ },
+ {
+  "id": "forest_loop_001",
+  "name": "Forest Rain Pattern",
+  "name_zh": "森林雨滴節奏",
+  "sound_type": "loop",
+  "primary_type": "ambience",
+  "subcategory": "organic",
+  "world": "forest",
+  "mood": "calm",
+  "energy": "low",
+  "duration_sec": 12,
+  "engine": "beam",
+  "tags": [
+   "loop",
+   "rain",
+   "bamboo",
+   "gentle",
+   "rhythm"
+  ]
+ },
+ {
+  "id": "ocean_loop_001",
+  "name": "Ocean Wave Cycle",
+  "name_zh": "海洋浪潮循環",
+  "sound_type": "loop",
+  "primary_type": "ambience",
+  "subcategory": "organic",
+  "world": "ocean",
+  "mood": "mystical",
+  "energy": "low",
+  "duration_sec": 8,
+  "engine": "string",
+  "tags": [
+   "loop",
+   "wave",
+   "deep",
+   "liquid",
+   "slow"
+  ]
+ },
+ {
+  "id": "clockwork_loop_001",
+  "name": "Clockwork Tick Loop",
+  "name_zh": "齒輪鐘擺循環",
+  "sound_type": "loop",
+  "primary_type": "mechanical",
+  "subcategory": "mechanical",
+  "world": "clockwork",
+  "mood": "neutral",
+  "energy": "medium",
+  "duration_sec": 4,
+  "engine": "beam",
+  "tags": [
+   "loop",
+   "tick",
+   "precise",
+   "mechanical",
+   "rhythm"
+  ]
+ }
+]

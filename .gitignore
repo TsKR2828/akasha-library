@@ -2,3 +2,6 @@ node_modules/
 .env
 .env.local
 _site/
+
+# tsuki-synth 音檔（專有授權，只供私有版；由 scripts/sync-audio.js 產生）
+private-assets/

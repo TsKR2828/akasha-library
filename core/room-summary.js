@@ -47,7 +47,7 @@ export async function getRoomSummary(module) {
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly');
-    const req = tx.objectStore(STORE).get(module);
+    const req = tx.objectStore(STORE).get(module || '_default');   // 大廳（無館）與 session-memory 一致用 _default
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });

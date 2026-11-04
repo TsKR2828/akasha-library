@@ -94,6 +94,7 @@ const PRIVATE_PATHS = [
 /** Public mode: additional exclusions */
 const PUBLIC_EXCLUDE_DIRS = new Set([
   'workers',                // backend source
+  'private-assets',         // tsuki-synth 音檔（專有授權，只進私有版）
 ]);
 
 const PUBLIC_EXCLUDE_FILES = new Set([
