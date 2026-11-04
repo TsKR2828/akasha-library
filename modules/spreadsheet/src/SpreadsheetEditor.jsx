@@ -1192,6 +1192,11 @@ export default function SpreadsheetEditor() {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
           }
+          /* 橫向捲動時項目不可被壓縮，否則「字級／底色／文字」標籤會被擠成一字一行 */
+          .ss-toolbar > * {
+            flex-shrink: 0;
+            white-space: nowrap;
+          }
           .ss-formula-bar {
             flex-wrap: wrap;
           }
