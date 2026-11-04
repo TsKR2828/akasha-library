@@ -1,6 +1,7 @@
 import React from "react";
 import { parsePlainScript, blocksToPlainScript, diffMergeBlocks, computeStats, getLineCol } from "../lib/parser.js";
 import { useVoiceTTS } from "../hooks/useVoiceTTS.js";
+import { useAudioCues } from "../hooks/useAudioCues.js";
 import BgmPanel from "./BgmPanel.jsx";
 
 /* ===========================================================
@@ -11,8 +12,9 @@ import BgmPanel from "./BgmPanel.jsx";
    Stores:    localStorage "sw_write_draft" (debounced 500ms)
    Roadmap:   v2-4 Alt+N shortcuts ✓
               v2-5 Voice TTS (Web Speech API) ✓
-              v2-6 BGM/SFX panel — placeholder; audio synth handled by
-                   sister project tsuki-synth (C++/JUCE VST3, see BgmPanel.jsx)
+              v2-6 BGM/SFX panel — audio synth handled by sister project
+                   tsuki-synth (C++/JUCE); v3 plays its pre-rendered library
+                   via useAudioCues (see BgmPanel.jsx)
               v2-7 cross-TAB sync (Write ↔ Editor/Reader) — pending
    =========================================================== */
 
@@ -256,6 +258,10 @@ const WriteTab = React.forwardRef(function WriteTab({ blocks, setBlocks, charact
 
   /* Voice TTS (v2-5) */
   const voice = useVoiceTTS();
+
+  /* tsuki-synth BGM / SFX (v3)：語音朗讀時 BGM 自動壓低（ducking） */
+  const audio = useAudioCues();
+  React.useEffect(() => { audio.duck(voice.state.speaking); }, [voice.state.speaking, audio.duck]);
 
   /* ---------- v2-7 BI-DIRECTIONAL SYNC ----------
      Forward:  textarea → parsedBlocks → setBlocks   (debounced 350ms)
@@ -726,8 +732,8 @@ const WriteTab = React.forwardRef(function WriteTab({ blocks, setBlocks, charact
         <div className="sw-index-card">
           {previewTab === "blocks" && isScriptMode && <BlocksPreview blocks={parsedBlocks} voice={voice} />}
           {previewTab === "stats"  && (isScriptMode ? <StatsPreview stats={stats} /> : <TextStatsPreview stats={contentStats} headings={headingOutline} mode={activeModeConfig} />)}
-          {previewTab === "voice"  && isScriptMode && <VoicePanel blocks={parsedBlocks} voice={voice} />}
-          {previewTab === "bgm"    && isScriptMode && <BgmPanel blocks={parsedBlocks} />}
+          {previewTab === "voice"  && isScriptMode && <VoicePanel blocks={parsedBlocks} voice={voice} audio={audio} />}
+          {previewTab === "bgm"    && isScriptMode && <BgmPanel blocks={parsedBlocks} audio={audio} />}
           {previewTab === "outline" && <OutlinePanel outline={sceneOutline} headings={headingOutline} onJump={jumpToLine} activeLine={globalLine} showSceneHint={isScriptMode} />}
         </div>
       </div>
@@ -973,7 +979,7 @@ function BlockCard({ block, index, voice }) {
 }
 
 /* ============= Voice Panel (v2-5) ============= */
-function VoicePanel({ blocks, voice }) {
+function VoicePanel({ blocks, voice, audio }) {
   if (!voice.hasTTS) {
     return (
       <div className="se-panel-hint is-empty">
@@ -995,8 +1001,22 @@ function VoicePanel({ blocks, voice }) {
     );
   }
 
-  const onPlayAll = () => voice.playQueue(blocks);
-  const onStop    = () => voice.stop();
+  // v3-5：朗讀時同步觸發 #bgm / #sfx；整串播完 BGM 淡出，按停止則一併停 BGM
+  const cueHooks = audio && audio.status === "ready" ? {
+    onCue: (b) => { audio.playCue(b.command, b.value); },
+    onEnd: () => audio.stopBgm(2000),
+  } : {};
+  // 朗讀前先把劇本用到的音檔預載完，cue 才會準時響
+  const startQueue = async (from) => {
+    if (cueHooks.onCue) {
+      const ids = blocks.filter(b => b.type === "command" && (b.command === "bgm" || b.command === "sfx"))
+        .map(b => String(b.value || "").trim());
+      await audio.preload(ids);
+    }
+    voice.playQueue(blocks, from, cueHooks);
+  };
+  const onPlayAll = () => startQueue(0);
+  const onStop    = () => { voice.stop(); audio?.stopBgm(600); };
 
   // group voices by lang for cleaner picker
   const sortedVoices = React.useMemo(() => {
@@ -1029,6 +1049,16 @@ function VoicePanel({ blocks, voice }) {
             : voice.state.speaking ? "speaking" : `${queue.length} ready`}
         </span>
       </div>
+
+      {audio && (
+        <div className="se-panel-hint" style={{ marginTop: -4 }}>
+          {audio.status === "ready"
+            ? <>朗讀時會同步播放劇本中的 <code className="se-code">#bgm</code> / <code className="se-code">#sfx</code>，語音出現時 BGM 自動壓低。{audio.nowBgm && <> 目前 BGM：<code className="se-code">{audio.nowBgm}</code></>}</>
+            : audio.status === "checking"
+              ? "正在確認音色庫…"
+              : <>此版本不含 tsuki-synth 音檔，朗讀時不播放 <code className="se-code">#bgm</code> / <code className="se-code">#sfx</code>。</>}
+        </div>
+      )}
 
       {/* settings */}
       <section>
@@ -1094,7 +1124,7 @@ function VoicePanel({ blocks, voice }) {
             return (
               <button
                 key={item.id || qi}
-                onClick={() => voice.playQueue(blocks, blocks.indexOf(item) >= 0
+                onClick={() => startQueue(blocks.indexOf(item) >= 0
                   ? queue.indexOf(item) : qi)}
                 className={"se-panel-row" + (active ? " is-active" : "")}
                 style={{ alignItems: "baseline" }}

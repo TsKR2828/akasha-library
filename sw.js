@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-b747d7e704';
+const CACHE_NAME = 'akasha-library-8181debe66';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -18,6 +18,9 @@ const LOCAL_ASSETS = [
 
   // Core modules
   './core/ai.js',
+  './core/tsuki-synth.js',
+  './core/tsuki-chat.js',
+  './core/tsuki-worker.js',
   './core/auth.js',
   './core/billing.js',
   './core/chat-history.js',
@@ -70,7 +73,7 @@ const LOCAL_ASSETS = [
   './dist/spreadsheet/assets/storage-CYqK1_QX.js',
   './dist/script-editor/index.html',
   './dist/script-editor/assets/index-BPKg5U8R.css',
-  './dist/script-editor/assets/index-Cffs-OZ5.js',
+  './dist/script-editor/assets/index-dTRPxvOU.js',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',
   './dist/script-editor/data/works/blackstar_ch1.json',
