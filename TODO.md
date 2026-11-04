@@ -2,6 +2,7 @@
 
 > Enhancement Phase 1–16 全部完成（含 15 談心+館報 / 8 Script Editor / 12 Security / 16 部署）
 > Branch: `master`（2026-06-13 解凍修復批次已經 PR #5 併入 master `b07c181`；`codex/fix-reviewed-bugs` 與 5 個舊 feature branch 已清）
+> 最後同步：2026-11-03（補記 2026-07-06 → 2026-10-18 的 master 工作，見「已完成（2026-07 ～ 10）」）
 
 ---
 
@@ -408,14 +409,46 @@
 - [x] **Editor** Block 上移/下移排序 — `moveBlock(id, dir)` + 雙按鈕取代裝飾拖曳圖標
 - [x] **Editor** Choice 路徑驗證 — `validateBlock` 第三參數 `blocks`，檢查缺跳轉 + 不存在場次
 
-### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
+### 已完成（2026-07 ～ 10：改版、各館補深、PWA、館報換源）
 
-阻塞條件：tsuki-synth `TsukiSynthCLI` 修好 `ScoreRenderer.h` API mismatch + sound library 鎖版。
+> 2026-11-03 依 master commit 補記；細節以各 commit 訊息為準。
 
-- [ ] **v3-1** tsuki-synth 批次預渲染 sound library → `exports/wav/`
-- [ ] **v3-2** WAV 收編進 akasha：`modules/script-editor/public/audio/{bgm,sfx}/`
-- [ ] **v3-3** `useAudioCues` hook：`#bgm:` / `#sfx:` cue → HTML5 `<audio>` 播放
-- [ ] **v3-4** BgmPanel 改為實際可操作面板（preset 選擇、音量、loop / fade）
-- [ ] **v3-5** 三軌混音：Voice TTS + BGM（ducking）+ SFX
+- [x] **07-06 介面統一** `3eab2b7` — 各館 header 統一、book-editor 退役歸檔、零韻手札移入 AI 面板、40 個 postMessage 類型集中成 `MSG_TYPES`、館報改抓 akasha-rss-news
+- [x] **07-12 全站改版** `63b9ff9` — The Midnight Study & The Open Page：tokens v2 紙頁系統、`.deskbar` 元件系統、52px 頂欄＋單一 masthead、各館移除自繪標題
+- [x] **07-12 明暗模式第二輪** `b294a29` — 首繪防閃色、劇本工房 23 處寫死深色改 token、PDF 閱讀器恆深（HANDOFF §3）、側欄 9 館、大廳 II–IX 卡片
+- [x] **07-13 README 館別表** `25485a2` — 對齊 8 館、移除 Bibliopegia
+- [x] **07-16 館報復活＋配色歸位** `0fdfdcb` — 館報改抓 daily-reports 分支、AI 面板亮模式、紙頁系暗模式反轉、刪死代碼、`check-msg-types.js` 進 `npm test`
+- [x] **08-05 夜燈藍紙** `771d69e` — 暗模式紙頁改從 navy 派生；側欄復刻 `3eab2b7` 舊版樣式
+- [x] **08-21 歸檔** `b8d2619` — 過時文件／設計規格／legacy 搬入 `archive/`
+- [x] **08-21 Charta 單色** `d15aaf8` — 七彩墨色收斂黃銅
+- [x] **08-21 核心加固** `1097c33` — CI 測試、SW 雙向檢查、月幣冪等＋月度補幣、storage 防卡死、sync 逐檔容錯、閘門 fail-closed
+- [x] **08-21 各館修復** `e2c9693` — 試算表保公式＋autosave、Table Forge 持久化＋送試算表橋、談心持久化、PDF 死頁籤移除、館報存書庫
+- [x] **08-21 Shell 修復** `e2c238c` — 閘門 fail-closed＋openModule 守衛、SW 更新提示、Notion pull 落地＋衝突對話框、大廳 Charta 書脊
+- [x] **08-23 試算表** `286f7ae` — 遞迴下降公式引擎（移除 eval）、XLSX 公式／欄寬往返、萬列虛擬捲動、響應式
+- [x] **08-23 各館補深** `4e4fd5e` — 閱讀器 Md 全集＋高亮＋搜尋跳轉、手札搜尋分頁、館報解析強韌化、記憶 Unicode 分詞、RAG 降級可見、Table Forge＋劇本工房響應式
+- [x] **08-23 PWA** `942758b` — 離線頁、安裝提示、manifest 修正、privacy 對齊實況
+- [x] **10-18 館報換源** `dcf4643` — akasha-rss-news 轉私有，改讀公開鏡像 `akasha-daily-public`
+
+### 進行中（2026-11-03 UI/UX 檢查）
+
+- [ ] **S1** PDF 閱讀器／AI 設定／館藏管理頁的操作提示全部看不見（`shared.css` 的 `.toast` 動畫衝突）— 修復已開 PR #8（PDF 閱讀器經維運者同意特別解凍）
+- [ ] **S2** 手機版劇本工房：書桌列按鈕互疊、清空／更多出界、稿紙只剩約 1.5 行 — 修復已開 PR #9
+- [ ] **S2** 手機版試算表工具列「字級／底色／文字」被擠成直排 — 修復已開 PR #11
+- [x] **已決策（C 維持現狀）** PDF 閱讀器亮模式「上亮下暗」— 維運者 2026-11-03 裁決保留 Lectorium 恆深設計（HANDOFF §3），不改
+- [ ] **待決策** `CLAUDE.md` B4 活躍／凍結清單仍為 2026-06 版本，需依 07–10 月實況重新認定
+- [x] **已確認（刻意範例）** 劇本工房首次開啟即載入《羅恩格林》全本 — 維運者 2026-11-03 確認為預設範例作品，不屬 B5-4 硬編碼殘留
+- [ ] **S3** 大廳 V／VII／IX 卡片標題比同排低約 10px
+
+### 已完成：tsuki-synth 整合（v3，2026-11-03，PR #12）
+
+> tsuki-synth CLI 修好、音色庫有 6 個循環音，開工條件達成。tsuki-synth 為專有授權：引擎、指南、音檔只進私有版（`private-assets/`）。
+
+- [x] **v3-1** CLI 批次渲染全部 45 個聲音 — `scripts/sync-audio.js`
+- [x] **v3-2** 收編為 MP3（循環音 tail wrap）→ `private-assets/audio/`
+- [x] **v3-3** `useAudioCues`：`#bgm:` / `#sfx:` 播放、交叉淡化
+- [x] **v3-4** BgmPanel：音量、停止、cue 檢查、音色庫試聽
+- [x] **v3-5** 三軌：語音朗讀觸發 cue、BGM ducking
+- [x] **零韻即興演奏**：tsuki-synth 引擎編成 WebAssembly（`scripts/build-tsuki-wasm.js`），零韻依 SCORE_GUIDE 寫 score.json 當場演奏；與原生 CLI 比對在登記容差內
+- [x] 順帶修正：大廳對話時 `getRoomSummary(null)` 讓零韻回覆失敗
 
 詳見 [`docs/tsuki-synth-integration.md`](docs/tsuki-synth-integration.md)。
