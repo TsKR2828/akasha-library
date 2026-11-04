@@ -208,12 +208,9 @@ body {
   font-size: 12px;
   font-weight: 600;
   box-shadow: 0 8px 24px -10px rgba(0,0,0,.7);
-  transform: translateY(60px);
-  opacity: 0;
-  transition: all 0.3s;
   z-index: 200;
 }
-.toast.visible { transform: translateY(0); opacity: 1; }
+/* 顯示／隱藏交給 shared.css 的 akasha-toast-fade 動畫，由 showToast 切 display 重播 */
 </style>
 </head>
 <body>
@@ -337,7 +334,7 @@ body {
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" style="display:none"></div>
 
 <script type="module">
 // postMessage type 對照表（本檔為 type="module"，靠 import core/billing.js 取得月幣
@@ -570,11 +567,17 @@ function updateEstimate() {
 }
 
 // === Utils ===
+// shared.css 的 .toast 動畫只在元素從 display:none 出現時播放，
+// 所以每次顯示前先藏起來、強制重排，再顯示，讓動畫從頭播。
+let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  t.style.display = 'none';
   t.textContent = msg;
-  t.classList.add('visible');
-  setTimeout(() => t.classList.remove('visible'), 2500);
+  void t.offsetWidth;
+  t.style.display = '';
+  toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3000);
 }
 
 function escapeHtml(value) {
