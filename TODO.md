@@ -439,14 +439,16 @@
 - [x] **已確認（刻意範例）** 劇本工房首次開啟即載入《羅恩格林》全本 — 維運者 2026-11-03 確認為預設範例作品，不屬 B5-4 硬編碼殘留
 - [ ] **S3** 大廳 V／VII／IX 卡片標題比同排低約 10px
 
-### 待開：tsuki-synth 整合（v3 系列，等 tsuki-synth 完工後啟動）
+### 已完成：tsuki-synth 整合（v3，2026-11-03，PR #12）
 
-阻塞條件：tsuki-synth `TsukiSynthCLI` 修好 `ScoreRenderer.h` API mismatch + sound library 鎖版。
+> tsuki-synth CLI 修好、音色庫有 6 個循環音，開工條件達成。tsuki-synth 為專有授權：引擎、指南、音檔只進私有版（`private-assets/`）。
 
-- [ ] **v3-1** tsuki-synth 批次預渲染 sound library → `exports/wav/`
-- [ ] **v3-2** WAV 收編進 akasha：`modules/script-editor/public/audio/{bgm,sfx}/`
-- [ ] **v3-3** `useAudioCues` hook：`#bgm:` / `#sfx:` cue → HTML5 `<audio>` 播放
-- [ ] **v3-4** BgmPanel 改為實際可操作面板（preset 選擇、音量、loop / fade）
-- [ ] **v3-5** 三軌混音：Voice TTS + BGM（ducking）+ SFX
+- [x] **v3-1** CLI 批次渲染全部 45 個聲音 — `scripts/sync-audio.js`
+- [x] **v3-2** 收編為 MP3（循環音 tail wrap）→ `private-assets/audio/`
+- [x] **v3-3** `useAudioCues`：`#bgm:` / `#sfx:` 播放、交叉淡化
+- [x] **v3-4** BgmPanel：音量、停止、cue 檢查、音色庫試聽
+- [x] **v3-5** 三軌：語音朗讀觸發 cue、BGM ducking
+- [x] **零韻即興演奏**：tsuki-synth 引擎編成 WebAssembly（`scripts/build-tsuki-wasm.js`），零韻依 SCORE_GUIDE 寫 score.json 當場演奏；與原生 CLI 比對在登記容差內
+- [x] 順帶修正：大廳對話時 `getRoomSummary(null)` 讓零韻回覆失敗
 
 詳見 [`docs/tsuki-synth-integration.md`](docs/tsuki-synth-integration.md)。
