@@ -120,8 +120,11 @@ export function useVoiceTTS() {
     setState({ speaking: false, queueActive: false, queueIdx: 0, queueTotal: 0, currentText: "" });
   }, [hasTTS]);
 
-  /* ---------- play queue of blocks ---------- */
-  const playQueue = React.useCallback(async (blocks, startFrom = 0) => {
+  /* ---------- play queue of blocks ----------
+     v3-5：可選的 hooks.onCue(block) 讓 #bgm / #sfx 指令在朗讀到該位置時觸發。
+     從中段開始播放時，會先補觸發起點之前最後一個 #bgm（SFX 不補），
+     讓背景音和劇情位置一致。hooks.onEnd() 在整串自然播完時呼叫。 */
+  const playQueue = React.useCallback(async (blocks, startFrom = 0, hooks = {}) => {
     if (!hasTTS) return;
     // If already queued, stop first then restart
     abortRef.current = true;
@@ -129,22 +132,48 @@ export function useVoiceTTS() {
     // small yield so cancel processes
     await new Promise(r => setTimeout(r, 60));
 
-    const queue = (blocks || []).filter(b =>
+    const isSpeakable = (b) =>
       b.type === "dialogue" ||
-      (b.type === "narration" && settingsRef.current.includeNarration)
-    );
+      (b.type === "narration" && settingsRef.current.includeNarration);
+    const isCue = (b) =>
+      b.type === "command" && (b.command === "bgm" || b.command === "sfx");
+
+    const all = blocks || [];
+    const queue = all.filter(isSpeakable);
     if (!queue.length) return;
+
+    // timeline：依原順序保留可朗讀的 block 與 cue；qi = 在 queue 中的序號
+    const timeline = [];
+    let qi = 0;
+    for (const b of all) {
+      if (isSpeakable(b)) timeline.push({ b, qi: qi++ });
+      else if (isCue(b)) timeline.push({ b, cue: true });
+    }
+    let pos = timeline.findIndex(e => e.qi === startFrom);
+    if (pos < 0) pos = 0;
+    if (hooks.onCue) {
+      for (let k = pos - 1; k >= 0; k--) {
+        const e = timeline[k];
+        if (e.cue && e.b.command === "bgm") { hooks.onCue(e.b); break; }
+      }
+    }
 
     abortRef.current = false;
     setState({ speaking: false, queueActive: true, queueIdx: startFrom, queueTotal: queue.length, currentText: "" });
 
-    for (let i = startFrom; i < queue.length; i++) {
-      if (abortRef.current) break;
-      const item = queue[i];
+    let finished = true;
+    for (let k = pos; k < timeline.length; k++) {
+      if (abortRef.current) { finished = false; break; }
+      const entry = timeline[k];
+      if (entry.cue) {
+        try { hooks.onCue?.(entry.b); } catch {}
+        continue;
+      }
+      const item = entry.b;
       const text = item.text || item.zh || item.original || "";
       if (!text.trim()) continue;
 
-      setState(s => ({ ...s, queueIdx: i, currentText: text, speaking: true }));
+      setState(s => ({ ...s, queueIdx: entry.qi, currentText: text, speaking: true }));
 
       await new Promise((resolve) => {
         const utt = new SpeechSynthesisUtterance(text);
@@ -155,9 +184,11 @@ export function useVoiceTTS() {
         catch { resolve(); }
       });
     }
+    if (abortRef.current) finished = false;
 
     setState(s => ({ ...s, queueActive: false, speaking: false, currentText: "" }));
     abortRef.current = false;
+    if (finished) { try { hooks.onEnd?.(); } catch {} }
   }, [hasTTS]);
 
   return {
