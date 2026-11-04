@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-fb47dbeccb';
+const CACHE_NAME = 'akasha-library-13f40ee1d2';
 const LOCAL_ASSETS = [
   './',
   './index.html',
