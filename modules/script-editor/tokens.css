@@ -791,3 +791,58 @@ button.se-panel-row {
     padding: 10px 14px !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   RESPONSIVE · 窄螢幕（≤760px，與 shared.css「窄螢幕」斷點一致）
+   - 書桌列：本模組未載入 shared.css，這裡補上同一條換行規則，讓
+     作品切換／從劇本回填／範例／清空／更多 換到第二列，不再互相壓住或
+     被推出畫面外。
+   - 筆盤：手機上 Alt 快捷鍵用不到，但 slot 仍可點選指派、雙擊插入，
+     所以保留 chip，改成單列橫向捲動，把高度還給稿紙。
+   桌面版（>760px）完全不受影響。
+   ════════════════════════════════════════════════════════════════════ */
+@media (max-width: 760px) {
+  .deskbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 8px 16px;
+    gap: 8px 10px;
+  }
+  .deskbar .desk-spacer { display: none; }
+  .deskbar .desk-actions {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    margin-left: 0;
+    row-gap: 6px;
+  }
+  .deskbar .desk-actions select { min-width: 0; }
+
+  .sw-pen-tray {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .sw-pen-tray .sw-slot-chip { flex: none; }
+  .sw-pen-tray__label,
+  .sw-pen-tray__hint { display: none; }
+
+  /* 稿紙：左邊界 82px 在 390px 寬太奢侈，縮窄並把紅色邊線一起內移 */
+  .sw-manuscript-textarea {
+    padding: 18px 16px 60vh 46px;
+    background-position: 30px 0, 0 4px;
+  }
+
+  /* 索引欄：五個分頁由直排改橫排，少佔約 150px 高度，留給稿紙 */
+  .sw-index-rail {
+    max-height: 34vh;
+    padding: 10px 12px 10px;
+  }
+  .sw-index-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .sw-index-tab { flex: none; padding: 6px 8px; }
+}

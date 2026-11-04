@@ -1,4 +1,4 @@
-const CACHE_NAME = 'akasha-library-8181debe66';
+const CACHE_NAME = 'akasha-library-2d56e34ceb';
 const LOCAL_ASSETS = [
   './',
   './index.html',
@@ -72,8 +72,8 @@ const LOCAL_ASSETS = [
   './dist/spreadsheet/assets/index-VVtV0VAy.js',
   './dist/spreadsheet/assets/storage-CYqK1_QX.js',
   './dist/script-editor/index.html',
-  './dist/script-editor/assets/index-BPKg5U8R.css',
-  './dist/script-editor/assets/index-dTRPxvOU.js',
+  './dist/script-editor/assets/index-eijYLyuX.js',
+  './dist/script-editor/assets/index-fbP9oCF8.css',
   './dist/script-editor/data/index.json',
   './dist/script-editor/data/works/lohengrin.json',
   './dist/script-editor/data/works/blackstar_ch1.json',
